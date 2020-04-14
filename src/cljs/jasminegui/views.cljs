@@ -13,6 +13,7 @@
     ["react-table" :as rt :default ReactTable]
     [goog.string :as gstring]
     [goog.string.format]
+    [jasminegui.mount :as mount]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]])
   (:import (goog.i18n NumberFormat)
@@ -31,6 +32,19 @@
     (if-let [x (aget this "value")]
       [:div  (nf (int x))]
       "-")))
+
+
+(defn case-insensitive-filter [filterfn row]
+  "filterfn is {id: column_name value: text_in_filter_box"
+  ;(println row)
+  (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))
+
+  ;(or
+  ;  (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))
+  ;  (.includes (.toLowerCase (str (aget row (aget filterfn "_pivotId")))) (.toLowerCase (aget filterfn "value")))
+  ;  )
+
+  )
 
 (defn txt-format [fmt this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt x) "-")))
 (def round3         (partial txt-format "%.3f"))
@@ -105,6 +119,11 @@
 (def table-columns
   {:id                          {:Header "ID"             :accessor "id"                          :show false}
    :id-show                     {:Header "ID"             :accessor "id"                          :width 75}
+   :region                      {:Header "Region" :accessor "Region" :width 140 :filterMethod case-insensitive-filter}
+   :country                     {:Header "Country" :accessor "Country" :width 140  :filterMethod case-insensitive-filter}
+   :issuer                      {:Header "Issuer" :accessor "TICKER" :width 140  :filterMethod case-insensitive-filter}
+   :sector                      {:Header "Issuer" :accessor "JPM_SECTOR" :width 140  :filterMethod case-insensitive-filter}
+   :name                        {:Header "Name" :accessor "NAME" :width 140  :filterMethod case-insensitive-filter}
    ;:strategy-shortcut           {:Header "Strategy"       :accessor "strategy-shortcut"           :width 110 :style {:textAlign "center"} :filterMethod case-insensitive-filter :Cell strategy-pop-up}
    ;:strategy                    {:Header "strategy-full"  :accessor "strategy"                    :show false};we need to have it in the table for the props
    ;:entry-date                  {:Header "Entry date"     :accessor "entry-date"                  :width 90 :style {:textAlign "center"} :Cell format-date-from-int-rt}
@@ -150,45 +169,93 @@
     "Cash" "AAA"
     x))
 
-(defn risk-view-generic []
-  "h1map {:fn :Region :header 'Region' :accessor 'Region'}"
-  (let [h1map {:fn :Region :header "Region" :accessor "Region"}
-        positions @(rf/subscribe [:positions])
-        portfolio-positions (filter #(= (:portfolio %) "OGEMCORD") positions)
-        display
-        (conj
-          (sort-by (juxt (comp first-level-sort (:fn h1map)) :Country :TICKER :NAME) portfolio-positions)
-          {(:fn h1map) "Total" :Country "Total" :Ticker "Total" :NAME "Total" :weight (reduce + (map :weight portfolio-positions)) :original-quantity (reduce + (map :original-quantity portfolio-positions))}
-          )
+(defn add-total-line [table]
+  (conj table
+        {:Region      "Total"
+         :JPM_SECTOR  "Total"
+         :Country     "Total"
+         :TICKER      "Total"
+         :NAME        "Total"
+         :description "Total"
+         :weight      (reduce + (map :weight table))
+         :original-quantity (reduce + (map :original-quantity table))}))
+
+(defn group-cash-line [table]
+  (let [grp (group-by #(= (:Region %) "Cash") table)]
+    (concat [        {:Region      "Cash"
+                      :JPM_SECTOR  "Cash"
+                      :Country     "Cash"
+                      :TICKER      "Cash"
+                      :NAME        "Cash"
+                      :description "Cash"
+                      :weight      (reduce + (map :weight (grp true)))
+                      :original-quantity (reduce + (map :original-quantity (grp true)))}]
+      (grp false))))
+
+(defn single-portfolio-risk-display []
+  (let [positions @(rf/subscribe [:positions])
+        portfolio @(rf/subscribe [:single-portfolio-risk-portfolio])
+        is-tree (= @(rf/subscribe [:single-portfolio-risk-display-style]) "Tree")
+        portfolio-positions (filter #(= (:portfolio %) portfolio) positions)
+        risk-filter @(rf/subscribe [:single-portfolio-risk-filter])
+        risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
+        risk-choice-2 (if (not= "None" (risk-filter 2)) (risk-filter 2))
+        risk-choice-3 (if (not= "None" (risk-filter 3)) (risk-filter 3))
+        grouping-columns (into [] (for [r (remove nil? [risk-choice-1 risk-choice-2 risk-choice-3 :name])] (table-columns r)))
+        accessors (mapv :accessor grouping-columns)
+        accessors-k (mapv keyword accessors)
+        display (add-total-line (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) (if is-tree portfolio-positions (group-cash-line portfolio-positions))))]
+        [:> ReactTable
+                            {:data           display
+                            :columns        [{:Header "Groups" :columns grouping-columns}
+                                             {:Header  "Position"
+                                              :columns [{:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
+                                                        {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell}]}
+                                             {:Header  "Description"
+                                              :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
+                            :showPagination false
+                            :sortable       (not is-tree)
+                             :filterable     (not is-tree)
+                             :pageSize       (if is-tree (inc (count (distinct (map (first accessors-k) portfolio-positions)))) (inc (count display)))
+                            :className      "-striped -highlight"
+                            :pivotBy        (if is-tree accessors[])}]))
+
+
+
+(defn risk-filtering []
+  (let [
+        portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        display-style (rf/subscribe [:single-portfolio-risk-display-style])
+        portfolio (rf/subscribe [:single-portfolio-risk-portfolio])
+        risk-filter (rf/subscribe [:single-portfolio-risk-filter])
+        risk-choice-1 (r/cursor risk-filter [1])
+        risk-choice-2 (r/cursor risk-filter [2])
+        risk-choice-3 (r/cursor risk-filter [3])
+        dropdown-width "150px"
         ]
-
-    [box :class "element"  :child
-     [:> ReactTable {:data            display
-                     :columns         [
-                                       {:Header  "Groups"
-                                        :columns [{:Header (:header h1map) :accessor (:accessor h1map) :width 140}
-                                                  {:Header "Country" :accessor "Country" :width 140}
-                                                  {:Header "Issuer" :accessor "TICKER" :width 140}
-                                                  {:Header "Name" :accessor "NAME" :width 140}]}
-                                       {:Header  "Position"
-                                        :columns [{:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
-                                                  {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell}
-                                                  ]}
-                                       {:Header "Description"
-                                        :columns [{:Header "Description" :accessor "description" :width 500}]}
-                                       ]
-                     :showPagination  false
-                     :sortable        false
-                     :defaultPageSize (count (distinct (map :Region portfolio-positions)))
-                     :className       "-striped -highlight"
-                     :pivotBy         [(:accessor h1map) "Country" "TICKER" "NAME"]
-                     }]])
+    [v-box :class "element" :gap "20px"
+     :children [[title :label "Portfolio drill-down" :level :level1]
+                [h-box :gap "10px"
+                 :children [
+                            [title :label "Display type:" :level :level3]
+                            [single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]
+                            [gap :size "50px"]
+                            [title :label "Filtering:" :level :level3]
+                            [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk-portfolio %])]
+                            [single-dropdown :width dropdown-width :model risk-choice-1 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 1 %])]
+                            [single-dropdown :width dropdown-width :model risk-choice-2 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 2 %])]
+                            [single-dropdown :width dropdown-width :model risk-choice-3 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 3 %])]]]
+                ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
+                [single-portfolio-risk-display]]])
   )
 
-(defn position-table []
-  [risk-view-generic]
-
-  )
+;(defn multiple-portfolio-risk-display []
+;  (let [positions @(rf/subscribe [:positions])
+;        instruments (distinct (map :))
+;
+;        ])
+;
+;  nil)
 
 (defn main-panel []
-  [v-box :gap "20px" :class "body" :padding "20px" :children [[position-table] ]])
+  [v-box :gap "20px" :class "body" :padding "20px" :children [ [risk-filtering]  ]])
