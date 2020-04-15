@@ -6,20 +6,89 @@
     [cljs.core.async :refer [<!]])
   (:require-macros [cljs.core.async.macros :refer [go]])
   )
+
+
+
+
+(def main-navigation
+  [{:code :home   :name "Home"            :dispatch :home   :subs nil}
+   {:code :trade-history  :name "Trade history"      :dispatch :trade-drilldown  :subs [{:code :description :name "Description"} {:code :history :name "History"}]}
+   {:code :administration   :name "Administration"  :dispatch :administration   :subs nil}
+   ])
+
+
+(def home-navigation
+  [{:code :summary               :name "Overview"}
+   {:code :single-portfolio                :name "Single portfolio"}
+   {:code :all-portfolios            :name "Multiple portfolios"}
+   ]
+  )
+
+
+
+(def risk-choice-map [{:id "None" :label "None"}
+                      {:id :region :label "Region"}
+                      {:id :country :label "Country"}
+                      {:id :issuer :label "Issuer"}
+                      {:id :rating :label "Rating"}
+                      {:id :sector :label "Sector"}])
+
+
 (def default-db {:positions []
+                 :pivoted-positions []
                  :portfolios []
+                 :active-view :home
+                 :active-home :overview
                  :single-portfolio-risk-display-style "Table"
                  :single-portfolio-risk-portfolio "OGEMCORD"
                  :single-portfolio-risk-filter {1 :region 2 :country 3 :issuer}
+                 :multiple-portfolio-risk-display-style "Table"
+                 :multiple-portfolio-risk-selected-portfolios (set nil) ;["OGEMCORD"]
+                 :multiple-portfolio-risk-filter {1 :region 2 :country 3 :issuer}
                  })
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
 (doseq [k (keys default-db)] (rf/reg-sub k (fn [db] (k db))))
-(doseq [k [:positions :portfolios :single-portfolio-risk-portfolio :single-portfolio-risk-display-style]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
+(doseq [k [:active-view
+           :active-home
+           :single-portfolio-risk-portfolio
+           :single-portfolio-risk-display-style
+           :multiple-portfolio-risk-display-style
+           :multiple-portfolio-risk-selected-portfolios]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
+
+(rf/reg-event-db
+  :portfolios
+  (fn [db [_ data]]
+    (let [portfolios (remove #{"WISHLIST" "IGWISHLIST"} data)]
+      (assoc db :portfolios portfolios
+                :multiple-portfolio-risk-selected-portfolios (set portfolios)))))
 
 (rf/reg-event-db
   :single-portfolio-risk-filter
   (fn [db [_ id f]] (assoc-in db [:single-portfolio-risk-filter id] f)))
+(rf/reg-event-db
+  :multiple-portfolio-risk-filter
+  (fn [db [_ id f]] (assoc-in db [:single-portfolio-risk-filter id] f)))
+
+(rf/reg-event-db
+  :positions
+  (fn [db [_ positions]]
+    (let [instruments (distinct (map :description positions))
+          grp (group-by (juxt :description :portfolio) positions)
+          portfolios (distinct (map :portfolio positions))
+          keys [:weight :original-quantity]
+          ]
+      (assoc db :positions positions
+                :pivoted-positions (remove nil? (into [] (for [instrument instruments]
+                                                           (let [template (ffirst (remove nil? (map #(get-in grp [[instrument %]]) portfolios)))]
+                                                             (if (not= "Cash" (:Region template))
+                                                               (merge template
+                                                                      (into {}
+                                                                            (for [k keys]
+                                                                              [k
+                                                                               (into {} (for [p portfolios] [(keyword p) (if-let [x (first (get-in grp [[instrument p]]))] (k x) 0.)]))]))))))))
+
+                ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;HTTP GET DEFINITION;;
@@ -54,13 +123,3 @@
 
 
 
-
-
-
-
-(def risk-choice-map [{:id "None" :label "None"}
-                      {:id :region :label "Region"}
-                      {:id :country :label "Country"}
-                      {:id :issuer :label "Issuer"}
-                      {:id :rating :label "Rating"}
-                      {:id :sector :label "Sector"}])
