@@ -43,6 +43,9 @@
                  :single-portfolio-risk-portfolio "OGEMCORD"
                  :single-portfolio-risk-filter {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-risk-display-style "Table"
+                 :multiple-portfolio-field-number "One"
+                 :multiple-portfolio-field-one :weight
+                 :multiple-portfolio-field-two "None"
                  :multiple-portfolio-risk-selected-portfolios (set nil) ;["OGEMCORD"]
                  :multiple-portfolio-risk-filter {1 :region 2 :country 3 :issuer}
                  })
@@ -54,6 +57,9 @@
            :single-portfolio-risk-portfolio
            :single-portfolio-risk-display-style
            :multiple-portfolio-risk-display-style
+           :multiple-portfolio-field-number
+           :multiple-portfolio-field-one
+           :multiple-portfolio-field-two
            :multiple-portfolio-risk-selected-portfolios]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
 (rf/reg-event-db
@@ -78,10 +84,11 @@
           portfolios (distinct (map :portfolio positions))
           keys [:weight :original-quantity]
           ]
+      ;      (println instruments)
       (assoc db :positions positions
                 :pivoted-positions (remove nil? (into [] (for [instrument instruments]
                                                            (let [template (ffirst (remove nil? (map #(get-in grp [[instrument %]]) portfolios)))]
-                                                             (if (not= "Cash" (:Region template))
+                                                             (if true ;(not= "Cash" (:Region template))
                                                                (merge template
                                                                       (into {}
                                                                             (for [k keys]

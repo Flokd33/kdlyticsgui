@@ -52,6 +52,19 @@
 (def yield-format   (partial txt-format "%.2f%"))
 (def zspread-format (partial txt-format "%.0fbps"))
 
+
+(defn sum-rows [vals] (reduce + vals))
+
+(defn median [coll]
+  (let [sorted (sort (remove nil? coll))
+        cnt (count sorted)
+        halfway (quot cnt 2)]
+    (cond
+      (zero? cnt) nil
+      (odd? cnt) (nth sorted halfway)
+      :else (let [bottom (dec halfway) bottom-val (nth sorted bottom) top-val (nth sorted halfway)] (* 0.5 (+ bottom-val top-val))))))
+
+
 (defn roundpc [fmt this]
   (r/as-element
     (if-let [x (aget this "value")]
@@ -116,14 +129,15 @@
 ;    (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))))
 ;
 
+
 (def table-columns
   {:id                          {:Header "ID"             :accessor "id"                          :show false}
    :id-show                     {:Header "ID"             :accessor "id"                          :width 75}
-   :region                      {:Header "Region" :accessor "Region" :width 140 :filterMethod case-insensitive-filter}
-   :country                     {:Header "Country" :accessor "Country" :width 140  :filterMethod case-insensitive-filter}
-   :issuer                      {:Header "Issuer" :accessor "TICKER" :width 140  :filterMethod case-insensitive-filter}
-   :sector                      {:Header "Issuer" :accessor "JPM_SECTOR" :width 140  :filterMethod case-insensitive-filter}
-   :name                        {:Header "Name" :accessor "NAME" :width 140  :filterMethod case-insensitive-filter}
+   :region                      {:Header "Region" :accessor "Region" :width 140 }
+   :country                     {:Header "Country" :accessor "Country" :width 140}
+   :issuer                      {:Header "Issuer" :accessor "TICKER" :width 140 }
+   :sector                      {:Header "Sector" :accessor "JPM_SECTOR" :width 140}
+   :name                        {:Header "Name" :accessor "NAME" :width 140} ;  :filterMethod case-insensitive-filter
    ;:strategy-shortcut           {:Header "Strategy"       :accessor "strategy-shortcut"           :width 110 :style {:textAlign "center"} :filterMethod case-insensitive-filter :Cell strategy-pop-up}
    ;:strategy                    {:Header "strategy-full"  :accessor "strategy"                    :show false};we need to have it in the table for the props
    ;:entry-date                  {:Header "Entry date"     :accessor "entry-date"                  :width 90 :style {:textAlign "center"} :Cell format-date-from-int-rt}
@@ -137,32 +151,41 @@
    :thisyear                    {:Header "thisyear"       :accessor "thisyear"                    :show false} ;we need to have it in the table for the props
    :position                    {:Header "Model"          :accessor "position"                    :width 60 :style {:textAlign "right"} :Cell round2pc}
 
-   :live-position               {:Header "Actual"         :accessor "live-position"               :width 60 :style {:textAlign "right"} :Cell round2pc}
-   :entry-price                 {:Header "Entry"          :accessor "entry-price"                 :width 75 :style {:textAlign "right"} :Cell round2}
-   :last-price                  {:Header "Last"           :accessor "last-price"                  :width 75 :style {:textAlign "right"} :Cell last-price-props}
-   :last-yield                  {:Header "Yield"          :accessor "last-yield"                  :width 75 :style {:textAlign "right"} :Cell yield-format}
-   :last-spread                 {:Header "Spread"         :accessor "last-spread"                 :width 75 :style {:textAlign "right"} :Cell zspread-format}
-   :d-relval                    {:Header "Relval"         :accessor "d-relval"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
-   :d-target                    {:Header "Price"          :accessor "d-target"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
-   :d-review                    {:Header "Review"         :accessor "d-review"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
-   :max-d-others                {:Header "Others"         :accessor "max-d-others"                :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
-   :ytd-return                  {:Header "Raw"            :accessor "ytd-return"                  :width 75 :style {:textAlign "right"} :Cell round1pcytd} ;:getProps fp4
-   :ytd-return-vs-cembi         {:Header "vs CEMBI"       :accessor "ytd-return-vs-cembi"         :width 75 :style {:textAlign "right"} :Cell round1pcytd} ;:getProps fp4
-   :ytd-return-vs-cembi-rating  {:Header "vs IGHY"        :accessor "ytd-return-vs-cembi-rating"  :width 75 :style {:textAlign "right"} :Cell round1pcytd}
-   :ytd-return-vs-cembi-country {:Header "vs country"     :accessor "ytd-return-vs-cembi-country" :width 75 :style {:textAlign "right"} :Cell round1pcytd}
-   :ytd-return-vs-cembi-sector  {:Header "vs sector"      :accessor "ytd-return-vs-cembi-sector"  :width 75 :style {:textAlign "right"} :Cell round1pcytd}
-   :ltd-return                  {:Header "Raw"            :accessor "ltd-return"                  :width 75 :style {:textAlign "right"} :Cell round1pc} ;:getProps fp4
-   :ltd-return-vs-cembi         {:Header "vs CEMBI"       :accessor "ltd-return-vs-cembi"         :width 75 :style {:textAlign "right"} :Cell round1pc} ;:getProps fp4
-   :ltd-return-vs-cembi-rating  {:Header "vs IGHY"        :accessor "ltd-return-vs-cembi-rating"  :width 75 :style {:textAlign "right"} :Cell round1pc}
-   :ltd-return-vs-cembi-country {:Header "vs country"     :accessor "ltd-return-vs-cembi-country" :width 75 :style {:textAlign "right"} :Cell round1pc}
-   :ltd-return-vs-cembi-sector  {:Header "vs sector"      :accessor "ltd-return-vs-cembi-sector"  :width 75 :style {:textAlign "right"} :Cell round1pc}
-   :price-target                {:Header "Target"         :accessor "price-target"                :width 60 :style {:textAlign "right"} :Cell last-price-props}
-   :relval-target-description   {:Header "Description"    :accessor "relval-target-description"   :width 200} ;:getProps fp4 ; :headerClassName "wordwrap"
-   :relval-target-latest        {:Header "Latest"         :accessor "relval-target-latest"        :width 60 :style {:textAlign "right"} :Cell round2} ;:getProps fp4 ; :headerClassName "wordwrap"
+   ;:live-position               {:Header "Actual"         :accessor "live-position"               :width 60 :style {:textAlign "right"} :Cell round2pc}
+   ;:entry-price                 {:Header "Entry"          :accessor "entry-price"                 :width 75 :style {:textAlign "right"} :Cell round2}
+   ;:last-price                  {:Header "Last"           :accessor "last-price"                  :width 75 :style {:textAlign "right"} :Cell last-price-props}
+   ;:last-yield                  {:Header "Yield"          :accessor "last-yield"                  :width 75 :style {:textAlign "right"} :Cell yield-format}
+   ;:last-spread                 {:Header "Spread"         :accessor "last-spread"                 :width 75 :style {:textAlign "right"} :Cell zspread-format}
+   ;:d-relval                    {:Header "Relval"         :accessor "d-relval"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
+   ;:d-target                    {:Header "Price"          :accessor "d-target"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
+   ;:d-review                    {:Header "Review"         :accessor "d-review"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
+   ;:max-d-others                {:Header "Others"         :accessor "max-d-others"                :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
+   ;:ytd-return                  {:Header "Raw"            :accessor "ytd-return"                  :width 75 :style {:textAlign "right"} :Cell round1pcytd} ;:getProps fp4
+   ;:ytd-return-vs-cembi         {:Header "vs CEMBI"       :accessor "ytd-return-vs-cembi"         :width 75 :style {:textAlign "right"} :Cell round1pcytd} ;:getProps fp4
+   ;:ytd-return-vs-cembi-rating  {:Header "vs IGHY"        :accessor "ytd-return-vs-cembi-rating"  :width 75 :style {:textAlign "right"} :Cell round1pcytd}
+   ;:ytd-return-vs-cembi-country {:Header "vs country"     :accessor "ytd-return-vs-cembi-country" :width 75 :style {:textAlign "right"} :Cell round1pcytd}
+   ;:ytd-return-vs-cembi-sector  {:Header "vs sector"      :accessor "ytd-return-vs-cembi-sector"  :width 75 :style {:textAlign "right"} :Cell round1pcytd}
+   ;:ltd-return                  {:Header "Raw"            :accessor "ltd-return"                  :width 75 :style {:textAlign "right"} :Cell round1pc} ;:getProps fp4
+   ;:ltd-return-vs-cembi         {:Header "vs CEMBI"       :accessor "ltd-return-vs-cembi"         :width 75 :style {:textAlign "right"} :Cell round1pc} ;:getProps fp4
+   ;:ltd-return-vs-cembi-rating  {:Header "vs IGHY"        :accessor "ltd-return-vs-cembi-rating"  :width 75 :style {:textAlign "right"} :Cell round1pc}
+   ;:ltd-return-vs-cembi-country {:Header "vs country"     :accessor "ltd-return-vs-cembi-country" :width 75 :style {:textAlign "right"} :Cell round1pc}
+   ;:ltd-return-vs-cembi-sector  {:Header "vs sector"      :accessor "ltd-return-vs-cembi-sector"  :width 75 :style {:textAlign "right"} :Cell round1pc}
+   ;:price-target                {:Header "Target"         :accessor "price-target"                :width 60 :style {:textAlign "right"} :Cell last-price-props}
+   ;:relval-target-description   {:Header "Description"    :accessor "relval-target-description"   :width 200} ;:getProps fp4 ; :headerClassName "wordwrap"
+   ;:relval-target-latest        {:Header "Latest"         :accessor "relval-target-latest"        :width 60 :style {:textAlign "right"} :Cell round2} ;:getProps fp4 ; :headerClassName "wordwrap"
+   ;
+
+   :nav                         {:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
+   :nominal                     {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell}
+   :z-spread                    {:Header "Z-spread" :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell}
+   :g-spread                    {:Header "G-spread" :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell}
+   :duration                    {:Header "M dur" :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2}
+   :yield                       {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc}
+
    })
 
 
-(defn sum-rows [vals] (reduce + vals))
+;(defn sum-rows [vals] (reduce + vals))
 
 (defn first-level-sort [x]
   (case x
@@ -192,6 +215,8 @@
                       :original-quantity (reduce + (map :original-quantity (grp true)))}]
       (grp false))))
 
+(def dropdown-width "150px")
+
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])
         portfolio @(rf/subscribe [:single-portfolio-risk-portfolio])
@@ -204,13 +229,12 @@
         grouping-columns (into [] (for [r (remove nil? [risk-choice-1 risk-choice-2 risk-choice-3 :name])] (table-columns r)))
         accessors (mapv :accessor grouping-columns)
         accessors-k (mapv keyword accessors)
-        display (add-total-line (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) (if is-tree portfolio-positions (group-cash-line portfolio-positions))))]
+        display (add-total-line (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) portfolio-positions))] ;(if is-tree portfolio-positions (group-cash-line portfolio-positions))
         [:> ReactTable
                             {:data           display
                             :columns        [{:Header "Groups" :columns grouping-columns}
                                              {:Header  "Position"
-                                              :columns [{:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
-                                                        {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell}]}
+                                              :columns (mapv table-columns [:nav :nominal :yield :z-spread :g-spread :duration])}
                                              {:Header  "Description"
                                               :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
                             :showPagination false
@@ -241,6 +265,7 @@
 
     [:> ReactTable
      {:data           display
+      :defaultFilterMethod case-insensitive-filter
       :columns        [{:Header "Groups" :columns grouping-columns}
                        {:Header  (str "Portfolio " (name display-key))
                         :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)] {:Header p :accessor p :width 100 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}))}
@@ -264,7 +289,6 @@
         risk-choice-1 (r/cursor risk-filter [1])
         risk-choice-2 (r/cursor risk-filter [2])
         risk-choice-3 (r/cursor risk-filter [3])
-        dropdown-width "150px"
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
@@ -290,24 +314,25 @@
         display-style (rf/subscribe [:multiple-portfolio-risk-display-style])
         risk-filter (rf/subscribe [:multiple-portfolio-risk-filter])
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk-selected-portfolios])
-        risk-choice-1 (r/cursor risk-filter [1])
-        risk-choice-2 (r/cursor risk-filter [2])
-        risk-choice-3 (r/cursor risk-filter [3])
-        dropdown-width "150px"
+        number-of-fields (rf/subscribe [:multiple-portfolio-field-number])
+        field-one (rf/subscribe [:multiple-portfolio-field-one])
+        field-two (rf/subscribe [:multiple-portfolio-field-two])
+        ;risk-choice-1 (r/cursor risk-filter [1])
+        ;risk-choice-2 (r/cursor risk-filter [2])
+        ;risk-choice-3 (r/cursor risk-filter [3])
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label "Portfolio drill-down" :level :level1]
                  [h-box :gap "10px"
-                  :children [
-                             [title :label "Display type:" :level :level3]
-                             [single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]
-                             [gap :size "50px"]
-                             [title :label "Filtering:" :level :level3]
-                             [selection-list :width dropdown-width :max-height "100px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk-selected-portfolios %])]
-                             [single-dropdown :width dropdown-width :model risk-choice-1 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 1 %])]
-                             [single-dropdown :width dropdown-width :model risk-choice-2 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 2 %])]
-                             [single-dropdown :width dropdown-width :model risk-choice-3 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 3 %])]]]
+                  :children (concat [
+                                     [v-box :gap "10px" :children [[title :label "Display type:" :level :level3] [title :label "Fields:" :level :level3]]]
+                                     [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]]
+                                                                   [single-dropdown :width dropdown-width :model number-of-fields :choices [{:id "One" :label "One"} {:id "Two" :label "Two"}] :on-change #(rf/dispatch [:multiple-portfolio-field-number %])]]]
+                                     [gap :size "50px"]
+                                     [title :label "Filtering:" :level :level3]
+                                     [selection-list :width dropdown-width :max-height "100px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk-selected-portfolios %])]]
+                                    (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter i %])])))]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
                  [multiple-portfolio-risk-display]]]])
   )
