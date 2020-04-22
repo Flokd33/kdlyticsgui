@@ -23,7 +23,7 @@
                  :single-portfolio-risk-filter {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-risk-display-style "Table"
                  :multiple-portfolio-field-number "One"
-                 :multiple-portfolio-field-one :weight
+                 :multiple-portfolio-field-one :nav
                  :multiple-portfolio-field-two "None"
                  :multiple-portfolio-risk-selected-portfolios (set nil) ;["OGEMCORD"]
                  :multiple-portfolio-risk-filter {1 :region 2 :country 3 :issuer}
@@ -58,8 +58,8 @@
 (rf/reg-event-db
   :positions
   (fn [db [_ positions]]
-    (let [instruments (distinct (map :description positions))
-          grp (group-by (juxt :description :portfolio) positions)
+    (let [instruments (distinct (map :id positions))
+          grp (group-by (juxt :id :portfolio) positions)
           portfolios (distinct (map :portfolio positions))
           keys [:weight :original-quantity :base-value :contrib-mdur :contrib-zspread :contrib-yield :contrib-gspread]
           ]

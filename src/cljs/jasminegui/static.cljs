@@ -27,9 +27,9 @@
 
 (def field-choices
   [{:id "None" :label "None"}
-   {:id :weight :label "NAV"}
-   {:id :base-value :label "Value"}
-   {:id :original-quantity :label "Nominal"}
+   {:id :nav :label "NAV"}
+   {:id :value :label "Value"}
+   {:id :nominal :label "Nominal"}
    {:id :contrib-yield :label "Yield contribution"}
    {:id :contrib-zspread :label "Z-spread contribution"}
    {:id :contrib-gspread :label "G-spread contribution"}

@@ -185,7 +185,7 @@
    :yield                       {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc}
    :value             {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell}
    :contrib-gspread                         {:Header "G-spread" :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
-   :contrib-zpread                         {:Header "Z-spread" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1}
+   :contrib-zspread                         {:Header "Z-spread" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1}
    :contrib-yield                         {:Header "Yield" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc}
    :contrib-mdur                         {:Header "M dur" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
 
@@ -216,6 +216,20 @@
          :contrib-mdur (reduce + (map :contrib-mdur table))
          }))
 
+(defn add-total-line-to-pivot [pivoted-table portfolios]
+  (let [total-line (merge
+                     {:Region      "Total"
+                      :JPM_SECTOR  "Total"
+                      :Country     "Total"
+                      :TICKER      "Total"
+                      :NAME        "Total"
+                      :description "Total"
+                      }
+                     (into {} (for [p portfolios] [(keyword p) (reduce + (map (keyword p) pivoted-table))]))
+                     )]
+    ;    (println total-line)
+    (conj pivoted-table total-line)))
+
 (defn group-cash-line [table]
   (let [grp (group-by #(= (:Region %) "Cash") table)]
     (concat [        {:Region      "Cash"
@@ -243,11 +257,11 @@
         accessors (mapv :accessor grouping-columns)
         accessors-k (mapv keyword accessors)
         display (add-total-line (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) portfolio-positions))] ;(if is-tree portfolio-positions (group-cash-line portfolio-positions))
-        [:> ReactTable
+    [:> ReactTable
          {:data           display
           :columns        [{:Header "Groups" :columns grouping-columns}
                            {:Header "Position" :columns (mapv table-columns [:nav :value :nominal])}
-                           {:Header "Contribution" :columns (mapv table-columns [:contrib-yield :contrib-zpread :contrib-mdur])}
+                           {:Header "Contribution" :columns (mapv table-columns [:contrib-yield :contrib-zspread :contrib-mdur])}
                            {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv table-columns [:yield :z-spread :g-spread :duration])}
                            {:Header "Description" :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
           :showPagination false
@@ -255,7 +269,9 @@
           :filterable     (not is-tree)
           :pageSize       (if is-tree (inc (count (distinct (map (first accessors-k) portfolio-positions)))) (inc (count display)))
           :className      "-striped -highlight"
-          :pivotBy        (if is-tree accessors [])}]))
+          :pivotBy        (if is-tree accessors [])}]
+
+        ))
 
 
 (defn multiple-portfolio-risk-display []
@@ -263,9 +279,12 @@
         pivoted-positions @(rf/subscribe [:pivoted-positions])
         selected-portfolios @(rf/subscribe [:multiple-portfolio-risk-selected-portfolios])
         portfolios  @(rf/subscribe [:portfolios])
+        number-of-fields @(rf/subscribe [:multiple-portfolio-field-number])
         display-key-one @(rf/subscribe [:multiple-portfolio-field-one])
-        cell-one (:Cell (first (filter #(= (:accessor %) display-key-one) table-columns)))
-        width-one (:width (first (filter #(= (:accessor %) display-key-one) table-columns)))
+        cell-one (get-in table-columns [display-key-one :Cell])
+        display-key-two @(rf/subscribe [:multiple-portfolio-field-two])
+        cell-two (get-in table-columns [display-key-two :Cell])
+        width-one 100                                      ;(get-in table-columns [display-key-one :width])
         is-tree (= @(rf/subscribe [:single-portfolio-risk-display-style]) "Tree")
         risk-filter @(rf/subscribe [:single-portfolio-risk-filter])
         risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
@@ -274,22 +293,43 @@
         grouping-columns (into [] (for [r (remove nil? [risk-choice-1 risk-choice-2 risk-choice-3 :name])] (table-columns r)))
         accessors (mapv :accessor grouping-columns)
         accessors-k (mapv keyword accessors)
-        display (sort-by
-                  (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) (map #(merge % (display-key-one %)) pivoted-positions))
-]
-(println display-key-one width-one cell-one)
+        pivoted-data (map #(merge % ((keyword (get-in table-columns [display-key-one :accessor])) %)) pivoted-positions)
+        display-one (add-total-line-to-pivot (sort-by
+                      (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k)))
+                      pivoted-data) portfolios)
+        ;display-two (if (not= display-key-two "None") (sort-by
+        ;                                                (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) (map #(merge % ((keyword (get-in table-columns [display-key-two :accessor])) %)) pivoted-positions)))
+        ]
     [:> ReactTable
-     {:data                display
+     {:data                display-one
       :defaultFilterMethod case-insensitive-filter
-      :columns             [{:Header "Groups" :columns grouping-columns}
-                            {:Header  (str "Portfolio " (name display-key-one))
-                             :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)] {:Header p :accessor p :width (+ 20 width-one) :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}))}
-                            {:Header  "Description"
-                             :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
+      :columns             (if (= number-of-fields "One")
+
+                             [{:Header "Groups" :columns grouping-columns}
+                              {:Header  (str "Portfolio " (name display-key-one))
+                               :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}))}
+                              {:Header  "Description"
+                               :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
+
+                             ;[{:Header "Groups" :columns grouping-columns}
+                             ; {:Header  (str "Portfolio " (name display-key-one) " and " (name display-key-two))
+                             ;  :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)]
+                             ;                      {:Header p
+                             ;                       :columns [
+                             ;                                 {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}
+                             ;                                 {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}
+                             ;                                 ]
+                             ;
+                             ;                       :width (+ 20 width-one) :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}))}
+                             ; {:Header  "Description"
+                             ;  :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
+
+
+                             )
       :showPagination      false
       :sortable            (not is-tree)
       :filterable          (not is-tree)
-      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display)))) (inc (count display)))
+      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display-one)))) (inc (count display-one)))
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])}]
 
@@ -301,9 +341,6 @@
         display-style (rf/subscribe [:single-portfolio-risk-display-style])
         portfolio (rf/subscribe [:single-portfolio-risk-portfolio])
         risk-filter (rf/subscribe [:single-portfolio-risk-filter])
-        risk-choice-1 (r/cursor risk-filter [1])
-        risk-choice-2 (r/cursor risk-filter [2])
-        risk-choice-3 (r/cursor risk-filter [3])
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
