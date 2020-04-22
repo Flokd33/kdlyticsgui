@@ -14,6 +14,7 @@
     [goog.string :as gstring]
     [goog.string.format]
     [jasminegui.mount :as mount]
+    [jasminegui.static :as static]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]])
   (:import (goog.i18n NumberFormat)
@@ -49,6 +50,7 @@
 (defn txt-format [fmt this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt x) "-")))
 (def round3         (partial txt-format "%.3f"))
 (def round2         (partial txt-format "%.2f"))
+(def round1         (partial txt-format "%.1f"))
 (def yield-format   (partial txt-format "%.2f%"))
 (def zspread-format (partial txt-format "%.0fbps"))
 
@@ -181,6 +183,11 @@
    :g-spread                    {:Header "G-spread" :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell}
    :duration                    {:Header "M dur" :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2}
    :yield                       {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc}
+   :value             {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell}
+   :contrib-gspread                         {:Header "G-spread" :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
+   :contrib-zpread                         {:Header "Z-spread" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1}
+   :contrib-yield                         {:Header "Yield" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc}
+   :contrib-mdur                         {:Header "M dur" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
 
    })
 
@@ -201,7 +208,13 @@
          :NAME        "Total"
          :description "Total"
          :weight      (reduce + (map :weight table))
-         :original-quantity (reduce + (map :original-quantity table))}))
+         :original-quantity (reduce + (map :original-quantity table))
+         :base-value (reduce + (map :base-value table))
+         :contrib-zspread (reduce + (map :contrib-zspread table))
+         :contrib-gspread (reduce + (map :contrib-gspread table))
+         :contrib-yield (reduce + (map :contrib-yield table))
+         :contrib-mdur (reduce + (map :contrib-mdur table))
+         }))
 
 (defn group-cash-line [table]
   (let [grp (group-by #(= (:Region %) "Cash") table)]
@@ -231,18 +244,18 @@
         accessors-k (mapv keyword accessors)
         display (add-total-line (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) portfolio-positions))] ;(if is-tree portfolio-positions (group-cash-line portfolio-positions))
         [:> ReactTable
-                            {:data           display
-                            :columns        [{:Header "Groups" :columns grouping-columns}
-                                             {:Header  "Position"
-                                              :columns (mapv table-columns [:nav :nominal :yield :z-spread :g-spread :duration])}
-                                             {:Header  "Description"
-                                              :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
-                            :showPagination false
-                            :sortable       (not is-tree)
-                             :filterable     (not is-tree)
-                             :pageSize       (if is-tree (inc (count (distinct (map (first accessors-k) portfolio-positions)))) (inc (count display)))
-                            :className      "-striped -highlight"
-                            :pivotBy        (if is-tree accessors[])}]))
+         {:data           display
+          :columns        [{:Header "Groups" :columns grouping-columns}
+                           {:Header "Position" :columns (mapv table-columns [:nav :value :nominal])}
+                           {:Header "Contribution" :columns (mapv table-columns [:contrib-yield :contrib-zpread :contrib-mdur])}
+                           {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv table-columns [:yield :z-spread :g-spread :duration])}
+                           {:Header "Description" :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
+          :showPagination false
+          :sortable       (not is-tree)
+          :filterable     (not is-tree)
+          :pageSize       (if is-tree (inc (count (distinct (map (first accessors-k) portfolio-positions)))) (inc (count display)))
+          :className      "-striped -highlight"
+          :pivotBy        (if is-tree accessors [])}]))
 
 
 (defn multiple-portfolio-risk-display []
@@ -250,7 +263,9 @@
         pivoted-positions @(rf/subscribe [:pivoted-positions])
         selected-portfolios @(rf/subscribe [:multiple-portfolio-risk-selected-portfolios])
         portfolios  @(rf/subscribe [:portfolios])
-        display-key :weight
+        display-key-one @(rf/subscribe [:multiple-portfolio-field-one])
+        cell-one (:Cell (first (filter #(= (:accessor %) display-key-one) table-columns)))
+        width-one (:width (first (filter #(= (:accessor %) display-key-one) table-columns)))
         is-tree (= @(rf/subscribe [:single-portfolio-risk-display-style]) "Tree")
         risk-filter @(rf/subscribe [:single-portfolio-risk-filter])
         risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
@@ -260,23 +275,23 @@
         accessors (mapv :accessor grouping-columns)
         accessors-k (mapv keyword accessors)
         display (sort-by
-                  (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) (map #(merge % (display-key %)) pivoted-positions))
+                  (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) (map #(merge % (display-key-one %)) pivoted-positions))
 ]
-
+(println display-key-one width-one cell-one)
     [:> ReactTable
-     {:data           display
+     {:data                display
       :defaultFilterMethod case-insensitive-filter
-      :columns        [{:Header "Groups" :columns grouping-columns}
-                       {:Header  (str "Portfolio " (name display-key))
-                        :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)] {:Header p :accessor p :width 100 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}))}
-                       {:Header  "Description"
-                        :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
-      :showPagination false
-      :sortable       (not is-tree)
-      :filterable     (not is-tree)
-      :pageSize       (if is-tree (inc (count (distinct (map (first accessors-k) display)))) (inc (count display)))
-      :className      "-striped -highlight"
-      :pivotBy        (if is-tree accessors [])}]
+      :columns             [{:Header "Groups" :columns grouping-columns}
+                            {:Header  (str "Portfolio " (name display-key-one))
+                             :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)] {:Header p :accessor p :width (+ 20 width-one) :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}))}
+                            {:Header  "Description"
+                             :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
+      :showPagination      false
+      :sortable            (not is-tree)
+      :filterable          (not is-tree)
+      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display)))) (inc (count display)))
+      :className           "-striped -highlight"
+      :pivotBy             (if is-tree accessors [])}]
 
     ))
 
@@ -294,15 +309,14 @@
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label "Portfolio drill-down" :level :level1]
                  [h-box :gap "10px"
-                  :children [
-                             [title :label "Display type:" :level :level3]
-                             [single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]
-                             [gap :size "50px"]
-                             [title :label "Filtering:" :level :level3]
-                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk-portfolio %])]
-                             [single-dropdown :width dropdown-width :model risk-choice-1 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 1 %])]
-                             [single-dropdown :width dropdown-width :model risk-choice-2 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 2 %])]
-                             [single-dropdown :width dropdown-width :model risk-choice-3 :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter 3 %])]]]
+                  :children [(concat [
+                                      [title :label "Display type:" :level :level3]
+                                      [single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]
+                                      [gap :size "50px"]
+                                      [title :label "Filtering:" :level :level3]
+                                      [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk-portfolio %])]]
+                                     (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter i %])])))
+                             ]]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
                  [single-portfolio-risk-display]]]])
   )
@@ -317,22 +331,22 @@
         number-of-fields (rf/subscribe [:multiple-portfolio-field-number])
         field-one (rf/subscribe [:multiple-portfolio-field-one])
         field-two (rf/subscribe [:multiple-portfolio-field-two])
-        ;risk-choice-1 (r/cursor risk-filter [1])
-        ;risk-choice-2 (r/cursor risk-filter [2])
-        ;risk-choice-3 (r/cursor risk-filter [3])
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label "Portfolio drill-down" :level :level1]
                  [h-box :gap "10px"
                   :children (concat [
-                                     [v-box :gap "10px" :children [[title :label "Display type:" :level :level3] [title :label "Fields:" :level :level3]]]
-                                     [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]]
-                                                                   [single-dropdown :width dropdown-width :model number-of-fields :choices [{:id "One" :label "One"} {:id "Two" :label "Two"}] :on-change #(rf/dispatch [:multiple-portfolio-field-number %])]]]
+                                     [v-box :gap "15px" :children [[title :label "Display type:" :level :level3] [title :label "Fields:" :level :level3] [title :label "Field one:" :level :level3] [title :label "Field two:" :level :level3]]]
+                                     [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]
+                                                                   [single-dropdown :width dropdown-width :model number-of-fields :choices [{:id "One" :label "One"} {:id "Two" :label "Two"}] :on-change #(rf/dispatch [:multiple-portfolio-field-number %])]
+                                                                   [single-dropdown :width dropdown-width :model field-one :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-field-one %])]
+                                                                   [single-dropdown :width dropdown-width :model field-two :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-field-two %])]
+                                                                   ]]
                                      [gap :size "50px"]
                                      [title :label "Filtering:" :level :level3]
-                                     [selection-list :width dropdown-width :max-height "100px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk-selected-portfolios %])]]
-                                    (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices mount/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter i %])])))]
+                                     [selection-list :width dropdown-width :height "250px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk-selected-portfolios %])]]
+                                    (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter i %])])))]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
                  [multiple-portfolio-risk-display]]]])
   )

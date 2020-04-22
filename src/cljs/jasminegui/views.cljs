@@ -9,6 +9,7 @@
     [re-com.util :refer [px]]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.mount :as mount]
+    [jasminegui.static :as static]
     [jasminegui.home :as home]))
 
 (defn nav-bar []
@@ -19,7 +20,7 @@
                 [h-box
                  :class "navbar"
                  :align :stretch
-                 :children [(for [item mount/main-navigation]
+                 :children [(for [item static/main-navigation]
                               ^{:key (:code item)}
                               [box
                                :width (if (= (:code item) :home) "250px" "150px")

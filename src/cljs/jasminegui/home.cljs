@@ -12,6 +12,7 @@
     [goog.string :as gstring]
     [goog.string.format]
     [jasminegui.mount :as mount]
+    [jasminegui.static :as static]
     [jasminegui.riskviews :as riskviews])
   )
 
@@ -26,7 +27,7 @@
                  :gap "20px"
                  :class "leftnavbar"
                  :children (into []
-                                 (for [item mount/home-navigation]
+                                 (for [item static/home-navigation]
                                    [button
                                     :class (str "btn btn-primary btn-block" (if (and (= active-home (:code item))) " active"))
                                     ;:style {:font-size "12px"}

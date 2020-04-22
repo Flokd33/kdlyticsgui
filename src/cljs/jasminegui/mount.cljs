@@ -1,6 +1,7 @@
 (ns jasminegui.mount
   (:require
     [reagent.core :as r]
+    [jasminegui.static :as static]
     [re-frame.core :as rf]
     [cljs-http.client :as http]
     [cljs.core.async :refer [<!]])
@@ -10,28 +11,6 @@
 
 
 
-(def main-navigation
-  [{:code :home   :name "Home"            :dispatch :home   :subs nil}
-   {:code :trade-history  :name "Trade history"      :dispatch :trade-drilldown  :subs [{:code :description :name "Description"} {:code :history :name "History"}]}
-   {:code :administration   :name "Administration"  :dispatch :administration   :subs nil}
-   ])
-
-
-(def home-navigation
-  [{:code :summary               :name "Overview"}
-   {:code :single-portfolio                :name "Single portfolio"}
-   {:code :all-portfolios            :name "Multiple portfolios"}
-   ]
-  )
-
-
-
-(def risk-choice-map [{:id "None" :label "None"}
-                      {:id :region :label "Region"}
-                      {:id :country :label "Country"}
-                      {:id :issuer :label "Issuer"}
-                      {:id :rating :label "Rating"}
-                      {:id :sector :label "Sector"}])
 
 
 (def default-db {:positions []
@@ -82,7 +61,7 @@
     (let [instruments (distinct (map :description positions))
           grp (group-by (juxt :description :portfolio) positions)
           portfolios (distinct (map :portfolio positions))
-          keys [:weight :original-quantity]
+          keys [:weight :original-quantity :base-value :contrib-mdur :contrib-zspread :contrib-yield :contrib-gspread]
           ]
       ;      (println instruments)
       (assoc db :positions positions
