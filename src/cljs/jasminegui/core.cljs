@@ -18,6 +18,9 @@
   (rf/dispatch-sync [::mount/initialize-db])
   (mount-root))
 
-(rf/dispatch [:get-positions])
 (rf/dispatch [:get-portfolios])
+(rf/dispatch [:get-positions])
+(rf/dispatch [:get-pivoted-positions])
+(rf/dispatch [:get-total-positions])
+(rf/dispatch [:get-rating-to-score])
 

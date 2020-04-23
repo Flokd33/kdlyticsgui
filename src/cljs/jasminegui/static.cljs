@@ -21,7 +21,8 @@
                       {:id :region :label "Region"}
                       {:id :country :label "Country"}
                       {:id :issuer :label "Issuer"}
-                      {:id :rating :label "Rating"}
+                      ;{:id :rating :label "Rating"}
+                      {:id :rating-score :label "Rating"}
                       {:id :sector :label "Sector"}])
 
 

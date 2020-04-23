@@ -54,6 +54,8 @@
 (def yield-format   (partial txt-format "%.2f%"))
 (def zspread-format (partial txt-format "%.0fbps"))
 
+(defn rating-sort [a b]
+  (let [t @(rf/subscribe [:rating-to-score])] (<= (t (keyword a)) (t (keyword b)))))
 
 (defn sum-rows [vals] (reduce + vals))
 
@@ -131,6 +133,8 @@
 ;    (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))))
 ;
 
+(defn rating-score-to-string [this] (aget this "row" "qt-iam-int-lt-median-rating"))
+
 
 (def table-columns
   {:id                          {:Header "ID"             :accessor "id"                          :show false}
@@ -139,55 +143,23 @@
    :country                     {:Header "Country" :accessor "Country" :width 140}
    :issuer                      {:Header "Issuer" :accessor "TICKER" :width 140 }
    :sector                      {:Header "Sector" :accessor "JPM_SECTOR" :width 140}
+   :rating                      {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}  ; :show false
+  ;  :rating                      {:Header "Rating" :accessor "qt-iam-int-lt-median-rating"  :show false} :sortMethod rating-sort} ; :show false
+   :rating-score                {:Header "Rating score" :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}
    :name                        {:Header "Name" :accessor "NAME" :width 140} ;  :filterMethod case-insensitive-filter
-   ;:strategy-shortcut           {:Header "Strategy"       :accessor "strategy-shortcut"           :width 110 :style {:textAlign "center"} :filterMethod case-insensitive-filter :Cell strategy-pop-up}
-   ;:strategy                    {:Header "strategy-full"  :accessor "strategy"                    :show false};we need to have it in the table for the props
-   ;:entry-date                  {:Header "Entry date"     :accessor "entry-date"                  :width 90 :style {:textAlign "center"} :Cell format-date-from-int-rt}
-   ;:exit-date                   {:Header "Exit date"      :accessor "exit-date"                   :width 90 :style {:textAlign "center"} :Cell exit-date-props :filterMethod exit-date-filter}
-   ;:analyst                     {:Header "Analyst"        :accessor "analyst"                     :width 65 :style {:textAlign "center"} :filterMethod case-insensitive-filter}
-   ;:NAME                        {:Header "Name"           :accessor "NAME"                        :width 165 :style {:textAlign "center"} :filterMethod case-insensitive-filter}
-   ;:portfolio                   {:Header "Portfolio"      :accessor "portfolio"                   :width 165 :style {:textAlign "center"} :filterMethod case-insensitive-filter}
-   :ISIN                        {:Header "ISIN"           :accessor "ISIN"                        :width 125 :style {:textAlign "center"}}
-   :status                      {:Header "Status"         :accessor "status"                      :show false} ;we need to have it in the table for the props
-   :status-show                 {:Header "Status"         :accessor "status"                      :width 75 :style {:textAlign "center"}} ;we need to have it in the table for the props
-   :thisyear                    {:Header "thisyear"       :accessor "thisyear"                    :show false} ;we need to have it in the table for the props
-   :position                    {:Header "Model"          :accessor "position"                    :width 60 :style {:textAlign "right"} :Cell round2pc}
-
-   ;:live-position               {:Header "Actual"         :accessor "live-position"               :width 60 :style {:textAlign "right"} :Cell round2pc}
-   ;:entry-price                 {:Header "Entry"          :accessor "entry-price"                 :width 75 :style {:textAlign "right"} :Cell round2}
-   ;:last-price                  {:Header "Last"           :accessor "last-price"                  :width 75 :style {:textAlign "right"} :Cell last-price-props}
-   ;:last-yield                  {:Header "Yield"          :accessor "last-yield"                  :width 75 :style {:textAlign "right"} :Cell yield-format}
-   ;:last-spread                 {:Header "Spread"         :accessor "last-spread"                 :width 75 :style {:textAlign "right"} :Cell zspread-format}
-   ;:d-relval                    {:Header "Relval"         :accessor "d-relval"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
-   ;:d-target                    {:Header "Price"          :accessor "d-target"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
-   ;:d-review                    {:Header "Review"         :accessor "d-review"                    :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
-   ;:max-d-others                {:Header "Others"         :accessor "max-d-others"                :width 60 :style {:textAlign "right"} :Cell round0pc-trigger}
-   ;:ytd-return                  {:Header "Raw"            :accessor "ytd-return"                  :width 75 :style {:textAlign "right"} :Cell round1pcytd} ;:getProps fp4
-   ;:ytd-return-vs-cembi         {:Header "vs CEMBI"       :accessor "ytd-return-vs-cembi"         :width 75 :style {:textAlign "right"} :Cell round1pcytd} ;:getProps fp4
-   ;:ytd-return-vs-cembi-rating  {:Header "vs IGHY"        :accessor "ytd-return-vs-cembi-rating"  :width 75 :style {:textAlign "right"} :Cell round1pcytd}
-   ;:ytd-return-vs-cembi-country {:Header "vs country"     :accessor "ytd-return-vs-cembi-country" :width 75 :style {:textAlign "right"} :Cell round1pcytd}
-   ;:ytd-return-vs-cembi-sector  {:Header "vs sector"      :accessor "ytd-return-vs-cembi-sector"  :width 75 :style {:textAlign "right"} :Cell round1pcytd}
-   ;:ltd-return                  {:Header "Raw"            :accessor "ltd-return"                  :width 75 :style {:textAlign "right"} :Cell round1pc} ;:getProps fp4
-   ;:ltd-return-vs-cembi         {:Header "vs CEMBI"       :accessor "ltd-return-vs-cembi"         :width 75 :style {:textAlign "right"} :Cell round1pc} ;:getProps fp4
-   ;:ltd-return-vs-cembi-rating  {:Header "vs IGHY"        :accessor "ltd-return-vs-cembi-rating"  :width 75 :style {:textAlign "right"} :Cell round1pc}
-   ;:ltd-return-vs-cembi-country {:Header "vs country"     :accessor "ltd-return-vs-cembi-country" :width 75 :style {:textAlign "right"} :Cell round1pc}
-   ;:ltd-return-vs-cembi-sector  {:Header "vs sector"      :accessor "ltd-return-vs-cembi-sector"  :width 75 :style {:textAlign "right"} :Cell round1pc}
-   ;:price-target                {:Header "Target"         :accessor "price-target"                :width 60 :style {:textAlign "right"} :Cell last-price-props}
-   ;:relval-target-description   {:Header "Description"    :accessor "relval-target-description"   :width 200} ;:getProps fp4 ; :headerClassName "wordwrap"
-   ;:relval-target-latest        {:Header "Latest"         :accessor "relval-target-latest"        :width 60 :style {:textAlign "right"} :Cell round2} ;:getProps fp4 ; :headerClassName "wordwrap"
-   ;
-
-   :nav                         {:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
-   :nominal                     {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell}
-   :z-spread                    {:Header "Z-spread" :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell}
-   :g-spread                    {:Header "G-spread" :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell}
-   :duration                    {:Header "M dur" :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2}
-   :yield                       {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc}
-   :value             {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell}
-   :contrib-gspread                         {:Header "G-spread" :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
-   :contrib-zspread                         {:Header "Z-spread" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1}
-   :contrib-yield                         {:Header "Yield" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc}
-   :contrib-mdur                         {:Header "M dur" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2}
+   :isin                        {:Header "ISIN"           :accessor "isin"                        :width 125 } ;:style {:textAlign "center"}
+   :description                 {:Header "thinkFolio ID" :accessor "description" :width 500}
+   :nav                         {:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :nominal                     {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable false}
+   :z-spread                    {:Header "Z-spread" :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable false}
+   :g-spread                    {:Header "G-spread" :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable false}
+   :duration                    {:Header "M dur" :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
+   :yield                       {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable false}
+   :value                       {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable false}
+   :contrib-gspread             {:Header "G-spread" :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :contrib-zspread                         {:Header "Z-spread" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
+   :contrib-yield                         {:Header "Yield" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+   :contrib-mdur                         {:Header "M dur" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
 
    })
 
@@ -199,22 +171,22 @@
     "Cash" "AAA"
     x))
 
-(defn add-total-line [table]
-  (conj table
-        {:Region      "Total"
-         :JPM_SECTOR  "Total"
-         :Country     "Total"
-         :TICKER      "Total"
-         :NAME        "Total"
-         :description "Total"
-         :weight      (reduce + (map :weight table))
-         :original-quantity (reduce + (map :original-quantity table))
-         :base-value (reduce + (map :base-value table))
-         :contrib-zspread (reduce + (map :contrib-zspread table))
-         :contrib-gspread (reduce + (map :contrib-gspread table))
-         :contrib-yield (reduce + (map :contrib-yield table))
-         :contrib-mdur (reduce + (map :contrib-mdur table))
-         }))
+;(defn add-total-line [table]
+;  (conj table
+;        {:Region      "Total"
+;         :JPM_SECTOR  "Total"
+;         :Country     "Total"
+;         :TICKER      "Total"
+;         :NAME        "Total"
+;         :description "Total"
+;         :weight      (reduce + (map :weight table))
+;         :original-quantity (reduce + (map :original-quantity table))
+;         :base-value (reduce + (map :base-value table))
+;         :contrib-zspread (reduce + (map :contrib-zspread table))
+;         :contrib-gspread (reduce + (map :contrib-gspread table))
+;         :contrib-yield (reduce + (map :contrib-yield table))
+;         :contrib-mdur (reduce + (map :contrib-mdur table))
+;         }))
 
 (defn add-total-line-to-pivot [pivoted-table portfolios]
   (let [total-line (merge
@@ -230,40 +202,43 @@
     ;    (println total-line)
     (conj pivoted-table total-line)))
 
-(defn group-cash-line [table]
-  (let [grp (group-by #(= (:Region %) "Cash") table)]
-    (concat [        {:Region      "Cash"
-                      :JPM_SECTOR  "Cash"
-                      :Country     "Cash"
-                      :TICKER      "Cash"
-                      :NAME        "Cash"
-                      :description "Cash"
-                      :weight      (reduce + (map :weight (grp true)))
-                      :original-quantity (reduce + (map :original-quantity (grp true)))}]
-      (grp false))))
+;(defn group-cash-line [table]
+;  (let [grp (group-by #(= (:Region %) "Cash") table)]
+;    (concat [        {:Region      "Cash"
+;                      :JPM_SECTOR  "Cash"
+;                      :Country     "Cash"
+;                      :TICKER      "Cash"
+;                      :NAME        "Cash"
+;                      :description "Cash"
+;                      :weight      (reduce + (map :weight (grp true)))
+;                      :original-quantity (reduce + (map :original-quantity (grp true)))}]
+;      (grp false))))
 
 (def dropdown-width "150px")
 
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])
-        portfolio @(rf/subscribe [:single-portfolio-risk-portfolio])
-        is-tree (= @(rf/subscribe [:single-portfolio-risk-display-style]) "Tree")
+        portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])
+        portfolio-total-line (@(rf/subscribe [:total-positions]) (keyword portfolio))
+        is-tree (= @(rf/subscribe [:single-portfolio-risk/display-style]) "Tree")
         portfolio-positions (filter #(= (:portfolio %) portfolio) positions)
-        risk-filter @(rf/subscribe [:single-portfolio-risk-filter])
+        risk-filter @(rf/subscribe [:single-portfolio-risk/filter])
         risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
         risk-choice-2 (if (not= "None" (risk-filter 2)) (risk-filter 2))
         risk-choice-3 (if (not= "None" (risk-filter 3)) (risk-filter 3))
         grouping-columns (into [] (for [r (remove nil? [risk-choice-1 risk-choice-2 risk-choice-3 :name])] (table-columns r)))
         accessors (mapv :accessor grouping-columns)
         accessors-k (mapv keyword accessors)
-        display (add-total-line (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) portfolio-positions))] ;(if is-tree portfolio-positions (group-cash-line portfolio-positions))
+        display (conj (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) portfolio-positions) portfolio-total-line)
+        ]
     [:> ReactTable
          {:data           display
+          :defaultFilterMethod case-insensitive-filter
           :columns        [{:Header "Groups" :columns grouping-columns}
                            {:Header "Position" :columns (mapv table-columns [:nav :value :nominal])}
                            {:Header "Contribution" :columns (mapv table-columns [:contrib-yield :contrib-zspread :contrib-mdur])}
                            {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv table-columns [:yield :z-spread :g-spread :duration])}
-                           {:Header "Description" :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
+                           {:Header "Description" :columns (mapv table-columns [:rating :isin :description])}]
           :showPagination false
           :sortable       (not is-tree)
           :filterable     (not is-tree)
@@ -277,16 +252,16 @@
 (defn multiple-portfolio-risk-display []
   (let [
         pivoted-positions @(rf/subscribe [:pivoted-positions])
-        selected-portfolios @(rf/subscribe [:multiple-portfolio-risk-selected-portfolios])
+        selected-portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         portfolios  @(rf/subscribe [:portfolios])
-        number-of-fields @(rf/subscribe [:multiple-portfolio-field-number])
-        display-key-one @(rf/subscribe [:multiple-portfolio-field-one])
+        number-of-fields @(rf/subscribe [:multiple-portfolio-risk/field-number])
+        display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
         cell-one (get-in table-columns [display-key-one :Cell])
-        display-key-two @(rf/subscribe [:multiple-portfolio-field-two])
+        display-key-two @(rf/subscribe [:multiple-portfolio-risk/field-two])
         cell-two (get-in table-columns [display-key-two :Cell])
         width-one 100                                      ;(get-in table-columns [display-key-one :width])
-        is-tree (= @(rf/subscribe [:single-portfolio-risk-display-style]) "Tree")
-        risk-filter @(rf/subscribe [:single-portfolio-risk-filter])
+        is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
+        risk-filter @(rf/subscribe [:multiple-portfolio-risk/filter])
         risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
         risk-choice-2 (if (not= "None" (risk-filter 2)) (risk-filter 2))
         risk-choice-3 (if (not= "None" (risk-filter 3)) (risk-filter 3))
@@ -309,20 +284,7 @@
                               {:Header  (str "Portfolio " (name display-key-one))
                                :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}))}
                               {:Header  "Description"
-                               :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
-
-                             ;[{:Header "Groups" :columns grouping-columns}
-                             ; {:Header  (str "Portfolio " (name display-key-one) " and " (name display-key-two))
-                             ;  :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)]
-                             ;                      {:Header p
-                             ;                       :columns [
-                             ;                                 {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}
-                             ;                                 {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}
-                             ;                                 ]
-                             ;
-                             ;                       :width (+ 20 width-one) :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}))}
-                             ; {:Header  "Description"
-                             ;  :columns [{:Header "thinkFolio ID" :accessor "description" :width 500}]}]
+                               :columns (mapv table-columns [:rating :isin :description])}]
 
 
                              )
@@ -335,12 +297,59 @@
 
     ))
 
-(defn single-portfolio-risk-view []
+
+(defn multiple-portfolio-difference-risk-display []
+  (let [
+        pivoted-positions @(rf/subscribe [:pivoted-positions])
+        base-portfolio @(rf/subscribe [:portfolio-difference/base-portfolio])
+        selected-portfolios @(rf/subscribe [:portfolio-difference/selected-portfolios])
+        portfolios  @(rf/subscribe [:portfolios])
+        display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
+        cell-one (get-in table-columns [display-key-one :Cell])
+        display-key-two @(rf/subscribe [:multiple-portfolio-risk/field-two])
+        cell-two (get-in table-columns [display-key-two :Cell])
+        width-one 100                                      ;(get-in table-columns [display-key-one :width])
+        is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
+        risk-filter @(rf/subscribe [:multiple-portfolio-risk/filter])
+        risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
+        risk-choice-2 (if (not= "None" (risk-filter 2)) (risk-filter 2))
+        risk-choice-3 (if (not= "None" (risk-filter 3)) (risk-filter 3))
+        grouping-columns (into [] (for [r (remove nil? [risk-choice-1 risk-choice-2 risk-choice-3 :name])] (table-columns r)))
+        accessors (mapv :accessor grouping-columns)
+        accessors-k (mapv keyword accessors)
+        pivoted-data (map #(merge % ((keyword (get-in table-columns [display-key-one :accessor])) %)) pivoted-positions)
+        display-one (add-total-line-to-pivot (sort-by
+                                               (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k)))
+                                               pivoted-data) portfolios)
+        ;display-two (if (not= display-key-two "None") (sort-by
+        ;                                                (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) (map #(merge % ((keyword (get-in table-columns [display-key-two :accessor])) %)) pivoted-positions)))
+        ]
+    [:> ReactTable
+     {:data                display-one
+      :defaultFilterMethod case-insensitive-filter
+      :columns
+
+                             [{:Header "Groups" :columns grouping-columns}
+                              {:Header  (str "Portfolio " (name display-key-one))
+                               :columns (into [] (for [p portfolios :when (some #{p} selected-portfolios)] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate sum-rows :Cell cell-one :filterable false}))}
+                              {:Header  "Description"
+                               :columns [{:Header "thinkFolio ID" :accessor "description" :width 500} (table-columns :rating)]}]
+
+      :showPagination      false
+      :sortable            (not is-tree)
+      :filterable          (not is-tree)
+      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display-one)))) (inc (count display-one)))
+      :className           "-striped -highlight"
+      :pivotBy             (if is-tree accessors [])}]
+
+    ))
+
+(defn single-portfolio-risk-controller []
   (let [
         portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
-        display-style (rf/subscribe [:single-portfolio-risk-display-style])
-        portfolio (rf/subscribe [:single-portfolio-risk-portfolio])
-        risk-filter (rf/subscribe [:single-portfolio-risk-filter])
+        display-style (rf/subscribe [:single-portfolio-risk/display-style])
+        portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
+        risk-filter (rf/subscribe [:single-portfolio-risk/filter])
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
@@ -348,26 +357,26 @@
                  [h-box :gap "10px"
                   :children [(concat [
                                       [title :label "Display type:" :level :level3]
-                                      [single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]
+                                      [single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk/display-style %])]
                                       [gap :size "50px"]
                                       [title :label "Filtering:" :level :level3]
-                                      [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk-portfolio %])]]
-                                     (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter i %])])))
+                                      [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
+                                     (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk/filter i %])])))
                              ]]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
                  [single-portfolio-risk-display]]]])
   )
 ;
 
-(defn multiple-portfolio-risk-view []
+(defn multiple-portfolio-risk-controller []
   (let [
         portfolio-map (into [] (for [p  @(rf/subscribe [:portfolios])] {:id p :label p}))
-        display-style (rf/subscribe [:multiple-portfolio-risk-display-style])
-        risk-filter (rf/subscribe [:multiple-portfolio-risk-filter])
-        selected-portfolios (rf/subscribe [:multiple-portfolio-risk-selected-portfolios])
-        number-of-fields (rf/subscribe [:multiple-portfolio-field-number])
-        field-one (rf/subscribe [:multiple-portfolio-field-one])
-        field-two (rf/subscribe [:multiple-portfolio-field-two])
+        display-style (rf/subscribe [:multiple-portfolio-risk/display-style])
+        risk-filter (rf/subscribe [:multiple-portfolio-risk/filter])
+        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        number-of-fields (rf/subscribe [:multiple-portfolio-risk/field-number])
+        field-one (rf/subscribe [:multiple-portfolio-risk/field-one])
+        field-two (rf/subscribe [:multiple-portfolio-risk/field-two])
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
@@ -375,19 +384,37 @@
                  [h-box :gap "10px"
                   :children (concat [
                                      [v-box :gap "15px" :children [[title :label "Display type:" :level :level3] [title :label "Fields:" :level :level3] [title :label "Field one:" :level :level3] [title :label "Field two:" :level :level3]]]
-                                     [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk-display-style %])]
-                                                                   [single-dropdown :width dropdown-width :model number-of-fields :choices [{:id "One" :label "One"} {:id "Two" :label "Two"}] :on-change #(rf/dispatch [:multiple-portfolio-field-number %])]
-                                                                   [single-dropdown :width dropdown-width :model field-one :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-field-one %])]
-                                                                   [single-dropdown :width dropdown-width :model field-two :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-field-two %])]
+                                     [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:multiple-portfolio-risk/display-style %])]
+                                                                   [single-dropdown :width dropdown-width :model number-of-fields :choices [{:id "One" :label "One"} {:id "Two" :label "Two"}] :on-change #(rf/dispatch [:multiple-portfolio-risk/field-number %])]
+                                                                   [single-dropdown :width dropdown-width :model field-one :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]
+                                                                   [single-dropdown :width dropdown-width :model field-two :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-two %])]
                                                                    ]]
                                      [gap :size "50px"]
                                      [title :label "Filtering:" :level :level3]
-                                     [selection-list :width dropdown-width :height "250px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk-selected-portfolios %])]]
-                                    (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk-filter i %])])))]
+                                     [selection-list :width dropdown-width :height "250px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]
+                                    (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:multiple-portfolio-risk/filter i %])])))]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
                  [multiple-portfolio-risk-display]]]])
   )
 
 
-(defn main-panel []
-  [v-box :gap "20px" :class "body" :padding "20px" :children [ [single-portfolio-risk-view]  ]])
+
+(defn summary-display []
+  (let [positions @(rf/subscribe [:positions])
+        portfolios @(rf/subscribe [:portfolios])
+        portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])
+        totals (@(rf/subscribe [:total-positions]) (keyword portfolio))
+        portfolio-positions (filter #(= (:portfolio %) portfolio) positions)
+        accessors-k (mapv keyword nil)
+        display nil
+        ]
+    [:> ReactTable
+     {:data                display
+      :columns             [{:Header "Balance" :columns [" NAV Cash% Cash$ Cash + 1y"]}
+                            {:Header "Value" :columns [" Yield Spread G duration"]}
+                            {:Header "Risk" :columns [" Rating VaR Beta"]} ]
+      :showPagination false
+      :pageSize       (count portfolios)
+      :className      "-striped -highlight" }]
+
+    ))

@@ -13,68 +13,53 @@
 
 
 
-(def default-db {:positions []
-                 :pivoted-positions []
-                 :portfolios []
-                 :active-view :home
-                 :active-home :overview
-                 :single-portfolio-risk-display-style "Table"
-                 :single-portfolio-risk-portfolio "OGEMCORD"
-                 :single-portfolio-risk-filter {1 :region 2 :country 3 :issuer}
-                 :multiple-portfolio-risk-display-style "Table"
-                 :multiple-portfolio-field-number "One"
-                 :multiple-portfolio-field-one :nav
-                 :multiple-portfolio-field-two "None"
-                 :multiple-portfolio-risk-selected-portfolios (set nil) ;["OGEMCORD"]
-                 :multiple-portfolio-risk-filter {1 :region 2 :country 3 :issuer}
+(def default-db {:positions                                   []
+                 :rating-to-score                             nil
+                 :pivoted-positions                           []
+                 :portfolios                                  []
+                 :total-positions                             {}
+                 :active-view                                 :home
+                 :active-home                                 :overview
+                 :single-portfolio-risk/display-style         "Table"
+                 :single-portfolio-risk/portfolio             "OGEMCORD"
+                 :single-portfolio-risk/filter                {1 :region 2 :country 3 :issuer}
+                 :multiple-portfolio-risk/display-style       "Table"
+                 :multiple-portfolio-risk/field-number        "One"
+                 :multiple-portfolio-risk/field-one           :nav
+                 :multiple-portfolio-risk/field-two           "None"
+                 :multiple-portfolio-risk/selected-portfolios (set nil) ;["OGEMCORD"]
+                 :multiple-portfolio-risk/filter              {1 :region 2 :country 3 :issuer}
                  })
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
 (doseq [k (keys default-db)] (rf/reg-sub k (fn [db] (k db))))
 (doseq [k [:active-view
            :active-home
-           :single-portfolio-risk-portfolio
-           :single-portfolio-risk-display-style
-           :multiple-portfolio-risk-display-style
-           :multiple-portfolio-field-number
-           :multiple-portfolio-field-one
-           :multiple-portfolio-field-two
-           :multiple-portfolio-risk-selected-portfolios]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
+           :positions
+           :rating-to-score
+           :pivoted-positions
+           :total-positions
+           :single-portfolio-risk/portfolio
+           :single-portfolio-risk/display-style
+           :multiple-portfolio-risk/display-style
+           :multiple-portfolio-risk/field-number
+           :multiple-portfolio-risk/field-one
+           :multiple-portfolio-risk/field-two
+           :multiple-portfolio-risk/selected-portfolios]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
 (rf/reg-event-db
   :portfolios
-  (fn [db [_ data]]
-    (let [portfolios (remove #{"WISHLIST" "IGWISHLIST"} data)]
+  (fn [db [_ portfolios]]
       (assoc db :portfolios portfolios
-                :multiple-portfolio-risk-selected-portfolios (set portfolios)))))
+                :multiple-portfolio-risk/selected-portfolios (set portfolios))))
 
 (rf/reg-event-db
-  :single-portfolio-risk-filter
-  (fn [db [_ id f]] (assoc-in db [:single-portfolio-risk-filter id] f)))
-(rf/reg-event-db
-  :multiple-portfolio-risk-filter
-  (fn [db [_ id f]] (assoc-in db [:single-portfolio-risk-filter id] f)))
+  :single-portfolio-risk/filter
+  (fn [db [_ id f]] (assoc-in db [:single-portfolio-risk/filter id] f)))
 
 (rf/reg-event-db
-  :positions
-  (fn [db [_ positions]]
-    (let [instruments (distinct (map :id positions))
-          grp (group-by (juxt :id :portfolio) positions)
-          portfolios (distinct (map :portfolio positions))
-          keys [:weight :original-quantity :base-value :contrib-mdur :contrib-zspread :contrib-yield :contrib-gspread]
-          ]
-      ;      (println instruments)
-      (assoc db :positions positions
-                :pivoted-positions (remove nil? (into [] (for [instrument instruments]
-                                                           (let [template (ffirst (remove nil? (map #(get-in grp [[instrument %]]) portfolios)))]
-                                                             (if true ;(not= "Cash" (:Region template))
-                                                               (merge template
-                                                                      (into {}
-                                                                            (for [k keys]
-                                                                              [k
-                                                                               (into {} (for [p portfolios] [(keyword p) (if-let [x (first (get-in grp [[instrument p]]))] (k x) 0.)]))]))))))))
-
-                ))))
+  :multiple-portfolio-risk/filter
+  (fn [db [_ id f]] (assoc-in db [:multiple-portfolio-risk/filter id] f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;HTTP GET DEFINITION;;
@@ -98,12 +83,33 @@
                          :kwk          true}}))
 
 (rf/reg-event-fx
+  :get-rating-to-score
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str "http://localhost:3501/rating-to-score") ;(str "http://iamlfilive:3501/positions")
+                         :dispatch-key [:rating-to-score]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
   :get-portfolios
   (fn [{:keys [db]} [_]]
     {:http-get-dispatch {:url          (str "http://localhost:3501/portfolios") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:portfolios]
                          :kwk          true}}))
 
+
+(rf/reg-event-fx
+  :get-pivoted-positions
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str "http://localhost:3501/pivoted-positions") ;(str "http://iamlfilive:3501/positions")
+                         :dispatch-key [:pivoted-positions]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-total-positions
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str "http://localhost:3501/total-positions") ;(str "http://iamlfilive:3501/positions")
+                         :dispatch-key [:total-positions]
+                         :kwk          true}}))
 
 
 
