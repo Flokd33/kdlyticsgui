@@ -12,6 +12,7 @@
   [{:code :summary               :name "Overview"}
    {:code :single-portfolio                :name "Single portfolio"}
    {:code :all-portfolios            :name "Multiple portfolios"}
+   {:code :portfolio-alignment      :name "Portfolio alignment"}
    ]
   )
 

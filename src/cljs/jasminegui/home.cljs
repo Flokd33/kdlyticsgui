@@ -40,9 +40,9 @@
   (let [active-home @(rf/subscribe [:active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-home
-      :summary               [label :label "hi"]
-      :single-portfolio              [riskviews/single-portfolio-risk-controller]
-      :all-portfolios [riskviews/multiple-portfolio-risk-controller]
+      :summary                        [riskviews/summary-display]
+      :single-portfolio               [riskviews/single-portfolio-risk-controller]
+      :all-portfolios                 [riskviews/multiple-portfolio-risk-controller]
       [:div.output "nothing to display"])))
 
 
