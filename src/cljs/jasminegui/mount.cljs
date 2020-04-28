@@ -20,9 +20,11 @@
                  :total-positions                             {}
                  :active-view                                 :home
                  :active-home                                 :overview
-                 :single-portfolio-risk/display-style         "Table"
+                 :single-portfolio-risk/display-style         "Tree"
                  :single-portfolio-risk/portfolio             "OGEMCORD"
                  :single-portfolio-risk/filter                {1 :region 2 :country 3 :issuer}
+                 :single-portfolio-risk/hide-zero-holdings    true
+                 :single-portfolio-risk/table-filter          []
                  :multiple-portfolio-risk/display-style       "Table"
                  :multiple-portfolio-risk/field-number        "One"
                  :multiple-portfolio-risk/field-one           :nav
@@ -41,6 +43,8 @@
            :total-positions
            :single-portfolio-risk/portfolio
            :single-portfolio-risk/display-style
+           :single-portfolio-risk/hide-zero-holdings
+           :single-portfolio-risk/table-filter
            :multiple-portfolio-risk/display-style
            :multiple-portfolio-risk/field-number
            :multiple-portfolio-risk/field-one

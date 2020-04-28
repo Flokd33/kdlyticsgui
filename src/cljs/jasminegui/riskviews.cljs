@@ -133,35 +133,45 @@
 ;    (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))))
 ;
 
+(defn bigger-than [filterfn row]
+  "filterfn is {id: column_name value: text_in_filter_box"
+  (>  (aget row "weight")  (aget filterfn "value")))
+
+
+
 (defn rating-score-to-string [this] (aget this "row" "qt-iam-int-lt-median-rating"))
 
 
 (def table-columns
   {:id                          {:Header "ID"             :accessor "id"                          :show false}
    :id-show                     {:Header "ID"             :accessor "id"                          :width 75}
-   :region                      {:Header "Region" :accessor "Region" :width 140 }
-   :country                     {:Header "Country" :accessor "Country" :width 140}
+   :region                      {:Header "Region" :accessor "qt-jpm-region" :width 140 }
+   :country                     {:Header "Country" :accessor "qt-risk-country-name" :width 140}
    :issuer                      {:Header "Issuer" :accessor "TICKER" :width 140 }
-   :sector                      {:Header "Sector" :accessor "JPM_SECTOR" :width 140}
+   :sector                      {:Header "Sector" :accessor "qt-jpm-sector" :width 140}
    :rating                      {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}  ; :show false
   ;  :rating                      {:Header "Rating" :accessor "qt-iam-int-lt-median-rating"  :show false} :sortMethod rating-sort} ; :show false
    :rating-score                {:Header "Rating" :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}
    :name                        {:Header "Name" :accessor "NAME" :width 140} ;  :filterMethod case-insensitive-filter
    :isin                        {:Header "ISIN"           :accessor "isin"                        :width 125 } ;:style {:textAlign "center"}
    :description                 {:Header "thinkFolio ID" :accessor "description" :width 500}
-   :nav                         {:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :nominal                     {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable false}
+   :nav                         {:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod bigger-than}
+   :bm-weight                         {:Header "Index" :accessor "bm-weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :nominal                     {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod bigger-than}
    :z-spread                    {:Header "Z-spread" :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable false}
    :g-spread                    {:Header "G-spread" :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable false}
    :duration                    {:Header "M dur" :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
    :yield                       {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable false}
-   :value                       {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable false}
+   :value                       {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod bigger-than}
    :contrib-gspread             {:Header "G-spread" :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
    :contrib-zspread                         {:Header "Z-spread" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
    :contrib-yield                         {:Header "Yield" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
    :contrib-mdur                         {:Header "M dur" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :bm-contrib-yield                         {:Header "Yield" :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+   :bm-contrib-eir-duration                         {:Header "M dur" :accessor "bm-contrib-eir-duration" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
    :cash-pct                         {:Header "Cash" :accessor "cash-pct" :width 60 :style {:textAlign "right"} :Cell yield-format :filterable false}
    :contrib-bond-yield                         {:Header "Bond yield" :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
+   :weight-delta                         {:Header "Delta" :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
 
    })
 
@@ -195,6 +205,8 @@
         portfolio-total-line (assoc (@(rf/subscribe [:total-positions]) (keyword portfolio)) :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
         is-tree (= @(rf/subscribe [:single-portfolio-risk/display-style]) "Tree")
         portfolio-positions (filter #(= (:portfolio %) portfolio) positions)
+
+        viewable-positions (if (and (not is-tree) @(rf/subscribe [:single-portfolio-risk/hide-zero-holdings])) (filter #(not= (:weight %) 0) portfolio-positions) portfolio-positions)
         risk-filter @(rf/subscribe [:single-portfolio-risk/filter])
         risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
         risk-choice-2 (if (not= "None" (risk-filter 2)) (risk-filter 2))
@@ -202,22 +214,28 @@
         grouping-columns (into [] (for [r (remove nil? [risk-choice-1 risk-choice-2 risk-choice-3 :name])] (table-columns r)))
         accessors (mapv :accessor grouping-columns)
         accessors-k (mapv keyword accessors)
-        display (conj (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) portfolio-positions) portfolio-total-line)
+        display (conj (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions) portfolio-total-line)
         ]
+    (println @(rf/subscribe [:single-portfolio-risk/table-filter]))
     [:> ReactTable
-         {:data           display
-          :defaultFilterMethod case-insensitive-filter
-          :columns        [{:Header "Groups" :columns grouping-columns}
-                           {:Header "Position" :columns (mapv table-columns [:nav :value :nominal])}
-                           {:Header "Contribution" :columns (mapv table-columns [:contrib-yield :contrib-zspread :contrib-mdur])}
-                           {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv table-columns [:yield :z-spread :g-spread :duration])}
-                           {:Header "Description" :columns (mapv table-columns [:rating :isin :description])}]
-          :showPagination false
-          :sortable       (not is-tree)
-          :filterable     (not is-tree)
-          :pageSize       (if is-tree (inc (count (distinct (map (first accessors-k) portfolio-positions)))) (inc (count display)))
-          :className      "-striped -highlight"
-          :pivotBy        (if is-tree accessors [])}]
+     {:data                display
+      :defaultFilterMethod case-insensitive-filter
+      :columns             [{:Header "Groups" :columns grouping-columns}
+                            {:Header "Allocation" :columns (mapv table-columns [:nav :bm-weight :weight-delta])}
+                            {:Header "Position" :columns (mapv table-columns [:value :nominal])}
+                            {:Header "Contribution" :columns (mapv table-columns [:contrib-yield :contrib-zspread :contrib-mdur])}
+                            {:Header "Index contribution" :columns (mapv table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
+                            {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv table-columns [:yield :z-spread :g-spread :duration])}
+                            {:Header "Description" :columns (mapv table-columns [:rating :isin :description])}]
+      :showPagination      (not is-tree)
+      :sortable            (not is-tree)
+      :filterable          (not is-tree)
+      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) portfolio-positions)))) 30) ;(inc (count display))
+      :className           "-striped -highlight"
+      :pivotBy             (if is-tree accessors [])
+      :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
+      :onFilteredChange    #(rf/dispatch [:single-portfolio-risk/table-filter %])
+      }]
 
         ))
 
@@ -259,12 +277,16 @@
 
 
                              )
-      :showPagination      false
+      :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
-      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display-one)))) (inc (count display-one)))
+      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display-one)))) 30)
       :className           "-striped -highlight"
-      :pivotBy             (if is-tree accessors [])}]
+      :pivotBy             (if is-tree accessors [])
+      :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
+      :onFilteredChange    #(rf/dispatch [:single-portfolio-risk/table-filter %])
+
+      }]
 
     ))
 
@@ -337,6 +359,7 @@
         display-style (rf/subscribe [:single-portfolio-risk/display-style])
         portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
         risk-filter (rf/subscribe [:single-portfolio-risk/filter])
+        hide-zero-risk (rf/subscribe [:single-portfolio-risk/hide-zero-holdings])
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
@@ -348,7 +371,11 @@
                                       [gap :size "50px"]
                                       [title :label "Filtering:" :level :level3]
                                       [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
-                                     (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk/filter i %])])))
+                                     (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk/filter i %])]))
+                                     [[gap :size "50px"]
+                                      [checkbox :model hide-zero-risk :label "Hide zero positions in table view" :disabled? (= @display-style "Tree") :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]]
+                                     )
+
                              ]]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
                  [single-portfolio-risk-display]]]])
@@ -399,8 +426,8 @@
                            (merge
                              {:portfolio       p}
                              (into {} (for [k [:base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score]] [k (get-in totals [(keyword p) k])]))
-                             {:cash-pct (reduce + (map :weight (filter #(and (= (:portfolio %) p) (= (:Region %) "Cash")) positions)))
-                              :contrib-bond-yield (- (get-in totals [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (= (:Region %) "Cash")) positions))))
+                             {:cash-pct (reduce + (map :weight (filter #(and (= (:portfolio %) p) (= (:qt-jpm-region %) "Cash")) positions)))
+                              :contrib-bond-yield (- (get-in totals [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (= (:qt-jpm-region %) "Cash")) positions))))
                               }
                              )
 
