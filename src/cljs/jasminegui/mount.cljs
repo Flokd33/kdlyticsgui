@@ -19,7 +19,7 @@
                  :portfolios                                  []
                  :total-positions                             {}
                  :active-view                                 :home
-                 :active-home                                 :overview
+                 :active-home                                 :summary
                  :single-portfolio-risk/display-style         "Tree"
                  :single-portfolio-risk/portfolio             "OGEMCORD"
                  :single-portfolio-risk/filter                {1 :region 2 :country 3 :issuer}

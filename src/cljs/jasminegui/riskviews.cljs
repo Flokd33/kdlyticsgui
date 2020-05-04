@@ -145,7 +145,7 @@
 (def table-columns
   {:id                          {:Header "ID"             :accessor "id"                          :show false}
    :id-show                     {:Header "ID"             :accessor "id"                          :width 75}
-   :region                      {:Header "Region" :accessor "qt-jpm-region" :width 140 }
+   :region                      {:Header "Region" :accessor "jpm-region" :width 140 }
    :country                     {:Header "Country" :accessor "qt-risk-country-name" :width 140}
    :issuer                      {:Header "Issuer" :accessor "TICKER" :width 140 }
    :sector                      {:Header "Sector" :accessor "qt-jpm-sector" :width 140}
@@ -155,7 +155,7 @@
    :name                        {:Header "Name" :accessor "NAME" :width 140} ;  :filterMethod case-insensitive-filter
    :isin                        {:Header "ISIN"           :accessor "isin"                        :width 125 } ;:style {:textAlign "center"}
    :description                 {:Header "thinkFolio ID" :accessor "description" :width 500}
-   :nav                         {:Header "NAV" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod bigger-than}
+   :nav                         {:Header "Fund" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod bigger-than}
    :bm-weight                         {:Header "Index" :accessor "bm-weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
    :nominal                     {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod bigger-than}
    :z-spread                    {:Header "Z-spread" :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable false}
@@ -164,14 +164,15 @@
    :yield                       {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable false}
    :value                       {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod bigger-than}
    :contrib-gspread             {:Header "G-spread" :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
-   :contrib-zspread                         {:Header "Z-spread" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
-   :contrib-yield                         {:Header "Yield" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
-   :contrib-mdur                         {:Header "M dur" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :bm-contrib-yield                         {:Header "Yield" :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
-   :bm-contrib-eir-duration                         {:Header "M dur" :accessor "bm-contrib-eir-duration" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :contrib-zspread                         {:Header "Fund" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
+   :contrib-yield                         {:Header "Fund" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+   :contrib-mdur                         {:Header "Fund" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :bm-contrib-yield                         {:Header "Index" :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+   :bm-contrib-eir-duration                         {:Header "Index" :accessor "bm-contrib-eir-duration" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
    :cash-pct                         {:Header "Cash" :accessor "cash-pct" :width 60 :style {:textAlign "right"} :Cell yield-format :filterable false}
    :contrib-bond-yield                         {:Header "Bond yield" :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
    :weight-delta                         {:Header "Delta" :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :mdur-delta                         {:Header "Delta" :accessor "mdur-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
 
    })
 
@@ -221,10 +222,12 @@
      {:data                display
       :defaultFilterMethod case-insensitive-filter
       :columns             [{:Header "Groups" :columns grouping-columns}
-                            {:Header "Allocation" :columns (mapv table-columns [:nav :bm-weight :weight-delta])}
+                            {:Header "NAV" :columns (mapv table-columns [:nav :bm-weight :weight-delta])}
+                            {:Header "Duration" :columns (mapv table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
+                            {:Header "Yield" :columns (mapv table-columns [:contrib-yield :bm-contrib-yield])}
+                            {:Header "Z-spread" :columns (mapv table-columns [:contrib-zspread ])}
                             {:Header "Position" :columns (mapv table-columns [:value :nominal])}
-                            {:Header "Contribution" :columns (mapv table-columns [:contrib-yield :contrib-zspread :contrib-mdur])}
-                            {:Header "Index contribution" :columns (mapv table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
+                            ;{:Header "Index contribution" :columns (mapv table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
                             {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv table-columns [:yield :z-spread :g-spread :duration])}
                             {:Header "Description" :columns (mapv table-columns [:rating :isin :description])}]
       :showPagination      (not is-tree)
@@ -426,8 +429,8 @@
                            (merge
                              {:portfolio       p}
                              (into {} (for [k [:base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score]] [k (get-in totals [(keyword p) k])]))
-                             {:cash-pct (reduce + (map :weight (filter #(and (= (:portfolio %) p) (= (:qt-jpm-region %) "Cash")) positions)))
-                              :contrib-bond-yield (- (get-in totals [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (= (:qt-jpm-region %) "Cash")) positions))))
+                             {:cash-pct (reduce + (map :weight (filter #(and (= (:portfolio %) p) (= (:jpm-region %) "Cash")) positions)))
+                              :contrib-bond-yield (- (get-in totals [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (= (:jpm-region %) "Cash")) positions))))
                               }
                              )
 
