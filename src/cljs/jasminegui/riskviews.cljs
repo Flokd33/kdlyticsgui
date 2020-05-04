@@ -421,36 +421,30 @@
 (defn summary-display []
   (let [positions @(rf/subscribe [:positions])
         portfolios @(rf/subscribe [:portfolios])
-        portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])
         totals @(rf/subscribe [:total-positions])
-        portfolio-positions (filter #(= (:portfolio %) portfolio) positions)
-        accessors-k (mapv keyword nil)
         display (into [] (for [p portfolios]
                            (merge
                              {:portfolio       p}
-                             (into {} (for [k [:base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score]] [k (get-in totals [(keyword p) k])]))
-                             {:cash-pct (reduce + (map :weight (filter #(and (= (:portfolio %) p) (= (:jpm-region %) "Cash")) positions)))
+                             (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score]] [k (get-in totals [(keyword p) k])]))
+                             {
+                              ;:cash-pct (reduce + (map :weight (filter #(and (= (:portfolio %) p) (= (:jpm-region %) "Cash")) positions)))
                               :contrib-bond-yield (- (get-in totals [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (= (:jpm-region %) "Cash")) positions))))
-                              }
-                             )
-
-                           ))
-        ]
-    (println display)
+                              })))]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label "Summary" :level :level1]
     [:> ReactTable
      {:data           display
-      :columns        [{:Header "Portfolio" :accessor "portfolio" :width 120 }
+      :columns        [{:Header "Portfolio" :accessor "portfolio" :width 120}
                        {:Header "Balance" :columns (mapv table-columns [:value :cash-pct])}
-                       {:Header "Value" :columns (mapv table-columns [:contrib-yield :contrib-bond-yield :contrib-zspread :contrib-gspread])}
-                       {:Header "Risk" :columns (mapv table-columns [:contrib-mdur :rating-score :rating])}
+                       {:Header "Value" :columns [(assoc (table-columns :contrib-yield) :Header "Yield")
+                                                  (table-columns :contrib-bond-yield)
+                                                  (assoc (table-columns :contrib-mdur) :Header "M Dur")
+                                                  (table-columns :rating)
+                                                  (assoc (table-columns :rating-score) :width 60  )
+                                                  (assoc (table-columns :contrib-zspread) :Header "Z-spread")
+                                                  (assoc (table-columns :contrib-gspread) :Header "G-spread")]}
                        ]
       :showPagination false
       :pageSize       (count portfolios)
-      :className      "-striped -highlight"}]
-]]]
-
-
-    ))
+      :className      "-striped -highlight"}]]]]))
