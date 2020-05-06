@@ -10,6 +10,7 @@
 
 
 
+(def server-address "http://iamlfilive:3501/")              ;"http://localhost:3501/
 
 
 
@@ -102,21 +103,21 @@
 (rf/reg-event-fx
   :get-positions
   (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str "http://localhost:3501/positions") ;(str "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "positions") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:positions]
                          :kwk          true}}))
 
 (rf/reg-event-fx
   :get-rating-to-score
   (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str "http://localhost:3501/rating-to-score") ;(str "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "rating-to-score") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:rating-to-score]
                          :kwk          true}}))
 
 (rf/reg-event-fx
   :get-portfolios
   (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str "http://localhost:3501/portfolios") ;(str "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "portfolios") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:portfolios]
                          :kwk          true}}))
 
@@ -124,14 +125,14 @@
 (rf/reg-event-fx
   :get-pivoted-positions
   (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str "http://localhost:3501/pivoted-positions") ;(str "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "pivoted-positions") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:pivoted-positions]
                          :kwk          true}}))
 
 (rf/reg-event-fx
   :get-total-positions
   (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str "http://localhost:3501/total-positions") ;(str "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "total-positions") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:total-positions]
                          :kwk          true}}))
 
