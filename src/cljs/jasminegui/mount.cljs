@@ -20,17 +20,27 @@
                  :total-positions                             {}
                  :active-view                                 :home
                  :active-home                                 :summary
+
                  :single-portfolio-risk/display-style         "Tree"
                  :single-portfolio-risk/portfolio             "OGEMCORD"
                  :single-portfolio-risk/filter                {1 :region 2 :country 3 :issuer}
                  :single-portfolio-risk/hide-zero-holdings    true
                  :single-portfolio-risk/table-filter          []
+
                  :multiple-portfolio-risk/display-style       "Table"
                  :multiple-portfolio-risk/field-number        "One"
                  :multiple-portfolio-risk/field-one           :nav
                  :multiple-portfolio-risk/field-two           "None"
                  :multiple-portfolio-risk/selected-portfolios (set nil) ;["OGEMCORD"]
                  :multiple-portfolio-risk/filter              {1 :region 2 :country 3 :issuer}
+                 :multiple-portfolio-risk/hide-zero-holdings    true
+
+                 :portfolio-alignment/display-style           "Tree"
+                 :portfolio-alignment/field                   :nav
+                 :portfolio-alignment/filter                  {1 :region 2 :country 3 :issuer}
+                 :portfolio-alignment/group                   :cembi
+                 :portfolio-alignment/threshold               :quarter
+
                  })
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
@@ -49,7 +59,13 @@
            :multiple-portfolio-risk/field-number
            :multiple-portfolio-risk/field-one
            :multiple-portfolio-risk/field-two
-           :multiple-portfolio-risk/selected-portfolios]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
+           :multiple-portfolio-risk/selected-portfolios
+           :multiple-portfolio-risk/hide-zero-holdings
+           :portfolio-alignment/display-style
+           :portfolio-alignment/field
+           :portfolio-alignment/group
+           :portfolio-alignment/threshold
+           ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
 (rf/reg-event-db
   :portfolios
@@ -64,6 +80,10 @@
 (rf/reg-event-db
   :multiple-portfolio-risk/filter
   (fn [db [_ id f]] (assoc-in db [:multiple-portfolio-risk/filter id] f)))
+
+(rf/reg-event-db
+  :portfolio-alignment/filter
+  (fn [db [_ id f]] (assoc-in db [:portfolio-alignment/filter id] f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;HTTP GET DEFINITION;;

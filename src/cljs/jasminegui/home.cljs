@@ -43,6 +43,7 @@
       :summary                        [riskviews/summary-display]
       :single-portfolio               [riskviews/single-portfolio-risk-controller]
       :all-portfolios                 [riskviews/multiple-portfolio-risk-controller]
+      :portfolio-alignment            [riskviews/portfolio-alignment-risk-controller]
       [:div.output "nothing to display"])))
 
 

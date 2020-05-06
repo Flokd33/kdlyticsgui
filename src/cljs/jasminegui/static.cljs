@@ -19,6 +19,11 @@
                       {:id :rating-score :label "Rating"}
                       {:id :sector :label "Sector"}])
 
+(def portfolio-alignment-groups [{:id :cembi :label "CEMBI" :portfolios ["OGEMCORD" "AIFGLBCD" "IBSGEMD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
+                                 {:id :allianz :label "Allianz" :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
+                                 {:id :ig :label "IG" :portfolios ["OGEMIGC" "ICIFEMD" "IBNPEMD"]}
+                                 {:id :talanx :label "Talanx" :portfolios ["ITLNXEMD" "ITLXEMD" "ITLXEMD3"]}])
+
 (def field-choices
   [{:id "None" :label "None"}
    {:id :nav :label "NAV"}
@@ -30,3 +35,15 @@
    {:id :contrib-yield :label "Yield contribution"}
    {:id :contrib-zspread :label "Z-spread contribution"}
    {:id :contrib-gspread :label "G-spread contribution"}])
+
+(def field-choices-alignment
+  [{:id :nav :label "NAV"}
+   {:id :contrib-mdur :label "M dur contribution"}]
+  )
+
+(def threshold-choices-alignment
+  [{:id :zero           :label "0.00"}
+   {:id :quarter        :label "0.25"}
+   {:id :half           :label "0.50"}
+   {:id :threequarters  :label "0.75"}
+   {:id :one            :label "1.00"}])
