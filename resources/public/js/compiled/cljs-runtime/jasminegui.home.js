@@ -13,37 +13,37 @@ goog.require('jasminegui.mount');
 goog.require('jasminegui.static$');
 goog.require('jasminegui.riskviews');
 jasminegui.home.nav_home_bar = (function jasminegui$home$nav_home_bar(){
-var active_home = cljs.core.deref((function (){var G__45396 = new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"active-home","active-home",53621216)], null);
-return (re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1(G__45396) : re_frame.core.subscribe.call(null,G__45396));
+var active_home = cljs.core.deref((function (){var G__45191 = new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"active-home","active-home",53621216)], null);
+return (re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1(G__45191) : re_frame.core.subscribe.call(null,G__45191));
 })());
 cljs.core.println.cljs$core$IFn$_invoke$arity$variadic(cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([active_home], 0));
 
 return new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [re_com.core.h_box,new cljs.core.Keyword(null,"children","children",-940561982),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 7, 5, cljs.core.PersistentVector.EMPTY_NODE, [re_com.core.v_box,new cljs.core.Keyword(null,"gap","gap",80255254),"20px",new cljs.core.Keyword(null,"class","class",-2030961996),"leftnavbar",new cljs.core.Keyword(null,"children","children",-940561982),cljs.core.into.cljs$core$IFn$_invoke$arity$2(cljs.core.PersistentVector.EMPTY,(function (){var iter__4523__auto__ = ((function (active_home){
-return (function jasminegui$home$nav_home_bar_$_iter__45397(s__45398){
+return (function jasminegui$home$nav_home_bar_$_iter__45192(s__45193){
 return (new cljs.core.LazySeq(null,((function (active_home){
 return (function (){
-var s__45398__$1 = s__45398;
+var s__45193__$1 = s__45193;
 while(true){
-var temp__5735__auto__ = cljs.core.seq(s__45398__$1);
+var temp__5735__auto__ = cljs.core.seq(s__45193__$1);
 if(temp__5735__auto__){
-var s__45398__$2 = temp__5735__auto__;
-if(cljs.core.chunked_seq_QMARK_(s__45398__$2)){
-var c__4521__auto__ = cljs.core.chunk_first(s__45398__$2);
+var s__45193__$2 = temp__5735__auto__;
+if(cljs.core.chunked_seq_QMARK_(s__45193__$2)){
+var c__4521__auto__ = cljs.core.chunk_first(s__45193__$2);
 var size__4522__auto__ = cljs.core.count(c__4521__auto__);
-var b__45400 = cljs.core.chunk_buffer(size__4522__auto__);
-if((function (){var i__45399 = (0);
+var b__45195 = cljs.core.chunk_buffer(size__4522__auto__);
+if((function (){var i__45194 = (0);
 while(true){
-if((i__45399 < size__4522__auto__)){
-var item = cljs.core._nth.cljs$core$IFn$_invoke$arity$2(c__4521__auto__,i__45399);
-cljs.core.chunk_append(b__45400,new cljs.core.PersistentVector(null, 7, 5, cljs.core.PersistentVector.EMPTY_NODE, [re_com.core.button,new cljs.core.Keyword(null,"class","class",-2030961996),["btn btn-primary btn-block",((cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(active_home,new cljs.core.Keyword(null,"code","code",1586293142).cljs$core$IFn$_invoke$arity$1(item)))?" active":null)].join(''),new cljs.core.Keyword(null,"label","label",1718410804),new cljs.core.Keyword(null,"name","name",1843675177).cljs$core$IFn$_invoke$arity$1(item),new cljs.core.Keyword(null,"on-click","on-click",1632826543),((function (i__45399,item,c__4521__auto__,size__4522__auto__,b__45400,s__45398__$2,temp__5735__auto__,active_home){
+if((i__45194 < size__4522__auto__)){
+var item = cljs.core._nth.cljs$core$IFn$_invoke$arity$2(c__4521__auto__,i__45194);
+cljs.core.chunk_append(b__45195,new cljs.core.PersistentVector(null, 7, 5, cljs.core.PersistentVector.EMPTY_NODE, [re_com.core.button,new cljs.core.Keyword(null,"class","class",-2030961996),["btn btn-primary btn-block",((cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(active_home,new cljs.core.Keyword(null,"code","code",1586293142).cljs$core$IFn$_invoke$arity$1(item)))?" active":null)].join(''),new cljs.core.Keyword(null,"label","label",1718410804),new cljs.core.Keyword(null,"name","name",1843675177).cljs$core$IFn$_invoke$arity$1(item),new cljs.core.Keyword(null,"on-click","on-click",1632826543),((function (i__45194,item,c__4521__auto__,size__4522__auto__,b__45195,s__45193__$2,temp__5735__auto__,active_home){
 return (function (){
-var G__45401 = new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"active-home","active-home",53621216),new cljs.core.Keyword(null,"code","code",1586293142).cljs$core$IFn$_invoke$arity$1(item)], null);
-return (re_frame.core.dispatch.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.dispatch.cljs$core$IFn$_invoke$arity$1(G__45401) : re_frame.core.dispatch.call(null,G__45401));
-});})(i__45399,item,c__4521__auto__,size__4522__auto__,b__45400,s__45398__$2,temp__5735__auto__,active_home))
+var G__45198 = new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"active-home","active-home",53621216),new cljs.core.Keyword(null,"code","code",1586293142).cljs$core$IFn$_invoke$arity$1(item)], null);
+return (re_frame.core.dispatch.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.dispatch.cljs$core$IFn$_invoke$arity$1(G__45198) : re_frame.core.dispatch.call(null,G__45198));
+});})(i__45194,item,c__4521__auto__,size__4522__auto__,b__45195,s__45193__$2,temp__5735__auto__,active_home))
 ], null));
 
-var G__45406 = (i__45399 + (1));
-i__45399 = G__45406;
+var G__45203 = (i__45194 + (1));
+i__45194 = G__45203;
 continue;
 } else {
 return true;
@@ -51,18 +51,18 @@ return true;
 break;
 }
 })()){
-return cljs.core.chunk_cons(cljs.core.chunk(b__45400),jasminegui$home$nav_home_bar_$_iter__45397(cljs.core.chunk_rest(s__45398__$2)));
+return cljs.core.chunk_cons(cljs.core.chunk(b__45195),jasminegui$home$nav_home_bar_$_iter__45192(cljs.core.chunk_rest(s__45193__$2)));
 } else {
-return cljs.core.chunk_cons(cljs.core.chunk(b__45400),null);
+return cljs.core.chunk_cons(cljs.core.chunk(b__45195),null);
 }
 } else {
-var item = cljs.core.first(s__45398__$2);
-return cljs.core.cons(new cljs.core.PersistentVector(null, 7, 5, cljs.core.PersistentVector.EMPTY_NODE, [re_com.core.button,new cljs.core.Keyword(null,"class","class",-2030961996),["btn btn-primary btn-block",((cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(active_home,new cljs.core.Keyword(null,"code","code",1586293142).cljs$core$IFn$_invoke$arity$1(item)))?" active":null)].join(''),new cljs.core.Keyword(null,"label","label",1718410804),new cljs.core.Keyword(null,"name","name",1843675177).cljs$core$IFn$_invoke$arity$1(item),new cljs.core.Keyword(null,"on-click","on-click",1632826543),((function (item,s__45398__$2,temp__5735__auto__,active_home){
+var item = cljs.core.first(s__45193__$2);
+return cljs.core.cons(new cljs.core.PersistentVector(null, 7, 5, cljs.core.PersistentVector.EMPTY_NODE, [re_com.core.button,new cljs.core.Keyword(null,"class","class",-2030961996),["btn btn-primary btn-block",((cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(active_home,new cljs.core.Keyword(null,"code","code",1586293142).cljs$core$IFn$_invoke$arity$1(item)))?" active":null)].join(''),new cljs.core.Keyword(null,"label","label",1718410804),new cljs.core.Keyword(null,"name","name",1843675177).cljs$core$IFn$_invoke$arity$1(item),new cljs.core.Keyword(null,"on-click","on-click",1632826543),((function (item,s__45193__$2,temp__5735__auto__,active_home){
 return (function (){
-var G__45402 = new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"active-home","active-home",53621216),new cljs.core.Keyword(null,"code","code",1586293142).cljs$core$IFn$_invoke$arity$1(item)], null);
-return (re_frame.core.dispatch.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.dispatch.cljs$core$IFn$_invoke$arity$1(G__45402) : re_frame.core.dispatch.call(null,G__45402));
-});})(item,s__45398__$2,temp__5735__auto__,active_home))
-], null),jasminegui$home$nav_home_bar_$_iter__45397(cljs.core.rest(s__45398__$2)));
+var G__45199 = new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"active-home","active-home",53621216),new cljs.core.Keyword(null,"code","code",1586293142).cljs$core$IFn$_invoke$arity$1(item)], null);
+return (re_frame.core.dispatch.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.dispatch.cljs$core$IFn$_invoke$arity$1(G__45199) : re_frame.core.dispatch.call(null,G__45199));
+});})(item,s__45193__$2,temp__5735__auto__,active_home))
+], null),jasminegui$home$nav_home_bar_$_iter__45192(cljs.core.rest(s__45193__$2)));
 }
 } else {
 return null;
@@ -77,14 +77,14 @@ return iter__4523__auto__(jasminegui.static$.home_navigation);
 })())], null)], null)], null);
 });
 jasminegui.home.active_home = (function jasminegui$home$active_home(){
-var active_home = cljs.core.deref((function (){var G__45404 = new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"active-home","active-home",53621216)], null);
-return (re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1(G__45404) : re_frame.core.subscribe.call(null,G__45404));
+var active_home = cljs.core.deref((function (){var G__45200 = new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"active-home","active-home",53621216)], null);
+return (re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1(G__45200) : re_frame.core.subscribe.call(null,G__45200));
 })());
 window.scrollTo((0),(0));
 
-var G__45405 = active_home;
-var G__45405__$1 = (((G__45405 instanceof cljs.core.Keyword))?G__45405.fqn:null);
-switch (G__45405__$1) {
+var G__45201 = active_home;
+var G__45201__$1 = (((G__45201 instanceof cljs.core.Keyword))?G__45201.fqn:null);
+switch (G__45201__$1) {
 case "summary":
 return new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [jasminegui.riskviews.summary_display], null);
 

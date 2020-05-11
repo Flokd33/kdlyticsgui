@@ -212,6 +212,7 @@
         risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
         risk-choice-2 (if (not= "None" (risk-filter 2)) (risk-filter 2))
         risk-choice-3 (if (not= "None" (risk-filter 3)) (risk-filter 3))
+        additional-des-cols (remove #{"None" risk-choice-1 risk-choice-2 risk-choice-3} (map :id static/risk-choice-map))
         grouping-columns (into [] (for [r (remove nil? [risk-choice-1 risk-choice-2 risk-choice-3 :name])] (table-columns r)))
         accessors (mapv :accessor grouping-columns)
         accessors-k (mapv keyword accessors)
@@ -229,11 +230,11 @@
                             {:Header "Position" :columns (mapv table-columns [:value :nominal])}
                             ;{:Header "Index contribution" :columns (mapv table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
                             {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv table-columns [:yield :z-spread :g-spread :duration])}
-                            {:Header "Description" :columns (mapv table-columns [:rating :isin :description])}]
+                            {:Header "Description" :columns (mapv table-columns (into [] (concat [:rating :isin] additional-des-cols [:description])))}]
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
-      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) portfolio-positions)))) 30) ;(inc (count display))
+      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) portfolio-positions)))) 25) ;(inc (count display))
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
@@ -249,7 +250,7 @@
         selected-portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         kselected-portfolios (mapv keyword selected-portfolios)
         portfolios  @(rf/subscribe [:portfolios])
-        hide-zero-risk (rf/subscribe [:multiple-portfolio-risk/hide-zero-holdings])
+        hide-zero-risk @(rf/subscribe [:multiple-portfolio-risk/hide-zero-holdings])
         number-of-fields @(rf/subscribe [:multiple-portfolio-risk/field-number])
         display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
         cell-one (get-in table-columns [display-key-one :Cell])
@@ -271,7 +272,6 @@
                       (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k)))
                       pivoted-data-hide-zero) portfolios)
         ]
-    ;    (print portfolios "hi" (map (nth pivoted-data-hide-zero 300) (mapv keyword portfolios)))
     [:> ReactTable
      {:data                display-one
       :defaultFilterMethod case-insensitive-filter
@@ -283,12 +283,11 @@
                               {:Header  "Description"
                                :columns (mapv table-columns [:rating :isin :description])}]
 
-
                              )
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
-      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display-one)))) 30)
+      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display-one)))) 25)
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
@@ -356,7 +355,7 @@
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
-      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display)))) 30)
+      :pageSize            (if is-tree (inc (count (distinct (map (first accessors-k) display)))) 25)
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])}]
 
@@ -374,18 +373,18 @@
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label "Portfolio drill-down" :level :level1]
                  [h-box :gap "10px"
-                  :children [(concat [
-                                      [title :label "Display type:" :level :level3]
-                                      [single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk/display-style %])]
-                                      [gap :size "50px"]
-                                      [title :label "Filtering:" :level :level3]
-                                      [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
-                                     (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk/filter i %])]))
-                                     [[gap :size "50px"]
-                                      [checkbox :model hide-zero-risk :label "Hide zero positions in table view" :disabled? (= @display-style "Tree") :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]]
-                                     )
+                  :children (into [] (concat [
+                                               [title :label "Display type:" :level :level3]
+                                               [single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:single-portfolio-risk/display-style %])]
+                                               [gap :size "50px"]
+                                               [title :label "Filtering:" :level :level3]
+                                               [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
+                                              (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:single-portfolio-risk/filter i %])]))
+                                              [[gap :size "50px"]
+                                               [checkbox :model hide-zero-risk :label "Hide zero positions in table view" :disabled? (= @display-style "Tree") :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]]
+                                              ))
 
-                             ]]
+                             ]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
                  [single-portfolio-risk-display]]]])
   )
@@ -406,21 +405,21 @@
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label "Portfolio drill-down" :level :level1]
                  [h-box :gap "10px"
-                  :children (concat [
-                                     [v-box :gap "15px" :children [[title :label "Display type:" :level :level3] ;[title :label "Fields:" :level :level3]
-                                                                   [title :label "Field:" :level :level3] ;[title :label "Field two:" :level :level3]
-                                                                   ]]
-                                     [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:multiple-portfolio-risk/display-style %])]
-                                                                   ;[single-dropdown :width dropdown-width :model number-of-fields :choices [{:id "One" :label "One"} {:id "Two" :label "Two"}] :on-change #(rf/dispatch [:multiple-portfolio-risk/field-number %])]
-                                                                   [single-dropdown :width dropdown-width :model field-one :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]
-                                                                   ;[single-dropdown :width dropdown-width :model field-two :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-two %])]
-                                                                   ]]
-                                     [gap :size "50px"]
-                                     [title :label "Filtering:" :level :level3]
-                                     [selection-list :width dropdown-width :height "250px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]
-                                    (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:multiple-portfolio-risk/filter i %])]))
-                  [[gap :size "50px"]
-                   [checkbox :model hide-zero-risk :label "Hide zero positions in table view" :disabled? (= @display-style "Tree") :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]])
+                  :children (into [] (concat [
+                                              [v-box :gap "15px" :children [[title :label "Display type:" :level :level3] ;[title :label "Fields:" :level :level3]
+                                                                            [title :label "Field:" :level :level3] ;[title :label "Field two:" :level :level3]
+                                                                            ]]
+                                              [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:multiple-portfolio-risk/display-style %])]
+                                                                            ;[single-dropdown :width dropdown-width :model number-of-fields :choices [{:id "One" :label "One"} {:id "Two" :label "Two"}] :on-change #(rf/dispatch [:multiple-portfolio-risk/field-number %])]
+                                                                            [single-dropdown :width dropdown-width :model field-one :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]
+                                                                            ;[single-dropdown :width dropdown-width :model field-two :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-two %])]
+                                                                            ]]
+                                              [gap :size "50px"]
+                                              [title :label "Filtering:" :level :level3]
+                                              [selection-list :width dropdown-width :height "250px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]
+                                             (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:multiple-portfolio-risk/filter i %])]))
+                                             [[gap :size "50px"]
+                                              [checkbox :model hide-zero-risk :label "Hide zero positions in table view" :disabled? (= @display-style "Tree") :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]]))
 
                   ]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
@@ -439,16 +438,16 @@
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label "Portfolio drill-down" :level :level1]
                  [h-box :gap "10px"
-                  :children (concat [
-                                     [v-box :gap "15px" :children [[title :label "Display type:" :level :level3]  [title :label "Field:" :level :level3] [title :label "Threshold:" :level :level3] ]]
-                                     [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:portfolio-alignment/display-style %])]
-                                                                   [single-dropdown :width dropdown-width :model field :choices static/field-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/field %])]
-                                                                   [single-dropdown :width dropdown-width :model threshold :choices static/threshold-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/threshold %])]
-                                                                   ]]
-                                     [gap :size "50px"]
-                                     [title :label "Filtering:" :level :level3]
-                                     [single-dropdown :width dropdown-width :model portfolio-alignment-group :choices static/portfolio-alignment-groups :on-change #(rf/dispatch [:portfolio-alignment/group %])]]
-                                    (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:portfolio-alignment/filter i %])])))]
+                  :children (into [] (concat [
+                                              [v-box :gap "15px" :children [[title :label "Display type:" :level :level3] [title :label "Field:" :level :level3] [title :label "Threshold:" :level :level3]]]
+                                              [v-box :gap "10px" :children [[single-dropdown :width dropdown-width :model display-style :choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}] :on-change #(rf/dispatch [:portfolio-alignment/display-style %])]
+                                                                            [single-dropdown :width dropdown-width :model field :choices static/field-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/field %])]
+                                                                            [single-dropdown :width dropdown-width :model threshold :choices static/threshold-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/threshold %])]
+                                                                            ]]
+                                              [gap :size "50px"]
+                                              [title :label "Filtering:" :level :level3]
+                                              [single-dropdown :width dropdown-width :model portfolio-alignment-group :choices static/portfolio-alignment-groups :on-change #(rf/dispatch [:portfolio-alignment/group %])]]
+                                             (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [:portfolio-alignment/filter i %])]))))]
                  ;[h-box :gap "10px" :children [[title :label "Shortcuts:"]]]
                  [multiple-portfolio-alignment-risk-display]
 
