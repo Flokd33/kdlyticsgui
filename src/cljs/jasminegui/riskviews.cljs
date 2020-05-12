@@ -133,9 +133,14 @@
 ;    (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))))
 ;
 
-(defn bigger-than [filterfn row]
+(defn compare-nb [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box"
-  (>  (aget row "weight")  (aget filterfn "value")))
+  (let [input (aget filterfn "value")
+        rowval (aget row (aget filterfn "id"))]
+    (case (subs input 0 1)
+      ">" (> rowval (cljs.reader/read-string (subs input 1)))
+      "<" (< rowval (cljs.reader/read-string (subs input 1)))
+      (> rowval (cljs.reader/read-string input)))))
 
 
 
@@ -145,34 +150,34 @@
 (def table-columns
   {:id                          {:Header "ID"             :accessor "id"                          :show false}
    :id-show                     {:Header "ID"             :accessor "id"                          :width 75}
-   :region                      {:Header "Region" :accessor "jpm-region" :width 140 }
-   :country                     {:Header "Country" :accessor "qt-risk-country-name" :width 140}
-   :issuer                      {:Header "Issuer" :accessor "TICKER" :width 140 }
-   :sector                      {:Header "Sector" :accessor "qt-jpm-sector" :width 140}
-   :rating                      {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}  ; :show false
+   :region                      {:Header "Region"         :accessor "jpm-region" :width 140 }
+   :country                     {:Header "Country"        :accessor "qt-risk-country-name" :width 140}
+   :issuer                      {:Header "Issuer"         :accessor "TICKER" :width 140 }
+   :sector                      {:Header "Sector"         :accessor "qt-jpm-sector" :width 140}
+   :rating                      {:Header "Rating"         :accessor "qt-iam-int-lt-median-rating" :show false}  ; :show false
   ;  :rating                      {:Header "Rating" :accessor "qt-iam-int-lt-median-rating"  :show false} :sortMethod rating-sort} ; :show false
-   :rating-score                {:Header "Rating" :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}
-   :name                        {:Header "Name" :accessor "NAME" :width 140} ;  :filterMethod case-insensitive-filter
+   :rating-score                {:Header "Rating"         :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}
+   :name                        {:Header "Name"           :accessor "NAME" :width 140} ;  :filterMethod case-insensitive-filter
    :isin                        {:Header "ISIN"           :accessor "isin"                        :width 125 } ;:style {:textAlign "center"}
-   :description                 {:Header "thinkFolio ID" :accessor "description" :width 500}
-   :nav                         {:Header "Fund" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod bigger-than}
-   :bm-weight                         {:Header "Index" :accessor "bm-weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :nominal                     {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod bigger-than}
-   :z-spread                    {:Header "Z-spread" :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable false}
-   :g-spread                    {:Header "G-spread" :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable false}
-   :duration                    {:Header "M dur" :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
-   :yield                       {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable false}
-   :value                       {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod bigger-than}
-   :contrib-gspread             {:Header "G-spread" :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
-   :contrib-zspread                         {:Header "Fund" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
-   :contrib-yield                         {:Header "Fund" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
-   :contrib-mdur                         {:Header "Fund" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :bm-contrib-yield                         {:Header "Index" :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
-   :bm-contrib-eir-duration                         {:Header "Index" :accessor "bm-contrib-eir-duration" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :cash-pct                         {:Header "Cash" :accessor "cash-pct" :width 60 :style {:textAlign "right"} :Cell yield-format :filterable false}
-   :contrib-bond-yield                         {:Header "Bond yield" :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
-   :weight-delta                         {:Header "Delta" :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :mdur-delta                         {:Header "Delta" :accessor "mdur-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :description                 {:Header "thinkFolio ID"  :accessor "description" :width 500}
+   :nav                         {:Header "Fund"           :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod compare-nb}
+   :bm-weight                   {:Header "Index"          :accessor "bm-weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod compare-nb}
+   :nominal                     {:Header "Nominal"        :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod compare-nb}
+   :z-spread                    {:Header "Z-spread"       :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable true :filterMethod compare-nb}
+   :g-spread                    {:Header "G-spread"       :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable true :filterMethod compare-nb}
+   :duration                    {:Header "M dur"          :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable true :filterMethod compare-nb}
+   :yield                       {:Header "Yield"          :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable true :filterMethod compare-nb}
+   :value                       {:Header "Value"          :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod compare-nb}
+   :contrib-gspread             {:Header "G-spread"       :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
+   :contrib-zspread             {:Header "Fund"           :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
+   :contrib-yield               {:Header "Fund"           :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+   :contrib-mdur                {:Header "Fund"           :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :bm-contrib-yield            {:Header "Index"          :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+   :bm-contrib-eir-duration     {:Header "Index"          :accessor "bm-contrib-eir-duration" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :cash-pct                    {:Header "Cash"           :accessor "cash-pct" :width 60 :style {:textAlign "right"} :Cell yield-format :filterable false}
+   :contrib-bond-yield          {:Header "Bond yield"     :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
+   :weight-delta                {:Header "Delta"          :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod compare-nb}
+   :mdur-delta                  {:Header "Delta"          :accessor "mdur-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
 
    })
 
@@ -468,7 +473,7 @@
                              (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score]] [k (get-in totals [(keyword p) k])]))
                              {
                               ;:cash-pct (reduce + (map :weight (filter #(and (= (:portfolio %) p) (= (:jpm-region %) "Cash")) positions)))
-                              :contrib-bond-yield (- (get-in totals [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (= (:jpm-region %) "Cash")) positions))))
+                              :contrib-bond-yield (- (get-in totals [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (not= (:asset-class %) "BONDS")) positions))))
                               })))]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"

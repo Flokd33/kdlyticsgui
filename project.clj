@@ -1,6 +1,6 @@
 (defproject jasminegui "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [org.clojure/clojurescript "1.10.520"
+                 [org.clojure/clojurescript "1.10.758"
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library]]
                  [thheller/shadow-cljs "2.8.59"]
@@ -8,7 +8,7 @@
                  [re-frame "0.10.9"]
                  [re-com "2.6.0"]
                  [cljs-http "0.1.46"]
-                 [metasoarous/oz "1.6.0-alpha3"]]
+                 [metasoarous/oz "1.6.0-alpha6"]]
 
   :plugins []
 
