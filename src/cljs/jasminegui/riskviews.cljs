@@ -181,20 +181,22 @@
 
 (defn first-level-sort [x]
   (case x
-    "Cash" "AAA"
+    "Cash"        "AAA"
+    "Collateral"  "AAA"
+    "Forwards"    "AAA"
+    "Equities"    "AAA"
     x))
 
 (defn add-total-line-to-pivot [pivoted-table portfolios]
   (let [total-line (merge
-                     {:jpm-region      "Total"
-                      :qt-jpm-sector  "Total"
-                      :qt-risk-country-name     "Total"
-                      :TICKER      "Total"
-                      :NAME        "Total"
-                      :description "Total"
-                      }
-                     (into {} (for [p portfolios] [(keyword p) (reduce + (map (keyword p) pivoted-table))]))
-                     )]
+                     {:jpm-region           "Total"
+                      :qt-jpm-sector        "Total"
+                      :qt-risk-country-name "Total"
+                      :TICKER               "Total"
+                      :NAME                 "Total"
+                      :description          "Total"
+                      :isin                 "Total"}
+                     (into {} (for [p portfolios] [(keyword p) (reduce + (map (keyword p) pivoted-table))])))]
     (conj pivoted-table total-line)))
 
 
@@ -218,7 +220,7 @@
         accessors-k (mapv keyword accessors)
         display (conj (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions) portfolio-total-line)
         ]
-    (println @(rf/subscribe [:single-portfolio-risk/table-filter]))
+    ;(println @(rf/subscribe [:single-portfolio-risk/table-filter]))
     [:> ReactTable
      {:data                display
       :defaultFilterMethod case-insensitive-filter
@@ -371,7 +373,7 @@
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
-      :children [[title :label "Portfolio drill-down" :level :level1]
+      :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
                  [h-box :gap "10px"
                   :children (into [] (concat [
                                                [title :label "Display type:" :level :level3]
@@ -403,7 +405,7 @@
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
-      :children [[title :label "Portfolio drill-down" :level :level1]
+      :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
                  [h-box :gap "10px"
                   :children (into [] (concat [
                                               [v-box :gap "15px" :children [[title :label "Display type:" :level :level3] ;[title :label "Fields:" :level :level3]
@@ -436,7 +438,7 @@
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
-      :children [[title :label "Portfolio drill-down" :level :level1]
+      :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
                  [h-box :gap "10px"
                   :children (into [] (concat [
                                               [v-box :gap "15px" :children [[title :label "Display type:" :level :level3] [title :label "Field:" :level :level3] [title :label "Threshold:" :level :level3]]]
@@ -470,7 +472,7 @@
                               })))]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
-      :children [[title :label "Summary" :level :level1]
+      :children [[title :label (str "Summary " @(rf/subscribe [:qt-date])) :level :level1]
     [:> ReactTable
      {:data           display
       :columns        [{:Header "Portfolio" :accessor "portfolio" :width 120}

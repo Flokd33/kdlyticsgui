@@ -23,4 +23,4 @@
 (rf/dispatch [:get-pivoted-positions])
 (rf/dispatch [:get-total-positions])
 (rf/dispatch [:get-rating-to-score])
-
+(rf/dispatch [:get-qt-date])

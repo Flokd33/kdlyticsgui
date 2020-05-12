@@ -22,6 +22,7 @@
                  :total-positions                             {}
                  :active-view                                 :home
                  :active-home                                 :summary
+                 :qt-date                                     "undefined"
 
                  :single-portfolio-risk/display-style         "Tree"
                  :single-portfolio-risk/portfolio             "OGEMCORD"
@@ -87,6 +88,10 @@
   :portfolio-alignment/filter
   (fn [db [_ id f]] (assoc-in db [:portfolio-alignment/filter id] f)))
 
+(rf/reg-event-db
+  :qt-date
+  (fn [db [_ qt-date]] (assoc db :qt-date (clojure.string/replace qt-date "\"" ""))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;HTTP GET DEFINITION;;
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -136,6 +141,17 @@
     {:http-get-dispatch {:url          (str server-address "total-positions") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:total-positions]
                          :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-qt-date
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str server-address "qt-date") ;(str "http://iamlfilive:3501/positions")
+                         :dispatch-key [:qt-date]
+                         :kwk          false}}))
+
+
+
+
 
 
 
