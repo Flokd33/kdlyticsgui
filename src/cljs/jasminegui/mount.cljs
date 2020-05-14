@@ -29,6 +29,7 @@
                  :single-portfolio-risk/filter                {1 :region 2 :country 3 :issuer}
                  :single-portfolio-risk/hide-zero-holdings    true
                  :single-portfolio-risk/table-filter          []
+                 :single-portfolio-risk/shortcut              1
 
                  :multiple-portfolio-risk/display-style       "Table"
                  :multiple-portfolio-risk/field-number        "One"
@@ -37,12 +38,14 @@
                  :multiple-portfolio-risk/selected-portfolios (set nil) ;["OGEMCORD"]
                  :multiple-portfolio-risk/filter              {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-risk/hide-zero-holdings    true
+                 :multiple-portfolio-risk/shortcut            1
 
                  :portfolio-alignment/display-style           "Tree"
                  :portfolio-alignment/field                   :nav
                  :portfolio-alignment/filter                  {1 :region 2 :country 3 :issuer}
                  :portfolio-alignment/group                   :cembi
                  :portfolio-alignment/threshold               :quarter
+                 :portfolio-alignment/shortcut                1
 
                  })
 
@@ -64,10 +67,12 @@
            :multiple-portfolio-risk/field-two
            :multiple-portfolio-risk/selected-portfolios
            :multiple-portfolio-risk/hide-zero-holdings
+           :multiple-portfolio-risk/shortcut
            :portfolio-alignment/display-style
            :portfolio-alignment/field
            :portfolio-alignment/group
            :portfolio-alignment/threshold
+           :portfolio-alignment/shortcut
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
 (rf/reg-event-db
@@ -91,6 +96,18 @@
 (rf/reg-event-db
   :qt-date
   (fn [db [_ qt-date]] (assoc db :qt-date (clojure.string/replace qt-date "\"" ""))))
+
+(rf/reg-event-db
+  :single-portfolio-risk/shortcut
+  (fn [db [_ snapshot]]
+    (case snapshot
+      1 (assoc db :single-portfolio-risk/shortcut snapshot)
+      2 (assoc db :single-portfolio-risk/shortcut snapshot)
+      3 (assoc db :single-portfolio-risk/shortcut snapshot)
+      4 (assoc db :single-portfolio-risk/shortcut snapshot)
+      )
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;HTTP GET DEFINITION;;
