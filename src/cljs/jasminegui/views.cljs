@@ -20,13 +20,17 @@
                 [h-box
                  :class "navbar"
                  :align :stretch
-                 :children (into [] (for [item static/main-navigation]
-                                      [box
-                                       :width (if (= (:code item) :home) "250px" "150px")
-                                       :class (if (= active-view (:code item)) "dropdown-active" "dropdown")
-                                       :child (if (:href item)
-                                                [hyperlink-href :label (:name item) :href (:href item)]
-                                                [hyperlink :label (:name item) :on-click #(rf/dispatch [:active-view (:code item)])])]))
+                 :children (into [] (concat (into [] (for [item static/main-navigation]
+                                                       [box
+                                                        :width (if (= (:code item) :home) "250px" "150px")
+                                                        :class (if (= active-view (:code item)) "dropdown-active" "dropdown")
+                                                        :child (if (:href item)
+                                                                 [hyperlink-href :label (:name item) :href (:href item)]
+                                                                 [hyperlink :label (:name item) :on-click #(rf/dispatch [:active-view (:code item)])])]))
+                                            [[gap :size "1"]
+                                             [box :align-self :center :height "50%" :width "3px" :child [line :color "#CA3E47" :size "3px"]]
+                                             [box :width "3px" :child ""] ;this is just equal to line above - ugly hack
+                                             [box :width "150px" :class "dropdown" :child [hyperlink :label "Jasmine" :on-click nil]]]))
 
 
                  ;[(for [item static/main-navigation]
