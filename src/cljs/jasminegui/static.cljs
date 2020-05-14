@@ -2,8 +2,10 @@
 
 
 (def main-navigation
-  [{:code :home :name "Home" :dispatch :home :subs nil}
+  [{:code :home :name "Holdings" :dispatch :home :subs nil}
    {:code :trade-history :name "Trade history" :dispatch :trade-drilldown :subs [{:code :description :name "Description"} {:code :history :name "History"}]}
+   {:code :trade-analyser :name "Trade analyser" :dispatch :home :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
+   {:code :performance :name "Performance" :dispatch :home :subs nil :href "https://iamqsense.investecam.com/qsensesso/qps/logout?targetUri=https://iamqsense.investecam.com/qsensesso/sense/app/3bfbbbc8-1ee7-4416-821f-972aab0ff5f6/sheet/89876e6f-f163-4d38-86bd-95f863397253/state/analysis"}
    {:code :administration :name "Administration" :dispatch :administration :subs nil}])
 
 (def home-navigation
@@ -21,7 +23,7 @@
 
 (def portfolio-alignment-groups [{:id :cembi :label "CEMBI" :portfolios ["OGEMCORD" "AIFGLBCD" "IBSGEMD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
                                  {:id :allianz :label "Allianz" :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-                                 {:id :ig :label "IG" :portfolios ["OGEMIGC" "ICIFEMD" "IBNPEMD"]}
+                                 {:id :ig :label "IG" :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD"]}
                                  {:id :talanx :label "Talanx" :portfolios ["ITLNXEMD" "ITLXEMD" "ITLXEMD3"]}])
 
 (def field-choices
