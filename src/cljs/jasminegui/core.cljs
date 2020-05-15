@@ -1,6 +1,8 @@
 (ns jasminegui.core
   (:require
    [reagent.core :as r]
+   [reagent.dom :as dom]
+
    [re-frame.core :as rf]
    [cljs-http.client :as http]
    [cljs.core.async :refer [<!]]
@@ -11,7 +13,7 @@
 
 (defn ^:dev/after-load mount-root []
   (rf/clear-subscription-cache!)
-  (r/render [views/main-panel]
+  (dom/render [views/main-panel]
             (.getElementById js/document "app")))
 
 (defn init []

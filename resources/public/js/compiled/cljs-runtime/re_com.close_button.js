@@ -8,22 +8,22 @@ re_com.close_button.close_button_args_desc = new cljs.core.PersistentVector(null
 re_com.close_button.close_button = (function re_com$close_button$close_button(){
 var over_QMARK_ = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(false);
 return (function() { 
-var re_com$close_button$close_button_$_close_button_render__delegate = function (p__55698){
-var map__55699 = p__55698;
-var map__55699__$1 = (((((!((map__55699 == null))))?(((((map__55699.cljs$lang$protocol_mask$partition0$ & (64))) || ((cljs.core.PROTOCOL_SENTINEL === map__55699.cljs$core$ISeq$))))?true:false):false))?cljs.core.apply.cljs$core$IFn$_invoke$arity$2(cljs.core.hash_map,map__55699):map__55699);
-var args = map__55699__$1;
-var disabled_QMARK_ = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__55699__$1,new cljs.core.Keyword(null,"disabled?","disabled?",-1523234181));
-var tooltip = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__55699__$1,new cljs.core.Keyword(null,"tooltip","tooltip",-1809677058));
-var attr = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__55699__$1,new cljs.core.Keyword(null,"attr","attr",-604132353));
-var left_offset = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__55699__$1,new cljs.core.Keyword(null,"left-offset","left-offset",-331155643));
-var color = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__55699__$1,new cljs.core.Keyword(null,"color","color",1011675173),"#ccc");
-var font_size = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__55699__$1,new cljs.core.Keyword(null,"font-size","font-size",-1847940346),(16));
-var div_size = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__55699__$1,new cljs.core.Keyword(null,"div-size","div-size",1661625995),(16));
-var on_click = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__55699__$1,new cljs.core.Keyword(null,"on-click","on-click",1632826543));
-var style = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__55699__$1,new cljs.core.Keyword(null,"style","style",-496642736));
-var class$ = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__55699__$1,new cljs.core.Keyword(null,"class","class",-2030961996));
-var top_offset = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__55699__$1,new cljs.core.Keyword(null,"top-offset","top-offset",1235816245));
-var hover_color = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__55699__$1,new cljs.core.Keyword(null,"hover-color","hover-color",663962326),"#999");
+var re_com$close_button$close_button_$_close_button_render__delegate = function (p__43361){
+var map__43362 = p__43361;
+var map__43362__$1 = (((((!((map__43362 == null))))?(((((map__43362.cljs$lang$protocol_mask$partition0$ & (64))) || ((cljs.core.PROTOCOL_SENTINEL === map__43362.cljs$core$ISeq$))))?true:false):false))?cljs.core.apply.cljs$core$IFn$_invoke$arity$2(cljs.core.hash_map,map__43362):map__43362);
+var args = map__43362__$1;
+var disabled_QMARK_ = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__43362__$1,new cljs.core.Keyword(null,"disabled?","disabled?",-1523234181));
+var tooltip = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__43362__$1,new cljs.core.Keyword(null,"tooltip","tooltip",-1809677058));
+var attr = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__43362__$1,new cljs.core.Keyword(null,"attr","attr",-604132353));
+var left_offset = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__43362__$1,new cljs.core.Keyword(null,"left-offset","left-offset",-331155643));
+var color = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__43362__$1,new cljs.core.Keyword(null,"color","color",1011675173),"#ccc");
+var font_size = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__43362__$1,new cljs.core.Keyword(null,"font-size","font-size",-1847940346),(16));
+var div_size = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__43362__$1,new cljs.core.Keyword(null,"div-size","div-size",1661625995),(16));
+var on_click = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__43362__$1,new cljs.core.Keyword(null,"on-click","on-click",1632826543));
+var style = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__43362__$1,new cljs.core.Keyword(null,"style","style",-496642736));
+var class$ = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__43362__$1,new cljs.core.Keyword(null,"class","class",-2030961996));
+var top_offset = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__43362__$1,new cljs.core.Keyword(null,"top-offset","top-offset",1235816245));
+var hover_color = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__43362__$1,new cljs.core.Keyword(null,"hover-color","hover-color",663962326),"#999");
 if((((!(goog.DEBUG)))?true:re_com.validate.validate_args.cljs$core$IFn$_invoke$arity$variadic(re_com.validate.extract_arg_data(re_com.close_button.close_button_args_desc),args,cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2(["close-button"], 0)))){
 } else {
 throw (new Error("Assert failed: (validate-args-macro close-button-args-desc args \"close-button\")"));
@@ -56,17 +56,17 @@ return null;
 })], null),attr], 0)),new cljs.core.Keyword(null,"child","child",623967545),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"i","i",-1386841315),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"class","class",-2030961996),"zmdi zmdi-hc-fw-rc zmdi zmdi-close"], null)], null)], null)], null);
 };
 var re_com$close_button$close_button_$_close_button_render = function (var_args){
-var p__55698 = null;
+var p__43361 = null;
 if (arguments.length > 0) {
-var G__55701__i = 0, G__55701__a = new Array(arguments.length -  0);
-while (G__55701__i < G__55701__a.length) {G__55701__a[G__55701__i] = arguments[G__55701__i + 0]; ++G__55701__i;}
-  p__55698 = new cljs.core.IndexedSeq(G__55701__a,0,null);
+var G__43427__i = 0, G__43427__a = new Array(arguments.length -  0);
+while (G__43427__i < G__43427__a.length) {G__43427__a[G__43427__i] = arguments[G__43427__i + 0]; ++G__43427__i;}
+  p__43361 = new cljs.core.IndexedSeq(G__43427__a,0,null);
 } 
-return re_com$close_button$close_button_$_close_button_render__delegate.call(this,p__55698);};
+return re_com$close_button$close_button_$_close_button_render__delegate.call(this,p__43361);};
 re_com$close_button$close_button_$_close_button_render.cljs$lang$maxFixedArity = 0;
-re_com$close_button$close_button_$_close_button_render.cljs$lang$applyTo = (function (arglist__55702){
-var p__55698 = cljs.core.seq(arglist__55702);
-return re_com$close_button$close_button_$_close_button_render__delegate(p__55698);
+re_com$close_button$close_button_$_close_button_render.cljs$lang$applyTo = (function (arglist__43428){
+var p__43361 = cljs.core.seq(arglist__43428);
+return re_com$close_button$close_button_$_close_button_render__delegate(p__43361);
 });
 re_com$close_button$close_button_$_close_button_render.cljs$core$IFn$_invoke$arity$variadic = re_com$close_button$close_button_$_close_button_render__delegate;
 return re_com$close_button$close_button_$_close_button_render;

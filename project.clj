@@ -4,11 +4,12 @@
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library]]
                  [thheller/shadow-cljs "2.8.59"]
-                 [reagent "0.8.1"]
-                 [re-frame "0.10.9"]
-                 [re-com "2.6.0"]
+                 [reagent "0.10.0"]
+                 [re-frame "0.12.0"]
+                 [re-com "2.8.0"]
                  [cljs-http "0.1.46"]
-                 [metasoarous/oz "1.6.0-alpha6"]]
+                 ;[metasoarous/oz "1.6.0-alpha6"]
+                 ]
 
   :plugins []
 

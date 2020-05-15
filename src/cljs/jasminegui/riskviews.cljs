@@ -1,6 +1,6 @@
 (ns jasminegui.riskviews
   (:require
-    [oz.core :as oz]
+    ; [oz.core :as oz]
     [re-frame.core :as rf]
     [reagent.core :as r]
     [goog.string :as gstring]
@@ -538,6 +538,8 @@
   )
 
 
+(defn go-to-portfolio-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:active-home :single-portfolio]) (rf/dispatch [:single-portfolio-risk/portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
+
 
 (defn summary-display []
   (let [positions @(rf/subscribe [:positions])
@@ -568,4 +570,5 @@
                        ]
       :showPagination false
       :pageSize       (count portfolios)
+      :getTrProps     go-to-portfolio-risk
       :className      "-striped -highlight"}]]]]))
