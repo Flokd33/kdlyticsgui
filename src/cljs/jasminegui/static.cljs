@@ -49,3 +49,4 @@
    {:id :half           :label "0.50"}
    {:id :threequarters  :label "0.75"}
    {:id :one            :label "1.00"}])
+

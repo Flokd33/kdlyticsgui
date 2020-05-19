@@ -4,7 +4,10 @@
     [jasminegui.static :as static]
     [re-frame.core :as rf]
     [cljs-http.client :as http]
-    [cljs.core.async :refer [<!]])
+    [cljs.core.async :refer [<!]]
+    [jasminegui.tables :as tables]
+    ;[re-pressed.core :as rp]
+    )
   (:require-macros [cljs.core.async.macros :refer [go]])
   )
 
@@ -51,6 +54,51 @@
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
 (doseq [k (keys default-db)] (rf/reg-sub k (fn [db] (k db))))
+
+
+(defn first-level-sort [x]
+  (case x
+    "Cash"        "AAA"
+    "Collateral"  "AAA"
+    "Forwards"    "AAA"
+    "Equities"    "AAA"
+    x))
+
+(defn add-total-line-to-pivot [pivoted-table portfolios]
+  (let [total-line (merge
+                     {:jpm-region           "Total"
+                      :qt-jpm-sector        "Total"
+                      :qt-risk-country-name "Total"
+                      :TICKER               "Total"
+                      :NAME                 "Total"
+                      :description          "Total"
+                      :isin                 "Total"
+                      :qt-iam-int-lt-median-rating-score "Total"}
+                     (into {} (for [p portfolios] [(keyword p) (reduce + (map (keyword p) pivoted-table))])))]
+    (conj pivoted-table total-line)))
+
+
+(rf/reg-sub
+  :multiple-portfolio-risk/table
+  (fn [db]
+    (let [
+          pivoted-positions (:pivoted-positions db)
+          kselected-portfolios (mapv keyword (:multiple-portfolio-risk/selected-portfolios db))
+          portfolios (:portfolios db)
+          hide-zero-risk (:multiple-portfolio-risk/hide-zero-holdings db)
+          display-key-one (:multiple-portfolio-risk/field-one db)
+          is-tree (= (:multiple-portfolio-risk/display-style db) "Tree")
+          risk-filter (:multiple-portfolio-risk/filter db)
+          risk-choice-1 (if (not= "None" (risk-filter 1)) (risk-filter 1))
+          risk-choice-2 (if (not= "None" (risk-filter 2)) (risk-filter 2))
+          risk-choice-3 (if (not= "None" (risk-filter 3)) (risk-filter 3))
+          grouping-columns (into [] (for [r (remove nil? [risk-choice-1 risk-choice-2 risk-choice-3 :name])] (tables/table-columns r)))
+          accessors-k (mapv keyword (mapv :accessor grouping-columns))
+          pivoted-data (map #(merge % ((keyword (get-in tables/table-columns [display-key-one :accessor])) %)) pivoted-positions)
+          thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
+          pivoted-data-hide-zero (if (and (not is-tree) hide-zero-risk) (filter thfil pivoted-data) pivoted-data)]
+    (add-total-line-to-pivot (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero) portfolios))))
+
 (doseq [k [:active-view
            :active-home
            :positions
@@ -97,6 +145,7 @@
   :qt-date
   (fn [db [_ qt-date]] (assoc db :qt-date (clojure.string/replace qt-date "\"" ""))))
 
+;THIS IS A DUMMY - IN PRACTICE WE'D DO MORE THINGS HERE
 (rf/reg-event-db
   :single-portfolio-risk/shortcut
   (fn [db [_ snapshot]]
@@ -104,10 +153,24 @@
       1 (assoc db :single-portfolio-risk/shortcut snapshot)
       2 (assoc db :single-portfolio-risk/shortcut snapshot)
       3 (assoc db :single-portfolio-risk/shortcut snapshot)
-      4 (assoc db :single-portfolio-risk/shortcut snapshot)
-      )
-    )
-  )
+      4 (assoc db :single-portfolio-risk/shortcut snapshot))))
+
+(rf/reg-event-db
+  :cycle-shortcut
+  (fn [db [_ _ _]]
+    (let [shortcut-key (keyword (str (name (:active-home db)) "-risk/shortcut"))
+          shortcut-value (shortcut-key db)]
+      (cond
+        (< shortcut-value 4) (assoc db shortcut-key (inc shortcut-value))
+        :else (assoc db shortcut-key 1)))))
+
+(rf/reg-event-db
+  :tree-table
+  (fn [db [_ _ _]]
+    (let [shortcut-key (keyword (str (name (:active-home db)) "-risk/display-style"))]
+      (case (shortcut-key db)
+        "Tree"  (assoc db shortcut-key "Table")
+        "Table" (assoc db shortcut-key "Tree")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;HTTP GET DEFINITION;;
@@ -165,8 +228,6 @@
     {:http-get-dispatch {:url          (str server-address "qt-date") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:qt-date]
                          :kwk          false}}))
-
-
 
 
 

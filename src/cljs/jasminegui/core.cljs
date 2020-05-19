@@ -6,6 +6,7 @@
    [re-frame.core :as rf]
    [cljs-http.client :as http]
    [cljs.core.async :refer [<!]]
+   [re-pressed.core :as rp]
    [jasminegui.views :as views]
    [jasminegui.mount :as mount])
   (:require-macros [cljs.core.async.macros :refer [go]]))
@@ -18,6 +19,7 @@
 
 (defn init []
   (rf/dispatch-sync [::mount/initialize-db])
+  (rf/dispatch-sync [::rp/add-keyboard-event-listener "keypress"])
   (mount-root))
 
 (rf/dispatch [:get-portfolios])
@@ -26,3 +28,8 @@
 (rf/dispatch [:get-total-positions])
 (rf/dispatch [:get-rating-to-score])
 (rf/dispatch [:get-qt-date])
+
+;letter v or V, then t or T
+(rf/dispatch [::rp/set-keypress-rules {:event-keys [[[:cycle-shortcut] [{:keyCode 86}] [{:keyCode 118}]]
+                                                    [[:tree-table] [{:keyCode 84}] [{:keyCode 116}]]]}])
+
