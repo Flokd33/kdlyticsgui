@@ -113,12 +113,12 @@
    :value                       {:Header "Value"          :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod compare-nb}
    :contrib-gspread             {:Header "G-spread"       :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
    :contrib-zspread             {:Header "Fund"           :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
-   :contrib-yield               {:Header "Fund"           :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+   :contrib-yield               {:Header "Fund"           :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell yield-format :filterable false}
    :contrib-mdur                {:Header "Fund"           :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :bm-contrib-yield            {:Header "Index"          :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+   :bm-contrib-yield            {:Header "Index"          :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell yield-format :filterable false}
    :bm-contrib-eir-duration     {:Header "Index"          :accessor "bm-contrib-eir-duration" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
    :cash-pct                    {:Header "Cash"           :accessor "cash-pct" :width 60 :style {:textAlign "right"} :Cell yield-format :filterable false}
-   :contrib-bond-yield          {:Header "Bond yield"     :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
+   :contrib-bond-yield          {:Header "Bond yield"     :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell yield-format :filterable false}
    :weight-delta                {:Header "Delta"          :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod compare-nb}
    :mdur-delta                  {:Header "Delta"          :accessor "mdur-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
 
