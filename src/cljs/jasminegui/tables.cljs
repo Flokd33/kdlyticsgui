@@ -48,12 +48,12 @@
   )
 
 (defn txt-format [fmt m this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt (* m x)) "-")))
-(def round3         (partial txt-format 1. "%.3f"))
-(def round2         (partial txt-format 1. "%.2f"))
-(def round1         (partial txt-format 1. "%.1f"))
-(def yield-format   (partial txt-format 1. "%.2f%"))
-(def zspread-format (partial txt-format 1. "%.0fbps"))
-(def round2*100     (partial txt-format 100.0 "%.2f"))
+(def round3         (partial txt-format "%.3f" 1.))
+(def round2         (partial txt-format "%.2f" 1.))
+(def round1         (partial txt-format "%.1f" 1.))
+(def yield-format   (partial txt-format "%.2f%" 1.))
+(def zspread-format (partial txt-format "%.0fbps" 1.))
+(def round2*100     (partial txt-format "%.2f" 100.))
 
 (defn rating-sort [a b]
   (let [t @(rf/subscribe [:rating-to-score])] (<= (t (keyword a)) (t (keyword b)))))
