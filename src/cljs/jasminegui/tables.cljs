@@ -47,12 +47,13 @@
 
   )
 
-(defn txt-format [fmt this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt x) "-")))
-(def round3         (partial txt-format "%.3f"))
-(def round2         (partial txt-format "%.2f"))
-(def round1         (partial txt-format "%.1f"))
-(def yield-format   (partial txt-format "%.2f%"))
-(def zspread-format (partial txt-format "%.0fbps"))
+(defn txt-format [fmt m this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt (* m x)) "-")))
+(def round3         (partial txt-format 1. "%.3f"))
+(def round2         (partial txt-format 1. "%.2f"))
+(def round1         (partial txt-format 1. "%.1f"))
+(def yield-format   (partial txt-format 1. "%.2f%"))
+(def zspread-format (partial txt-format 1. "%.0fbps"))
+(def round2*100     (partial txt-format 100.0 "%.2f"))
 
 (defn rating-sort [a b]
   (let [t @(rf/subscribe [:rating-to-score])] (<= (t (keyword a)) (t (keyword b)))))
@@ -103,8 +104,8 @@
    :name                        {:Header "Name"           :accessor "NAME" :width 140} ;  :filterMethod case-insensitive-filter
    :isin                        {:Header "ISIN"           :accessor "isin"                        :width 125 } ;:style {:textAlign "center"}
    :description                 {:Header "thinkFolio ID"  :accessor "description" :width 500}
-   :nav                         {:Header "Fund"           :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod compare-nb}
-   :bm-weight                   {:Header "Index"          :accessor "bm-weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod compare-nb}
+   :nav                         {:Header "Fund"           :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb}
+   :bm-weight                   {:Header "Index"          :accessor "bm-weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb}
    :nominal                     {:Header "Nominal"        :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod compare-nb}
    :z-spread                    {:Header "Z-spread"       :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable true :filterMethod compare-nb}
    :g-spread                    {:Header "G-spread"       :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable true :filterMethod compare-nb}
@@ -117,9 +118,9 @@
    :contrib-mdur                {:Header "Fund"           :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
    :bm-contrib-yield            {:Header "Index"          :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
    :bm-contrib-eir-duration     {:Header "Index"          :accessor "bm-contrib-eir-duration" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :cash-pct                    {:Header "Cash"           :accessor "cash-pct" :width 60 :style {:textAlign "right"} :Cell yield-format :filterable false}
+   :cash-pct                    {:Header "Cash"           :accessor "cash-pct" :width 60 :style {:textAlign "right"} :Cell round2pc :filterable false}
    :contrib-bond-yield          {:Header "Bond yield"     :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
-   :weight-delta                {:Header "Delta"          :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable true :filterMethod compare-nb}
+   :weight-delta                {:Header "Delta"          :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb}
    :mdur-delta                  {:Header "Delta"          :accessor "mdur-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
 
    })
