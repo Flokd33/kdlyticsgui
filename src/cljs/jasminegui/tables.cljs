@@ -66,6 +66,7 @@
       [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
       "-")))
 
+(def round0pc (partial roundpc "%.0f%"))
 (def round1pc (partial roundpc "%.1f%"))
 (def round2pc (partial roundpc "%.2f%"))
 
@@ -98,6 +99,7 @@
    :country                     {:Header "Country"        :accessor "qt-risk-country-name" :width 140}
    :issuer                      {:Header "Issuer"         :accessor "TICKER" :width 140 }
    :sector                      {:Header "Sector"         :accessor "qt-jpm-sector" :width 140}
+   :maturity-band               {:Header "Maturity"       :accessor "qt-final-maturity-band" :width 140}
    :rating                      {:Header "Rating"         :accessor "qt-iam-int-lt-median-rating" :show false}  ; :show false
    ;  :rating                      {:Header "Rating" :accessor "qt-iam-int-lt-median-rating"  :show false} :sortMethod rating-sort} ; :show false
    :rating-score                {:Header "Rating"         :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}

@@ -28,6 +28,9 @@
 (rf/dispatch [:get-total-positions])
 (rf/dispatch [:get-rating-to-score])
 (rf/dispatch [:get-qt-date])
+(rf/dispatch [:get-var-proxies])
+(rf/dispatch [:get-var-dates])
+(rf/dispatch [:get-var-data "OGEMCORD"])
 
 ;letter v or V, then t or T
 (rf/dispatch [::rp/set-keypress-rules {:event-keys [[[:cycle-shortcut] [{:keyCode 86}] [{:keyCode 118}]]

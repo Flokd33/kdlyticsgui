@@ -10,7 +10,9 @@
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
-    [jasminegui.home :as home]))
+    [jasminegui.home :as home]
+    [jasminegui.var :as var]
+    ))
 
 (defn nav-bar []
   (let [active-view @(rf/subscribe [:active-view])]
@@ -113,6 +115,7 @@
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-view
       :home   [home/home-view]
+      :var    [var/var-view]
       ;:trade-drilldown  [tradeview/trade-description-view]
       ;:trade-entry      [tradeentry/trade-entry-view]
       ;:sim-trades       [tables/simulated-trades-view]

@@ -14,7 +14,7 @@
 
 (def dev-server-address "http://localhost:3501/")
 (def prod-server-address "http://iamlfilive:3501/")
-(def server-address prod-server-address)              ;"http://localhost:3501/
+(def server-address dev-server-address)              ;"http://localhost:3501/
 
 
 
@@ -25,6 +25,7 @@
                  :total-positions                             {}
                  :active-view                                 :home
                  :active-home                                 :summary
+                 :active-var                                  :overview
                  :qt-date                                     "undefined"
 
                  :single-portfolio-risk/display-style         "Tree"
@@ -52,6 +53,15 @@
                  :portfolio-alignment/shortcut                1
                  :portfolio-alignment/table-filter          []
 
+                 :var/portfolio                              "OGEMCORD"
+                 :var/result                                 nil
+                 :var/proxies                                nil
+                 :var/history                                nil
+                 :var/data                                   nil
+                 :var/dates                                  nil
+
+                 :trade-history/active-bond                  nil
+                 :trade-history/history                      nil
                  })
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
@@ -144,10 +154,15 @@
 
 (doseq [k [:active-view
            :active-home
+           :active-var
            :positions
            :rating-to-score
            :pivoted-positions
            :total-positions
+           :var/proxies
+           :var/dates
+           :var/data
+           :var/portfolio
            :single-portfolio-risk/portfolio
            :single-portfolio-risk/display-style
            :single-portfolio-risk/hide-zero-holdings
@@ -274,8 +289,27 @@
                          :dispatch-key [:qt-date]
                          :kwk          false}}))
 
+(rf/reg-event-fx
+  :get-var-proxies
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str server-address "var-proxies") ;(str "http://iamlfilive:3501/positions")
+                         :dispatch-key [:var/proxies]
+                         :kwk          true}}))
 
+(rf/reg-event-fx
+  :get-var-dates
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str server-address "var-dates") ;(str "http://iamlfilive:3501/positions")
+                         :dispatch-key [:var/dates]
+                         :kwk          true}}))
 
+(rf/reg-event-fx
+  :get-var-data
+  (fn [{:keys [db]} [_ portfolio]]
+    (println "calling var data")
+    {:http-get-dispatch {:url          (str server-address "var-data?portfolio=" portfolio) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:var/data]
+                         :kwk          true}}))
 
 
 

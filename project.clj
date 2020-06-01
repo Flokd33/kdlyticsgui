@@ -10,7 +10,7 @@
                  [cljs-http "0.1.46"]
                  [re-pressed "0.3.1"]
 
-                 ;[metasoarous/oz "1.6.0-alpha6"]
+                 [metasoarous/oz "1.6.0-alpha6"]
                  ]
 
   :plugins []
