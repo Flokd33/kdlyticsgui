@@ -59,3 +59,10 @@
 
 (def tree-table-choices
   [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}])
+
+(def var-charts-choice-map [{:id :daily-1y   :label "Daily 1y"   :frequency :daily   :period 1}
+                            {:id :daily-3y   :label "Daily 3y"   :frequency :daily   :period 3}
+                            {:id :weekly-1y  :label "Weekly 1y"  :frequency :weekly  :period 1}
+                            {:id :weekly-3y  :label "Weekly 3y"  :frequency :weekly  :period 3}
+                            {:id :monthly-1y :label "Monthly 1y" :frequency :monthly :period 1}
+                            {:id :monthly-3y :label "Monthly 3y" :frequency :monthly :period 3}])

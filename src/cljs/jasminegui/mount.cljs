@@ -14,20 +14,25 @@
 
 (def dev-server-address "http://localhost:3501/")
 (def prod-server-address "http://iamlfilive:3501/")
-(def server-address dev-server-address)              ;"http://localhost:3501/
+(def server-address prod-server-address)              ;"http://localhost:3501/
 
 
 
-(def default-db {:positions                                   []
+(def default-db {
+                 ;data
+                 :positions                                   []
                  :rating-to-score                             nil
                  :pivoted-positions                           []
                  :portfolios                                  []
                  :total-positions                             {}
+                 :qt-date                                     "undefined"
+
+                 ;navigation
                  :active-view                                 :home
                  :active-home                                 :summary
                  :active-var                                  :overview
-                 :qt-date                                     "undefined"
 
+                 ;single-portfolio view
                  :single-portfolio-risk/display-style         "Tree"
                  :single-portfolio-risk/portfolio             "OGEMCORD"
                  :single-portfolio-risk/filter                {1 :region 2 :country 3 :issuer}
@@ -35,6 +40,7 @@
                  :single-portfolio-risk/table-filter          []
                  :single-portfolio-risk/shortcut              1
 
+                 ;multiple-portfolio view
                  :multiple-portfolio-risk/display-style       "Table"
                  :multiple-portfolio-risk/field-number        "One"
                  :multiple-portfolio-risk/field-one           :nav
@@ -45,6 +51,7 @@
                  :multiple-portfolio-risk/shortcut            1
                  :multiple-portfolio-risk/table-filter          []
 
+                 ;portfolio-alignment-view
                  :portfolio-alignment/display-style           "Tree"
                  :portfolio-alignment/field                   :nav
                  :portfolio-alignment/filter                  {1 :region 2 :country 3 :issuer}
@@ -53,13 +60,16 @@
                  :portfolio-alignment/shortcut                1
                  :portfolio-alignment/table-filter          []
 
+                 ;var view
                  :var/portfolio                              "OGEMCORD"
                  :var/result                                 nil
                  :var/proxies                                nil
                  :var/history                                nil
                  :var/data                                   nil
                  :var/dates                                  nil
+                 :var/chart-period                          :daily-3y
 
+                 ;trade history
                  :trade-history/active-bond                  nil
                  :trade-history/history                      nil
                  })
@@ -163,6 +173,7 @@
            :var/dates
            :var/data
            :var/portfolio
+           :var/chart-period
            :single-portfolio-risk/portfolio
            :single-portfolio-risk/display-style
            :single-portfolio-risk/hide-zero-holdings
@@ -311,6 +322,14 @@
                          :dispatch-key [:var/data]
                          :kwk          true}}))
 
+
+(rf/reg-event-fx
+  :get-portfolio-var
+  (fn [{:keys [db]} [_ portfolio]]
+    {:db (assoc db :var/portfolio portfolio)
+     :http-get-dispatch {:url          (str server-address "var-data?portfolio=" portfolio) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:var/data]
+                         :kwk          true}}))
 
 
 

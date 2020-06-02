@@ -87,3 +87,25 @@
      :encoding
               {:x 	   {:field "date"  :type "temporal" :axis {:format "%b-%y", :labelFontSize 12 :title nil} :sort "descending"}
                :y     {:field "price" :type "quantitative"  :scale {:domain [ymin ymax]}  :axis {:labelFontSize 12 :title nil}}}}))
+
+(defn r5 [x] (* 5 (int (/ (+ x 4) 5))))
+
+(defn return-histogram [returns width height]
+  (let [data (into [] (map (fn [x] {:return (* 100 x)}) returns))
+        absmax (r5 (Math/ceil (* 100 (apply max (map #(Math/abs %) returns)))))]
+    ;(print "absmax" (apply max (map #(Math/abs %) returns)))
+    {:title    nil
+     :data     {:values data
+                :format {:type "json" :parse {:return "number"}}}
+     :encoding {:x {:bin {:step 0.5}
+                    :field "return"
+                    :type "quantitative"
+                    :scale {:domain [(- absmax), absmax]}
+                    :axis {:title nil
+                           :labelFontSize 12
+                           :values (vec (range (- absmax) (+ absmax 5) 0.5))
+                           :format ".1f"}}                           ;
+                :y {:aggregate "count" :type "quantitative" :axis {:title nil :labelFontSize 12}}}
+     :mark     "bar"
+     :width    width
+     :height   height}))

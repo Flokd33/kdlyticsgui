@@ -69,6 +69,17 @@
        {:id "Monthly 1y"  :std (get-in risk [:monthly :sd-1y])  :beta (get-in regression [:monthly :beta-1y]) :rsq (get-in regression [:monthly :rsq-1y]) :var95 (get-in risk [:monthly :var-1y-95pct]) :var99 (get-in risk [:monthly :var-1y-99pct]) :maxd (get-in risk [:monthly :maxd-1y])}
        {:id "Monthly 3y"  :std (get-in risk [:monthly :sd-3y])  :beta (get-in regression [:monthly :beta-3y]) :rsq (get-in regression [:monthly :rsq-3y]) :var95 (get-in risk [:monthly :var-3y-95pct]) :var99 (get-in risk [:monthly :var-3y-99pct]) :maxd (get-in risk [:monthly :maxd-3y])}])))
 
+(rf/reg-sub
+  :var/portfolio-proxies
+  (fn [db]
+    (let [all-proxies (get-in db [:var/proxies])
+          days-with-data (get-in db [:var/data :days-with-data])
+          total-days (count (get-in db [:var/dates :daily]))]
+      (sort-by :days (into [] (for [[kb d] days-with-data]
+                                (update
+                                  (merge {:bond (name kb) :days (- total-days d)} (get-in all-proxies [kb]))
+                                  :adjdur str) ))))))
+
 
 ;(defn var-navigation-dispatch [item]
 ;  (println item)
@@ -101,10 +112,22 @@
   [label :label "hi"])
 
 
+(defn portfolio-proxy-table []
+  ;(println @(rf/subscribe [:var/portfolio-proxies]))
+  [:> ReactTable
+   {:data                @(rf/subscribe [:var/portfolio-proxies])
+    :columns             [{:Header "Bond"             :accessor "bond"    :width 150}
+                          {:Header "Days with data"   :accessor "days"    :width 150}
+                          {:Header "Proxy"            :accessor "proxy"   :width 150}
+                          {:Header "Adjust duration?" :accessor "adjdur"  :width 150}]
+    :showPagination      true
+    :sortable            false
+    :filterable          true
+    :defaultFilterMethod tables/case-insensitive-filter
+    :pageSize            25
+    :className           "-striped"}])
 
 (defn var-table []
-  (let [                                                    ;data @(rf/subscribe [:var/data])
-        display nil]
     [:> ReactTable
      {:data                @(rf/subscribe [:var/table])
       :columns             [{:Header "Period"     :accessor "id"     :width 90}
@@ -119,39 +142,66 @@
       :sortable            false
       :filterable          false
       :pageSize            6
-      :className           "-striped -highlight"}]))
+      :className           "-striped"}])
 
 
 (def dropdown-width "150px")
 
 
 (defn var-table-view []
-  (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
-        portfolio (rf/subscribe [:var/portfolio])]
-    [box :class "subbody rightelement" :child
-     [v-box :class "element" :align-self :center :justify :center :gap "20px"
-      :children [[title :label "Backtested VaR" :level :level1]
-                 [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:var/portfolio %])]
-                 [var-table]
-                 [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]]]]))
+  [v-box :class "element" :align-self :center :justify :center :gap "20px"
+   :children [[title :label "Backtested VaR" :level :level1]
+              [var-table]
+              [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]]])
 
 
 (defn backtest-chart []
   (let [dates @(rf/subscribe [:var/dates])
-        data @(rf/subscribe [:var/data])]
-    (println (get-in dates [:daily]) (get-in data [:portfolio-value :daily]))
-    [box :class "subbody rightelement" :child
+        data @(rf/subscribe [:var/data])
+        chart-period @(rf/subscribe [:var/chart-period])
+        line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
+        days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label "Backtested portfolio value" :level :level1]
-                 [oz/vega-lite (charting/backtest-chart (get-in dates [:daily]) (get-in data [:portfolio-value :daily]) 550 550)]
-                 ]]]))
+                 [oz/vega-lite (charting/backtest-chart
+                                 (take-last days (get-in dates [(line :frequency)]))
+                                 (take-last days (get-in data [:portfolio-value (line :frequency)]))
+                                 550 550)]]]))
+
+(defn histogram-chart []
+  (let [dates @(rf/subscribe [:var/dates])
+        data @(rf/subscribe [:var/data])
+        chart-period @(rf/subscribe [:var/chart-period])
+        line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
+        days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
+    [v-box :class "element" :align-self :center :justify :center :gap "20px"
+     :children [[title :label "Return histogram" :level :level1]
+                [oz/vega-lite (charting/return-histogram
+                                (take-last days (get-in data [:portfolio-returns (line :frequency)]))
+                                550 550)]
+                ]]))
 
 
+(defn var-controller []
+  (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        portfolio (rf/subscribe [:var/portfolio])
+        chart-period (rf/subscribe [:var/chart-period])]
+     [v-box :class "element" :align-self :center :justify :center :gap "20px"
+      :children [[title :label "Display selection" :level :level1]
+                 [h-box :gap "20px" :padding "0px 20px 0px 0px"
+                  :children [[title :label "Portfolio:" :level :level3]
+                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:get-portfolio-var %])]
+                             [gap :size "20px"]
+                             [title :label "Chart period:" :level :level3]
+                             [single-dropdown :width dropdown-width :model chart-period :choices static/var-charts-choice-map :on-change #(rf/dispatch [:var/chart-period %])]]]]]))
 
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
 (defn proxy-table []
   (let [data @(rf/subscribe [:var/proxies])
         display (sort-by :bond (into [] (for [[k v] data] (update (merge {:bond k} v) :adjdur str))))]
@@ -165,19 +215,30 @@
       :filterable          true
       :defaultFilterMethod tables/case-insensitive-filter
       :pageSize            25
-      :className           "-striped -highlight"}]))
+      :className           "-striped"}]))
 
 (defn proxy-table-view []
-  [box :class "subbody rightelement" :child
    [v-box :class "element" :align-self :center :justify :center :gap "20px"
     :children [[title :label "Bond proxies" :level :level1]
-               [proxy-table]]]])
+               [proxy-table]]])
+
+(defn portfolio-proxies []
+   [v-box :class "element" :align-self :center :justify :center :gap "20px"
+    :children [[title :label "Bond proxies" :level :level1]
+               [portfolio-proxy-table]]])
 
 (defn active-home []
   (let [active-var @(rf/subscribe [:active-var])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-var
-      :overview                       [h-box :align :start :children [[var-table-view] [backtest-chart]]]
+      :overview                       [v-box :width "850px"
+                                       :gap "20px"
+                                       :padding "80px 20px"
+                                       :class "rightelement"  :children [[h-box :align :start :children [[var-controller] ]]
+                                                                                   [h-box :align :start :children [[var-table-view] ]]
+                                                                                   [h-box :align :start :children [[backtest-chart]]]
+                                                                         [h-box :align :start :children [[histogram-chart]]]
+                                                                                  [h-box :align :start :children [[portfolio-proxies]]]]]
       :marginal                       [marginal]
       :proxies [proxy-table-view]
       [:div.output "nothing to display"])))
