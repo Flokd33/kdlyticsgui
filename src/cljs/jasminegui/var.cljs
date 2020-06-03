@@ -19,42 +19,6 @@
   )
 
 
-;
-;{:daily {:beta 1.2260532296491367, :rsq 0.8849355266051778},
-; :weekly {:beta 1.318406056405913, :rsq 0.9682877396734104},
-; :monthly {:beta 1.3517721344251228, :rsq 0.9896161636479072}}
-;
-;
-;
-;
-;
-;
-;
-;{:daily {:sd-3y 0.05075792288462579,
-;         :sd-1y 0.08181622471933907,
-;         :var-3y-99pct -0.01575246019256893,
-;         :var-3y-95pct -0.0027800223125257206,
-;         :var-1y-99pct -0.027673840035470465,
-;         :var-1y-95pct -0.007117672811373987,
-;         :maxd-1y -0.1179462293850927,
-;         :maxd-3y -0.14836531983027934},
-; :weekly {:sd-3y 0.08738352600045841,
-;          :sd-1y 0.14156626769555813,
-;          :var-3y-99pct -0.08792046764255501,
-;          :var-3y-95pct -0.007750608408804038,
-;          :var-1y-99pct -0.08792046764255501,
-;          :var-1y-95pct -0.017187007926761422,
-;          :maxd-1y -0.11505966664407652,
-;          :maxd-3y -0.14467278052642674},
-; :monthly {:sd-3y 0.13930849870633258,
-;           :sd-1y 0.21764709073569768,
-;           :var-3y-99pct -0.18965485658006875,
-;           :var-3y-95pct -0.02340672603291527,
-;           :var-1y-99pct -0.18965485658006875,
-;           :var-1y-95pct -0.0021206313396463505,
-;           :maxd-1y -0.10090678426046451,
-;           :maxd-3y -0.1357390240242926}}
-
 
 
 (rf/reg-sub
@@ -92,8 +56,7 @@
   (let [active-var @(rf/subscribe [:active-var])]
     [h-box
      :children [[v-box
-                 :gap "20px"
-                 :class "leftnavbar"
+                 :gap "20px" :class "leftnavbar"
                  :children (into []
                                  (for [item static/var-navigation]
                                    [button
@@ -144,12 +107,13 @@
       :pageSize            6
       :className           "-striped"}])
 
-
+(def standard-box-width "800px")
 (def dropdown-width "150px")
 
 
 (defn var-table-view []
-  [v-box :class "element" :align-self :center :justify :center :gap "20px"
+  [v-box
+   :class "element" :width "100%" :gap "20px"
    :children [[title :label "Backtested VaR" :level :level1]
               [var-table]
               [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]]])
@@ -161,34 +125,51 @@
         chart-period @(rf/subscribe [:var/chart-period])
         line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
         days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
-     [v-box :class "element" :align-self :center :justify :center :gap "20px"
+     [v-box
+      :class "element" :width "100%" :gap "20px"
       :children [[title :label "Backtested portfolio value" :level :level1]
                  [oz/vega-lite (charting/backtest-chart
                                  (take-last days (get-in dates [(line :frequency)]))
                                  (take-last days (get-in data [:portfolio-value (line :frequency)]))
-                                 550 550)]]]))
+                                 (- (cljs.reader/read-string (subs standard-box-width 0 3)) 150) 550)]]]))
 
 (defn histogram-chart []
-  (let [dates @(rf/subscribe [:var/dates])
-        data @(rf/subscribe [:var/data])
+  (let [data @(rf/subscribe [:var/data])
         chart-period @(rf/subscribe [:var/chart-period])
         line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
         days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
-    [v-box :class "element" :align-self :center :justify :center :gap "20px"
+    [v-box
+     :class "element" :width "100%" :gap "20px"
      :children [[title :label "Return histogram" :level :level1]
                 [oz/vega-lite (charting/return-histogram
                                 (take-last days (get-in data [:portfolio-returns (line :frequency)]))
-                                550 550)]
-                ]]))
+                                (- (cljs.reader/read-string (subs standard-box-width 0 3)) 150) 550)]]]))
 
+
+(defn regression-chart []
+  (let [data @(rf/subscribe [:var/data])
+        chart-period @(rf/subscribe [:var/chart-period])
+        line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
+        days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
+    [v-box
+     :class "element" :width "100%" :gap "20px"
+     :children [[title :label "Regression" :level :level1]
+                [oz/vega-lite (charting/regression-output
+                                (take-last days (get-in data [:portfolio-returns (line :frequency)]))
+                                (take-last days (get-in data [:benchmark-returns (line :frequency)]))
+                                (get-in data [:regression (line :frequency) (if (= 3 (line :period)) :alpha-3y :alpha-1y)])
+                                (get-in data [:regression (line :frequency) (if (= 3 (line :period)) :beta-3y :beta-1y)])
+                                (- (cljs.reader/read-string (subs standard-box-width 0 3)) 150) 550)]]]))
 
 (defn var-controller []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         portfolio (rf/subscribe [:var/portfolio])
         chart-period (rf/subscribe [:var/chart-period])]
-     [v-box :class "element" :align-self :center :justify :center :gap "20px"
+     [v-box
+      :class "element" :width "100%" :gap "20px"
       :children [[title :label "Display selection" :level :level1]
-                 [h-box :gap "20px" :padding "0px 20px 0px 0px"
+                 [h-box
+                  :gap "20px" :padding "0px 20px 0px 0px"
                   :children [[title :label "Portfolio:" :level :level3]
                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:get-portfolio-var %])]
                              [gap :size "20px"]
@@ -218,26 +199,29 @@
       :className           "-striped"}]))
 
 (defn proxy-table-view []
-   [v-box :class "element" :align-self :center :justify :center :gap "20px"
-    :children [[title :label "Bond proxies" :level :level1]
-               [proxy-table]]])
+  [box
+   :class "subbody rightelement"
+   :child [v-box
+           :class "element" :gap "20px"
+           :children [[title :label "Bond proxies" :level :level1] [proxy-table]]]])
 
 (defn portfolio-proxies []
-   [v-box :class "element" :align-self :center :justify :center :gap "20px"
-    :children [[title :label "Bond proxies" :level :level1]
-               [portfolio-proxy-table]]])
+   [v-box
+    :class "element" :width "100%" :gap "20px"
+    :children [[title :label "Bond proxies" :level :level1] [portfolio-proxy-table]]])
 
 (defn active-home []
   (let [active-var @(rf/subscribe [:active-var])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-var
-      :overview                       [v-box :width "850px"
+      :overview                       [v-box :width standard-box-width
                                        :gap "20px"
                                        :padding "80px 20px"
                                        :class "rightelement"  :children [[h-box :align :start :children [[var-controller] ]]
                                                                                    [h-box :align :start :children [[var-table-view] ]]
                                                                                    [h-box :align :start :children [[backtest-chart]]]
                                                                          [h-box :align :start :children [[histogram-chart]]]
+                                                                         [h-box :align :start :children [[regression-chart]]]
                                                                                   [h-box :align :start :children [[portfolio-proxies]]]]]
       :marginal                       [marginal]
       :proxies [proxy-table-view]

@@ -85,13 +85,13 @@
      :data {:values data :format {:parse {:date "date:'%Y-%m-%d'" :return "quantitative"}}}
      :mark "line",
      :encoding
-              {:x 	   {:field "date"  :type "temporal" :axis {:format "%b-%y", :labelFontSize 12 :title nil} :sort "descending"}
-               :y     {:field "price" :type "quantitative"  :scale {:domain [ymin ymax]}  :axis {:labelFontSize 12 :title nil}}}}))
+              {:x 	   {:field "date"  :type "temporal" :axis {:format "%b-%y", :labelFontSize 14 :title nil} :sort "descending"}
+               :y     {:field "price" :type "quantitative"  :scale {:domain [ymin ymax]}  :axis {:labelFontSize 14 :title nil}}}}))
 
 (defn r5 [x] (* 5 (int (/ (+ x 4) 5))))
 
 (defn return-histogram [returns width height]
-  (let [data (into [] (map (fn [x] {:return (* 100 x)}) returns))
+  (let [data (mapv (fn [x] {:return (* 100 x)}) returns)
         absmax (r5 (Math/ceil (* 100 (apply max (map #(Math/abs %) returns)))))]
     ;(print "absmax" (apply max (map #(Math/abs %) returns)))
     {:title    nil
@@ -102,10 +102,31 @@
                     :type "quantitative"
                     :scale {:domain [(- absmax), absmax]}
                     :axis {:title nil
-                           :labelFontSize 12
+                           :labelFontSize 14
                            :values (vec (range (- absmax) (+ absmax 5) 0.5))
                            :format ".1f"}}                           ;
-                :y {:aggregate "count" :type "quantitative" :axis {:title nil :labelFontSize 12}}}
+                :y {:aggregate "count" :type "quantitative" :axis {:title nil :labelFontSize 14}}}
      :mark     "bar"
+     :width    width
+     :height   height}))
+
+(defn regression-output [portfolio-returns benchmark-returns alpha beta width height]
+  (let [data (mapv (fn [y x] {:portfolio (* 100 y)
+                              :benchmark (* 100 x)
+                              :predict   (* 100 (+ alpha (* beta x)))})
+                           portfolio-returns benchmark-returns)]
+    ;(println benchmark-returns)
+    ;(print "absmax" (apply max (map #(Math/abs %) returns)))
+    {:title    nil
+     :data     {:values data
+                :format {:type "json" :parse {:portfolio "number" :benchmark "number" :predict "number"}}}
+     :layer [
+             {:mark {:type "point" :filled true}
+              :encoding {:x {:field "benchmark" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}}
+                         :y {:field "portfolio" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}}}}
+             {:mark {:type "line" :color "firebrick"}
+              :encoding {:x {:field "benchmark" :type "quantitative"}
+                         :y {:field "predict" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}}}}
+             ]
      :width    width
      :height   height}))
