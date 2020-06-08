@@ -44,7 +44,9 @@
    {:id :nominal          :label "Nominal"}
    {:id :contrib-yield    :label "Yield contribution"}
    {:id :contrib-zspread  :label "Z-spread contribution"}
-   {:id :contrib-gspread  :label "G-spread contribution"}])
+   {:id :contrib-gspread  :label "G-spread contribution"}
+   {:id :contrib-beta     :label "Beta contribution"}
+   ])
 
 (def field-choices-alignment
   [{:id :nav          :label "NAV"}

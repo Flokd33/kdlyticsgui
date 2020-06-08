@@ -124,6 +124,6 @@
    :contrib-bond-yield          {:Header "Bond yield"     :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
    :weight-delta                {:Header "Delta"          :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb}
    :mdur-delta                  {:Header "Delta"          :accessor "mdur-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-
+   :contrib-beta                {:Header "Fund"           :accessor "contrib-beta-1y-daily" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
    })
 

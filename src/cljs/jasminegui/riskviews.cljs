@@ -94,6 +94,7 @@
                             {:Header "Duration" :columns (mapv tables/table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
                             {:Header "Yield" :columns (mapv tables/table-columns [:contrib-yield :bm-contrib-yield])}
                             {:Header "Z-spread" :columns (mapv tables/table-columns [:contrib-zspread])}
+                            {:Header "Beta"  :columns (mapv tables/table-columns [:beta-1y-daily])}
                             {:Header "Position" :columns (mapv tables/table-columns [:value :nominal])}
                             ;{:Header "Index contribution" :columns (mapv tables/table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
                             {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/table-columns [:yield :z-spread :g-spread :duration])}
@@ -333,7 +334,9 @@
                                                   (tables/table-columns :rating)
                                                   (assoc (tables/table-columns :rating-score) :width 60  )
                                                   (assoc (tables/table-columns :contrib-zspread) :Header "Z-spread")
-                                                  (assoc (tables/table-columns :contrib-gspread) :Header "G-spread")]}
+                                                  (assoc (tables/table-columns :contrib-gspread) :Header "G-spread")
+                                                  (assoc (tables/table-columns :contrib-beta) :Header "Beta")
+                                                  ]}
                        ]
       :showPagination false
       :pageSize       (count @(rf/subscribe [:portfolios]))
