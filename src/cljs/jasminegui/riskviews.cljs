@@ -94,7 +94,7 @@
                             {:Header "Duration" :columns (mapv tables/table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
                             {:Header "Yield" :columns (mapv tables/table-columns [:contrib-yield :bm-contrib-yield])}
                             {:Header "Z-spread" :columns (mapv tables/table-columns [:contrib-zspread])}
-                            {:Header "Beta"  :columns (mapv tables/table-columns [:beta-1y-daily])}
+                            {:Header "Beta"  :columns (mapv tables/table-columns [:contrib-beta])}
                             {:Header "Position" :columns (mapv tables/table-columns [:value :nominal])}
                             ;{:Header "Index contribution" :columns (mapv tables/table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
                             {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/table-columns [:yield :z-spread :g-spread :duration])}

@@ -159,7 +159,7 @@
     (into [] (for [p (:portfolios db)]
                (merge
                  {:portfolio       p}
-                 (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score :contrib-beta]] [k (get-in (:total-positions db) [(keyword p) k])]))
+                 (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score :contrib-beta-1y-daily]] [k (get-in (:total-positions db) [(keyword p) k])]))
                                {:contrib-bond-yield (- (get-in (:total-positions db) [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (not= (:asset-class %) "BONDS")) (:positions db)))))})))))
 
 (doseq [k [:active-view
