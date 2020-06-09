@@ -3,11 +3,11 @@
 
 (def main-navigation
   [{:code :home           :name "Holdings"       :dispatch :home            :subs nil}
+   {:code :attribution    :name "Performance"    :dispatch :attribution            :subs nil}
+   {:code :var            :name "VaR"            :dispatch :var             :subs nil}
    {:code :trade-history  :name "Trade history"  :dispatch :trade-drilldown :subs [{:code :description :name "Description"} {:code :history :name "History"}]}
    {:code :trade-analyser :name "Trade analyser" :dispatch :home            :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
-   {:code :attribution    :name "Performance"    :dispatch :attribution            :subs nil}
    ;{:code :performance    :name "Performance"    :dispatch :home            :subs nil :href "https://iamqsense.investecam.com/qsensesso/qps/logout?targetUri=https://iamqsense.investecam.com/qsensesso/sense/app/3bfbbbc8-1ee7-4416-821f-972aab0ff5f6/sheet/89876e6f-f163-4d38-86bd-95f863397253/state/analysis"}
-   {:code :var            :name "VaR"            :dispatch :var             :subs nil}
    {:code :administration :name "Administration" :dispatch :administration  :subs nil}])
 
 (def risk-navigation
@@ -32,17 +32,15 @@
                       {:id :issuer        :label "Issuer"}
                       {:id :rating-score  :label "Rating"}
                       {:id :sector        :label "Sector"}
-                      {:id :maturity-band :label "Maturity"}
-                      ])
+                      {:id :maturity-band :label "Maturity"}])
 
 (def attribution-choice-map [{:id "None"         :label "None"}
-                      {:id :region        :label "Region"}
-                      {:id :country       :label "Country"}
-                      {:id :issuer        :label "Issuer"}
-                      {:id :rating-score  :label "Rating"}
-                      {:id :sector        :label "Sector"}
-                      {:id :maturity-band :label "Maturity"}
-                      ])
+                             {:id :region        :label "Region"}
+                             {:id :country       :label "Country"}
+                             {:id :issuer        :label "Issuer"}
+                             {:id :invrtg        :label "Rating"}
+                             {:id :sector        :label "Sector"}
+                             {:id :maturity-band :label "Maturity"}])
 
 
 (def portfolio-alignment-groups [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IBSGEMD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
@@ -72,6 +70,13 @@
    {:id :bm-contribution  :label "BM contribution"}
    {:id :weight           :label "Weight"}
    {:id :bm-weight        :label "BM weight"}
+   ])
+
+(def attribution-period-choices
+  [{:id "ytd"     :label "YTD"}
+   {:id "mtd"     :label "MTD"}
+   {:id "wtd"     :label "WTD"}
+   {:id "day"     :label "Day"}
    ])
 
 (def field-choices-alignment

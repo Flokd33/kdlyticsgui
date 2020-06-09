@@ -79,19 +79,19 @@
                  :single-portfolio-attribution/display-style         "Tree"
                  :single-portfolio-attribution/portfolio             "OGEMCORD"
                  :single-portfolio-attribution/filter                {1 :region 2 :country 3 :issuer}
-                 :single-portfolio-attribution/hide-zero-holdings    true
+                 :single-portfolio-attribution/period               "ytd"
                  :single-portfolio-attribution/table-filter          []
                  :single-portfolio-attribution/shortcut              1
                  :single-portfolio-attribution/table                  []
 
                  ;multiple-portfolio attribution
-                 :multiple-portfolio-attribution/display-style       "Table"
+                 :multiple-portfolio-attribution/display-style       "Tree"
                  :multiple-portfolio-attribution/field-number        "One"
-                 :multiple-portfolio-attribution/field-one           :nav
+                 :multiple-portfolio-attribution/period               "ytd"
+                 :multiple-portfolio-attribution/field-one           :total-effect
                  :multiple-portfolio-attribution/field-two           "None"
                  :multiple-portfolio-attribution/selected-portfolios (set nil) ;["OGEMCORD"]
                  :multiple-portfolio-attribution/filter              {1 :region 2 :country 3 :issuer}
-                 :multiple-portfolio-attribution/hide-zero-holdings    true
                  :multiple-portfolio-attribution/shortcut            1
                  :multiple-portfolio-attribution/table-filter          []
                  :multiple-portfolio-attribution/table                []
@@ -124,6 +124,13 @@
                      (into {} (for [p kportfolios] [p (reduce + (map p pivoted-table))])))]
     (conj pivoted-table total-line)))
 
+(defn add-total-line-to-attribution-pivot [pivoted-table kportfolios]
+  (let [template (into {} (for [[k v] (first pivoted-table)] [k "Total"]))
+        total-line (merge
+                     template
+                     (into {} (for [p kportfolios] [p (reduce + (map p pivoted-table))])))]
+    (conj pivoted-table total-line)))
+
 
 (rf/reg-sub
   :single-portfolio-risk/table
@@ -151,8 +158,8 @@
                                  :Average-Index-Weight (reduce + (map :Average-Index-Weight data))
                                  :Fund-Contribution (reduce + (map :Fund-Contribution data))
                                  :Index-Contribution (reduce + (map :Index-Contribution data)))
-          risk-choices (let [rfil @(rf/subscribe [:single-portfolio-attribution/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/attribution-table-columns r)))
+          risk-choices (let [rfil (:single-portfolio-attribution/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :security))] (tables/attribution-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))]
       (conj (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) data) portfolio-total-line))))
 
@@ -172,6 +179,27 @@
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
           pivoted-data-hide-zero (if (and (not is-tree) hide-zero-risk) (filter thfil pivoted-data) pivoted-data)]
     (add-total-line-to-pivot (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero) (map keyword (:portfolios db))))))
+
+(rf/reg-sub
+  :multiple-portfolio-attribution/clean-table
+  (fn [db]
+    (let [pivoted-positions (:multiple-portfolio-attribution/table db)
+          kselected-portfolios (mapv keyword (:multiple-portfolio-attribution/selected-portfolios db))
+          display-key-one (:multiple-portfolio-attribution/field-one db)
+          attribution-choices (let [rfil @(rf/subscribe [:multiple-portfolio-attribution/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+          grouping-columns (into [] (for [r (remove nil? (conj attribution-choices :security))] (tables/attribution-table-columns r)))
+          accessors-k (mapv keyword (mapv :accessor grouping-columns))
+          pivoted-data (map #(merge % ((keyword (get-in tables/attribution-table-columns [display-key-one :accessor])) %)) pivoted-positions)]
+      ;(println pivoted-data)
+      (add-total-line-to-attribution-pivot (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data) (map keyword (:portfolios db)))
+      ;(println (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k)))
+      ;pivoted-data
+      ;(sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data)
+      )
+
+    )
+
+  )
 
 
 (rf/reg-sub
@@ -241,7 +269,7 @@
 
            :single-portfolio-attribution/portfolio
            :single-portfolio-attribution/display-style
-           :single-portfolio-attribution/hide-zero-holdings
+           :single-portfolio-attribution/period
            :single-portfolio-attribution/table-filter
            :single-portfolio-attribution/table
 
@@ -254,8 +282,8 @@
            :multiple-portfolio-attribution/shortcut
            :multiple-portfolio-attribution/table-filter
            :multiple-portfolio-attribution/table
+           :multiple-portfolio-attribution/period
 
-           :attribution-date
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -264,7 +292,8 @@
   :portfolios
   (fn [db [_ portfolios]]
       (assoc db :portfolios portfolios
-                :multiple-portfolio-risk/selected-portfolios (set portfolios))))
+                :multiple-portfolio-risk/selected-portfolios (set portfolios)
+                :multiple-portfolio-attribution/selected-portfolios (set portfolios))))
 
 (rf/reg-event-db
   :single-portfolio-risk/filter
@@ -281,6 +310,18 @@
 (rf/reg-event-db
   :qt-date
   (fn [db [_ qt-date]] (assoc db :qt-date (clojure.string/replace qt-date "\"" ""))))
+
+(rf/reg-event-db
+  :single-portfolio-attribution/filter
+  (fn [db [_ id f]] (assoc-in db [:single-portfolio-attribution/filter id] f)))
+
+(rf/reg-event-db
+  :multiple-portfolio-attribution/filter
+  (fn [db [_ id f]] (assoc-in db [:multiple-portfolio-attribution/filter id] f)))
+
+(rf/reg-event-db
+  :attribution-date
+  (fn [db [_ attribution-date]] (assoc db :attribution-date (clojure.string/replace attribution-date "\"" ""))))
 
 ;THIS IS A DUMMY - IN PRACTICE WE'D DO MORE THINGS HERE
 (rf/reg-event-db
@@ -396,6 +437,16 @@
                          :dispatch-key [:var/data]
                          :kwk          true}}))
 
+
+
+(rf/reg-event-fx
+  :get-attribution-date
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str server-address "attribution-date") ;(str "http://iamlfilive:3501/positions")
+                         :dispatch-key [:attribution-date]
+                         :kwk          false}}))
+
+;SINGLE ATTRIBUTION
 (rf/reg-event-fx
   :get-single-attribution
   (fn [{:keys [db]} [_ portfolio period]]
@@ -404,6 +455,23 @@
                          :kwk          true}}))
 
 (rf/reg-event-fx
+  :change-single-attribution-portfolio
+  (fn [{:keys [db]} [_ portfolio]]
+    {:db (assoc db :single-portfolio-attribution/portfolio portfolio)
+     :http-get-dispatch {:url          (str server-address "attribution-single?portfolio=" portfolio "&period=" (:single-portfolio-attribution/period db)) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:single-portfolio-attribution/table]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :change-single-attribution-period
+  (fn [{:keys [db]} [_ period]]
+    {:db (assoc db :single-portfolio-attribution/period period)
+     :http-get-dispatch {:url          (str server-address "attribution-single?portfolio=" (:single-portfolio-attribution/portfolio db) "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:single-portfolio-attribution/table]
+                         :kwk          true}}))
+
+;MULTIPLE ATTRIBUTION
+(rf/reg-event-fx
   :get-multiple-attribution
   (fn [{:keys [db]} [_ target period]]
     {:http-get-dispatch {:url          (str server-address "attribution-multiple?target=" target "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
@@ -411,8 +479,19 @@
                          :kwk          true}}))
 
 (rf/reg-event-fx
-  :get-attribution-date
-  (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str server-address "attribution-date") ;(str "http://iamlfilive:3501/positions")
-                         :dispatch-key [:attribution-date]
-                         :kwk          false}}))
+  :change-multiple-attribution-target
+  (fn [{:keys [db]} [_ ktarget]]
+    (let [target (clojure.string.replace (get-in tables/attribution-table-columns [ktarget :accessor]) "-" " ")]
+      {:db                (assoc db :multiple-portfolio-attribution/field-one ktarget)
+       :http-get-dispatch {:url          (str server-address "attribution-multiple?target=" target "&period=" (:multiple-portfolio-attribution/period db)) ;(srotr "http://iamlfilive:3501/positions")
+                           :dispatch-key [:multiple-portfolio-attribution/table]
+                           :kwk          true}})))
+
+(rf/reg-event-fx
+  :change-multiple-attribution-period
+  (fn [{:keys [db]} [_ period]]
+    (let [target (clojure.string.replace (get-in tables/attribution-table-columns [(:multiple-portfolio-attribution/field-one db) :accessor]) "-" " ")]
+      {:db                (assoc db :multiple-portfolio-attribution/period period)
+       :http-get-dispatch {:url          (str server-address "attribution-multiple?target=" target "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
+                           :dispatch-key [:multiple-portfolio-attribution/table]
+                           :kwk          true}})))

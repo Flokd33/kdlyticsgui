@@ -34,6 +34,7 @@
 (rf/dispatch [:get-portfolio-var "OGEMCORD"])
 (rf/dispatch [:get-attribution-date])
 (rf/dispatch [:get-single-attribution "OGEMCORD" "ytd"])
+(rf/dispatch [:get-multiple-attribution "Total Effect" "ytd"])
 
 ;letter v or V, then t or T
 (rf/dispatch [::rp/set-keypress-rules {:event-keys [[[:cycle-shortcut] [{:keyCode 86}] [{:keyCode 118}]]

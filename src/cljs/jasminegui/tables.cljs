@@ -136,12 +136,14 @@
    :contrib-beta                {:Header "Fund"           :accessor "contrib-beta-1y-daily" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
    })
 
+(defn invrtg-to-string [this] (aget this "row" "Rating"))
+
 (def attribution-table-columns
   {:region                      {:Header "Region"         :accessor "Region" :width 140 }
    :country                     {:Header "Country"        :accessor "Country" :width 140}
    :issuer                      {:Header "Issuer"         :accessor "Issuer" :width 140 }
    :sector                      {:Header "Sector"         :accessor "Sector" :width 140}
-   :maturity-band               {:Header "Duration"       :accessor "Duration-Bucket" :width 140}
+   :maturity-band               {:Header "Maturity"       :accessor "Duration-Bucket" :width 140}
    :portfolio                   {:Header "Portfolio"       :accessor "Fund" :width 140}
    :total-effect                {:Header "Fund" :accessor "Total-Effect"  :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
    :xs-weight                   {:Header "Excess"   :accessor "Average-Excess-Weight"  :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
@@ -149,11 +151,11 @@
    :bm-weight                   {:Header "Index"   :accessor "Average-Index-Weight" :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
    :contribution                {:Header "Fund"   :accessor "Fund-Contribution" :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
    :bm-contribution             {:Header "Index"   :accessor "Index-Contribution" :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
-   :rating                      {:Header "Rating"   :accessor "Rating" :width 140}
+   :rating                      {:Header "Rating"   :accessor "Rating" :width 140 :show false}
    :rating-group                {:Header "Rating Group"   :accessor "RatingGroup" :width 140}
    :code                        {:Header "Code" :accessor "Code" :width 140}
    :ighy                        {:Header "IGHY" :accessor "IGHY" :width 140}
-   :invrtg                      {:Header "INVRTG" :accessor "INVRTG" :width 140}
+   :invrtg                      {:Header "Rating" :accessor "INVRTG" :width 140  :Cell invrtg-to-string :aggregate first}
    :period                      {:Header "Period" :accessor "Period" :width 140}
    :security                    {:Header "Security" :accessor "Security" :width 140}
    })
