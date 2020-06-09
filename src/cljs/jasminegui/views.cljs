@@ -12,6 +12,7 @@
     [jasminegui.static :as static]
     [jasminegui.home :as home]
     [jasminegui.var :as var]
+    [jasminegui.attribution :as attribution]
     ))
 
 (defn nav-bar []
@@ -116,6 +117,7 @@
     (case active-view
       :home   [home/home-view]
       :var    [var/var-view]
+      :attribution [attribution/home-view]
       ;:trade-drilldown  [tradeview/trade-description-view]
       ;:trade-entry      [tradeentry/trade-entry-view]
       ;:sim-trades       [tables/simulated-trades-view]

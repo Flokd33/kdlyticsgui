@@ -27,7 +27,7 @@
                  :gap "20px"
                  :class "leftnavbar"
                  :children (into []
-                                 (for [item static/home-navigation]
+                                 (for [item static/risk-navigation]
                                    [button
                                     :class (str "btn btn-primary btn-block" (if (and (= active-home (:code item))) " active"))
                                     ;:style {:font-size "12px"}

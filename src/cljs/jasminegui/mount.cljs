@@ -14,7 +14,7 @@
 
 (def dev-server-address "http://localhost:3501/")
 (def prod-server-address "http://iamlfilive:3501/")
-(def server-address prod-server-address)              ;"http://localhost:3501/
+(def server-address dev-server-address)              ;"http://localhost:3501/
 
 
 
@@ -26,11 +26,13 @@
                  :portfolios                                  []
                  :total-positions                             {}
                  :qt-date                                     "undefined"
+                 :attribution-date                            "undefined"
 
                  ;navigation
                  :active-view                                 :home
                  :active-home                                 :summary
                  :active-var                                  :overview
+                 :active-attribution                          :summary
 
                  ;single-portfolio view
                  :single-portfolio-risk/display-style         "Tree"
@@ -72,6 +74,29 @@
                  ;trade history
                  :trade-history/active-bond                  nil
                  :trade-history/history                      nil
+
+                 ;single-portfolio attribution
+                 :single-portfolio-attribution/display-style         "Tree"
+                 :single-portfolio-attribution/portfolio             "OGEMCORD"
+                 :single-portfolio-attribution/filter                {1 :region 2 :country 3 :issuer}
+                 :single-portfolio-attribution/hide-zero-holdings    true
+                 :single-portfolio-attribution/table-filter          []
+                 :single-portfolio-attribution/shortcut              1
+                 :single-portfolio-attribution/table                  []
+
+                 ;multiple-portfolio attribution
+                 :multiple-portfolio-attribution/display-style       "Table"
+                 :multiple-portfolio-attribution/field-number        "One"
+                 :multiple-portfolio-attribution/field-one           :nav
+                 :multiple-portfolio-attribution/field-two           "None"
+                 :multiple-portfolio-attribution/selected-portfolios (set nil) ;["OGEMCORD"]
+                 :multiple-portfolio-attribution/filter              {1 :region 2 :country 3 :issuer}
+                 :multiple-portfolio-attribution/hide-zero-holdings    true
+                 :multiple-portfolio-attribution/shortcut            1
+                 :multiple-portfolio-attribution/table-filter          []
+                 :multiple-portfolio-attribution/table                []
+
+
                  })
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
@@ -110,9 +135,26 @@
           portfolio-positions (filter #(= (:portfolio %) portfolio) positions)
           viewable-positions (if (and (not is-tree) (:single-portfolio-risk/hide-zero-holdings db)) (filter #(not= (:weight %) 0) portfolio-positions) portfolio-positions)
           risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/table-columns r)))
+          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))]
   (conj (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions) portfolio-total-line))))
+
+(rf/reg-sub
+  :single-portfolio-attribution/clean-table
+  (fn [db]
+    (let [data (:single-portfolio-attribution/table db)
+          template (into {} (for [[k v] (first data)] [k "Total"]))
+          portfolio-total-line (assoc template
+                                 :Total-Effect (reduce + (map :Total-Effect data))
+                                 :Average-Excess-Weight (reduce + (map :Average-Excess-Weight data))
+                                 :Average-Fund-Weight (reduce + (map :Average-Fund-Weight data))
+                                 :Average-Index-Weight (reduce + (map :Average-Index-Weight data))
+                                 :Fund-Contribution (reduce + (map :Fund-Contribution data))
+                                 :Index-Contribution (reduce + (map :Index-Contribution data)))
+          risk-choices (let [rfil @(rf/subscribe [:single-portfolio-attribution/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/attribution-table-columns r)))
+          accessors-k (mapv keyword (mapv :accessor grouping-columns))]
+      (conj (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) data) portfolio-total-line))))
 
 
 (rf/reg-sub
@@ -124,9 +166,9 @@
           display-key-one (:multiple-portfolio-risk/field-one db)
           is-tree (= (:multiple-portfolio-risk/display-style db) "Tree")
           risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/table-columns r)))
+          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
-          pivoted-data (map #(merge % ((keyword (get-in tables/table-columns [display-key-one :accessor])) %)) pivoted-positions)
+          pivoted-data (map #(merge % ((keyword (get-in tables/risk-table-columns [display-key-one :accessor])) %)) pivoted-positions)
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
           pivoted-data-hide-zero (if (and (not is-tree) hide-zero-risk) (filter thfil pivoted-data) pivoted-data)]
     (add-total-line-to-pivot (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero) (map keyword (:portfolios db))))))
@@ -140,9 +182,9 @@
           base-kportfolio (first group)
           kportfolios (rest group)
           risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/table-columns r)))
+          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
-          pivoted-data (map #(merge % ((keyword (get-in tables/table-columns [(:portfolio-alignment/field db) :accessor])) %)) pivoted-positions)
+          pivoted-data (map #(merge % ((keyword (get-in tables/risk-table-columns [(:portfolio-alignment/field db) :accessor])) %)) pivoted-positions)
           differentiate (fn [line] (reduce
                                      (fn [temp-line p] (assoc temp-line p (- (p temp-line) (base-kportfolio temp-line))))
                                      line
@@ -165,6 +207,7 @@
 (doseq [k [:active-view
            :active-home
            :active-var
+           :active-attribution
            :positions
            :rating-to-score
            :pivoted-positions
@@ -174,10 +217,12 @@
            :var/data
            :var/portfolio
            :var/chart-period
+           
            :single-portfolio-risk/portfolio
            :single-portfolio-risk/display-style
            :single-portfolio-risk/hide-zero-holdings
            :single-portfolio-risk/table-filter
+           
            :multiple-portfolio-risk/display-style
            :multiple-portfolio-risk/field-number
            :multiple-portfolio-risk/field-one
@@ -186,12 +231,33 @@
            :multiple-portfolio-risk/hide-zero-holdings
            :multiple-portfolio-risk/shortcut
            :multiple-portfolio-risk/table-filter
+           
            :portfolio-alignment/display-style
            :portfolio-alignment/field
            :portfolio-alignment/group
            :portfolio-alignment/threshold
            :portfolio-alignment/shortcut
            :portfolio-alignment/table-filter
+
+           :single-portfolio-attribution/portfolio
+           :single-portfolio-attribution/display-style
+           :single-portfolio-attribution/hide-zero-holdings
+           :single-portfolio-attribution/table-filter
+           :single-portfolio-attribution/table
+
+           :multiple-portfolio-attribution/display-style
+           :multiple-portfolio-attribution/field-number
+           :multiple-portfolio-attribution/field-one
+           :multiple-portfolio-attribution/field-two
+           :multiple-portfolio-attribution/selected-portfolios
+           :multiple-portfolio-attribution/hide-zero-holdings
+           :multiple-portfolio-attribution/shortcut
+           :multiple-portfolio-attribution/table-filter
+           :multiple-portfolio-attribution/table
+
+           :attribution-date
+
+
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
 (rf/reg-event-db
@@ -317,7 +383,6 @@
 (rf/reg-event-fx
   :get-var-data
   (fn [{:keys [db]} [_ portfolio]]
-    (println "calling var data")
     {:http-get-dispatch {:url          (str server-address "var-data?portfolio=" portfolio) ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:var/data]
                          :kwk          true}}))
@@ -331,5 +396,23 @@
                          :dispatch-key [:var/data]
                          :kwk          true}}))
 
+(rf/reg-event-fx
+  :get-single-attribution
+  (fn [{:keys [db]} [_ portfolio period]]
+    {:http-get-dispatch {:url          (str server-address "attribution-single?portfolio=" portfolio "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:single-portfolio-attribution/table]
+                         :kwk          true}}))
 
+(rf/reg-event-fx
+  :get-multiple-attribution
+  (fn [{:keys [db]} [_ target period]]
+    {:http-get-dispatch {:url          (str server-address "attribution-multiple?target=" target "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:multiple-portfolio-attribution/table]
+                         :kwk          true}}))
 
+(rf/reg-event-fx
+  :get-attribution-date
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str server-address "attribution-date") ;(str "http://iamlfilive:3501/positions")
+                         :dispatch-key [:attribution-date]
+                         :kwk          false}}))

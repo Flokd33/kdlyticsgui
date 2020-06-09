@@ -82,7 +82,7 @@
         is-tree (= @(rf/subscribe [:single-portfolio-risk/display-style]) "Tree")
         portfolio-positions (filter #(= (:portfolio %) portfolio) positions)
         risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/table-columns r)))
+        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
         accessors (mapv :accessor grouping-columns)
         display @(rf/subscribe [:single-portfolio-risk/table])]
@@ -90,15 +90,15 @@
      {:data                display
       :defaultFilterMethod tables/case-insensitive-filter
       :columns             [{:Header "Groups" :columns grouping-columns}
-                            {:Header "NAV" :columns (mapv tables/table-columns [:nav :bm-weight :weight-delta])}
-                            {:Header "Duration" :columns (mapv tables/table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
-                            {:Header "Yield" :columns (mapv tables/table-columns [:contrib-yield :bm-contrib-yield])}
-                            {:Header "Z-spread" :columns (mapv tables/table-columns [:contrib-zspread])}
-                            {:Header "Beta"  :columns (mapv tables/table-columns [:contrib-beta])}
-                            {:Header "Position" :columns (mapv tables/table-columns [:value :nominal])}
+                            {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
+                            {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
+                            {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
+                            {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
+                            {:Header "Beta"  :columns (mapv tables/risk-table-columns [:contrib-beta])}
+                            {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
                             ;{:Header "Index contribution" :columns (mapv tables/table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
-                            {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/table-columns [:yield :z-spread :g-spread :duration])}
-                            {:Header "Description" :columns (mapv tables/table-columns (into [] (concat [:rating :isin] additional-des-cols [:description])))}]
+                            {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration])}
+                            {:Header "Description" :columns (mapv tables/risk-table-columns (into [] (concat [:rating :isin] additional-des-cols [:description])))}]
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
@@ -114,7 +114,7 @@
         width-one 100                                      ;(get-in tables/table-columns [display-key-one :width])
         is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/table-columns r)))
+        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
         accessors (mapv :accessor grouping-columns)
         display-one @(rf/subscribe [:multiple-portfolio-risk/table])
         cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
@@ -123,14 +123,14 @@
                          :width width-one
                          :style {:textAlign "right"}
                          :aggregate tables/sum-rows
-                         :Cell (get-in tables/table-columns [display-key-one :Cell])
+                         :Cell (get-in tables/risk-table-columns [display-key-one :Cell])
                          :filterable false}))]
     [:> ReactTable
      {:data                display-one
       :defaultFilterMethod tables/case-insensitive-filter
       :columns             [{:Header "Groups" :columns grouping-columns}
                             {:Header  (str "Portfolio " (name display-key-one)) :columns cols}
-                            {:Header  "Description" :columns (mapv tables/table-columns [:rating :isin :description])}]
+                            {:Header  "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
@@ -146,11 +146,11 @@
         base-portfolio (first group)
         portfolios (rest group)
         display-key @(rf/subscribe [:portfolio-alignment/field])
-        cell-one (get-in tables/table-columns [display-key :Cell])
+        cell-one (get-in tables/risk-table-columns [display-key :Cell])
         width-one 100
         is-tree (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/table-columns r)))
+        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
         accessors (mapv :accessor grouping-columns)
         display @(rf/subscribe [:portfolio-alignment/table])]
     [:> ReactTable
@@ -161,7 +161,7 @@
                             {:Header  (str "Portfolio " (name display-key) " vs " base-portfolio)
                              :columns (into [] (for [p portfolios] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}))}
                             {:Header  "Description"
-                             :columns [{:Header "thinkFolio ID" :accessor "description" :width 500} (tables/table-columns :rating)]}]
+                             :columns [{:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
@@ -255,7 +255,7 @@
                                :children [
                                           [h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/display-style %])]]]
                                           [checkbox :model hide-zero-risk :label "Hide zero positions in table view" :disabled? (= @display-style "Tree") :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]
-                                          [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]]]
+                                          [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]]]
                               [v-box :gap "10px"
                                :children [[title :label "Portfolios:" :level :level3]
                                           [button :style {:width "100%"} :label "All"      :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
@@ -290,7 +290,7 @@
                   :children
                   [[v-box :gap "20px"
                     :children [[h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:portfolio-alignment/display-style %])]]]
-                               [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field :choices static/field-choices :on-change #(rf/dispatch [:portfolio-alignment/field %])]]]
+                               [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field :choices static/risk-field-choices :on-change #(rf/dispatch [:portfolio-alignment/field %])]]]
                                [h-box :gap "10px" :children [[title :label "Threshold:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model threshold :choices static/threshold-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/threshold %])]]]]]
                    [v-box :gap "20px"
                      :children [[h-box :gap "10px" :children [[title :label "Portfolios:" :level :level3] [gap :size "1"]
@@ -327,15 +327,15 @@
     [:> ReactTable
      {:data           @(rf/subscribe [:summary-display/table])
       :columns        [{:Header "Portfolio" :accessor "portfolio" :width 120}
-                       {:Header "Balance" :columns (mapv tables/table-columns [:value :cash-pct])}
-                       {:Header "Value" :columns [(assoc (tables/table-columns :contrib-yield) :Header "Yield")
-                                                  (tables/table-columns :contrib-bond-yield)
-                                                  (assoc (tables/table-columns :contrib-mdur) :Header "M Dur")
-                                                  (tables/table-columns :rating)
-                                                  (assoc (tables/table-columns :rating-score) :width 60  )
-                                                  (assoc (tables/table-columns :contrib-zspread) :Header "Z-spread")
-                                                  (assoc (tables/table-columns :contrib-gspread) :Header "G-spread")
-                                                  (assoc (tables/table-columns :contrib-beta) :Header "Beta")
+                       {:Header "Balance" :columns (mapv tables/risk-table-columns [:value :cash-pct])}
+                       {:Header "Value" :columns [(assoc (tables/risk-table-columns :contrib-yield) :Header "Yield")
+                                                  (tables/risk-table-columns :contrib-bond-yield)
+                                                  (assoc (tables/risk-table-columns :contrib-mdur) :Header "M Dur")
+                                                  (tables/risk-table-columns :rating)
+                                                  (assoc (tables/risk-table-columns :rating-score) :width 60)
+                                                  (assoc (tables/risk-table-columns :contrib-zspread) :Header "Z-spread")
+                                                  (assoc (tables/risk-table-columns :contrib-gspread) :Header "G-spread")
+                                                  (assoc (tables/risk-table-columns :contrib-beta) :Header "Beta")
                                                   ]}
                        ]
       :showPagination false
