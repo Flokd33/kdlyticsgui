@@ -214,34 +214,25 @@
 (defn go-to-attribution-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:active-attribution :single-portfolio]) (rf/dispatch [:change-single-attribution-portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
 
 (defn summary-display []
+  (let [fmt {:width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
+        timeframes [["Year to date" "ytd"] ["Month to date" "mtd"] ["Week to date" "wtd"] ["Daily" "day"]]
+        targets [["Fund" "-Fund-Contribution"] ["Benchmark" "-Index-Contribution"] ["Relative" "-Total-Effect"]]]
   [box :class "subbody rightelement" :child
-   [v-box :class "element" :align-self :center :justify :center :gap "20px"
+   [v-box :class "element" :gap "20px"
     :children [[title :label (str "Summary " @(rf/subscribe [:attribution-date])) :level :level1]
                [:> ReactTable
                 {:data           @(rf/subscribe [:attribution/summary])
-                 :columns        [{:Header "Portfolio" :accessor "portfolio" :width 120}
-                                  {:Header "Year to date"
-                                   :columns [{:Header "Effect"        :accessor "ytd-Total-Effect"        :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
-                                             {:Header "Contribution"  :accessor "ytd-Fund-Contribution"   :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
-                                             {:Header "Index"         :accessor "ytd-Index-Contribution"  :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}]}
-                                  {:Header "Month to date"
-                                   :columns [{:Header "Effect"        :accessor "mtd-Total-Effect"        :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
-                                             {:Header "Contribution"  :accessor "mtd-Fund-Contribution"   :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
-                                             {:Header "Index"         :accessor "mtd-Index-Contribution"  :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}]}
-                                  {:Header "Week to date"
-                                   :columns [{:Header "Effect"        :accessor "wtd-Total-Effect"        :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
-                                             {:Header "Contribution"  :accessor "wtd-Fund-Contribution"   :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
-                                             {:Header "Index"         :accessor "wtd-Index-Contribution"  :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}]}
-                                  {:Header "Daily"
-                                   :columns [{:Header "Effect"        :accessor "day-Total-Effect"        :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
-                                             {:Header "Contribution"  :accessor "day-Fund-Contribution"   :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
-                                             {:Header "Index"         :accessor "day-Index-Contribution"  :width 90 :style {:textAlign "right"} :Cell tables/round2colpct}]}
-                                  ]
+                 :columns        (into [{:Header "Portfolio" :accessor "portfolio" :width 120}]
+                                       (for [[k1 v1] timeframes]
+                                         {:Header k1
+                                          :columns (into [] (for [[k2 v2] targets]
+                                                              (merge {:Header k2
+                                                                      :accessor (str v1 v2)}
+                                                                     fmt)))}))
                  :showPagination false
                  :pageSize       (count @(rf/subscribe [:attribution/summary]))
                  :getTrProps     go-to-attribution-risk
-                 :className      "-striped -highlight"}]]]])
-
+                 :className      "-striped -highlight"}]]]]))
 
 
 (defn nav-attribution-bar []
