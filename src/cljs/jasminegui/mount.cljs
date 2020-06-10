@@ -14,7 +14,7 @@
 
 (def dev-server-address "http://localhost:3501/")
 (def prod-server-address "http://iamlfilive:3501/")
-(def server-address dev-server-address)              ;"http://localhost:3501/
+(def server-address prod-server-address)              ;"http://localhost:3501/
 
 
 
