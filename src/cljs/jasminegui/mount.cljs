@@ -96,6 +96,8 @@
                  :multiple-portfolio-attribution/table-filter          []
                  :multiple-portfolio-attribution/table                []
 
+                 :attribution/summary                                 []
+
 
                  })
 
@@ -284,6 +286,8 @@
            :multiple-portfolio-attribution/table
            :multiple-portfolio-attribution/period
 
+           :attribution/summary
+
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -442,7 +446,7 @@
 (rf/reg-event-fx
   :get-attribution-date
   (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str server-address "attribution-date") ;(str "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "attribution?query-type=attribution-date") ;(str "http://iamlfilive:3501/positions")
                          :dispatch-key [:attribution-date]
                          :kwk          false}}))
 
@@ -450,7 +454,7 @@
 (rf/reg-event-fx
   :get-single-attribution
   (fn [{:keys [db]} [_ portfolio period]]
-    {:http-get-dispatch {:url          (str server-address "attribution-single?portfolio=" portfolio "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:single-portfolio-attribution/table]
                          :kwk          true}}))
 
@@ -458,7 +462,7 @@
   :change-single-attribution-portfolio
   (fn [{:keys [db]} [_ portfolio]]
     {:db (assoc db :single-portfolio-attribution/portfolio portfolio)
-     :http-get-dispatch {:url          (str server-address "attribution-single?portfolio=" portfolio "&period=" (:single-portfolio-attribution/period db)) ;(srotr "http://iamlfilive:3501/positions")
+     :http-get-dispatch {:url          (str server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:single-portfolio-attribution/period db)) ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:single-portfolio-attribution/table]
                          :kwk          true}}))
 
@@ -466,7 +470,7 @@
   :change-single-attribution-period
   (fn [{:keys [db]} [_ period]]
     {:db (assoc db :single-portfolio-attribution/period period)
-     :http-get-dispatch {:url          (str server-address "attribution-single?portfolio=" (:single-portfolio-attribution/portfolio db) "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
+     :http-get-dispatch {:url          (str server-address "attribution?query-type=single-portfolio&portfolio=" (:single-portfolio-attribution/portfolio db) "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:single-portfolio-attribution/table]
                          :kwk          true}}))
 
@@ -474,7 +478,7 @@
 (rf/reg-event-fx
   :get-multiple-attribution
   (fn [{:keys [db]} [_ target period]]
-    {:http-get-dispatch {:url          (str server-address "attribution-multiple?target=" target "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:multiple-portfolio-attribution/table]
                          :kwk          true}}))
 
@@ -483,7 +487,7 @@
   (fn [{:keys [db]} [_ ktarget]]
     (let [target (clojure.string.replace (get-in tables/attribution-table-columns [ktarget :accessor]) "-" " ")]
       {:db                (assoc db :multiple-portfolio-attribution/field-one ktarget)
-       :http-get-dispatch {:url          (str server-address "attribution-multiple?target=" target "&period=" (:multiple-portfolio-attribution/period db)) ;(srotr "http://iamlfilive:3501/positions")
+       :http-get-dispatch {:url          (str server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" (:multiple-portfolio-attribution/period db)) ;(srotr "http://iamlfilive:3501/positions")
                            :dispatch-key [:multiple-portfolio-attribution/table]
                            :kwk          true}})))
 
@@ -492,6 +496,14 @@
   (fn [{:keys [db]} [_ period]]
     (let [target (clojure.string.replace (get-in tables/attribution-table-columns [(:multiple-portfolio-attribution/field-one db) :accessor]) "-" " ")]
       {:db                (assoc db :multiple-portfolio-attribution/period period)
-       :http-get-dispatch {:url          (str server-address "attribution-multiple?target=" target "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
+       :http-get-dispatch {:url          (str server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period) ;(srotr "http://iamlfilive:3501/positions")
                            :dispatch-key [:multiple-portfolio-attribution/table]
                            :kwk          true}})))
+
+;SUMMARY ATTRIBUTION
+(rf/reg-event-fx
+  :get-attribution-summary
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str server-address "attribution?query-type=summary") ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:attribution/summary]
+                         :kwk          true}}))

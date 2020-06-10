@@ -33,6 +33,7 @@
 ;(rf/dispatch [:get-var-data "OGEMCORD"])
 (rf/dispatch [:get-portfolio-var "OGEMCORD"])
 (rf/dispatch [:get-attribution-date])
+(rf/dispatch [:get-attribution-summary])
 (rf/dispatch [:get-single-attribution "OGEMCORD" "ytd"])
 (rf/dispatch [:get-multiple-attribution "Total Effect" "ytd"])
 
