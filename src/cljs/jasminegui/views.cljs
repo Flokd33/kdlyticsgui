@@ -13,6 +13,7 @@
     [jasminegui.home :as home]
     [jasminegui.var :as var]
     [jasminegui.attribution :as attribution]
+    [jasminegui.administration :as administration]
     ))
 
 (defn nav-bar []
@@ -121,7 +122,7 @@
       ;:trade-drilldown  [tradeview/trade-description-view]
       ;:trade-entry      [tradeentry/trade-entry-view]
       ;:sim-trades       [tables/simulated-trades-view]
-      ;:administration   [tools/tools-view]
+      :administration   [administration/administration-view]
       ;:implementation   [implementation/trade-implementation-view]
       [:div.output "nothing to display"])))
 

@@ -33,6 +33,7 @@
                  :active-home                                 :summary
                  :active-var                                  :overview
                  :active-attribution                          :summary
+                 :success-modal                               {:show false :on-close nil :response nil}
 
                  ;single-portfolio view
                  :single-portfolio-risk/display-style         "Tree"
