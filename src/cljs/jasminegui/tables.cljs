@@ -27,6 +27,7 @@
 (defn round-to-thousand [x] (* 1000 (int (/ x 1000.))))
 (def tnfmt (comp nf round-to-thousand))
 
+(defn nf2 [x] (.format nff x))
 
 (defn nfcell [this]
   (r/as-element

@@ -15,12 +15,18 @@
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
     [jasminegui.tables :as tables]
-
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
 
+
+(rf/reg-event-fx
+  :get-single-bond-history
+  (fn [{:keys [db]} [_ bond-sedol portfolios start-date end-date]]
+    {:http-get-dispatch {:url          (str mount/server-address "single-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
+                         :dispatch-key [:single-bond-trade-history/data]
+                         :kwk          true}}))
 
 
 (defn round0pc-trigger  [this]
@@ -76,6 +82,17 @@
 
 (def dropdown-width "150px")
 
+(defn single-bond-trade-history [state rowInfo instance]
+  (clj->js {:onClick #(do
+                        (rf/dispatch [:get-single-bond-history
+                                      (aget rowInfo "row" "_original" "id")
+                                      [@(rf/subscribe [:single-portfolio-risk/portfolio])]
+                                      "01Jan2019"
+                                      @(rf/subscribe [:qt-date])
+                                      ])
+                        (rf/dispatch [:single-bond-trade-history/show-modal true])
+                        ) :style {:cursor "pointer"}}))
+
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])
         portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])
@@ -105,6 +122,7 @@
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) portfolio-positions)))) 25) ;(inc (count display))
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
+      :getTrProps          single-bond-trade-history
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
       :onFilteredChange    #(rf/dispatch [:single-portfolio-risk/table-filter %])}]))
 

@@ -99,6 +99,9 @@
 
                  :attribution/summary                                 []
 
+                 :single-bond-trade-history/data                                 []
+                 :single-bond-trade-history/show-modal                false
+
 
                  })
 
@@ -289,6 +292,10 @@
 
            :attribution/summary
 
+           :single-bond-trade-history/show-modal
+           :single-bond-trade-history/data
+
+
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -368,6 +375,17 @@
         (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
 
 (rf/reg-fx :http-get-dispatch http-get-dispatch)
+
+(defn http-post-dispatch [request]
+  (go (let [response (<! (http/post (:url request) {:edn-params (:edn-params request)}))]
+        (rf/dispatch (conj (:dispatch-key request)
+                           (if (:kwk request)
+                             (js->clj (js/JSON.parse (:body response)) :keywordize-keys true)
+                             (:body response))))
+        (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
+
+(rf/reg-fx :http-post-dispatch http-post-dispatch)
+
 
 (rf/reg-event-fx
   :get-positions

@@ -13,7 +13,8 @@
     [goog.string.format]
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
-    [jasminegui.riskviews :as riskviews])
+    [jasminegui.riskviews :as riskviews]
+    [jasminegui.tradehistory :as tradehistory])
   )
 
 
@@ -51,5 +52,5 @@
   [h-box :gap "10px"
    ;:style {:overflow "hidden"}
    :padding "0px"
-   :children [[nav-home-bar] [active-home]]])
+   :children [[nav-home-bar] [active-home] [tradehistory/modal-single-bond-trade-history]]])
 
