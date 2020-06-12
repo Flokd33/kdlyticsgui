@@ -23,11 +23,19 @@
 
 (rf/reg-event-fx
   :get-single-bond-history
-  (fn [{:keys [db]} [_ bond-sedol portfolios start-date end-date]]
-    {:http-get-dispatch {:url          (str mount/server-address "single-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
+  (fn [{:keys [db]} [_ name bond-sedol portfolios start-date end-date]]
+    {:db (assoc db :single-bond-trade-history/bond name :single-bond-trade-history/show-modal true)
+     :http-get-dispatch {:url          (str mount/server-address "single-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
                          :dispatch-key [:single-bond-trade-history/data]
                          :kwk          true}}))
 
+(rf/reg-event-fx
+  :get-single-bond-flat-history
+  (fn [{:keys [db]} [_ name bond-sedol portfolios start-date end-date]]
+    {:db (assoc db :single-bond-trade-history/bond name :single-bond-trade-history/show-flat-modal true)
+     :http-get-dispatch {:url          (str mount/server-address "flat-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
+                         :dispatch-key [:single-bond-trade-history/flat-data]
+                         :kwk          true}}))
 
 (defn round0pc-trigger  [this]
   (r/as-element
@@ -83,15 +91,13 @@
 (def dropdown-width "150px")
 
 (defn single-bond-trade-history [state rowInfo instance]
-  (clj->js {:onClick #(do
-                        (rf/dispatch [:get-single-bond-history
-                                      (aget rowInfo "row" "_original" "id")
-                                      [@(rf/subscribe [:single-portfolio-risk/portfolio])]
-                                      "01Jan2019"
-                                      @(rf/subscribe [:qt-date])
-                                      ])
-                        (rf/dispatch [:single-bond-trade-history/show-modal true])
-                        ) :style {:cursor "pointer"}}))
+  (clj->js {:onClick #(rf/dispatch [:get-single-bond-history
+                                    (aget rowInfo "row" "_original" "NAME")
+                                    (aget rowInfo "row" "_original" "id")
+                                    [@(rf/subscribe [:single-portfolio-risk/portfolio])]
+                                    "01Jan2019"
+                                    @(rf/subscribe [:qt-date])])
+            :style {:cursor "pointer"}}))
 
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])
@@ -127,6 +133,16 @@
       :onFilteredChange    #(rf/dispatch [:single-portfolio-risk/table-filter %])}]))
 
 
+
+(defn single-bond-trade-flat-history [state rowInfo instance]
+  (clj->js {:onClick #(rf/dispatch [:get-single-bond-flat-history
+                                   (aget rowInfo "row" "_original" "NAME")
+                                   (aget rowInfo "row" "_original" "id")
+                                   @(rf/subscribe [:portfolios])
+                                   "01Jan2019"
+                                   @(rf/subscribe [:qt-date])])
+            :style {:cursor "pointer"}}))
+
 (defn multiple-portfolio-risk-display []
   (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
         width-one 100                                      ;(get-in tables/table-columns [display-key-one :width])
@@ -155,6 +171,7 @@
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display-one)))) 25)
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
+      :getTrProps          single-bond-trade-flat-history
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:multiple-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
       :onFilteredChange    #(rf/dispatch [:multiple-portfolio-risk/table-filter %])}]))
 
@@ -207,8 +224,8 @@
                 :choices static/risk-choice-map
                 :on-change #(rf/dispatch [key i %])]))))
 
-(defn csv-link [data filename]
-  (tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv")))
+;(defn csv-link [data filename]
+;  (tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv")))
 
 ;(defn csv-link-single-portfolio []
 ;  (let [portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])]
@@ -243,7 +260,7 @@
                                                                                                    (shortcut-row :single-portfolio-risk/shortcut)
                                                                                                    [[gap :size "50px"]
                                                                                                     [title :label "Download:" :level :level3]
-                                                                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(csv-link @(rf/subscribe [:single-portfolio-risk/table]) @portfolio)]]))]]]]]
+                                                                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:single-portfolio-risk/table]) @portfolio)]]))]]]]]
                  [single-portfolio-risk-display]]]]))
 
 
@@ -287,7 +304,7 @@
                                :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter)))]
                                           [h-box :gap "10px" :children (shortcut-row :multiple-portfolio-risk/shortcut)]
                                           [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
-                                                                        [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(csv-link @(rf/subscribe [:multiple-portfolio-risk/table]) "pivot")]]]]]]]
+                                                                        [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:multiple-portfolio-risk/table]) "pivot")]]]]]]]
                  [multiple-portfolio-risk-display]]]]))
 
 ;(defn csv-link-portfolio-alignment []
@@ -318,7 +335,7 @@
                     :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :portfolio-alignment/filter)))]
                                [h-box :gap "10px" :children (shortcut-row :portfolio-alignment/shortcut)]
                                [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
-                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(csv-link @(rf/subscribe [:portfolio-alignment/table]) "alignment")]]]]]]]
+                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-alignment/table]) "alignment")]]]]]]]
 
 
 

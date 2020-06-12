@@ -16,7 +16,8 @@
 
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    [jasminegui.tables :as tables])
+    [jasminegui.tables :as tables]
+    [jasminegui.tools :as tools])
   )
 
 
@@ -31,25 +32,37 @@
   (r/as-element
     (if-let [x (aget this "value")]
       [:div  (tables/nf x)]
-      "-")))
+      "")))
+
+(rf/reg-event-db
+  :single-bond-trade-history/close-modal
+  (fn [db [_]]
+    (assoc db :single-bond-trade-history/bond nil
+              :single-bond-trade-history/data []
+              :single-bond-trade-history/flat-data []
+              :single-bond-trade-history/show-modal false
+              :single-bond-trade-history/show-flat-modal false)))
+
 
 (defn modal-single-bond-trade-history []
   (let [
         modal-data (get-in @(rf/subscribe [:single-bond-trade-history/data]) [(keyword @(rf/subscribe [:single-portfolio-risk/portfolio]))])
         show-modal @(rf/subscribe [:single-bond-trade-history/show-modal])
-        display (reverse (remove #(= (:TransactionTypeName %) "Coupon Payment") modal-data))
-        ]
-    (println modal-data)
+        display (reverse (remove #(= (:TransactionTypeName %) "Coupon Payment") modal-data))]
+    ;(println modal-data)
     (if show-modal
 
       [modal-panel
        :wrap-nicely? true
-       :backdrop-on-click #(do
-                             (rf/dispatch [:single-bond-trade-history/data []])
-                             (rf/dispatch [:single-bond-trade-history/show-modal false]))
+       :backdrop-on-click #(rf/dispatch [:single-bond-trade-history/close-modal])
        :child
-       [v-box :gap "10px" :children [[title :label "Trades since 2019-01-01" :level :level2]
-                                     [:> ReactTable
+       [v-box :gap "10px"
+        :children [
+                   [h-box :gap "20px" :align :center
+                    :children [
+                               [title :label (str @(rf/subscribe [:single-bond-trade-history/bond]) " trades since 2019-01-01") :level :level2]
+                               [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
+                    [:> ReactTable
                                       {:data           display
                                        :columns        [{:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
                                                         {:Header "Type" :accessor "TransactionTypeName" :width 100}
@@ -63,3 +76,40 @@
 
        ])))
 
+;(tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv"))
+;[title :label "Download:" :level :level3]
+;[md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(csv-link @(rf/subscribe [:single-portfolio-risk/table]) @portfolio)]]))]]]]]
+
+(defn modal-single-bond-flat-trade-history []
+  (let [
+        modal-data @(rf/subscribe [:single-bond-trade-history/flat-data])
+        show-modal @(rf/subscribe [:single-bond-trade-history/show-flat-modal])
+        display (reverse (sort-by :date (remove #(some #{(:trade %)} ["Coupon Payment" "Scrip Transfer"]) modal-data)))]
+    (println modal-data)
+    (if show-modal
+
+      [modal-panel
+       :wrap-nicely? true
+       :backdrop-on-click #(rf/dispatch [:single-bond-trade-history/close-modal])
+       :child
+       [v-box :gap "20px"
+        :children [[h-box :gap "20px" :align :center
+                    :children [[title :label (str @(rf/subscribe [:single-bond-trade-history/bond]) " trades since 2019-01-01") :level :level2]
+                               [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
+                               [:> ReactTable
+                                {:data           display
+                                 :columns        [{:Header "Date" :accessor "date" :width 100}
+                                                  {:Header "Type" :accessor "trade" :width 75}
+                                                  {:Header "Price" :accessor "price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
+                                                  {:Header "Portfolio" :columns (into []
+                                                                                      (for [p @(rf/subscribe [:portfolios])]
+                                                                                        {:Header p :accessor p :width 90 :style {:textAlign "right"} :Cell nfh}))}
+                                                  ]
+                                 :showPagination false
+                                 :pageSize       (count display)
+                                 :className      "-striped -highlight"}]
+
+                                     ]]]
+
+
+      )))

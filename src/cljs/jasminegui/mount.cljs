@@ -100,7 +100,11 @@
                  :attribution/summary                                 []
 
                  :single-bond-trade-history/data                                 []
+                 :single-bond-trade-history/flat-data                 []
+                 :single-bond-trade-history/bond                      nil
                  :single-bond-trade-history/show-modal                false
+                 :single-bond-trade-history/show-flat-modal           false
+
 
 
                  })
@@ -112,9 +116,9 @@
 (defn first-level-sort [x]
   (case x
     "Cash"        "AAA"
-    "Collateral"  "AAA"
-    "Forwards"    "AAA"
-    "Equities"    "AAA"
+    "Collateral"  "ZZZ"
+    "Forwards"    "ZZZ"
+    "Equities"    "ZZZ"
     x))
 
 (defn add-total-line-to-pivot [pivoted-table kportfolios]
@@ -294,6 +298,9 @@
 
            :single-bond-trade-history/show-modal
            :single-bond-trade-history/data
+           :single-bond-trade-history/show-flat-modal
+           :single-bond-trade-history/flat-data
+           :single-bond-trade-history/bond
 
 
 

@@ -17,3 +17,5 @@
     (.removeChild (.-body js/document) link)))
 
 
+(defn csv-link [data filename]
+  (download-object-as-csv (clj->js (vector-of-maps->csv data)) (str filename ".csv")))

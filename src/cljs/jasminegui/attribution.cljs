@@ -24,18 +24,18 @@
 
 
 
-
-
-(defn strategy-pop-up [this]
-  (r/as-element [:div [:span {:title (aget this "row" "strategy")} (aget this "row" "strategy-shortcut")]]))
-
-(defn last-price-props [this]
-  (if-not (nil? this)
-    (let [status (aget this "row" "status")
-          prefix (if (= status "CLOSED") "(c) " "")]
-      (r/as-element (str prefix (gstring/format "%.2f" (aget this "value")))))
-    (clj->js {:style nil})))
-
+;
+;
+;(defn strategy-pop-up [this]
+;  (r/as-element [:div [:span {:title (aget this "row" "strategy")} (aget this "row" "strategy-shortcut")]]))
+;
+;(defn last-price-props [this]
+;  (if-not (nil? this)
+;    (let [status (aget this "row" "status")
+;          prefix (if (= status "CLOSED") "(c) " "")]
+;      (r/as-element (str prefix (gstring/format "%.2f" (aget this "value")))))
+;    (clj->js {:style nil})))
+;
 
 (def dropdown-width "150px")
 

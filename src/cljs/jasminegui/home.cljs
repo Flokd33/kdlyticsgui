@@ -52,5 +52,8 @@
   [h-box :gap "10px"
    ;:style {:overflow "hidden"}
    :padding "0px"
-   :children [[nav-home-bar] [active-home] [tradehistory/modal-single-bond-trade-history]]])
+   :children [[nav-home-bar]
+              [active-home]
+              [tradehistory/modal-single-bond-trade-history]
+              [tradehistory/modal-single-bond-flat-trade-history]]])
 
