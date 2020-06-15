@@ -132,7 +132,8 @@
    :gap "0px"
    :class "body"
    :children [
-              ;[modal-global-password] [modal-mounting]
+              ;[modal-global-password]
+              [modal-mounting]
               [nav-bar] [active-view]
               ;[modal-portfolio-selector] [modal-success]
               ]])

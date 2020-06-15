@@ -41,7 +41,8 @@
               :single-bond-trade-history/data []
               :single-bond-trade-history/flat-data []
               :single-bond-trade-history/show-modal false
-              :single-bond-trade-history/show-flat-modal false)))
+              :single-bond-trade-history/show-flat-modal false
+              :single-bond-trade-history/show-throbber true)))
 
 
 (defn modal-single-bond-trade-history []
@@ -62,19 +63,19 @@
                     :children [
                                [title :label (str @(rf/subscribe [:single-bond-trade-history/bond]) " trades since 2019-01-01") :level :level2]
                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
-                    [:> ReactTable
-                                      {:data           display
-                                       :columns        [{:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
-                                                        {:Header "Type" :accessor "TransactionTypeName" :width 100}
-                                                        {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh}
-                                                        {:Header "Price" :accessor "PriceLcl" :width 100 :style {:textAlign "right"} :Cell tables/round2}
-                                                        {:Header "Counterparty" :accessor "counterparty_code" :width 100}
-                                                        ]
-                                       :showPagination false
-                                       :pageSize       (count display)
-                                       :className      "-striped -highlight"}]]]
-
-       ])))
+                   (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
+                     [box :align :center :child [throbber :size :large]]
+                     [:> ReactTable
+                                        {:data           display
+                                         :columns        [{:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
+                                                          {:Header "Type" :accessor "TransactionTypeName" :width 100}
+                                                          {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh}
+                                                          {:Header "Price" :accessor "PriceLcl" :width 100 :style {:textAlign "right"} :Cell tables/round2}
+                                                          {:Header "Counterparty" :accessor "counterparty_code" :width 100}
+                                                          ]
+                                         :showPagination false
+                                         :pageSize       (count display)
+                                         :className      "-striped -highlight"}])]]])))
 
 ;(tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv"))
 ;[title :label "Download:" :level :level3]
@@ -96,20 +97,17 @@
         :children [[h-box :gap "20px" :align :center
                     :children [[title :label (str @(rf/subscribe [:single-bond-trade-history/bond]) " trades since 2019-01-01") :level :level2]
                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
-                               [:> ReactTable
-                                {:data           display
-                                 :columns        [{:Header "Date" :accessor "date" :width 100}
-                                                  {:Header "Type" :accessor "trade" :width 75}
-                                                  {:Header "Price" :accessor "price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
-                                                  {:Header "Portfolio" :columns (into []
-                                                                                      (for [p @(rf/subscribe [:portfolios])]
-                                                                                        {:Header p :accessor p :width 90 :style {:textAlign "right"} :Cell nfh}))}
-                                                  ]
-                                 :showPagination false
-                                 :pageSize       (count display)
-                                 :className      "-striped -highlight"}]
-
-                                     ]]]
-
-
-      )))
+                               (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
+                                 [box :align :center :child [throbber :size :large]]
+                                 [:> ReactTable
+                                  {:data           display
+                                   :columns        [{:Header "Date" :accessor "date" :width 100}
+                                                    {:Header "Type" :accessor "trade" :width 75}
+                                                    {:Header "Price" :accessor "price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
+                                                    {:Header "Portfolio" :columns (into []
+                                                                                        (for [p @(rf/subscribe [:portfolios])]
+                                                                                          {:Header p :accessor p :width 90 :style {:textAlign "right"} :Cell nfh}))}
+                                                    ]
+                                   :showPagination false
+                                   :pageSize       (count display)
+                                   :className      "-striped -highlight"}])]]])))

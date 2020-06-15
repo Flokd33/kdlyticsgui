@@ -34,6 +34,7 @@
                  :active-var                                  :overview
                  :active-attribution                          :summary
                  :success-modal                               {:show false :on-close nil :response nil}
+                 :show-mounting-modal                         true
 
                  ;single-portfolio view
                  :single-portfolio-risk/display-style         "Tree"
@@ -104,6 +105,8 @@
                  :single-bond-trade-history/bond                      nil
                  :single-bond-trade-history/show-modal                false
                  :single-bond-trade-history/show-flat-modal           false
+                 :single-bond-trade-history/show-throbber             true
+
 
 
 
@@ -246,7 +249,6 @@
            :active-home
            :active-var
            :active-attribution
-           :positions
            :rating-to-score
            :pivoted-positions
            :total-positions
@@ -296,16 +298,37 @@
 
            :attribution/summary
 
-           :single-bond-trade-history/show-modal
-           :single-bond-trade-history/data
            :single-bond-trade-history/show-flat-modal
            :single-bond-trade-history/flat-data
+           :single-bond-trade-history/show-modal
+           :single-bond-trade-history/data
            :single-bond-trade-history/bond
+           :single-bond-trade-history/show-throbber
 
 
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
+
+
+(rf/reg-event-db
+  :positions
+  (fn [db [_ positions]]
+    (assoc db :positions positions
+              :show-mounting-modal false)))
+
+(rf/reg-event-db
+  :single-bond-trade-history/data
+  (fn [db [_ data]]
+    (assoc db :single-bond-trade-history/data data
+              :single-bond-trade-history/show-throbber false)))
+
+(rf/reg-event-db
+  :single-bond-trade-history/flat-data
+  (fn [db [_ data]]
+    (assoc db :single-bond-trade-history/flat-data data
+              :single-bond-trade-history/show-throbber false)))
+
 
 (rf/reg-event-db
   :portfolios
