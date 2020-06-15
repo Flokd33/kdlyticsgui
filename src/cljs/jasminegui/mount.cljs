@@ -107,6 +107,12 @@
                  :single-bond-trade-history/show-flat-modal           false
                  :single-bond-trade-history/show-throbber             true
 
+                 :portfolio-review/portfolio                          "OGEMCORD"
+                 :portfolio-review/active-tab                         :summary
+                 :portfolio-review/summary-data                       nil
+                 :portfolio-review/contribution-chart-data            nil
+                 :portfolio-review/alpha-chart-data                   nil
+
 
 
 
@@ -304,6 +310,9 @@
            :single-bond-trade-history/data
            :single-bond-trade-history/bond
            :single-bond-trade-history/show-throbber
+
+           :portfolio-review/portfolio
+           :portfolio-review/active-tab
 
 
 
@@ -555,4 +564,27 @@
   (fn [{:keys [db]} [_]]
     {:http-get-dispatch {:url          (str server-address "attribution?query-type=summary") ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:attribution/summary]
+                         :kwk          true}}))
+
+;;;;;;;;;;;;;;;PORTFOLIO REVIEW
+;SUMMARY ATTRIBUTION
+(rf/reg-event-fx
+  :get-portfolio-review-summary-data
+  (fn [{:keys [db]} [_ portfolio]]
+    {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=summary&portfolio=" portfolio) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/summary-data]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-portfolio-review-contribution-chart-data
+  (fn [{:keys [db]} [_ portfolio period grouping]]
+    {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping= " grouping) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/contribution-chart-data]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-portfolio-review-alpha-chart-data
+  (fn [{:keys [db]} [_ portfolio grouping]]
+    {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping= " grouping) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/alpha-chart-data]
                          :kwk          true}}))

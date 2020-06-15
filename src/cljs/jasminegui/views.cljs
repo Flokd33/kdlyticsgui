@@ -14,6 +14,7 @@
     [jasminegui.var :as var]
     [jasminegui.attribution :as attribution]
     [jasminegui.administration :as administration]
+    [jasminegui.portfolioreview :as pr]
     ))
 
 (defn nav-bar []
@@ -117,8 +118,9 @@
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-view
       :home   [home/home-view]
-      :var    [var/var-view]
       :attribution [attribution/home-view]
+      :var    [var/var-view]
+      :portfolio-review [pr/view]
       ;:trade-drilldown  [tradeview/trade-description-view]
       ;:trade-entry      [tradeentry/trade-entry-view]
       ;:sim-trades       [tables/simulated-trades-view]
