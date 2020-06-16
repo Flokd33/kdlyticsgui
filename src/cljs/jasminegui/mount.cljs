@@ -313,6 +313,9 @@
 
            :portfolio-review/portfolio
            :portfolio-review/active-tab
+           :portfolio-review/summary-data
+           :portfolio-review/contribution-chart-data
+           :portfolio-review/alpha-chart-data
 
 
 
@@ -578,13 +581,13 @@
 (rf/reg-event-fx
   :get-portfolio-review-contribution-chart-data
   (fn [{:keys [db]} [_ portfolio period grouping]]
-    {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping= " grouping) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:portfolio-review/contribution-chart-data]
                          :kwk          true}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-alpha-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
-    {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping= " grouping) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:portfolio-review/alpha-chart-data]
                          :kwk          true}}))

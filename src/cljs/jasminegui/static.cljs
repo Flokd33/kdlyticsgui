@@ -27,14 +27,6 @@
    {:code :marginal            :name "Marginals"}
    {:code :proxies             :name "Proxies"}])
 
-(def portfolio-review-navigation
-  [{:code :summary             :name "Summary"}
-   {:code :performance         :name "Contribution"}
-   {:code :alpha               :name "Alpha"}
-   {:code :top-contributors    :name "Top contributors"}
-   {:code :jensen              :name "Jensen"}
-   {:code :risk                :name "Risk"}])
-
 (def risk-choice-map [{:id "None"         :label "None"}
                       {:id :region        :label "Region"}
                       {:id :country       :label "Country"}
