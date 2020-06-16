@@ -22,40 +22,6 @@
            (goog.i18n.NumberFormat Format))
   )
 
-
-
-;{
-; "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
-;          "data": {"values": [
-;                              {"country": "Argentina", "period": "ytd", "performance": 3.0},
-;                              {"country": "Argentina", "period": "mtd", "performance": 5.0},
-;                              {"country": "Brazil", "period": "ytd", "performance": -2.0},
-;                              {"country": "Brazil", "period": "mtd", "performance":  1.0}]},
-; "transform": [
-;               {"filter": "datum.performance >= -50"},
-;               {"calculate": "datum.period == 2 ? 'Female' : 'Male'", "as": "gender"}
-;               ],
-; "width": {"step": 12},
-; "mark": "bar",
-; "encoding": {
-;              "row": {"field": "country", "type": "ordinal", "spacing": 10},
-;                   "x": {
-;                         "aggregate": "sum",
-;                                    "field": "performance",
-;                         "type": "quantitative",
-;                                    "axis": {"title": "Performance",
-;                                                    "gridColor": {"condition": {"test": "datum.value === 0", "value": "black"}}}
-;                         },
-;              "y": {"field": "period", "type": "nominal", "axis": {"title": ""}},
-;                   "color": {
-;                             "field": "period",
-;                                    "type": "nominal",
-;                             "scale": {"range": ["#675193", "#ca8861"]}
-;                             }
-;              },
-; "config": {"view": {"stroke": "transparent"}, "axis": {"domainWidth": 1}}
-; }
-
 (def standard-box-width "1600px")
 (def standard-box-height "1024px")
 (def standard-box-width-nb 1600)
@@ -98,14 +64,6 @@
      :config
                 {:view {:stroke "transparent"},
                  :axis {:domainWidth 1}}})
-
-
-
-
-  ;:width  (- standard-box-width-nb 400)
-  ;:height {:step (/ (- standard-box-height-nb 400) (* 2 (count (distinct (map :group data)))))}
-
-
     )
 
 
@@ -113,7 +71,7 @@
   [{:code :summary             :name "Summary" :page-start 1}
    {:code :contribution         :name "Contribution" :page-start 2}
    {:code :alpha :name "Alpha" :page-start 10}
-   {:code :top-contributors    :name "Top contributors" :page-start 14}
+   {:code :top-bottom    :name "Top contributors" :page-start 14}
    {:code :jensen              :name "Jensen" :page-start 19}
    {:code :risk                :name "Risk" :page-start 23}])
 
@@ -140,8 +98,6 @@
             20 {:title "Jensen by Country"            :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Country"]}
             21 {:title "Jensen by Sector"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Sector"]}
             22 {:title "Jensen by Rating"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "RatingGroup"]}
-
-
             })
 
 (def maximum-page (count pages))
@@ -187,50 +143,54 @@
                (get-in data [:beta :country-2]) " (" (g (get-in data [:beta :value-2])) "x), and "
                (get-in data [:beta :country-3]) " (" (g (get-in data [:beta :value-3])) "x).")]]]]))
 
-(defn contribution-chart []
-  (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
-        data @(rf/subscribe [:portfolio-review/contribution-chart-data])
-        ]
+(defn contribution-or-alpha-chart [data]
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
       :children
       [[title :label (get-in pages [@current-page :title]) :level :level1]
-       [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]]))
+       [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]])
 
-;(defn alpha-chart []
-;  (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
-;        data @(rf/subscribe [:portfolio-review/alpha-chart-data])
-;        ]
-;    (println data)
-;    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-;     :child
-;     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-;      :children
-;      [[title :label (get-in pages [@current-page :title]) :level :level1]
-;       [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]]))
 
 (defn top-contributors []
-  (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
-        attribution @(rf/subscribe [:single-portfolio-attribution/table])
-        ])
-  [v-box :width "800px"
-   :children [
-              nil
+  (let [display (sort-by :Fund-Contribution (remove #(or (some #{(:Sector %)} ["Total"])
+                                                         (= (subs (:Security %) 0 16) "Foreign Currency")
+                                                         (= (subs (:Security %) 4 22) "Settlement Account"))
+                                                    @(rf/subscribe [:single-portfolio-attribution/clean-table])))]
+    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
+     :child
+     [v-box :gap "10px" :class "element" :width "100%" :height "100%"
+      :children
+      [[title :label (get-in pages [@current-page :title]) :level :level1]
+       [:> ReactTable
+         {:data                (if (or (= @current-page 14) (= @current-page 16)) (reverse display) display)
+          :defaultFilterMethod tables/case-insensitive-filter
+          :columns             [
+                                {:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
+                                {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
+                                {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
+                                {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
+                                ;{:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}
+                                ]
+          :showPagination      false
+          :sortable            false
+          :filterable          false
+          :pageSize            20
+          :className           "-striped -highlight"
+          }]]]]
+    ))
 
 
-              ]
-   ]
-  )
+
 
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-tab
       :summary                       [summary-text]
-      :contribution                  [contribution-chart]
-      :alpha                         [contribution-chart]
-      :top-contributors [:div.output "nothing to display"]
+      :contribution                  [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/contribution-chart-data])]
+      :alpha                         [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/alpha-chart-data])]
+      :top-bottom                    [top-contributors]
       :jensen [:div.output "nothing to display"]
       :risk [:div.output "nothing to display"]
       [:div.output "nothing to display"])))
