@@ -28,6 +28,9 @@
 (def standard-box-height-nb 1024)
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;VEGA-LITE CHART DEFINITIONS;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn portfolio-vs-index-horizontal-bars [data]
   (let [individual-height (/ standard-box-height-nb (* 3.5 (count (distinct (map :group data)))))
@@ -66,6 +69,10 @@
                  :axis {:domainWidth 1}}})
     )
 
+
+;;;;;;;;;;;;;;;;
+;;;NAVIGATION;;;
+;;;;;;;;;;;;;;;;
 
 (def portfolio-review-navigation
   [{:code :summary             :name "Summary" :page-start 1}
@@ -125,6 +132,10 @@
               @(rf/subscribe [:portfolio-review/portfolio])))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;
+;;;PAGE CONSTRUCTION;;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
         data @(rf/subscribe [:portfolio-review/summary-data])
@@ -151,7 +162,6 @@
       [[title :label (get-in pages [@current-page :title]) :level :level1]
        [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]])
 
-
 (defn top-contributors []
   (let [display (sort-by :Fund-Contribution (remove #(or (some #{(:Sector %)} ["Total"])
                                                          (= (subs (:Security %) 0 16) "Foreign Currency")
@@ -163,23 +173,22 @@
       :children
       [[title :label (get-in pages [@current-page :title]) :level :level1]
        [:> ReactTable
-         {:data                (if (or (= @current-page 14) (= @current-page 16)) (reverse display) display)
-          :defaultFilterMethod tables/case-insensitive-filter
-          :columns             [
-                                {:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
-                                {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
-                                {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
-                                {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
-                                ;{:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}
-                                ]
-          :showPagination      false
-          :sortable            false
-          :filterable          false
-          :pageSize            20
-          :className           "-striped -highlight"
-          }]]]]
+        {:data                (take 20 (if (or (= @current-page 14) (= @current-page 16)) (reverse display) display))
+         :defaultFilterMethod tables/case-insensitive-filter
+         :columns             [
+                               {:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
+                               {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
+                               {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
+                               {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
+                               ;{:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}
+                               ]
+         :showPagination      false
+         :sortable            false
+         :filterable          false
+         :pageSize            20
+         :className           "-striped -highlight"
+         }]]]]
     ))
-
 
 
 
