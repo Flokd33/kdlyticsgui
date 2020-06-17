@@ -112,6 +112,7 @@
                  :portfolio-review/summary-data                       nil
                  :portfolio-review/contribution-chart-data            nil
                  :portfolio-review/alpha-chart-data                   nil
+                 :portfolio-review/jensen-chart-data                   nil
 
 
 
@@ -316,6 +317,7 @@
            :portfolio-review/summary-data
            :portfolio-review/contribution-chart-data
            :portfolio-review/alpha-chart-data
+           :portfolio-review/jensen-chart-data
 
 
 
@@ -590,4 +592,12 @@
   (fn [{:keys [db]} [_ portfolio grouping]]
     {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
                          :dispatch-key [:portfolio-review/alpha-chart-data]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-portfolio-review-jensen-chart-data
+  (fn [{:keys [db]} [_ portfolio grouping]]
+    (println (str server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" grouping))
+    {:http-get-dispatch {:url          (str server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/jensen-chart-data]
                          :kwk          true}}))

@@ -35,7 +35,7 @@
 (defn portfolio-vs-index-horizontal-bars [data]
   (let [individual-height (/ standard-box-height-nb (* 3.5 (count (distinct (map :group data)))))
         text-size 16]
-    (println (count (distinct (map :group data))))
+    ;    (println (count (distinct (map :group data))))
     {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
      ;   :width     (- standard-box-width-nb 400),
      :height    {:step (/ (- standard-box-height-nb 200) (* 2 (count (distinct (map :group data)))))},
@@ -74,41 +74,99 @@
 ;;;NAVIGATION;;;
 ;;;;;;;;;;;;;;;;
 
-(def portfolio-review-navigation
-  [{:code :summary             :name "Summary" :page-start 1}
-   {:code :contribution         :name "Contribution" :page-start 2}
-   {:code :alpha :name "Alpha" :page-start 10}
-   {:code :top-bottom    :name "Top contributors" :page-start 14}
-   {:code :jensen              :name "Jensen" :page-start 19}
-   {:code :risk                :name "Risk" :page-start 23}])
 
-(def pages {
-            1  {:title "Summary"                      :nav-request :summary         :data-request nil}
-            2  {:title "MTD Contribution by Region"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Region"]}
-            3  {:title "MTD Contribution by Country"  :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Country"]}
-            4  {:title "MTD Contribution by Sector"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Sector"]}
-            5  {:title "MTD Contribution by Rating"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "RatingGroup"]}
-            6  {:title "YTD Contribution by Region"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Region"]}
-            7  {:title "YTD Contribution by Country"  :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Country"]}
-            8  {:title "YTD Contribution by Sector"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Sector"]}
-            9  {:title "YTD Contribution by Rating"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "RatingGroup"]}
-            10 {:title "Alpha by Region"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Region"]}
-            11 {:title "Alpha by Country"             :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Country"]}
-            12 {:title "Alpha by Sector"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Sector"]}
-            13 {:title "Alpha by Rating"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "RatingGroup"]}
-            14 {:title "MTD top contributors"         :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "mtd"]}
-            15 {:title "MTD bottom contributors"      :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "mtd"]}
-            16 {:title "YTD top contributors"         :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "ytd"]}
-            17 {:title "YTD bottom contributors"      :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "ytd"]}
-            18 {:title "Fund relative performance"    :nav-request :relative-perf   :data-request nil}
-            19 {:title "Jensen by Region"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Region"]}
-            20 {:title "Jensen by Country"            :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Country"]}
-            21 {:title "Jensen by Sector"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Sector"]}
-            22 {:title "Jensen by Rating"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "RatingGroup"]}
-            })
+
+(def contribution-pages
+  (into []
+        (for [p [["MTD" "mtd"]
+                 ["YTD" "ytd"]]
+              k [["Region" "Region"]
+                 ["Country" "Country"]
+                 ["Sector" "Sector"]
+                 ["Rating" "RatingGroup"]
+                 ["Duration" "Duration Bucket"]]]
+          {:title        (str (first p) " Contribution by " (first k))
+           :nav-request  :contribution
+           :data-request [:get-portfolio-review-contribution-chart-data "portfolio" (second p) (second k)]})))
+
+(def alpha-pages
+  (into []
+        (for [k [["Region" "Region"]
+                 ["Country" "Country"]
+                 ["Sector" "Sector"]
+                 ["Rating" "RatingGroup"]
+                 ["Duration" "Duration Bucket"]]]
+          {:title        (str "Alpha by " (first k))
+           :nav-request  :alpha
+           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" (second k)]})))
+
+(def top-bottom-pages
+  (into []
+        (for [p [["MTD" "mtd"]
+                 ["YTD" "ytd"]]
+              k [["top" "top"]
+                 ["bottom" "bottom"]]]
+          {:title        (str (first p) " " (first k) " contributors")
+           :nav-request  :top-bottom
+           :data-request [:get-single-attribution "portfolio" (second p)]})))
+
+(def jensen-pages
+  (into []
+        (for [k [["Region" "Region"]
+                 ["Country" "Country"]
+                 ["Sector" "Sector"]
+                 ["Rating" "RatingGroup"]
+                 ["Duration" "Duration Bucket"]]]
+          {:title        (str "Jensen by " (first k))
+           :nav-request  :jensen
+           :data-request [:get-portfolio-review-jensen-chart-data "portfolio" (second k)]})))
+
+(def pages (into {} (map-indexed
+                      vector
+                      (concat
+                        [{:title "Summary"                      :nav-request :summary         :data-request nil}]
+                         contribution-pages
+                         alpha-pages
+                         top-bottom-pages
+                         jensen-pages))))
+
+(def portfolio-review-navigation
+  [{:code :summary      :name "Summary"           :page-start 0}
+   {:code :contribution :name "Contribution"      :page-start (apply min (keys (filter #(= (:nav-request (second %)) :contribution) pages)))}
+   {:code :alpha        :name "Alpha"             :page-start (apply min (keys (filter #(= (:nav-request (second %)) :alpha) pages)))}
+   {:code :top-bottom   :name "Top contributors"  :page-start (apply min (keys (filter #(= (:nav-request (second %)) :top-bottom) pages)))}
+   {:code :jensen       :name "Jensen"            :page-start (apply min (keys (filter #(= (:nav-request (second %)) :jensen) pages)))}
+   {:code :risk         :name "Risk"              :page-start 40}])
+
+;(def pages {
+;            1  {:title "Summary"                      :nav-request :summary         :data-request nil}
+;            2  {:title "MTD Contribution by Region"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Region"]}
+;            3  {:title "MTD Contribution by Country"  :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Country"]}
+;            4  {:title "MTD Contribution by Sector"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Sector"]}
+;            5  {:title "MTD Contribution by Rating"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "RatingGroup"]}
+;            6  {:title "MTD Contribution by Rating"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "RatingGroup"]}
+;
+;            6  {:title "YTD Contribution by Region"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Region"]}
+;            7  {:title "YTD Contribution by Country"  :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Country"]}
+;            8  {:title "YTD Contribution by Sector"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Sector"]}
+;            9  {:title "YTD Contribution by Rating"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "RatingGroup"]}
+;            10 {:title "Alpha by Region"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Region"]}
+;            11 {:title "Alpha by Country"             :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Country"]}
+;            12 {:title "Alpha by Sector"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Sector"]}
+;            13 {:title "Alpha by Rating"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "RatingGroup"]}
+;            14 {:title "MTD top contributors"         :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "mtd"]}
+;            15 {:title "MTD bottom contributors"      :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "mtd"]}
+;            16 {:title "YTD top contributors"         :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "ytd"]}
+;            17 {:title "YTD bottom contributors"      :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "ytd"]}
+;            18 {:title "Fund relative performance"    :nav-request :relative-perf   :data-request nil}
+;            19 {:title "Jensen by Region"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Region"]}
+;            20 {:title "Jensen by Country"            :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Country"]}
+;            21 {:title "Jensen by Sector"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Sector"]}
+;            22 {:title "Jensen by Rating"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "RatingGroup"]}
+;            })
 
 (def maximum-page (count pages))
-(def current-page (r/atom 1))
+(def current-page (r/atom 0))
 
 (defn go-to-page [n portfolio]
   (reset! current-page n)
@@ -122,7 +180,7 @@
     (go-to-page (inc @current-page) @(rf/subscribe [:portfolio-review/portfolio]))))
 
 (defn previous-page! []
-  (when (> @current-page 1)
+  (when (> @current-page 0)
     (go-to-page (dec @current-page) @(rf/subscribe [:portfolio-review/portfolio]))))
 
 (defn go-to-block! [x]
@@ -155,6 +213,7 @@
                (get-in data [:beta :country-3]) " (" (g (get-in data [:beta :value-3])) "x).")]]]]))
 
 (defn contribution-or-alpha-chart [data]
+  (println data)
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
@@ -163,7 +222,7 @@
        [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]])
 
 (defn top-contributors []
-  (let [display (sort-by :Fund-Contribution (remove #(or (some #{(:Sector %)} ["Total"])
+  (let [display (sort-by :Total-Effect (remove #(or (some #{(:Sector %)} ["Total"])
                                                          (= (subs (:Security %) 0 16) "Foreign Currency")
                                                          (= (subs (:Security %) 4 22) "Settlement Account"))
                                                     @(rf/subscribe [:single-portfolio-attribution/clean-table])))]
@@ -200,7 +259,7 @@
       :contribution                  [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/contribution-chart-data])]
       :alpha                         [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/alpha-chart-data])]
       :top-bottom                    [top-contributors]
-      :jensen [:div.output "nothing to display"]
+      :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
       :risk [:div.output "nothing to display"]
       [:div.output "nothing to display"])))
 
@@ -214,7 +273,7 @@
                  :class "leftnavbar"
                  :children (into [
                                   [h-box :children [[box    :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Previous" :on-click previous-page!]]
-                                                    [box :size "1" :align :center  :child [label :label (str @current-page "/" maximum-page) :style {:width "70px" :color "white" :text-align "center"}]]
+                                                    [box :size "1" :align :center  :child [label :label (str (inc @current-page) "/" maximum-page) :style {:width "70px" :color "white" :text-align "center"}]]
                                                     [box    :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Next"  :on-click next-page!]]]]
                                   [line :color "#CA3E47" :class "separatornavline"]
 
