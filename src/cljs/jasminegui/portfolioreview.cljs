@@ -17,7 +17,8 @@
     [jasminegui.tables :as tables]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    [oz.core :as oz])
+    [oz.core :as oz]
+    [jasminegui.charting :as charting])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
@@ -33,15 +34,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn portfolio-vs-index-horizontal-bars [data]
-  (let [individual-height (/ standard-box-height-nb (* 3.5 (count (distinct (map :group data)))))
-        text-size 16]
-    ;    (println (count (distinct (map :group data))))
+  (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
+        text-size 16
+        scl (int (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 30))]
+    ;    (println (count (distinct (map :group data))) individual-height)
     {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
      ;   :width     (- standard-box-width-nb 400),
-     :height    {:step (/ (- standard-box-height-nb 200) (* 2 (count (distinct (map :group data)))))},
+     ;:height    {:step (/ (- standard-box-height-nb 0) (* 3.0 (count (distinct (map :group data)))))},
      :data      {:values data},
-     :transform [{:calculate "datum.value >= 0 ? datum.value + 0.05 : datum.value - 0.05", :as "valuetxt"}],
-     :facet     {:row {:field "group", :type "ordinal", :spacing 10, :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "left"}}},
+     :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
+     :facet     { :row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "left"}}},
      :spec
                 {:layer
                  [{:mark   "bar",
@@ -50,7 +52,7 @@
                    :encoding
                            {:x
                                    {:aggregate "sum", :field "value", :type "quantitative",
-                                    :axis      {:title "", :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                                    :axis      {:title "Basis points", :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
                             :y
                                    {:field "performance", :type "nominal", :axis {:title "", :labels false}},
                             :color {:field "performance", :type "nominal", :sort "descending", :scale {:range ["#134848" "#009D80"]}, :legend {:title "", :labelFontSize text-size}}}}
@@ -62,7 +64,7 @@
                             :y    {:field "performance", :type "nominal", :axis {:title "", :labels false}},
                             :color
                                   {:field "performance", :type "nominal", :sort "descending", :scale {:range ["#134848" "#009D80"]}, :legend nil},
-                            :text {:field "value" :format ".2f"}
+                            :text {:field "value" :format ".0f"}
                             }}]},
      :config
                 {:view {:stroke "transparent"},
@@ -128,7 +130,9 @@
                          contribution-pages
                          alpha-pages
                          top-bottom-pages
-                         jensen-pages))))
+                         jensen-pages
+                        [{:title "Three year daily backtest"   :nav-request :backtest-history  :data-request nil}]
+                        ))))
 
 (def portfolio-review-navigation
   [{:code :summary      :name "Summary"           :page-start 0}
@@ -136,6 +140,7 @@
    {:code :alpha        :name "Alpha"             :page-start (apply min (keys (filter #(= (:nav-request (second %)) :alpha) pages)))}
    {:code :top-bottom   :name "Top contributors"  :page-start (apply min (keys (filter #(= (:nav-request (second %)) :top-bottom) pages)))}
    {:code :jensen       :name "Jensen"            :page-start (apply min (keys (filter #(= (:nav-request (second %)) :jensen) pages)))}
+   {:code :backtest-history       :name "Backtest"            :page-start (apply min (keys (filter #(= (:nav-request (second %)) :backtest-history) pages)))}
    {:code :risk         :name "Risk"              :page-start 40}])
 
 ;(def pages {
@@ -184,8 +189,6 @@
     (go-to-page (dec @current-page) @(rf/subscribe [:portfolio-review/portfolio]))))
 
 (defn go-to-block! [x]
-  (println x)
-  (println (:page-start (first (filter #(= (:code %) x) portfolio-review-navigation))))
   (go-to-page (:page-start (first (filter #(= (:code %) x) portfolio-review-navigation)))
               @(rf/subscribe [:portfolio-review/portfolio])))
 
@@ -213,7 +216,7 @@
                (get-in data [:beta :country-3]) " (" (g (get-in data [:beta :value-3])) "x).")]]]]))
 
 (defn contribution-or-alpha-chart [data]
-  (println data)
+  ;(println data)
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
@@ -225,14 +228,15 @@
   (let [display (sort-by :Total-Effect (remove #(or (some #{(:Sector %)} ["Total"])
                                                          (= (subs (:Security %) 0 16) "Foreign Currency")
                                                          (= (subs (:Security %) 4 22) "Settlement Account"))
-                                                    @(rf/subscribe [:single-portfolio-attribution/clean-table])))]
+                                                    @(rf/subscribe [:single-portfolio-attribution/clean-table])))
+        ttl (get-in pages [@current-page :title])]
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "10px" :class "element" :width "100%" :height "100%"
       :children
-      [[title :label (get-in pages [@current-page :title]) :level :level1]
+      [[title :label ttl :level :level1]
        [:> ReactTable
-        {:data                (take 20 (if (or (= @current-page 14) (= @current-page 16)) (reverse display) display))
+        {:data                (take 20 (if (= (subs ttl 4 7) "top") (reverse display) display))
          :defaultFilterMethod tables/case-insensitive-filter
          :columns             [
                                {:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
@@ -249,6 +253,23 @@
          }]]]]
     ))
 
+(defn backtest-history []
+  (rf/dispatch [:get-portfolio-var @(rf/subscribe [:portfolio-review/portfolio])])
+  (rf/dispatch [:var/chart-period :daily-3y])
+  (let [dates @(rf/subscribe [:var/dates])
+        data @(rf/subscribe [:var/data])
+        chart-period @(rf/subscribe [:var/chart-period])
+        line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
+        days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
+    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
+     :child
+     [v-box :gap "10px" :class "element" :width "100%" :height "100%"
+      :children
+      [[title :label (get-in pages [@current-page :title]) :level :level1]
+       [oz/vega-lite (charting/backtest-chart
+                       (take-last days (get-in dates [(line :frequency)]))
+                       (take-last days (get-in data [:portfolio-value (line :frequency)]))
+                       (- standard-box-width-nb 200) (- standard-box-height-nb 300))]]]]))
 
 
 (defn active-home []
@@ -260,7 +281,7 @@
       :alpha                         [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/alpha-chart-data])]
       :top-bottom                    [top-contributors]
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
-      :risk [:div.output "nothing to display"]
+      :backtest-history                          [backtest-history]
       [:div.output "nothing to display"])))
 
 
