@@ -33,42 +33,38 @@
 ;;;VEGA-LITE CHART DEFINITIONS;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def performance-colors ["#134848" "#009D80" "#FDAA94" "#74908D"])
+
 (defn portfolio-vs-index-horizontal-bars [data]
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         text-size 16
+        perf-sort (reverse (distinct (mapv :performance data)))
+        colors (reverse (take (count (distinct (mapv :performance data))) performance-colors))
         scl (int (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 30))]
-    ;    (println (count (distinct (map :group data))) individual-height)
     {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
-     ;   :width     (- standard-box-width-nb 400),
-     ;:height    {:step (/ (- standard-box-height-nb 0) (* 3.0 (count (distinct (map :group data)))))},
      :data      {:values data},
      :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
-     :facet     { :row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "left"}}},
+     :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "left"}}},
      :spec
                 {:layer
                  [{:mark   "bar",
                    :width  (- standard-box-width-nb 400),
                    :height individual-height
                    :encoding
-                           {:x
-                                   {:aggregate "sum", :field "value", :type "quantitative",
+                           {:x     {:aggregate "sum", :field "value", :type "quantitative",
                                     :axis      {:title "Basis points", :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
-                            :y
-                                   {:field "performance", :type "nominal", :axis {:title "", :labels false}},
-                            :color {:field "performance", :type "nominal", :sort "descending", :scale {:range ["#134848" "#009D80"]}, :legend {:title "", :labelFontSize text-size}}}}
+                            :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
+                            :color {:field "performance", :type "nominal", :scale {:range colors}, :legend {:title "", :labelFontSize text-size}}}}
                   {:mark   {:type "text", :fontSize text-size},
                    :width  (- standard-box-width-nb 400),
                    :height individual-height
                    :encoding
-                           {:x    {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title nil}},
-                            :y    {:field "performance", :type "nominal", :axis {:title "", :labels false}},
-                            :color
-                                  {:field "performance", :type "nominal", :sort "descending", :scale {:range ["#134848" "#009D80"]}, :legend nil},
-                            :text {:field "value" :format ".0f"}
+                           {:x     {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title nil}},
+                            :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
+                            :color {:field "performance", :type "nominal", :scale {:range colors}, :legend nil},
+                            :text  {:field "value" :format ".0f"}
                             }}]},
-     :config
-                {:view {:stroke "transparent"},
-                 :axis {:domainWidth 1}}})
+     :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}})
     )
 
 
@@ -76,52 +72,49 @@
 ;;;NAVIGATION;;;
 ;;;;;;;;;;;;;;;;
 
-
+(def risk-breakdowns
+  [["Region" "Region"]
+   ["Country" "Country"]
+   ["Sector" "Sector"]
+   ["Rating" "RatingGroup"]
+   ["Duration" "Duration Bucket"]])
 
 (def contribution-pages
   (into []
-        (for [p [["MTD" "mtd"]
-                 ["YTD" "ytd"]]
-              k [["Region" "Region"]
-                 ["Country" "Country"]
-                 ["Sector" "Sector"]
-                 ["Rating" "RatingGroup"]
-                 ["Duration" "Duration Bucket"]]]
+        (for [p [["MTD" "mtd"] ["YTD" "ytd"]] k risk-breakdowns]
           {:title        (str (first p) " Contribution by " (first k))
            :nav-request  :contribution
            :data-request [:get-portfolio-review-contribution-chart-data "portfolio" (second p) (second k)]})))
 
 (def alpha-pages
   (into []
-        (for [k [["Region" "Region"]
-                 ["Country" "Country"]
-                 ["Sector" "Sector"]
-                 ["Rating" "RatingGroup"]
-                 ["Duration" "Duration Bucket"]]]
+        (for [k risk-breakdowns]
           {:title        (str "Alpha by " (first k))
            :nav-request  :alpha
            :data-request [:get-portfolio-review-alpha-chart-data "portfolio" (second k)]})))
 
 (def top-bottom-pages
   (into []
-        (for [p [["MTD" "mtd"]
-                 ["YTD" "ytd"]]
-              k [["top" "top"]
-                 ["bottom" "bottom"]]]
+        (for [p [["MTD" "mtd"] ["YTD" "ytd"]]
+              k [["top" "top"] ["bottom" "bottom"]]]
           {:title        (str (first p) " " (first k) " contributors")
            :nav-request  :top-bottom
            :data-request [:get-single-attribution "portfolio" (second p)]})))
 
 (def jensen-pages
   (into []
-        (for [k [["Region" "Region"]
-                 ["Country" "Country"]
-                 ["Sector" "Sector"]
-                 ["Rating" "RatingGroup"]
-                 ["Duration" "Duration Bucket"]]]
+        (for [k risk-breakdowns]
           {:title        (str "Jensen by " (first k))
            :nav-request  :jensen
            :data-request [:get-portfolio-review-jensen-chart-data "portfolio" (second k)]})))
+
+(def risk-pages
+  (into []
+        (for [k risk-breakdowns p ["weights" "beta contribution" "deviation from index"]]
+          {:title        (str "Risk by " (first k) ": " p)
+           :nav-request  :risk
+           :data-request nil})))
+
 
 (def pages (into {} (map-indexed
                       vector
@@ -132,43 +125,17 @@
                          top-bottom-pages
                          jensen-pages
                         [{:title "Three year daily backtest"   :nav-request :backtest-history  :data-request nil}]
+                        risk-pages
                         ))))
 
 (def portfolio-review-navigation
-  [{:code :summary      :name "Summary"           :page-start 0}
-   {:code :contribution :name "Contribution"      :page-start (apply min (keys (filter #(= (:nav-request (second %)) :contribution) pages)))}
-   {:code :alpha        :name "Alpha"             :page-start (apply min (keys (filter #(= (:nav-request (second %)) :alpha) pages)))}
-   {:code :top-bottom   :name "Top contributors"  :page-start (apply min (keys (filter #(= (:nav-request (second %)) :top-bottom) pages)))}
-   {:code :jensen       :name "Jensen"            :page-start (apply min (keys (filter #(= (:nav-request (second %)) :jensen) pages)))}
-   {:code :backtest-history       :name "Backtest"            :page-start (apply min (keys (filter #(= (:nav-request (second %)) :backtest-history) pages)))}
-   {:code :risk         :name "Risk"              :page-start 40}])
-
-;(def pages {
-;            1  {:title "Summary"                      :nav-request :summary         :data-request nil}
-;            2  {:title "MTD Contribution by Region"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Region"]}
-;            3  {:title "MTD Contribution by Country"  :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Country"]}
-;            4  {:title "MTD Contribution by Sector"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "Sector"]}
-;            5  {:title "MTD Contribution by Rating"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "RatingGroup"]}
-;            6  {:title "MTD Contribution by Rating"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "mtd" "RatingGroup"]}
-;
-;            6  {:title "YTD Contribution by Region"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Region"]}
-;            7  {:title "YTD Contribution by Country"  :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Country"]}
-;            8  {:title "YTD Contribution by Sector"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "Sector"]}
-;            9  {:title "YTD Contribution by Rating"   :nav-request :contribution    :data-request [:get-portfolio-review-contribution-chart-data "portfolio" "ytd" "RatingGroup"]}
-;            10 {:title "Alpha by Region"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Region"]}
-;            11 {:title "Alpha by Country"             :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Country"]}
-;            12 {:title "Alpha by Sector"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Sector"]}
-;            13 {:title "Alpha by Rating"              :nav-request :alpha           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "RatingGroup"]}
-;            14 {:title "MTD top contributors"         :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "mtd"]}
-;            15 {:title "MTD bottom contributors"      :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "mtd"]}
-;            16 {:title "YTD top contributors"         :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "ytd"]}
-;            17 {:title "YTD bottom contributors"      :nav-request :top-bottom      :data-request [:get-single-attribution "portfolio" "ytd"]}
-;            18 {:title "Fund relative performance"    :nav-request :relative-perf   :data-request nil}
-;            19 {:title "Jensen by Region"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Region"]}
-;            20 {:title "Jensen by Country"            :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Country"]}
-;            21 {:title "Jensen by Sector"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "Sector"]}
-;            22 {:title "Jensen by Rating"             :nav-request :jensen          :data-request [:get-portfolio-review-alpha-chart-data "portfolio" "RatingGroup"]}
-;            })
+  [{:code :summary          :name "Summary"           :page-start 0}
+   {:code :contribution     :name "Contribution"      :page-start (apply min (keys (filter #(= (:nav-request (second %)) :contribution) pages)))}
+   {:code :alpha            :name "Alpha"             :page-start (apply min (keys (filter #(= (:nav-request (second %)) :alpha) pages)))}
+   {:code :top-bottom       :name "Top contributors"  :page-start (apply min (keys (filter #(= (:nav-request (second %)) :top-bottom) pages)))}
+   {:code :jensen           :name "Jensen"            :page-start (apply min (keys (filter #(= (:nav-request (second %)) :jensen) pages)))}
+   {:code :backtest-history :name "Backtest"          :page-start (apply min (keys (filter #(= (:nav-request (second %)) :backtest-history) pages)))}
+   {:code :risk             :name "Risk"              :page-start (apply min (keys (filter #(= (:nav-request (second %)) :risk) pages)))}])
 
 (def maximum-page (count pages))
 (def current-page (r/atom 0))
@@ -216,16 +183,18 @@
                                          (g (get-in data [:beta :total])) "x with top contributors being "
                (get-in data [:beta :country-1]) " (" (g (get-in data [:beta :value-1])) "x), "
                (get-in data [:beta :country-2]) " (" (g (get-in data [:beta :value-2])) "x), and "
-               (get-in data [:beta :country-3]) " (" (g (get-in data [:beta :value-3])) "x).")]]]]))
+               (get-in data [:beta :country-3]) " (" (g (get-in data [:beta :value-3])) "x).")]
+       [gap :size "1"]
+       [p (str "Performance data as of " @(rf/subscribe [:attribution-date]) ". Risk data as of " @(rf/subscribe [:qt-date]) ".")]
+       ]]]))
 
 (defn contribution-or-alpha-chart [data]
-  ;(println data)
+  (println data)
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
       :children
-      [[heading-box]                                        ; [title :label (get-in pages [@current-page :title]) :level :level1]
-       [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]])
+      [[heading-box] [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]])
 
 (defn top-contributors []
   (let [display (sort-by :Total-Effect (remove #(or (some #{(:Sector %)} ["Total"])
@@ -274,6 +243,20 @@
                        (take-last days (get-in data [:portfolio-value (line :frequency)]))
                        (- standard-box-width-nb 200) (- standard-box-height-nb 300))]]]]))
 
+(defn risk [grouping]
+  (let [data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
+        totals (get-in @(rf/subscribe [:total-positions]) [(keyword @(rf/subscribe [:portfolio-review/portfolio]))])
+        grp (group-by grouping data)
+        risks [["weight" :weight] ["mod duration" :contrib-mdur] ["duration x spread" :duration-times-spread-weight] ["beta" :contrib-beta-1y-daily]]
+        chart-data (into [] (for [[k g] grp r risks] {:group k :performance (first r) :value (* 100 (/ (reduce + (map (second r) g)) ((second r) totals)))}))
+        clean-data (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities"]) chart-data)
+        clean-data-sorted (sort-by :group (reverse (sort-by :performance clean-data)))
+        ]
+    (println (distinct (mapv :performance clean-data-sorted)))
+    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
+     :child
+     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
+      :children [[heading-box] [oz/vega-lite (portfolio-vs-index-horizontal-bars clean-data-sorted)]]]]))
 
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
@@ -281,10 +264,11 @@
     (case active-tab
       :summary                       [summary-text]
       :contribution                  [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/contribution-chart-data])]
-      :alpha                         [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/alpha-chart-data])]
+      :alpha                         [contribution-or-alpha-chart (sort-by :group (reverse (sort-by :performance @(rf/subscribe [:portfolio-review/alpha-chart-data]))))]
       :top-bottom                    [top-contributors]
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
       :backtest-history                          [backtest-history]
+      :risk                          [risk :jpm-region]
       [:div.output "nothing to display"])))
 
 
