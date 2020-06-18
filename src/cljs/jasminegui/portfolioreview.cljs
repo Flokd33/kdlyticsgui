@@ -198,7 +198,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn heading-box []
-  [h-box :gap "20px" :align :center :children [[:img {:width "37px" :height "64px" :src "../assets/91-logo-green.png"}] [title :label (get-in pages [@current-page :title]) :level :level1]]])
+  [h-box :gap "20px" :align :center :children [[:img {:width "37px" :height "64px" :src "/assets/91-logo-green.png"}] [title :label (get-in pages [@current-page :title]) :level :level1]]])
 
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
