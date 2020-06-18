@@ -181,7 +181,7 @@
   (rf/dispatch [:portfolio-review/active-tab (get-in pages [n :nav-request])]))
 
 (defn next-page! []
-  (when (< @current-page maximum-page)
+  (when (< @current-page (dec maximum-page))
     (go-to-page (inc @current-page) @(rf/subscribe [:portfolio-review/portfolio]))))
 
 (defn previous-page! []
@@ -197,6 +197,9 @@
 ;;;PAGE CONSTRUCTION;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn heading-box []
+  [h-box :gap "20px" :align :center :children [[:img {:width "37px" :height "64px" :src "../assets/91-logo-green.png"}] [title :label (get-in pages [@current-page :title]) :level :level1]]])
+
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
         data @(rf/subscribe [:portfolio-review/summary-data])
@@ -206,7 +209,7 @@
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
       :children
-      [[title :label (get-in pages [@current-page :title]) :level :level1]
+      [[heading-box]
        [title :level :level2 :label (str "MTD, " portfolio " returned " (f (get-in data [:mtd :portfolio])) " vs " (f (get-in data [:mtd :index])) " for the index, " (f (get-in data [:mtd :alpha])) " of alpha.")]
        [title :level :level2 :label (str "YTD, " portfolio " returned " (f (get-in data [:ytd :portfolio])) " vs " (f (get-in data [:ytd :index])) " for the index, " (f (get-in data [:ytd :alpha])) " of alpha.")]
        [title :level :level2 :label (str "We currently run a beta of "
@@ -221,7 +224,7 @@
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
       :children
-      [[title :label (get-in pages [@current-page :title]) :level :level1]
+      [[heading-box]                                        ; [title :label (get-in pages [@current-page :title]) :level :level1]
        [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]])
 
 (defn top-contributors []
@@ -234,7 +237,7 @@
      :child
      [v-box :gap "10px" :class "element" :width "100%" :height "100%"
       :children
-      [[title :label ttl :level :level1]
+      [[heading-box]                                        ; [title :label ttl :level :level1]
        [:> ReactTable
         {:data                (take 20 (if (= (subs ttl 4 7) "top") (reverse display) display))
          :defaultFilterMethod tables/case-insensitive-filter
@@ -265,7 +268,7 @@
      :child
      [v-box :gap "10px" :class "element" :width "100%" :height "100%"
       :children
-      [[title :label (get-in pages [@current-page :title]) :level :level1]
+      [[heading-box]                                        ; [title :label (get-in pages [@current-page :title]) :level :level1]
        [oz/vega-lite (charting/backtest-chart
                        (take-last days (get-in dates [(line :frequency)]))
                        (take-last days (get-in data [:portfolio-value (line :frequency)]))

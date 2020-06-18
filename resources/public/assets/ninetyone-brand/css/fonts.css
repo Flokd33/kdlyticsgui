@@ -1,0 +1,55 @@
+@font-face {
+    font-family: "Ninety One Visuelt";
+    src:     url("../fonts/NinetyOneVisuelt-Light.eot?#iefix");
+    src: url("../fonts/NinetyOneVisuelt-Light.eot?#iefix") format("eot"),
+         url("../fonts/NinetyOneVisuelt-Light.woff2") format("woff2"),
+         url("../fonts/NinetyOneVisuelt-Light.woff") format("woff"),
+         url("../fonts/NinetyOneVisuelt-Light.ttf") format("truetype");
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Ninety One Visuelt Display";
+    src:     url("../fonts/NinetyOneVisueltDisplay-Light.eot?#iefix");
+    src: url("../fonts/NinetyOneVisueltDisplay-Light.eot?#iefix") format("eot"),
+         url("../fonts/NinetyOneVisueltDisplay-Light.woff2") format("woff2"),
+         url("../fonts/NinetyOneVisueltDisplay-Light.woff") format("woff"),
+         url("../fonts/NinetyOneVisueltDisplay-Light.ttf") format("truetype");
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Ninety One Visuelt";
+    src:     url("../fonts/NinetyOneVisuelt-Regular.eot?#iefix");
+    src: url("../fonts/NinetyOneVisuelt-Regular.eot?#iefix") format("eot"),
+         url("../fonts/NinetyOneVisuelt-Regular.woff2") format("woff2"),
+         url("../fonts/NinetyOneVisuelt-Regular.woff") format("woff"),
+         url("../fonts/NinetyOneVisuelt-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Ninety One Visuelt Display";
+    src:     url("../fonts/NinetyOneVisueltDisplay-Regular.eot?#iefix");
+    src: url("../fonts/NinetyOneVisueltDisplay-Regular.eot?#iefix") format("eot"),
+         url("../fonts/NinetyOneVisueltDisplay-Regular.woff2") format("woff2"),
+         url("../fonts/NinetyOneVisueltDisplay-Regular.woff") format("woff"),
+         url("../fonts/NinetyOneVisueltDisplay-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Ninety One Visuelt";
+    src:     url("../fonts/NinetyOneVisuelt-Medium.eot?#iefix");
+    src: url("../fonts/NinetyOneVisuelt-Medium.eot?#iefix") format("eot"),
+         url("../fonts/NinetyOneVisuelt-Medium.woff2") format("woff2"),
+         url("../fonts/NinetyOneVisuelt-Medium.woff") format("woff"),
+         url("../fonts/NinetyOneVisuelt-Medium.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+}
+

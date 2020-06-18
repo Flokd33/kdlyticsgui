@@ -120,7 +120,7 @@
                             {:Header "Beta"  :columns (mapv tables/risk-table-columns [:contrib-beta])}
                             {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
                             ;{:Header "Index contribution" :columns (mapv tables/table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
-                            {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration])}
+                            {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}
                             {:Header "Description" :columns (mapv tables/risk-table-columns (into [] (concat [:rating :isin] additional-des-cols [:description])))}]
       :showPagination      (not is-tree)
       :sortable            (not is-tree)

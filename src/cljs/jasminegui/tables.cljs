@@ -131,7 +131,7 @@
    :z-spread                    {:Header "Z-spread"       :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable true :filterMethod compare-nb}
    :g-spread                    {:Header "G-spread"       :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable true :filterMethod compare-nb}
    :duration                    {:Header "M dur"          :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable true :filterMethod compare-nb}
-   :yield                       {:Header "Yield"          :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable true :filterMethod compare-nb}
+   :yield                       {:Header "Yield"          :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable true :filterMethod compare-nb-d100}
    :value                       {:Header "Value"          :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod compare-nb}
    :contrib-gspread             {:Header "G-spread"       :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
    :contrib-zspread             {:Header "Fund"           :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
@@ -143,7 +143,11 @@
    :contrib-bond-yield          {:Header "Bond yield"     :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
    :weight-delta                {:Header "Delta"          :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
    :mdur-delta                  {:Header "Delta"          :accessor "mdur-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-   :contrib-beta                {:Header "Fund"           :accessor "contrib-beta-1y-daily" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+   :contrib-beta                {:Header "Fund"           :accessor "contrib-beta-1y-daily" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
+   :cembi-beta-last-year        {:Header "1y beta"        :accessor "cembi-beta-last-year" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
+   :cembi-beta-previous-year    {:Header "LY beta"        :accessor "cembi-beta-previous-year" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
+   :total-return-ytd            {:Header "YTD TR"         :accessor "total-return-ytd" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2*100 :filterable false}
+   :jensen-ytd                  {:Header "Jensen"         :accessor "jensen-ytd" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2*100 :filterable false}
    })
 
 (defn invrtg-to-string [this] (aget this "row" "Rating"))
