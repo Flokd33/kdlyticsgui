@@ -33,39 +33,68 @@
 ;;;VEGA-LITE CHART DEFINITIONS;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def performance-colors ["#134848" "#009D80" "#FDAA94" "#74908D"])
+(def performance-colors ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
 
-(defn portfolio-vs-index-horizontal-bars [data]
+(defn grouped-horizontal-bars [data title]
+  "The data is of the form [{:group TXT :performance txt :value 0}]"
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         text-size 16
         perf-sort (reverse (distinct (mapv :performance data)))
         colors (reverse (take (count (distinct (mapv :performance data))) performance-colors))
-        scl (int (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 30))]
+        scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
     {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
      :data      {:values data},
      :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
      :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "left"}}},
-     :spec
-                {:layer
+     :spec      {:layer
                  [{:mark   "bar",
                    :width  (- standard-box-width-nb 400),
                    :height individual-height
-                   :encoding
-                           {:x     {:aggregate "sum", :field "value", :type "quantitative",
-                                    :axis      {:title "Basis points", :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
-                            :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
-                            :color {:field "performance", :type "nominal", :scale {:range colors}, :legend {:title "", :labelFontSize text-size}}}}
+                   :encoding {:x     {:aggregate "sum", :field "value", :type "quantitative",
+                                    :axis {:title title, :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                              :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
+                              :color {:field "performance", :type "nominal", :scale {:range colors}, :legend {:title "", :labelFontSize text-size}}}}
                   {:mark   {:type "text", :fontSize text-size},
                    :width  (- standard-box-width-nb 400),
                    :height individual-height
-                   :encoding
-                           {:x     {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title nil}},
-                            :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
-                            :color {:field "performance", :type "nominal", :scale {:range colors}, :legend nil},
-                            :text  {:field "value" :format ".0f"}
-                            }}]},
+                   :encoding {:x     {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title nil}},
+                              :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
+                              :color {:field "performance", :type "nominal", :scale {:range colors}, :legend nil},
+                              :text  {:field "value" :format ".0f"}}}]},
      :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}})
     )
+
+(defn stacked-vertical-bars [data title]
+  (let [text-size 16
+        groups (distinct (mapv :group data))
+        colors (take (count (distinct (mapv :group data))) performance-colors)
+        new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)
+        ]
+    (println new-data colors)
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+     :data    {:values new-data},
+     :width   (- standard-box-width-nb 800),
+     :height  (- standard-box-height-nb 400),
+
+     :layer
+              [{:mark "bar",
+                :scale {:padding-left 60}
+                :encoding
+                      {:x     {:field "performance",
+                               :type "nominal",
+                               :axis {:title nil :labelFontSize text-size :labelAngle 0}
+                               :sort (distinct (mapv :performance data))
+                               :scale {:paddingInner 0.5}},
+                       :y     {:field "value", :type "quantitative", :axis {:title nil :labelFontSize text-size}},
+                       :order {:field "order", :type "quantitative"}
+                       :color
+                              {:field "group", :type "nominal", :scale {:domain (distinct (map :group new-data))
+                                                                        :range colors} :legend nil}}}
+               {:mark {:type "text" :fontSize text-size :color "white"},
+                :encoding
+                      {:x    {:field "performance", :type "nominal", :axis {:title nil}, :sort (distinct (mapv :performance data))},
+                       :y    {:field "mid", :type "quantitative"},
+                       :text {:field "group", :type "nominal"}}}]}))
 
 
 ;;;;;;;;;;;;;;;;
@@ -113,7 +142,9 @@
         (for [k risk-breakdowns p ["weights" "beta contribution" "deviation from index"]]
           {:title        (str "Risk by " (first k) ": " p)
            :nav-request  :risk
-           :data-request nil})))
+           :grouping k
+           :subgrouping p
+           :data-request (if (= p "beta contribution") [:get-portfolio-review-marginal-beta-chart-data "portfolio" (second k)])})))
 
 
 (def pages (into {} (map-indexed
@@ -142,7 +173,6 @@
 
 (defn go-to-page [n portfolio]
   (reset! current-page n)
-  ;(println (replace {"portfolio" portfolio} (get-in pages [n :data-request])))
   (when-let [req (get-in pages [n :data-request])]
     (rf/dispatch (replace {"portfolio" portfolio} req)))
   (rf/dispatch [:portfolio-review/active-tab (get-in pages [n :nav-request])]))
@@ -180,50 +210,53 @@
        [title :level :level2 :label (str "MTD, " portfolio " returned " (f (get-in data [:mtd :portfolio])) " vs " (f (get-in data [:mtd :index])) " for the index, " (f (get-in data [:mtd :alpha])) " of alpha.")]
        [title :level :level2 :label (str "YTD, " portfolio " returned " (f (get-in data [:ytd :portfolio])) " vs " (f (get-in data [:ytd :index])) " for the index, " (f (get-in data [:ytd :alpha])) " of alpha.")]
        [title :level :level2 :label (str "We currently run a beta of "
-                                         (g (get-in data [:beta :total])) "x with top contributors being "
-               (get-in data [:beta :country-1]) " (" (g (get-in data [:beta :value-1])) "x), "
-               (get-in data [:beta :country-2]) " (" (g (get-in data [:beta :value-2])) "x), and "
-               (get-in data [:beta :country-3]) " (" (g (get-in data [:beta :value-3])) "x).")]
+                                         (g (get-in data [:beta :total]))
+                                         "x with top contributors being "
+                                         (get-in data [:beta :country-1])
+                                         " ("
+                                         (g (get-in data [:beta :value-1]))
+                                         "x), "
+                                         (get-in data [:beta :country-2])
+                                         " ("
+                                         (g (get-in data [:beta :value-2]))
+                                         "x), and "
+                                         (get-in data [:beta :country-3])
+                                         " ("
+                                         (g (get-in data [:beta :value-3]))
+                                         "x).")]
        [gap :size "1"]
-       [p (str "Performance data as of " @(rf/subscribe [:attribution-date]) ". Risk data as of " @(rf/subscribe [:qt-date]) ".")]
-       ]]]))
+       [p (str "Performance data as of " @(rf/subscribe [:attribution-date]) ". Risk data as of " @(rf/subscribe [:qt-date]) ".")]]]]))
 
 (defn contribution-or-alpha-chart [data]
-  (println data)
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
       :children
-      [[heading-box] [oz/vega-lite (portfolio-vs-index-horizontal-bars data)]]]])
+      [[heading-box] [oz/vega-lite (grouped-horizontal-bars data "Basis points")]]]])
 
 (defn top-contributors []
-  (let [display (sort-by :Total-Effect (remove #(or (some #{(:Sector %)} ["Total"])
-                                                         (= (subs (:Security %) 0 16) "Foreign Currency")
-                                                         (= (subs (:Security %) 4 22) "Settlement Account"))
-                                                    @(rf/subscribe [:single-portfolio-attribution/clean-table])))
-        ttl (get-in pages [@current-page :title])]
+  (let [display (sort-by :Total-Effect
+                         (remove #(or (some #{(:Sector %)} ["Total"])
+                                      (= (subs (:Security %) 0 16) "Foreign Currency")
+                                      (= (subs (:Security %) 4 22) "Settlement Account"))
+                                 @(rf/subscribe [:single-portfolio-attribution/clean-table])))]
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "10px" :class "element" :width "100%" :height "100%"
       :children
       [[heading-box]                                        ; [title :label ttl :level :level1]
        [:> ReactTable
-        {:data                (take 20 (if (= (subs ttl 4 7) "top") (reverse display) display))
+        {:data                (take 20 (if (= (subs (get-in pages [@current-page :title]) 4 7) "top") (reverse display) display))
          :defaultFilterMethod tables/case-insensitive-filter
-         :columns             [
-                               {:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
+         :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
                                {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
                                {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
-                               {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
-                               ;{:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}
-                               ]
+                               {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
          :showPagination      false
          :sortable            false
          :filterable          false
          :pageSize            20
-         :className           "-striped -highlight"
-         }]]]]
-    ))
+         :className           "-striped -highlight"}]]]]))
 
 (defn backtest-history []
   (rf/dispatch [:get-portfolio-var @(rf/subscribe [:portfolio-review/portfolio])])
@@ -237,28 +270,101 @@
      :child
      [v-box :gap "10px" :class "element" :width "100%" :height "100%"
       :children
-      [[heading-box]                                        ; [title :label (get-in pages [@current-page :title]) :level :level1]
+      [[heading-box]
        [oz/vega-lite (charting/backtest-chart
                        (take-last days (get-in dates [(line :frequency)]))
                        (take-last days (get-in data [:portfolio-value (line :frequency)]))
                        (- standard-box-width-nb 200) (- standard-box-height-nb 300))]]]]))
 
-(defn risk [grouping]
-  (let [data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
+
+(defn risk-betas []
+  (let [
+        data @(rf/subscribe [:portfolio-review/marginal-beta-chart-data])
+        portfolio @(rf/subscribe [:portfolio-review/portfolio])
+        idx (first (remove #(= portfolio %) (map :performance data)))
+        sort-order (reverse (map :group (sort-by :value (filter #(= (:performance %) portfolio) data))))
+        sorted-data (sort-by #(.indexOf sort-order (:group %)) data)
+        groups (distinct (mapv :group data))
+        new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) sorted-data)
+        ]
+    (println sort-order sorted-data)
+    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
+     :child
+     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
+      :children [[heading-box] [oz/vega-lite (stacked-vertical-bars new-data "Beta contribution")]]]]))
+
+(defn risk-beta-over-time [])
+
+
+(defn risk-weights []
+  (let [g (second (get-in pages [@current-page :grouping]))
+        grouping (case g
+                   "Region" :jpm-region
+                   "Country" :qt-risk-country-name
+                   "Sector" :qt-jpm-sector
+                   "RatingGroup" :rating-group
+                   "Duration Bucket" :qt-final-maturity-band)
+        data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
         totals (get-in @(rf/subscribe [:total-positions]) [(keyword @(rf/subscribe [:portfolio-review/portfolio]))])
         grp (group-by grouping data)
         risks [["weight" :weight] ["mod duration" :contrib-mdur] ["duration x spread" :duration-times-spread-weight] ["beta" :contrib-beta-1y-daily]]
         chart-data (into [] (for [[k g] grp r risks] {:group k :performance (first r) :value (* 100 (/ (reduce + (map (second r) g)) ((second r) totals)))}))
-        clean-data (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities"]) chart-data)
+        clean-data (case g
+                     "Region" (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities"]) chart-data)
+                     "Country" (let [top-countries (map :group (take-last 8 (sort-by #(Math/abs (:value %)) (filter (fn [x] (= (:performance x) "weight")) chart-data))))]
+                                 (sort-by :group (filter #(some #{(:group %)} top-countries) chart-data)))
+                     "RatingGroup" (remove #(some #{(:group %)} ["08 C" "08 CC" "08 D" "09 NM"]) chart-data)
+                     "Sector" (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)
+                     chart-data
+                     )
         clean-data-sorted (sort-by :group (reverse (sort-by :performance clean-data)))
         ]
-    (println (distinct (mapv :performance clean-data-sorted)))
+    ;    (println clean-data)
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children [[heading-box] [oz/vega-lite (portfolio-vs-index-horizontal-bars clean-data-sorted)]]]]))
+      :children [[heading-box] [oz/vega-lite (grouped-horizontal-bars clean-data-sorted "Share of total risk")]]]]))
+
+(defn risk-deltas []
+  (let [g (second (get-in pages [@current-page :grouping]))
+        grouping (case g
+                   "Region" :jpm-region
+                   "Country" :qt-risk-country-name
+                   "Sector" :qt-jpm-sector
+                   "RatingGroup" :rating-group
+                   "Duration Bucket" :qt-final-maturity-band)
+        data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
+        totals (get-in @(rf/subscribe [:total-positions]) [(keyword @(rf/subscribe [:portfolio-review/portfolio]))])
+        grp (group-by grouping data)
+        risks [["weight" :weight-delta] ["mod duration" :mdur-delta] ]
+        chart-data (into [] (for [[k g] grp r risks] {:group k :performance (first r) :value (* (if (= (first r) "weight") 100. 1.) (reduce + (map (second r) g)))}))
+        clean-data (case g
+                     "Region" (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities"]) chart-data)
+                     "Country" (let [top-countries (map :group (take-last 8 (sort-by #(Math/abs (:value %)) (filter (fn [x] (= (:performance x) "weight")) chart-data))))]
+                                 (sort-by :group (filter #(some #{(:group %)} top-countries) chart-data)))
+                     "RatingGroup" (remove #(some #{(:group %)} ["08 C" "08 CC" "08 D" "09 NM"]) chart-data)
+                     "Sector" (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)
+                     chart-data
+                     )
+        clean-data-sorted (sort-by :group (reverse (sort-by :performance clean-data)))
+        ]
+    ;(println clean-data)
+    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
+     :child
+     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
+      :children [[heading-box] [oz/vega-lite (grouped-horizontal-bars clean-data-sorted "Share of total risk")]]]]))
+
+
+(defn risk []
+  (cond
+    (clojure.string/includes? (get-in pages [@current-page :title]) "weights")    [risk-weights]
+    (clojure.string/includes? (get-in pages [@current-page :title]) "beta")       [risk-betas]
+    (clojure.string/includes? (get-in pages [@current-page :title]) "deviation")  [risk-deltas]
+    :else [p "no data"]))
+
 
 (defn active-home []
+  ;(println pages)
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-tab
@@ -268,7 +374,7 @@
       :top-bottom                    [top-contributors]
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
       :backtest-history                          [backtest-history]
-      :risk                          [risk :jpm-region]
+      :risk                          [risk]
       [:div.output "nothing to display"])))
 
 
