@@ -51,7 +51,7 @@
                    :width  (- standard-box-width-nb 400),
                    :height individual-height
                    :encoding {:x     {:aggregate "sum", :field "value", :type "quantitative",
-                                    :axis {:title title, :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                                      :axis {:title title, :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
                               :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
                               :color {:field "performance", :type "nominal", :scale {:range colors}, :legend {:title "", :labelFontSize text-size}}}}
                   {:mark   {:type "text", :fontSize text-size},
@@ -61,6 +61,33 @@
                               :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
                               :color {:field "performance", :type "nominal", :scale {:range colors}, :legend nil},
                               :text  {:field "value" :format ".0f"}}}]},
+     :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}})
+  )
+
+(defn simple-horizontal-bars [data title fmt dc]
+  "The data is of the form [{:group TXT :value 0}]"
+  (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
+        text-size 16
+        scl (* dc (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40))]
+    {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
+     :data      {:values data},
+     :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
+     :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "left"}}},
+     :spec      {:layer
+                 [{:mark     "bar",
+                   :width    (- (/ standard-box-width-nb 2) 250),
+                   :height   individual-height
+                   :encoding {:x     {:aggregate "sum", :field "value", :type "quantitative",
+                                      :axis      {:title title, :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                              :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
+                              :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil}}}
+                  {:mark     {:type "text", :fontSize text-size},
+                   :width    (- (/ standard-box-width-nb 2) 250),
+                   :height   individual-height
+                   :encoding {:x     {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title nil}},
+                              :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
+                              :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil},
+                              :text  {:field "value" :format fmt}}}]}
      :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}})
     )
 
@@ -352,7 +379,12 @@
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children [[heading-box] [oz/vega-lite (grouped-horizontal-bars clean-data-sorted "Share of total risk")]]]]))
+      :children [[heading-box]
+                 [h-box :gap "20px"
+                  :children [[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "weight") clean-data-sorted) "Weight vs index" ".0f" 1.5)]
+                             [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]]
+                  ]
+                 ]]]))
 
 
 (defn risk []
