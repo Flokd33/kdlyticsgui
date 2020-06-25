@@ -23,7 +23,7 @@
 
 (def var-navigation
   [{:code :overview            :name "Overview"}
-   {:code :marginal            :name "Marginals"}
+   ;   {:code :marginal            :name "Marginals"}
    {:code :proxies             :name "Proxies"}])
 
 (def risk-choice-map [{:id "None"         :label "None"}

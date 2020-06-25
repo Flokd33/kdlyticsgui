@@ -267,7 +267,7 @@
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
         data @(rf/subscribe [:portfolio-review/summary-data])
-        positions (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
+        positions (filter #(= (:portfolio %) portfolio) @(rf/subscribe [:positions]))
         f (fn [x] (gstring/format "%.0fbps" (* 100 x)))
         g (fn [x] (gstring/format "%.2f" x))
         h (fn [x] (gstring/format "%.1f" x))]
@@ -468,9 +468,15 @@
       :risk                          [risk]
       [:div.output "nothing to display"])))
 
+(defn portfolio-change [portfolio]
+  (rf/dispatch [:portfolio-review/portfolio portfolio])
+  (println "here")
+  (rf/dispatch [:get-portfolio-review-summary-data portfolio]))
 
 (defn nav []
-  (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
+  (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])
+        portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        portfolio @(rf/subscribe [:portfolio-review/portfolio])]
     [h-box
      :children [
                 [v-box
@@ -481,8 +487,8 @@
                                                     [box :size "1" :align :center  :child [label :label (str (inc @current-page) "/" maximum-page) :style {:width "70px" :color "white" :text-align "center"}]]
                                                     [box    :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Next"  :on-click next-page!]]]]
                                   [line :color "#CA3E47" :class "separatornavline"]
-
-                                  ]
+                                  [single-dropdown :width "100%" :model portfolio :choices portfolio-map :on-change portfolio-change]
+                                  [line :color "#CA3E47" :class "separatornavline"]]
                                  (for [item portfolio-review-navigation]
                                    [button
                                     :class (str "btn btn-primary btn-block" (if (and (= active-tab (:code item))) " active"))

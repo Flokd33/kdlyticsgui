@@ -222,9 +222,14 @@
                                                                                    [h-box :align :start :children [[backtest-chart]]]
                                                                          [h-box :align :start :children [[histogram-chart]]]
                                                                          [h-box :align :start :children [[regression-chart]]]
-                                                                                  [h-box :align :start :children [[portfolio-proxies]]]]]
+                                                                         ;[h-box :align :start :children [[portfolio-proxies]]]
+                                                                         ]]
       :marginal                       [marginal]
-      :proxies [proxy-table-view]
+      :proxies [v-box :width standard-box-width
+                :gap "20px"
+                :padding "80px 20px"
+                :class "rightelement"  :children [[h-box :align :start :children [[portfolio-proxies]]]]]
+      ;[proxy-table-view]
       [:div.output "nothing to display"])))
 
 
