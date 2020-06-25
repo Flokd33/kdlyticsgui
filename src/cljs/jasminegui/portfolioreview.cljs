@@ -455,7 +455,6 @@
 
 
 (defn active-home []
-  ;(println pages)
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-tab
@@ -470,7 +469,6 @@
 
 (defn portfolio-change [portfolio]
   (rf/dispatch [:portfolio-review/portfolio portfolio])
-  (println "here")
   (rf/dispatch [:get-portfolio-review-summary-data portfolio]))
 
 (defn nav []

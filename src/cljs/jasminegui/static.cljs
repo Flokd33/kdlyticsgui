@@ -1,6 +1,6 @@
 (ns jasminegui.static)
 
-(def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :dev))
+(def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
 
 (def main-navigation
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil}
