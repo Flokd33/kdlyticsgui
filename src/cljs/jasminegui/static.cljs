@@ -1,15 +1,14 @@
 (ns jasminegui.static)
 
+(def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :dev))
 
 (def main-navigation
-  [{:code :home           :name "Holdings"       :dispatch :home            :subs nil}
-   {:code :attribution    :name "Performance"    :dispatch :attribution            :subs nil}
-   {:code :var            :name "VaR"            :dispatch :var             :subs nil}
-   {:code :portfolio-review            :name "Portfolio review"            :dispatch :portfolio-review             :subs nil}
-   ;{:code :trade-history  :name "Trade history"  :dispatch :trade-drilldown :subs [{:code :description :name "Description"} {:code :history :name "History"}]}
-   {:code :trade-analyser :name "Trade analyser" :dispatch :home            :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
-   ;{:code :performance    :name "Performance"    :dispatch :home            :subs nil :href "https://iamqsense.investecam.com/qsensesso/qps/logout?targetUri=https://iamqsense.investecam.com/qsensesso/sense/app/3bfbbbc8-1ee7-4416-821f-972aab0ff5f6/sheet/89876e6f-f163-4d38-86bd-95f863397253/state/analysis"}
-   {:code :administration :name "Administration" :dispatch :administration  :subs nil}])
+  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil}
+   {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil}
+   {:code :var              :name "VaR"               :dispatch :var              :subs nil}
+   {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil}
+   {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
+   {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}])
 
 (def risk-navigation
   [{:code :summary             :name "Overview"}
@@ -60,8 +59,7 @@
    {:id :contrib-yield    :label "Yield contribution"}
    {:id :contrib-zspread  :label "Z-spread contribution"}
    {:id :contrib-gspread  :label "G-spread contribution"}
-   {:id :contrib-beta     :label "Beta contribution"}
-   ])
+   {:id :contrib-beta     :label "Beta contribution"}])
 
 (def attribution-field-choices
   [{:id "None"            :label "None"}
@@ -70,15 +68,13 @@
    {:id :contribution     :label "Contribution"}
    {:id :bm-contribution  :label "BM contribution"}
    {:id :weight           :label "Weight"}
-   {:id :bm-weight        :label "BM weight"}
-   ])
+   {:id :bm-weight        :label "BM weight"}])
 
 (def attribution-period-choices
   [{:id "ytd"     :label "YTD"}
    {:id "mtd"     :label "MTD"}
    {:id "wtd"     :label "WTD"}
-   {:id "day"     :label "Day"}
-   ])
+   {:id "day"     :label "Day"}])
 
 (def field-choices-alignment
   [{:id :nav          :label "NAV"}

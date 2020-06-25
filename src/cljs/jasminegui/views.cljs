@@ -18,7 +18,7 @@
     ))
 
 (defn nav-bar []
-  (let [active-view @(rf/subscribe [:active-view])]
+  (let [active-view @(rf/subscribe [:navigation/active-view])]
     [v-box
      :align :start
      :children [
@@ -31,7 +31,7 @@
                                                         :class (if (= active-view (:code item)) "dropdown-active" "dropdown")
                                                         :child (if (:href item)
                                                                  [hyperlink-href :label (:name item) :href (:href item)]
-                                                                 [hyperlink :label (:name item) :on-click #(rf/dispatch [:active-view (:code item)])])]))
+                                                                 [hyperlink :label (:name item) :on-click #(rf/dispatch [:navigation/active-view (:code item)])])]))
                                             [[gap :size "1"]
                                              [box :align-self :center :height "50%" :width "3px" :child [line :color "#CA3E47" :size "3px"]]
                                              [box :width "3px" :child ""] ;this is just equal to line above - ugly hack
@@ -102,7 +102,7 @@
                                                                                  )]]]])))
 
 (defn modal-mounting []
-  (if @(rf/subscribe [:show-mounting-modal])
+  (if @(rf/subscribe [:navigation/show-mounting-modal])
     [modal-panel
      :wrap-nicely? false
      ;:backdrop-opacity "1.0"
@@ -114,7 +114,7 @@
 
 
 (defn active-view []
-  (let [active-view @(rf/subscribe [:active-view])]
+  (let [active-view @(rf/subscribe [:navigation/active-view])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-view
       :home   [home/home-view]

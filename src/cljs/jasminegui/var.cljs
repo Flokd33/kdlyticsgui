@@ -53,7 +53,7 @@
 ;    (rf/dispatch [:get-var-data "OGEMCORD"])))
 
 (defn nav-var-bar []
-  (let [active-var @(rf/subscribe [:active-var])]
+  (let [active-var @(rf/subscribe [:navigation/active-var])]
     [h-box
      :children [[v-box
                  :gap "20px" :class "leftnavbar"
@@ -63,7 +63,7 @@
                                     :class (str "btn btn-primary btn-block" (if (and (= active-var (:code item))) " active"))
                                     ;:style {:font-size "12px"}
                                     :label (:name item)
-                                    :on-click #(rf/dispatch [:active-var (:code item)])]))]
+                                    :on-click #(rf/dispatch [:navigation/active-var (:code item)])]))]
                 ;(rf/dispatch [:active-var (:code item)])
                 ;[line :color "#CA3E47" :class "separatorvline"]
                 ]]))
@@ -211,7 +211,7 @@
     :children [[title :label "Bond proxies" :level :level1] [portfolio-proxy-table]]])
 
 (defn active-home []
-  (let [active-var @(rf/subscribe [:active-var])]
+  (let [active-var @(rf/subscribe [:navigation/active-var])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-var
       :overview                       [v-box :width standard-box-width

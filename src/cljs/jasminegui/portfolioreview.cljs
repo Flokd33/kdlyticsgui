@@ -23,6 +23,46 @@
            (goog.i18n.NumberFormat Format))
   )
 
+;;;;;;;;;;;;
+;; EVENTS ;;
+;;;;;;;;;;;;
+
+(rf/reg-event-fx
+  :get-portfolio-review-summary-data
+  (fn [{:keys [db]} [_ portfolio]]
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=summary&portfolio=" portfolio) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/summary-data]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-portfolio-review-contribution-chart-data
+  (fn [{:keys [db]} [_ portfolio period grouping]]
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/contribution-chart-data]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-portfolio-review-alpha-chart-data
+  (fn [{:keys [db]} [_ portfolio grouping]]
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/alpha-chart-data]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-portfolio-review-jensen-chart-data
+  (fn [{:keys [db]} [_ portfolio grouping]]
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/jensen-chart-data]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-portfolio-review-marginal-beta-chart-data
+  (fn [{:keys [db]} [_ portfolio grouping]]
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=marginal-beta&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+                         :dispatch-key [:portfolio-review/marginal-beta-chart-data]
+                         :kwk          true}}))
+
+
 (def standard-box-width "1600px")
 (def standard-box-height "1024px")
 (def standard-box-width-nb 1600)
@@ -227,8 +267,10 @@
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
         data @(rf/subscribe [:portfolio-review/summary-data])
+        positions (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
         f (fn [x] (gstring/format "%.0fbps" (* 100 x)))
-        g (fn [x] (gstring/format "%.2f" x))]
+        g (fn [x] (gstring/format "%.2f" x))
+        h (fn [x] (gstring/format "%.1f" x))]
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
@@ -236,6 +278,8 @@
       [[heading-box]
        [title :level :level2 :label (str "MTD, " portfolio " returned " (f (get-in data [:mtd :portfolio])) " vs " (f (get-in data [:mtd :index])) " for the index, " (f (get-in data [:mtd :alpha])) " of alpha.")]
        [title :level :level2 :label (str "YTD, " portfolio " returned " (f (get-in data [:ytd :portfolio])) " vs " (f (get-in data [:ytd :index])) " for the index, " (f (get-in data [:ytd :alpha])) " of alpha.")]
+       [title :level :level2 :label (str "The portfolio yield is " (g (* 100 (reduce + (map :contrib-yield positions)))) "% vs " (g (* 100 (reduce + (map :bm-contrib-yield positions)))) "% for the index.")]
+       [title :level :level2 :label (str "Our duration is " (h (reduce + (map :contrib-mdur positions))) " vs " (h (reduce + (map :bm-contrib-eir-duration positions))) " for the index.")]
        [title :level :level2 :label (str "We currently run a beta of "
                                          (g (get-in data [:beta :total]))
                                          "x with top contributors being "
@@ -259,7 +303,11 @@
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
       :children
-      [[heading-box] [oz/vega-lite (grouped-horizontal-bars data "Basis points")]]]])
+      [[heading-box]
+       [oz/vega-lite (grouped-horizontal-bars data "Basis points")]
+       [gap :size "1"]
+       [box :width "100%" :align :end :child [p {:style {:text-align "right" :z-index 500}} "UST categorized as cash"]]
+       ]]])
 
 (defn top-contributors []
   (let [display (sort-by :Total-Effect
@@ -272,18 +320,20 @@
      [v-box :gap "10px" :class "element" :width "100%" :height "100%"
       :children
       [[heading-box]                                        ; [title :label ttl :level :level1]
-       [:> ReactTable
-        {:data                (take 20 (if (= (subs (get-in pages [@current-page :title]) 4 7) "top") (reverse display) display))
-         :defaultFilterMethod tables/case-insensitive-filter
-         :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
-                               {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
-                               {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
-                               {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
-         :showPagination      false
-         :sortable            false
-         :filterable          false
-         :pageSize            20
-         :className           "-striped -highlight"}]]]]))
+       [box :width "850px"
+        :child
+        [:> ReactTable
+         {:data                (take 20 (if (= (subs (get-in pages [@current-page :title]) 4 7) "top") (reverse display) display))
+          :defaultFilterMethod tables/case-insensitive-filter
+          :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
+                                {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
+                                {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
+                                {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
+          :showPagination      false
+          :sortable            false
+          :filterable          false
+          :pageSize            20
+          :className           "-striped -highlight"}]]]]]))
 
 (defn backtest-history []
   (rf/dispatch [:get-portfolio-var @(rf/subscribe [:portfolio-review/portfolio])])
@@ -309,12 +359,11 @@
         data @(rf/subscribe [:portfolio-review/marginal-beta-chart-data])
         portfolio @(rf/subscribe [:portfolio-review/portfolio])
         idx (first (remove #(= portfolio %) (map :performance data)))
-        sort-order (reverse (map :group (sort-by :value (filter #(= (:performance %) portfolio) data))))
-        sorted-data (sort-by #(.indexOf sort-order (:group %)) data)
+        sorted-data data
         groups (distinct (mapv :group data))
         new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) sorted-data)
         ]
-    (println sort-order sorted-data)
+    ;(println data sort-order sorted-data)
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
@@ -344,7 +393,13 @@
                      "Sector" (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)
                      chart-data
                      )
-        clean-data-sorted (sort-by :group (reverse (sort-by :performance clean-data)))
+        clean-data-sorted (case g
+                            "RatingGroup" (map #(update % :group subs 3) (sort-by :group (reverse (sort-by :performance clean-data))))
+                            "Duration Bucket" (sort-by (fn [x] (.indexOf ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"] (:group x))) (reverse (sort-by :performance clean-data)))
+                            (sort-by :group (reverse (sort-by :performance clean-data)))
+                            )
+
+
         ]
     ;    (println clean-data)
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
@@ -373,7 +428,11 @@
                      "Sector" (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)
                      chart-data
                      )
-        clean-data-sorted (sort-by :group (reverse (sort-by :performance clean-data)))
+        clean-data-sorted (case g
+                            "RatingGroup" (map #(update % :group subs 3) (sort-by :group (reverse (sort-by :performance clean-data))))
+                            "Duration Bucket" (sort-by (fn [x] (.indexOf ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"] (:group x))) (reverse (sort-by :performance clean-data)))
+                            (sort-by :group (reverse (sort-by :performance clean-data)))
+                            )
         ]
     ;(println clean-data)
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
@@ -402,10 +461,10 @@
     (case active-tab
       :summary                       [summary-text]
       :contribution                  [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/contribution-chart-data])]
-      :alpha                         [contribution-or-alpha-chart (sort-by :group (reverse (sort-by :performance @(rf/subscribe [:portfolio-review/alpha-chart-data]))))]
+      :alpha                         [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/alpha-chart-data])] ;(sort-by :group (reverse (sort-by :performance @(rf/subscribe [:portfolio-review/alpha-chart-data]))))
       :top-bottom                    [top-contributors]
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
-      :backtest-history                          [backtest-history]
+      :backtest-history              [backtest-history]
       :risk                          [risk]
       [:div.output "nothing to display"])))
 

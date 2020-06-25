@@ -211,7 +211,7 @@
 
 
 
-(defn go-to-attribution-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:active-attribution :single-portfolio]) (rf/dispatch [:change-single-attribution-portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
+(defn go-to-attribution-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:navigation/active-attribution :single-portfolio]) (rf/dispatch [:change-single-attribution-portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
 
 (defn summary-display []
   (let [fmt {:width 90 :style {:textAlign "right"} :Cell tables/round2colpct}
@@ -236,7 +236,7 @@
 
 
 (defn nav-attribution-bar []
-  (let [active-home @(rf/subscribe [:active-attribution])]
+  (let [active-home @(rf/subscribe [:navigation/active-attribution])]
     [h-box
      ;:align :start
      :children [
@@ -249,13 +249,13 @@
                                     :class (str "btn btn-primary btn-block" (if (and (= active-home (:code item))) " active"))
                                     ;:style {:font-size "12px"}
                                     :label (:name item)
-                                    :on-click #(rf/dispatch [:active-attribution (:code item)])]))]
+                                    :on-click #(rf/dispatch [:navigation/active-attribution (:code item)])]))]
                 ;[line :color "#CA3E47" :class "separatorvline"]
                 ]]))
 
 (defn active-home []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
-  (case @(rf/subscribe [:active-attribution])
+  (case @(rf/subscribe [:navigation/active-attribution])
     :summary                        [summary-display]
     :single-portfolio               [single-portfolio-attribution-controller]
     :all-portfolios                 [multiple-portfolio-attribution-controller]

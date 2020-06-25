@@ -19,8 +19,8 @@
 (rf/reg-event-fx
   :rebuild
   (fn [{:keys [db]} [_]]
-    {:db (assoc db :success-modal {:show true :on-close :close-rebuild :response nil})
-     :http-post-dispatch {:url          (str mount/server-address "rebuild")
+    {:db (assoc db :navigation/success-modal {:show true :on-close :close-rebuild :response nil})
+     :http-post-dispatch {:url          (str static/server-address "rebuild")
                           :edn-params   {}
                           :dispatch-key [:has-rebuilt]
                           :kwk          true}}))
@@ -37,15 +37,15 @@
     (rf/dispatch [:get-var-proxies])
     (rf/dispatch [:get-var-dates])
     (rf/dispatch [:get-portfolio-var "OGEMCORD"])
-    (assoc-in db [:success-modal :response] (:text-response data))))
+    (assoc-in db [:navigation/success-modal :response] (:text-response data))))
 
 (rf/reg-event-db
   :close-rebuild
   (fn [db [_]]
-    (assoc db :success-modal {:show false :on-close nil :response nil})))
+    (assoc db :navigation/success-modal {:show false :on-close nil :response nil})))
 
 (defn modal-success []
-  (let [modal-data @(rf/subscribe [:success-modal])]
+  (let [modal-data @(rf/subscribe [:navigation/success-modal])]
     (if (:show modal-data)
       [modal-panel
        :wrap-nicely? false

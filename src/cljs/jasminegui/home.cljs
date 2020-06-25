@@ -19,26 +19,21 @@
 
 
 (defn nav-home-bar []
-  (let [active-home @(rf/subscribe [:active-home])]
+  (let [active-home @(rf/subscribe [:navigation/active-home])]
     (println active-home)
     [h-box
-     ;:align :start
-     :children [
-                [v-box
+     :children [[v-box
                  :gap "20px"
                  :class "leftnavbar"
                  :children (into []
                                  (for [item static/risk-navigation]
                                    [button
                                     :class (str "btn btn-primary btn-block" (if (and (= active-home (:code item))) " active"))
-                                    ;:style {:font-size "12px"}
                                     :label (:name item)
-                                    :on-click #(rf/dispatch [:active-home (:code item)])]))]
-                ;[line :color "#CA3E47" :class "separatorvline"]
-                ]]))
+                                    :on-click #(rf/dispatch [:navigation/active-home (:code item)])]))]]]))
 
 (defn active-home []
-  (let [active-home @(rf/subscribe [:active-home])]
+  (let [active-home @(rf/subscribe [:navigation/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-home
       :summary                        [riskviews/summary-display]
@@ -49,9 +44,7 @@
 
 
 (defn home-view []
-  [h-box :gap "10px"
-   ;:style {:overflow "hidden"}
-   :padding "0px"
+  [h-box :gap "10px" :padding "0px"
    :children [[nav-home-bar]
               [active-home]
               [tradehistory/modal-single-bond-trade-history]
