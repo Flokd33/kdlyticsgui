@@ -30,38 +30,44 @@
 (rf/reg-event-fx
   :get-portfolio-review-summary-data
   (fn [{:keys [db]} [_ portfolio]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=summary&portfolio=" portfolio) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=summary&portfolio=" portfolio)
                          :dispatch-key [:portfolio-review/summary-data]
                          :kwk          true}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-contribution-chart-data
   (fn [{:keys [db]} [_ portfolio period grouping]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping=" grouping)
                          :dispatch-key [:portfolio-review/contribution-chart-data]
                          :kwk          true}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-alpha-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" grouping)
                          :dispatch-key [:portfolio-review/alpha-chart-data]
                          :kwk          true}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-jensen-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" grouping)
                          :dispatch-key [:portfolio-review/jensen-chart-data]
                          :kwk          true}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-marginal-beta-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=marginal-beta&portfolio=" portfolio "&grouping=" grouping) ;(srotr "http://iamlfilive:3501/positions")
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=marginal-beta&portfolio=" portfolio "&grouping=" grouping)
                          :dispatch-key [:portfolio-review/marginal-beta-chart-data]
                          :kwk          true}}))
 
+(rf/reg-event-fx
+  :get-portfolio-review-historical-beta-chart-data
+  (fn [{:keys [db]} [_ portfolio countries]]
+    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=historical-beta&portfolio=" portfolio "&countries=" countries)
+                         :dispatch-key [:portfolio-review/historical-beta-chart-data]
+                         :kwk          true}}))
 
 (def standard-box-width "1600px")
 (def standard-box-height "1024px")
@@ -137,7 +143,7 @@
         colors (take (count (distinct (mapv :group data))) performance-colors)
         new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)
         ]
-    (println new-data colors)
+    ;    (println new-data colors)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :data    {:values new-data},
      :width   (- standard-box-width-nb 800),
@@ -163,6 +169,26 @@
                        :y    {:field "mid", :type "quantitative"},
                        :text {:field "group", :type "nominal"}}}]}))
 
+(defn area-chart [data]
+  (let [text-size 16
+        nb-countries (count (distinct (map :country data)))
+        ordered-countries (reverse (conj (remove #(= % "Rest") (map :country (sort-by :value (take-last nb-countries data)))) "Rest"))
+        colors (take (count (distinct (mapv :country data))) performance-colors)
+        new-data (mapv #(assoc %1 :order (.indexOf ordered-countries (:country %1))) data)]
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+     :data    {:values new-data :format {:parse {:date "date:'%Y%m%d'"}}},
+     :width   (- standard-box-width-nb 400),
+     :height  (- standard-box-height-nb 400),
+     :layer
+              [{:mark  "area",
+                :scale {:padding-left 60}
+                :encoding
+                       {:x     {:field "date", :type  "temporal",
+                                :axis  {:title nil :labelFontSize text-size :labelAngle 0}},
+                        :y     {:field "value", :type "quantitative", :axis {:title nil :labelFontSize text-size}},
+                        :order {:field "order", :type "quantitative"}
+                        :color {:field  "country", :type "nominal", :scale {:domain (reverse ordered-countries) :range (reverse colors)}
+                                :legend {:title nil :labelFontSize text-size}}}}]}))
 
 ;;;;;;;;;;;;;;;;
 ;;;NAVIGATION;;;
@@ -204,14 +230,21 @@
            :nav-request  :jensen
            :data-request [:get-portfolio-review-jensen-chart-data "portfolio" (second k)]})))
 
+(def end-page {:title "The End" :nav-request :end :data-request nil})
+
 (def risk-pages
-  (into []
-        (for [k risk-breakdowns p ["weights" "beta contribution" "deviation from index"]]
-          {:title        (str "Risk by " (first k) ": " p)
-           :nav-request  :risk
-           :grouping k
-           :subgrouping p
-           :data-request (if (= p "beta contribution") [:get-portfolio-review-marginal-beta-chart-data "portfolio" (second k)])})))
+  (conj
+    (into [
+           {:title "Beta evolution over time" :nav-request :risk :data-request [:get-portfolio-review-historical-beta-chart-data "portfolio" ["BR", "CN", "AR", "TR", "MX"]]}
+           ]
+          (for [k risk-breakdowns p ["weights" "beta contribution" "deviation from index"]]
+            {:title        (str "Risk by " (first k) ": " p)
+             :nav-request  :risk
+             :grouping     k
+             :subgrouping  p
+             :data-request (if (= p "beta contribution") [:get-portfolio-review-marginal-beta-chart-data "portfolio" (second k)])}))
+    end-page
+    ))
 
 
 (def pages (into {} (map-indexed
@@ -264,6 +297,12 @@
 (defn heading-box []
   [h-box :gap "20px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label (get-in pages [@current-page :title]) :level :level1]]])
 
+(defn end []
+  [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
+   :child
+   [v-box :gap "40px" :class "element" :width "100%" :height "100%"
+    :children [[heading-box]]]])
+
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
         data @(rf/subscribe [:portfolio-review/summary-data])
@@ -309,11 +348,24 @@
        [box :width "100%" :align :end :child [p {:style {:text-align "right" :z-index 500}} "UST categorized as cash"]]
        ]]])
 
+(defn historical-beta []
+  (let [data @(rf/subscribe [:portfolio-review/historical-beta-chart-data])]
+    ;    (println data)
+    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
+     :child
+     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
+      :children
+      [[heading-box]
+       [oz/vega-lite (area-chart data)]
+       ]]]))
+
 (defn top-contributors []
   (let [display (sort-by :Total-Effect
                          (remove #(or (some #{(:Sector %)} ["Total"])
-                                      (= (subs (:Security %) 0 16) "Foreign Currency")
-                                      (= (subs (:Security %) 4 22) "Settlement Account"))
+                                      ;(= (subs (:Security %) 0 16) "Foreign Currency")
+                                      ;(= (subs (:Security %) 4 22) "Settlement Account")
+                                      (and (= (:Sector %) "Cash") (some? (:Security %)) (not= "T" (subs (:Security %) 0 1)))
+                                      )
                                  @(rf/subscribe [:single-portfolio-attribution/clean-table])))]
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
      :child
@@ -325,7 +377,7 @@
         [:> ReactTable
          {:data                (take 20 (if (= (subs (get-in pages [@current-page :title]) 4 7) "top") (reverse display) display))
           :defaultFilterMethod tables/case-insensitive-filter
-          :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
+          :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector ])}
                                 {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
                                 {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
                                 {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
@@ -368,9 +420,6 @@
      :child
      [v-box :gap "40px" :class "element" :width "100%" :height "100%"
       :children [[heading-box] [oz/vega-lite (stacked-vertical-bars new-data "Beta contribution")]]]]))
-
-(defn risk-beta-over-time [])
-
 
 (defn risk-weights []
   (let [g (second (get-in pages [@current-page :grouping]))
@@ -448,6 +497,7 @@
 
 (defn risk []
   (cond
+    (clojure.string/includes? (get-in pages [@current-page :title]) "evolution")  [historical-beta]
     (clojure.string/includes? (get-in pages [@current-page :title]) "weights")    [risk-weights]
     (clojure.string/includes? (get-in pages [@current-page :title]) "beta")       [risk-betas]
     (clojure.string/includes? (get-in pages [@current-page :title]) "deviation")  [risk-deltas]
@@ -465,6 +515,7 @@
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
       :backtest-history              [backtest-history]
       :risk                          [risk]
+      :end                           [end]
       [:div.output "nothing to display"])))
 
 (defn portfolio-change [portfolio]
