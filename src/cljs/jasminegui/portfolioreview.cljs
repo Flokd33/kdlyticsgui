@@ -69,10 +69,18 @@
                          :dispatch-key [:portfolio-review/historical-beta-chart-data]
                          :kwk          true}}))
 
+(rf/reg-event-fx
+  :get-portfolio-review-historical-performance-chart-data
+  (fn [{:keys [db]} [_ portfolio]]
+    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=history&portfolio=" portfolio)
+                         :dispatch-key [:portfolio-review/historical-performance-chart-data]
+                         :kwk          true}}))
+
 (def standard-box-width "1600px")
 (def standard-box-height "1024px")
 (def standard-box-width-nb 1600)
 (def standard-box-height-nb 1024)
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -107,8 +115,7 @@
                               :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
                               :color {:field "performance", :type "nominal", :scale {:range colors}, :legend nil},
                               :text  {:field "value" :format ".0f"}}}]},
-     :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}})
-  )
+     :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}}))
 
 (defn simple-horizontal-bars [data title fmt dc]
   "The data is of the form [{:group TXT :value 0}]"
@@ -141,20 +148,16 @@
   (let [text-size 16
         groups (distinct (mapv :group data))
         colors (take (count (distinct (mapv :group data))) performance-colors)
-        new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)
-        ]
-    ;    (println new-data colors)
+        new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)]
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :data    {:values new-data},
      :width   (- standard-box-width-nb 800),
      :height  (- standard-box-height-nb 400),
-
      :layer
               [{:mark "bar",
                 :scale {:padding-left 60}
                 :encoding
-                      {:x     {:field "performance",
-                               :type "nominal",
+                      {:x     {:field "performance", :type "nominal",
                                :axis {:title nil :labelFontSize text-size :labelAngle 0}
                                :sort (distinct (mapv :performance data))
                                :scale {:paddingInner 0.5}},
@@ -190,6 +193,111 @@
                         :color {:field  "country", :type "nominal", :scale {:domain (reverse ordered-countries) :range (reverse colors)}
                                 :legend {:title nil :labelFontSize text-size}}}}]}))
 
+(defn grouped-vertical-bars [data title]
+  "The data is of the form [{:date dt :group TXT :value 0}]"
+  (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
+        text-size 16
+        colors (take (count (distinct (mapv :group data))) performance-colors)
+        scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
+    ;(println data)
+    {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
+     :data      {:values data :format {:parse {:date "date:'%Y%m%d'"}}},
+     :title     nil
+     :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
+     :facet     {:column {:field "date", :type "temporal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "center" :format "%b"}}},
+     :spec      {:layer
+                 [{:mark     "bar",
+                   :width    individual-height,
+                   :height   (- standard-box-height-nb 400)
+                   :encoding {:x     {:field "group", :type "nominal",
+                                      :sort  (distinct (mapv :group data))
+                                      :axis  {:title nil, :titleFontSize text-size, :titleFontWeight "normal" :labels false :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                              :y     {:field "value", :type "quantitative", :axis {:title "Contribution (%)", :titleFontSize text-size :labels true :labelFontSize text-size}},
+                              :color {:field "group", :type "nominal", :scale {:range (reverse colors)}, :legend {:title "", :labelFontSize text-size}}}}
+                  ;{:mark   {:type "text", :fontSize text-size},
+                  ; :width  individual-height,
+                  ; :height (- standard-box-height-nb 400)
+                  ; :encoding {:x     {:aggregate "sum", :field "group", :type "quantitative", :axis {:title nil}},
+                  ;            :y     {:field "value", :type "quantitative", :sort perf-sort, :axis {:title "", :labels false}},
+                  ;            :color {:field "group", :type "nominal", :scale {:range colors}, :legend nil},
+                  ;            :text  {:field "value" :format ".0f"}}}
+
+                  ]},
+     :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}}))
+
+(defn vertical-waterfall [data title]
+  "The data is of the form [{:date dt :group TXT :value 0}]"
+  (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
+        text-size 16
+        new-data (map (fn [line] (update line :value #(Math/round (* 100. %))))
+                      (concat ;[{:date "Begin", :value 0}]
+                        data [{:date "YTD", :value 0}]))
+        ]
+    {:$schema
+             "https://vega.github.io/schema/vega-lite/v4.json",
+     :data {:values new-data},
+     :width 600,
+     :height (- standard-box-height-nb 400),
+     :title nil
+     :transform                                             ;
+             [{:window
+               [{:op "sum", :field "value", :as "sum"}]}
+              {:window
+               [{:op "lead", :field "date", :as "lead"}]}
+              {:calculate
+                   "datum.lead === null ? datum.date : datum.lead",
+               :as "lead"}
+              {:calculate
+                   "datum.date === 'YTD' ? 0 : datum.sum - datum.value",
+               :as "previous_sum"}
+              {:calculate
+                   "datum.date === 'YTD' ? datum.sum : datum.value",
+               :as "value"}
+              {:calculate
+                   "(datum.date !== 'Begin' && datum.date !== 'YTD' && datum.value > 0 ? '+' : '') + datum.value",
+               :as "text_amount"}
+              {:calculate
+                   "(datum.sum + datum.previous_sum) / 2",
+               :as "center"}
+              {:calculate
+                   "datum.sum < datum.previous_sum ? datum.sum : ''",
+               :as "sum_dec"}
+              {:calculate
+                   "datum.sum > datum.previous_sum ? datum.sum : ''",
+               :as "sum_inc"}],
+     :encoding
+             {:x
+              {:field "date", :type "ordinal", :sort nil, :axis {:labelAngle 0, :title nil :labelFontSize text-size}}},
+     :layer
+             [{:mark {:type "bar", :size 45},
+               :encoding
+                     {:y {:field "previous_sum", :type "quantitative", :title "Effect (bps)"
+                           :axis {:labelFontSize text-size :titleFontSize text-size} },
+                      :y2 {:field "sum"},
+                      :color
+                          {:condition
+                                  [{:test "datum.date === 'Begin' || datum.date === 'YTD'", :value (second performance-colors)}
+                                   {:test "datum.sum < datum.previous_sum", :value (nth performance-colors 4)}],
+                           :value (first performance-colors)}}}
+              {:mark
+               {:type "rule", :color "#404040", :opacity 1, :strokeWidth 2, :xOffset -22.5, :x2Offset 22.5},
+               :encoding {:x2 {:field "lead"}, :y {:field "sum", :type "quantitative"}}}
+              {:mark
+               {:type "text", :dy -4, :baseline "bottom"},
+               :encoding {:y {:field "sum_inc", :type "quantitative"}, :text {:field "sum_inc", :type "nominal" }}}
+              {:mark
+               {:type "text", :dy 4, :baseline "top"},
+               :encoding {:y {:field "sum_dec", :type "quantitative"}, :text {:field "sum_dec", :type "nominal" }}}
+              {:mark
+               {:type "text", :fontWeight "bold", :baseline "middle"},
+               :encoding
+               {:y {:field "center", :type "quantitative"}, :text {:field "text_amount", :type "nominal"  },
+                :color
+                   {:condition [{:test "datum.date === 'Begin' || datum.date === 'YTD'", :value "white"}],
+                    :value "white"}}}],
+     :config
+             {:text {:fontWeight "bold", :color "#404040"}}}))
+
 ;;;;;;;;;;;;;;;;
 ;;;NAVIGATION;;;
 ;;;;;;;;;;;;;;;;
@@ -202,7 +310,9 @@
    ["Duration" "Duration Bucket"]])
 
 (def contribution-pages
-  (into []
+  (into [
+         {:title "Year to date monthly performance" :nav-request :ytd-performance :data-request [:get-portfolio-review-historical-performance-chart-data "portfolio"]}
+         ]
         (for [p [["MTD" "mtd"] ["YTD" "ytd"]] k risk-breakdowns]
           {:title        (str (first p) " Contribution by " (first k))
            :nav-request  :contribution
@@ -299,9 +409,7 @@
 
 (defn end []
   [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-   :child
-   [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-    :children [[heading-box]]]])
+   :child [v-box :gap "40px" :class "element" :width "100%" :height "100%" :children [[heading-box]]]])
 
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
@@ -336,6 +444,35 @@
                                          "x).")]
        [gap :size "1"]
        [p (str "Performance data as of " @(rf/subscribe [:attribution-date]) ". Risk data as of " @(rf/subscribe [:qt-date]) ".")]]]]))
+
+(defn ytd-performance []
+  (let [data @(rf/subscribe [:portfolio-review/historical-performance-chart-data])
+        monthmap {"01" "Jan" "02" "Feb" "03" "Mar" "04" "Apr" "05" "May" "06" "Jun"
+                  "07" "Jul" "08" "Aug" "09" "Sep" "10" "Oct" "11" "Nov" "12" "Dec"}
+        ]
+    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
+     :child
+     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
+      :children
+      [[heading-box]
+       [h-box :gap "20px"
+        :children [
+                   [oz/vega-lite (grouped-vertical-bars
+                                   (sort-by (juxt :date (fn [x] (if (= (:group x) "Index") 1 2)))
+                                            (map (fn [line]
+                                                   (update line :group #({"Fund-Contribution"  @(rf/subscribe [:portfolio-review/portfolio])
+                                                                          "Index-Contribution" "Index"} %)))
+                                                 (remove #(= (:group %) "Total-Effect") data)))
+                                   "Basis points")]
+                   [oz/vega-lite (vertical-waterfall (map (fn [line] (update line :date #(monthmap (subs % 4 6))))
+
+                                                          (filter #(= (:group %) "Total-Effect") data)) "")]
+
+                   ]]
+       ]]]
+
+    )
+  )
 
 (defn contribution-or-alpha-chart [data]
     [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
@@ -509,6 +646,7 @@
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-tab
       :summary                       [summary-text]
+      :ytd-performance               [ytd-performance]
       :contribution                  [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/contribution-chart-data])]
       :alpha                         [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/alpha-chart-data])] ;(sort-by :group (reverse (sort-by :performance @(rf/subscribe [:portfolio-review/alpha-chart-data]))))
       :top-bottom                    [top-contributors]

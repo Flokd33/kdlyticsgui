@@ -112,6 +112,7 @@
                  :portfolio-review/jensen-chart-data                 nil
                  :portfolio-review/marginal-beta-chart-data          nil
                  :portfolio-review/historical-beta-chart-data        nil
+                 :portfolio-review/historical-performance-chart-data nil
 
 
                  })
@@ -188,6 +189,7 @@
            :portfolio-review/jensen-chart-data
            :portfolio-review/marginal-beta-chart-data
            :portfolio-review/historical-beta-chart-data
+           :portfolio-review/historical-performance-chart-data
 
 
 
