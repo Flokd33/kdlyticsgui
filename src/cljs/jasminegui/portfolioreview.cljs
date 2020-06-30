@@ -88,27 +88,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def performance-colors ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
+(def chart-text-size 16)
 
 (defn grouped-horizontal-bars [data title]
   "The data is of the form [{:group TXT :performance txt :value 0}]"
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
-        text-size 16
         perf-sort (reverse (distinct (mapv :performance data)))
         colors (reverse (take (count (distinct (mapv :performance data))) performance-colors))
         scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
     {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
      :data      {:values data},
      :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
-     :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "left"}}},
+     :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "left"}}},
      :spec      {:layer
                  [{:mark   "bar",
                    :width  (- standard-box-width-nb 400),
                    :height individual-height
                    :encoding {:x     {:aggregate "sum", :field "value", :type "quantitative",
-                                      :axis {:title title, :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                                      :axis {:title title, :titleFontSize chart-text-size, :titleFontWeight "normal" :labelFontSize chart-text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
                               :y     {:field "performance", :type "nominal", :sort perf-sort, :axis {:title "", :labels false}},
-                              :color {:field "performance", :type "nominal", :scale {:range colors}, :legend {:title "", :labelFontSize text-size}}}}
-                  {:mark   {:type "text", :fontSize text-size},
+                              :color {:field "performance", :type "nominal", :scale {:range colors}, :legend {:title "", :labelFontSize chart-text-size}}}}
+                  {:mark   {:type "text", :fontSize chart-text-size},
                    :width  (- standard-box-width-nb 400),
                    :height individual-height
                    :encoding {:x     {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title nil}},
@@ -120,21 +120,20 @@
 (defn simple-horizontal-bars [data title fmt dc]
   "The data is of the form [{:group TXT :value 0}]"
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
-        text-size 16
         scl (* dc (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40))]
     {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
      :data      {:values data},
      :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
-     :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "left"}}},
+     :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "left"}}},
      :spec      {:layer
                  [{:mark     "bar",
                    :width    (- (/ standard-box-width-nb 2) 250),
                    :height   individual-height
                    :encoding {:x     {:aggregate "sum", :field "value", :type "quantitative",
-                                      :axis      {:title title, :titleFontSize text-size, :titleFontWeight "normal" :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                                      :axis      {:title title, :titleFontSize chart-text-size, :titleFontWeight "normal" :labelFontSize chart-text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
                               :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
                               :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil}}}
-                  {:mark     {:type "text", :fontSize text-size},
+                  {:mark     {:type "text", :fontSize chart-text-size},
                    :width    (- (/ standard-box-width-nb 2) 250),
                    :height   individual-height
                    :encoding {:x     {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title nil}},
@@ -145,8 +144,7 @@
     )
 
 (defn stacked-vertical-bars [data title]
-  (let [text-size 16
-        groups (distinct (mapv :group data))
+  (let [groups (distinct (mapv :group data))
         colors (take (count (distinct (mapv :group data))) performance-colors)
         new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)]
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
@@ -158,23 +156,22 @@
                 :scale {:padding-left 60}
                 :encoding
                       {:x     {:field "performance", :type "nominal",
-                               :axis {:title nil :labelFontSize text-size :labelAngle 0}
+                               :axis {:title nil :labelFontSize chart-text-size :labelAngle 0}
                                :sort (distinct (mapv :performance data))
                                :scale {:paddingInner 0.5}},
-                       :y     {:field "value", :type "quantitative", :axis {:title nil :labelFontSize text-size}},
+                       :y     {:field "value", :type "quantitative", :axis {:title nil :labelFontSize chart-text-size}},
                        :order {:field "order", :type "quantitative"}
                        :color
                               {:field "group", :type "nominal", :scale {:domain (distinct (map :group new-data))
                                                                         :range colors} :legend nil}}}
-               {:mark {:type "text" :fontSize text-size :color "white"},
+               {:mark {:type "text" :fontSize chart-text-size :color "white"},
                 :encoding
                       {:x    {:field "performance", :type "nominal", :axis {:title nil}, :sort (distinct (mapv :performance data))},
                        :y    {:field "mid", :type "quantitative"},
                        :text {:field "group", :type "nominal"}}}]}))
 
 (defn area-chart [data]
-  (let [text-size 16
-        nb-countries (count (distinct (map :country data)))
+  (let [nb-countries (count (distinct (map :country data)))
         ordered-countries (reverse (conj (remove #(= % "Rest") (map :country (sort-by :value (take-last nb-countries data)))) "Rest"))
         colors (take (count (distinct (mapv :country data))) performance-colors)
         new-data (mapv #(assoc %1 :order (.indexOf ordered-countries (:country %1))) data)]
@@ -187,16 +184,15 @@
                 :scale {:padding-left 60}
                 :encoding
                        {:x     {:field "date", :type  "temporal",
-                                :axis  {:title nil :labelFontSize text-size :labelAngle 0}},
-                        :y     {:field "value", :type "quantitative", :axis {:title nil :labelFontSize text-size}},
+                                :axis  {:title nil :labelFontSize chart-text-size :labelAngle 0}},
+                        :y     {:field "value", :type "quantitative", :axis {:title nil :labelFontSize chart-text-size}},
                         :order {:field "order", :type "quantitative"}
                         :color {:field  "country", :type "nominal", :scale {:domain (reverse ordered-countries) :range (reverse colors)}
-                                :legend {:title nil :labelFontSize text-size}}}}]}))
+                                :legend {:title nil :labelFontSize chart-text-size}}}}]}))
 
 (defn grouped-vertical-bars [data title]
   "The data is of the form [{:date dt :group TXT :value 0}]"
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
-        text-size 16
         colors (take (count (distinct (mapv :group data))) performance-colors)
         scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
     ;(println data)
@@ -204,16 +200,16 @@
      :data      {:values data :format {:parse {:date "date:'%Y%m%d'"}}},
      :title     nil
      :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
-     :facet     {:column {:field "date", :type "temporal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize text-size, :labelAlign "center" :format "%b"}}},
+     :facet     {:column {:field "date", :type "temporal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "center" :format "%b"}}},
      :spec      {:layer
                  [{:mark     "bar",
                    :width    individual-height,
                    :height   (- standard-box-height-nb 400)
                    :encoding {:x     {:field "group", :type "nominal",
                                       :sort  (distinct (mapv :group data))
-                                      :axis  {:title nil, :titleFontSize text-size, :titleFontWeight "normal" :labels false :labelFontSize text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
-                              :y     {:field "value", :type "quantitative", :axis {:title "Contribution (%)", :titleFontSize text-size :labels true :labelFontSize text-size}},
-                              :color {:field "group", :type "nominal", :scale {:range (reverse colors)}, :legend {:title "", :labelFontSize text-size}}}}
+                                      :axis  {:title nil, :titleFontSize chart-text-size, :titleFontWeight "normal" :labels false :labelFontSize chart-text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                              :y     {:field "value", :type "quantitative", :axis {:title "Contribution (%)", :titleFontSize chart-text-size :labels true :labelFontSize chart-text-size}},
+                              :color {:field "group", :type "nominal", :scale {:range (reverse colors)}, :legend {:title "", :labelFontSize chart-text-size}}}}
                   ;{:mark   {:type "text", :fontSize text-size},
                   ; :width  individual-height,
                   ; :height (- standard-box-height-nb 400)
@@ -228,11 +224,9 @@
 (defn vertical-waterfall [data title]
   "The data is of the form [{:date dt :group TXT :value 0}]"
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
-        text-size 16
         new-data (map (fn [line] (update line :value #(Math/round (* 100. %))))
                       (concat ;[{:date "Begin", :value 0}]
-                        data [{:date "YTD", :value 0}]))
-        ]
+                        data [{:date "YTD", :value 0}]))]
     {:$schema
              "https://vega.github.io/schema/vega-lite/v4.json",
      :data {:values new-data},
@@ -240,39 +234,23 @@
      :height (- standard-box-height-nb 400),
      :title nil
      :transform                                             ;
-             [{:window
-               [{:op "sum", :field "value", :as "sum"}]}
-              {:window
-               [{:op "lead", :field "date", :as "lead"}]}
-              {:calculate
-                   "datum.lead === null ? datum.date : datum.lead",
-               :as "lead"}
-              {:calculate
-                   "datum.date === 'YTD' ? 0 : datum.sum - datum.value",
-               :as "previous_sum"}
-              {:calculate
-                   "datum.date === 'YTD' ? datum.sum : datum.value",
-               :as "value"}
-              {:calculate
-                   "(datum.date !== 'Begin' && datum.date !== 'YTD' && datum.value > 0 ? '+' : '') + datum.value",
-               :as "text_amount"}
-              {:calculate
-                   "(datum.sum + datum.previous_sum) / 2",
-               :as "center"}
-              {:calculate
-                   "datum.sum < datum.previous_sum ? datum.sum : ''",
-               :as "sum_dec"}
-              {:calculate
-                   "datum.sum > datum.previous_sum ? datum.sum : ''",
-               :as "sum_inc"}],
+             [{:window [{:op "sum", :field "value", :as "sum"}]}
+              {:window [{:op "lead", :field "date", :as "lead"}]}
+              {:calculate "datum.lead === null ? datum.date : datum.lead", :as "lead"}
+              {:calculate "datum.date === 'YTD' ? 0 : datum.sum - datum.value", :as "previous_sum"}
+              {:calculate "datum.date === 'YTD' ? datum.sum : datum.value", :as "value"}
+              {:calculate "(datum.date !== 'Begin' && datum.date !== 'YTD' && datum.value > 0 ? '+' : '') + datum.value", :as "text_amount"}
+              {:calculate "(datum.sum + datum.previous_sum) / 2", :as "center"}
+              {:calculate "datum.sum < datum.previous_sum ? datum.sum : ''", :as "sum_dec"}
+              {:calculate "datum.sum > datum.previous_sum ? datum.sum : ''", :as "sum_inc"}],
      :encoding
              {:x
-              {:field "date", :type "ordinal", :sort nil, :axis {:labelAngle 0, :title nil :labelFontSize text-size}}},
+              {:field "date", :type "ordinal", :sort nil, :axis {:labelAngle 0, :title nil :labelFontSize chart-text-size}}},
      :layer
              [{:mark {:type "bar", :size 45},
                :encoding
                      {:y {:field "previous_sum", :type "quantitative", :title "Effect (bps)"
-                           :axis {:labelFontSize text-size :titleFontSize text-size} },
+                           :axis {:labelFontSize chart-text-size :titleFontSize chart-text-size} },
                       :y2 {:field "sum"},
                       :color
                           {:condition
@@ -310,9 +288,7 @@
    ["Duration" "Duration Bucket"]])
 
 (def contribution-pages
-  (into [
-         {:title "Year to date monthly performance" :nav-request :ytd-performance :data-request [:get-portfolio-review-historical-performance-chart-data "portfolio"]}
-         ]
+  (into [{:title "Year to date monthly performance" :nav-request :ytd-performance :data-request [:get-portfolio-review-historical-performance-chart-data "portfolio"]}]
         (for [p [["MTD" "mtd"] ["YTD" "ytd"]] k risk-breakdowns]
           {:title        (str (first p) " Contribution by " (first k))
            :nav-request  :contribution
@@ -344,17 +320,14 @@
 
 (def risk-pages
   (conj
-    (into [
-           {:title "Beta evolution over time" :nav-request :risk :data-request [:get-portfolio-review-historical-beta-chart-data "portfolio" ["BR", "CN", "AR", "TR", "MX"]]}
-           ]
+    (into [{:title "Beta evolution over time" :nav-request :risk :data-request [:get-portfolio-review-historical-beta-chart-data "portfolio" ["BR", "CN", "AR", "TR", "MX"]]}]
           (for [k risk-breakdowns p ["weights" "beta contribution" "deviation from index"]]
             {:title        (str "Risk by " (first k) ": " p)
              :nav-request  :risk
              :grouping     k
              :subgrouping  p
              :data-request (if (= p "beta contribution") [:get-portfolio-review-marginal-beta-chart-data "portfolio" (second k)])}))
-    end-page
-    ))
+    end-page))
 
 
 (def pages (into {} (map-indexed
@@ -366,8 +339,7 @@
                          top-bottom-pages
                          jensen-pages
                         [{:title "Three year daily backtest"   :nav-request :backtest-history  :data-request nil}]
-                        risk-pages
-                        ))))
+                        risk-pages))))
 
 (def portfolio-review-navigation
   [{:code :summary          :name "Summary"           :page-start 0}
@@ -407,9 +379,12 @@
 (defn heading-box []
   [h-box :gap "20px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label (get-in pages [@current-page :title]) :level :level1]]])
 
-(defn end []
+(defn portfolio-review-box-template [children]
   [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-   :child [v-box :gap "40px" :class "element" :width "100%" :height "100%" :children [[heading-box]]]])
+   :child [v-box :gap "40px" :class "element" :width "100%" :height "100%" :children (concat [[heading-box]] children)]])
+
+(defn end []
+  (portfolio-review-box-template nil))
 
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
@@ -418,103 +393,64 @@
         f (fn [x] (gstring/format "%.0fbps" (* 100 x)))
         g (fn [x] (gstring/format "%.2f" x))
         h (fn [x] (gstring/format "%.1f" x))]
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children
-      [[heading-box]
-       [title :level :level2 :label (str "MTD, " portfolio " returned " (f (get-in data [:mtd :portfolio])) " vs " (f (get-in data [:mtd :index])) " for the index, " (f (get-in data [:mtd :alpha])) " of alpha.")]
-       [title :level :level2 :label (str "YTD, " portfolio " returned " (f (get-in data [:ytd :portfolio])) " vs " (f (get-in data [:ytd :index])) " for the index, " (f (get-in data [:ytd :alpha])) " of alpha.")]
-       [title :level :level2 :label (str "The portfolio yield is " (g (* 100 (reduce + (map :contrib-yield positions)))) "% vs " (g (* 100 (reduce + (map :bm-contrib-yield positions)))) "% for the index.")]
-       [title :level :level2 :label (str "Our duration is " (h (reduce + (map :contrib-mdur positions))) " vs " (h (reduce + (map :bm-contrib-eir-duration positions))) " for the index.")]
-       [title :level :level2 :label (str "We currently run a beta of "
-                                         (g (get-in data [:beta :total]))
-                                         "x with top contributors being "
-                                         (get-in data [:beta :country-1])
-                                         " ("
-                                         (g (get-in data [:beta :value-1]))
-                                         "x), "
-                                         (get-in data [:beta :country-2])
-                                         " ("
-                                         (g (get-in data [:beta :value-2]))
-                                         "x), and "
-                                         (get-in data [:beta :country-3])
-                                         " ("
-                                         (g (get-in data [:beta :value-3]))
-                                         "x).")]
-       [gap :size "1"]
-       [p (str "Performance data as of " @(rf/subscribe [:attribution-date]) ". Risk data as of " @(rf/subscribe [:qt-date]) ".")]]]]))
+    (portfolio-review-box-template [[title :level :level2 :label (str "MTD, " portfolio " returned " (f (get-in data [:mtd :portfolio])) " vs " (f (get-in data [:mtd :index])) " for the index, " (f (get-in data [:mtd :alpha])) " of alpha.")]
+                                    [title :level :level2 :label (str "YTD, " portfolio " returned " (f (get-in data [:ytd :portfolio])) " vs " (f (get-in data [:ytd :index])) " for the index, " (f (get-in data [:ytd :alpha])) " of alpha.")]
+                                    [title :level :level2 :label (str "The portfolio yield is " (g (* 100 (reduce + (map :contrib-yield positions)))) "% vs " (g (* 100 (reduce + (map :bm-contrib-yield positions)))) "% for the index.")]
+                                    [title :level :level2 :label (str "Our duration is " (h (reduce + (map :contrib-mdur positions))) " vs " (h (reduce + (map :bm-contrib-eir-duration positions))) " for the index.")]
+                                    [title :level :level2 :label (str "We currently run a beta of "
+                                                                      (g (get-in data [:beta :total]))
+                                                                      "x with top contributors being "
+                                                                      (get-in data [:beta :country-1])
+                                                                      " ("
+                                                                      (g (get-in data [:beta :value-1]))
+                                                                      "x), "
+                                                                      (get-in data [:beta :country-2])
+                                                                      " ("
+                                                                      (g (get-in data [:beta :value-2]))
+                                                                      "x), and "
+                                                                      (get-in data [:beta :country-3])
+                                                                      " ("
+                                                                      (g (get-in data [:beta :value-3]))
+                                                                      "x).")]
+                                    [gap :size "1"]
+                                    [p (str "Performance data as of " @(rf/subscribe [:attribution-date]) ". Risk data as of " @(rf/subscribe [:qt-date]) ".")]])))
 
 (defn ytd-performance []
   (let [data @(rf/subscribe [:portfolio-review/historical-performance-chart-data])
         monthmap {"01" "Jan" "02" "Feb" "03" "Mar" "04" "Apr" "05" "May" "06" "Jun"
-                  "07" "Jul" "08" "Aug" "09" "Sep" "10" "Oct" "11" "Nov" "12" "Dec"}
-        ]
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children
-      [[heading-box]
-       [h-box :gap "20px"
-        :children [
-                   [oz/vega-lite (grouped-vertical-bars
-                                   (sort-by (juxt :date (fn [x] (if (= (:group x) "Index") 1 2)))
+                  "07" "Jul" "08" "Aug" "09" "Sep" "10" "Oct" "11" "Nov" "12" "Dec"}]
+    (portfolio-review-box-template
+      [[h-box :gap "20px"
+        :children [[oz/vega-lite (grouped-vertical-bars
+                                   (sort-by (juxt :date (fn [x] (if (= (:group x) "Index") 2 1)))
                                             (map (fn [line]
                                                    (update line :group #({"Fund-Contribution"  @(rf/subscribe [:portfolio-review/portfolio])
                                                                           "Index-Contribution" "Index"} %)))
-                                                 (remove #(= (:group %) "Total-Effect") data)))
-                                   "Basis points")]
-                   [oz/vega-lite (vertical-waterfall (map (fn [line] (update line :date #(monthmap (subs % 4 6))))
-
-                                                          (filter #(= (:group %) "Total-Effect") data)) "")]
-
-                   ]]
-       ]]]
-
-    )
-  )
+                                                 (remove #(= (:group %) "Total-Effect") data))) "Basis points")]
+                    [oz/vega-lite (vertical-waterfall (map (fn [line] (update line :date #(monthmap (subs % 4 6))))
+                                                           (filter #(= (:group %) "Total-Effect") data)) "")]]]])))
 
 (defn contribution-or-alpha-chart [data]
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children
-      [[heading-box]
-       [oz/vega-lite (grouped-horizontal-bars data "Basis points")]
-       [gap :size "1"]
-       [box :width "100%" :align :end :child [p {:style {:text-align "right" :z-index 500}} "UST categorized as cash"]]
-       ]]])
+  (portfolio-review-box-template
+    [[oz/vega-lite (grouped-horizontal-bars data "Basis points")]
+     [gap :size "1"]
+     [box :width "100%" :align :end :child [p {:style {:text-align "right" :z-index 500}} "UST categorized as cash"]]]))
 
 (defn historical-beta []
-  (let [data @(rf/subscribe [:portfolio-review/historical-beta-chart-data])]
-    ;    (println data)
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children
-      [[heading-box]
-       [oz/vega-lite (area-chart data)]
-       ]]]))
+  (portfolio-review-box-template [[oz/vega-lite (area-chart @(rf/subscribe [:portfolio-review/historical-beta-chart-data]))]]))
 
 (defn top-contributors []
   (let [display (sort-by :Total-Effect
                          (remove #(or (some #{(:Sector %)} ["Total"])
-                                      ;(= (subs (:Security %) 0 16) "Foreign Currency")
-                                      ;(= (subs (:Security %) 4 22) "Settlement Account")
-                                      (and (= (:Sector %) "Cash") (some? (:Security %)) (not= "T" (subs (:Security %) 0 1)))
-                                      )
+                                      (and (= (:Sector %) "Cash") (some? (:Security %)) (not= "T" (subs (:Security %) 0 1))))
                                  @(rf/subscribe [:single-portfolio-attribution/clean-table])))]
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "10px" :class "element" :width "100%" :height "100%"
-      :children
-      [[heading-box]                                        ; [title :label ttl :level :level1]
-       [box :width "850px"
+    (portfolio-review-box-template
+      [[box :width "850px"
         :child
         [:> ReactTable
          {:data                (take 20 (if (= (subs (get-in pages [@current-page :title]) 4 7) "top") (reverse display) display))
           :defaultFilterMethod tables/case-insensitive-filter
-          :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector ])}
+          :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
                                 {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
                                 {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
                                 {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
@@ -522,7 +458,7 @@
           :sortable            false
           :filterable          false
           :pageSize            20
-          :className           "-striped -highlight"}]]]]]))
+          :className           "-striped -highlight"}]]])))
 
 (defn backtest-history []
   (rf/dispatch [:get-portfolio-var @(rf/subscribe [:portfolio-review/portfolio])])
@@ -532,31 +468,17 @@
         chart-period @(rf/subscribe [:var/chart-period])
         line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
         days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "10px" :class "element" :width "100%" :height "100%"
-      :children
-      [[heading-box]
-       [oz/vega-lite (charting/backtest-chart
+    (portfolio-review-box-template
+      [[oz/vega-lite (charting/backtest-chart
                        (take-last days (get-in dates [(line :frequency)]))
                        (take-last days (get-in data [:portfolio-value (line :frequency)]))
-                       (- standard-box-width-nb 200) (- standard-box-height-nb 300))]]]]))
-
+                       (- standard-box-width-nb 200) (- standard-box-height-nb 300))]]) ))
 
 (defn risk-betas []
-  (let [
-        data @(rf/subscribe [:portfolio-review/marginal-beta-chart-data])
-        portfolio @(rf/subscribe [:portfolio-review/portfolio])
-        idx (first (remove #(= portfolio %) (map :performance data)))
-        sorted-data data
+  (let [data @(rf/subscribe [:portfolio-review/marginal-beta-chart-data])
         groups (distinct (mapv :group data))
-        new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) sorted-data)
-        ]
-    ;(println data sort-order sorted-data)
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children [[heading-box] [oz/vega-lite (stacked-vertical-bars new-data "Beta contribution")]]]]))
+        new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)]
+    (portfolio-review-box-template [[oz/vega-lite (stacked-vertical-bars new-data "Beta contribution")]])))
 
 (defn risk-weights []
   (let [g (second (get-in pages [@current-page :grouping]))
@@ -583,15 +505,8 @@
                             "RatingGroup" (map #(update % :group subs 3) (sort-by :group (reverse (sort-by :performance clean-data))))
                             "Duration Bucket" (sort-by (fn [x] (.indexOf ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"] (:group x))) (reverse (sort-by :performance clean-data)))
                             (sort-by :group (reverse (sort-by :performance clean-data)))
-                            )
-
-
-        ]
-    ;    (println clean-data)
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children [[heading-box] [oz/vega-lite (grouped-horizontal-bars clean-data-sorted "Share of total risk")]]]]))
+                            )]
+    (portfolio-review-box-template [[oz/vega-lite (grouped-horizontal-bars clean-data-sorted "Share of total risk")]])))
 
 (defn risk-deltas []
   (let [g (second (get-in pages [@current-page :grouping]))
@@ -612,25 +527,15 @@
                                  (sort-by :group (filter #(some #{(:group %)} top-countries) chart-data)))
                      "RatingGroup" (remove #(some #{(:group %)} ["08 C" "08 CC" "08 D" "09 NM"]) chart-data)
                      "Sector" (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)
-                     chart-data
-                     )
+                     chart-data)
         clean-data-sorted (case g
                             "RatingGroup" (map #(update % :group subs 3) (sort-by :group (reverse (sort-by :performance clean-data))))
                             "Duration Bucket" (sort-by (fn [x] (.indexOf ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"] (:group x))) (reverse (sort-by :performance clean-data)))
-                            (sort-by :group (reverse (sort-by :performance clean-data)))
-                            )
-        ]
-    ;(println clean-data)
-    [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
-     :child
-     [v-box :gap "40px" :class "element" :width "100%" :height "100%"
-      :children [[heading-box]
-                 [h-box :gap "20px"
-                  :children [[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "weight") clean-data-sorted) "Weight vs index" ".0f" 1.5)]
-                             [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]]
-                  ]
-                 ]]]))
-
+                            (sort-by :group (reverse (sort-by :performance clean-data))))]
+    (portfolio-review-box-template
+      [[h-box :gap "20px"
+        :children [[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "weight") clean-data-sorted) "Weight vs index" ".0f" 1.5)]
+                   [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]]]])))
 
 (defn risk []
   (cond
@@ -639,7 +544,6 @@
     (clojure.string/includes? (get-in pages [@current-page :title]) "beta")       [risk-betas]
     (clojure.string/includes? (get-in pages [@current-page :title]) "deviation")  [risk-deltas]
     :else [p "no data"]))
-
 
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
@@ -665,8 +569,7 @@
         portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         portfolio @(rf/subscribe [:portfolio-review/portfolio])]
     [h-box
-     :children [
-                [v-box
+     :children [[v-box
                  :gap "20px"
                  :class "leftnavbar"
                  :children (into [
@@ -681,12 +584,7 @@
                                     :class (str "btn btn-primary btn-block" (if (and (= active-tab (:code item))) " active"))
                                     :label (:name item)
                                     :on-click #(go-to-block! (:code item)) ;#(rf/dispatch [:portfolio-review/active-tab (:code item)])
-
-                                    ]))]
-                ]]))
+                                    ]))]]]))
 
 (defn view []
-  [h-box :gap "10px"
-   ;:style {:overflow "hidden"}
-   :padding "0px"
-   :children [[nav] [active-home]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav] [active-home]]])
