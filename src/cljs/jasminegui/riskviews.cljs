@@ -15,7 +15,9 @@
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
     [jasminegui.tables :as tables]
-    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]])
+    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
+    [cljs-time.core :refer [today]]
+    )
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
@@ -27,7 +29,9 @@
 (rf/reg-event-fx
   :get-single-bond-history
   (fn [{:keys [db]} [_ name bond-sedol portfolios start-date end-date]]
-    {:db (assoc db :single-bond-trade-history/bond name :single-bond-trade-history/show-modal true)
+    {:db (assoc db :single-bond-trade-history/bond name
+                   :single-bond-trade-history/show-modal true
+                   :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "single-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
                          :dispatch-key [:single-bond-trade-history/data]
                          :kwk          true}}))
@@ -35,9 +39,21 @@
 (rf/reg-event-fx
   :get-single-bond-flat-history
   (fn [{:keys [db]} [_ name bond-sedol portfolios start-date end-date]]
-    {:db (assoc db :single-bond-trade-history/bond name :single-bond-trade-history/show-flat-modal true)
+    {:db (assoc db :single-bond-trade-history/bond name
+                   :single-bond-trade-history/show-flat-modal true
+                   :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "flat-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
                          :dispatch-key [:single-bond-trade-history/flat-data]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-portfolio-trade-history
+  (fn [{:keys [db]} [_ portfolio start-date end-date]]
+    {:db (assoc db :portfolio-trade-history/data nil
+                   :single-bond-trade-history/show-throbber true
+                   :single-bond-trade-history/show-throbber true)
+     :http-get-dispatch {:url          (str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
+                         :dispatch-key [:portfolio-trade-history/data]
                          :kwk          true}}))
 
 (rf/reg-event-db
@@ -52,6 +68,11 @@
     (assoc db :single-bond-trade-history/flat-data data
               :single-bond-trade-history/show-throbber false)))
 
+(rf/reg-event-db
+  :portfolio-trade-history/data
+  (fn [db [_ data]]
+    (assoc db :portfolio-trade-history/data data
+              :single-bond-trade-history/show-throbber false)))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; SUCBSCRIPTIONS ;;
@@ -181,6 +202,7 @@
 ;;;;;;;;;
 
 (def dropdown-width "150px")
+(def mini-dropdown-width "75px")
 
 (defn single-bond-trade-history [state rowInfo instance]
   (clj->js {:onClick #(rf/dispatch [:get-single-bond-history
@@ -218,6 +240,7 @@
       :sortable            (not is-tree)
       :filterable          (not is-tree)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) portfolio-positions)))) 25) ;(inc (count display))
+      :showPageSizeOptions false
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :getTrProps          single-bond-trade-history
@@ -259,6 +282,7 @@
       :sortable            (not is-tree)
       :filterable          (not is-tree)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display-one)))) 25)
+      :showPageSizeOptions false
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :getTrProps          single-bond-trade-flat-history
@@ -291,6 +315,7 @@
       :sortable            (not is-tree)
       :filterable          (not is-tree)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display)))) 25)
+      :showPageSizeOptions false
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:portfolio-alignment/table-filter])) ; [{:id "analyst" :value "Tammy"}]
@@ -431,3 +456,81 @@
       :pageSize       (count @(rf/subscribe [:portfolios]))
       :getTrProps     go-to-portfolio-risk
       :className      "-striped -highlight"}]]]])
+
+
+(defn portfolio-history-table []
+  (let [data @(rf/subscribe [:portfolio-trade-history/data])]
+    (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
+      [box :align :center :child [throbber :size :large]]
+      [box :align :center
+       :child
+               [:> ReactTable
+                {:data           data
+                 :columns        [
+                                  {:Header "Date" :accessor "TradeDate" :width 100 :Cell jasminegui.tradehistory/subs10}
+                                  {:Header "Type" :accessor "TransactionTypeName" :width 100}
+                                  {:Header "Instrument" :accessor "IssueName" :width 400}
+                                  {:Header "SEDOL" :accessor "SEDOL" :width 75}
+                                  {:Header "CCY" :accessor "LocalCcy" :width 60}
+                                  {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell jasminegui.tradehistory/nfh} ;
+                                  {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
+                                  {:Header "Counterparty" :accessor "counterparty_code" :width 100}
+                                  ]
+                 :showPagination (> (count data) 50)
+                 :pageSize       (min 50 (count data))
+                 :className      "-striped -highlight"}]]
+
+      ))
+  )
+
+
+
+
+(defn trade-history []
+  (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
+        performance (rf/subscribe [:portfolio-trade-history/performance])
+        portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        start-date (rf/subscribe [:portfolio-trade-history/start-date])
+        end-date (rf/subscribe [:portfolio-trade-history/end-date])]
+    [box :class "subbody rightelement" :child
+     [v-box :class "element" :gap "20px"
+      :children [[title :label (str "Trade history for " @portfolio) :level :level1]
+                 [h-box :gap "50px"
+                  :children [
+                             [v-box :gap "15px"
+                              :children [
+                                         [h-box
+                                          :width "1200px"
+                                          :gap "10px"
+                                          :children [[title :label "Portfolio:" :level :level3]
+                                                     [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:portfolio-trade-history/portfolio %])]
+                                                     [gap :size "20px"]
+                                                     [title :label "Start:" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model start-date
+                                                      :minimum (tools/int-to-gdate 20200101)
+                                                      :maximum (today)
+                                                      :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:portfolio-trade-history/start-date %])]
+                                                     [gap :size "20px"]
+                                                     [title :label "End:" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model end-date
+                                                      :minimum (tools/int-to-gdate 20200101)
+                                                      :maximum (today)
+                                                      :format "dd/MM/yyyy" :show-today? false :on-change #(rf/dispatch [:portfolio-trade-history/end-date %])]
+                                                     [gap :size "20px"]
+                                                     [title :label "Get performance?" :level :level3]
+                                                     [single-dropdown :width mini-dropdown-width :model performance :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/performance %])]
+                                                     [gap :size "20px"]
+                                                     [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
+                                                     [gap :size "20px"]
+                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio)]
+                                                     ]]
+
+                                         ]
+
+
+                              ]]]
+                 [portfolio-history-table]]]])
+
+  )

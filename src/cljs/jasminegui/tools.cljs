@@ -1,5 +1,9 @@
 (ns jasminegui.tools)
 
+(defn int-to-gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
+(defn gdate-to-yyyymmdd [x] (subs (.toString x) 0 8))
+
+
 (defn vector-of-maps->csv [vector-of-maps]
   (let [cols (keys (last vector-of-maps))]                  ;use last not first as first is totals that are different
     (reduce #(str %1 (clojure.string/join "," (mapv %2 cols)) "\n")

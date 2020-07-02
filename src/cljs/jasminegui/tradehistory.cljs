@@ -41,8 +41,7 @@
               :single-bond-trade-history/data []
               :single-bond-trade-history/flat-data []
               :single-bond-trade-history/show-modal false
-              :single-bond-trade-history/show-flat-modal false
-              :single-bond-trade-history/show-throbber true)))
+              :single-bond-trade-history/show-flat-modal false)))
 
 
 (defn modal-single-bond-trade-history []

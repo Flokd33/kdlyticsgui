@@ -14,7 +14,8 @@
   [{:code :summary             :name "Overview"}
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
-   {:code :portfolio-alignment :name "Portfolio alignment"}])
+   {:code :portfolio-alignment :name "Portfolio alignment"}
+   {:code :trade-history       :name "Trade history"}])
 
 (def attribution-navigation
   [{:code :summary             :name "Overview"}

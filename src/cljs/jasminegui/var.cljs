@@ -15,10 +15,7 @@
     [jasminegui.tables :as tables]
     [jasminegui.static :as static]
     [jasminegui.charting :as charting]
-    [oz.core :as oz])
-  )
-
-
+    [oz.core :as oz]))
 
 
 (rf/reg-sub
@@ -44,14 +41,6 @@
                                   (merge {:bond (name kb) :days (- total-days d)} (get-in all-proxies [kb]))
                                   :adjdur str) ))))))
 
-
-;(defn var-navigation-dispatch [item]
-;  (println item)
-;  (rf/dispatch [:active-var (:code item)])
-;  (when (and (= item :overview) (nil? @(rf/subscribe [:var/data])))
-;    ;this is the first run
-;    (rf/dispatch [:get-var-data "OGEMCORD"])))
-
 (defn nav-var-bar []
   (let [active-var @(rf/subscribe [:navigation/active-var])]
     [h-box
@@ -61,19 +50,8 @@
                                  (for [item static/var-navigation]
                                    [button
                                     :class (str "btn btn-primary btn-block" (if (and (= active-var (:code item))) " active"))
-                                    ;:style {:font-size "12px"}
                                     :label (:name item)
-                                    :on-click #(rf/dispatch [:navigation/active-var (:code item)])]))]
-                ;(rf/dispatch [:active-var (:code item)])
-                ;[line :color "#CA3E47" :class "separatorvline"]
-                ]]))
-
-(defn overview []
-  [label :label "hi"])
-
-(defn marginal []
-  [label :label "hi"])
-
+                                    :on-click #(rf/dispatch [:navigation/active-var (:code item)])]))]]]))
 
 (defn portfolio-proxy-table []
   ;(println @(rf/subscribe [:var/portfolio-proxies]))
@@ -93,14 +71,13 @@
 (defn var-table []
     [:> ReactTable
      {:data                @(rf/subscribe [:var/table])
-      :columns             [{:Header "Period"     :accessor "id"     :width 90}
-                            {:Header "Volatility" :accessor "std"    :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
-                            {:Header "Index Beta" :accessor "beta"   :width 90 :style {:textAlign "right"} :Cell tables/round1}
-                            {:Header "Index R2"   :accessor "rsq"    :width 90 :style {:textAlign "right"} :Cell tables/round0pc}
-                            {:Header "95% VaR"    :accessor "var95"  :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
-                            {:Header "99% VaR"    :accessor "var99"  :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
-                            {:Header "Max loss (*)"   :accessor "maxd"   :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
-                            ]
+      :columns             [{:Header "Period"       :accessor "id"     :width 90}
+                            {:Header "Volatility"   :accessor "std"    :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
+                            {:Header "Index Beta"   :accessor "beta"   :width 90 :style {:textAlign "right"} :Cell tables/round1}
+                            {:Header "Index R2"     :accessor "rsq"    :width 90 :style {:textAlign "right"} :Cell tables/round0pc}
+                            {:Header "95% VaR"      :accessor "var95"  :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
+                            {:Header "99% VaR"      :accessor "var99"  :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
+                            {:Header "Max loss (*)" :accessor "maxd"   :width 90 :style {:textAlign "right"} :Cell tables/round1pc}]
       :showPagination      false
       :sortable            false
       :filterable          false
@@ -110,14 +87,10 @@
 (def standard-box-width "800px")
 (def dropdown-width "150px")
 
-
 (defn var-table-view []
   [v-box
    :class "element" :width "100%" :gap "20px"
-   :children [[title :label "Backtested VaR" :level :level1]
-              [var-table]
-              [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]]])
-
+   :children [[title :label "Backtested VaR" :level :level1] [var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]]])
 
 (defn backtest-chart []
   (let [dates @(rf/subscribe [:var/dates])
@@ -144,7 +117,6 @@
                 [oz/vega-lite (charting/return-histogram
                                 (take-last days (get-in data [:portfolio-returns (line :frequency)]))
                                 (- (cljs.reader/read-string (subs standard-box-width 0 3)) 150) 550)]]]))
-
 
 (defn regression-chart []
   (let [data @(rf/subscribe [:var/data])
@@ -176,13 +148,6 @@
                              [title :label "Chart period:" :level :level3]
                              [single-dropdown :width dropdown-width :model chart-period :choices static/var-charts-choice-map :on-change #(rf/dispatch [:var/chart-period %])]]]]]))
 
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
 (defn proxy-table []
   (let [data @(rf/subscribe [:var/proxies])
         display (sort-by :bond (into [] (for [[k v] data] (update (merge {:bond k} v) :adjdur str))))]
@@ -199,15 +164,11 @@
       :className           "-striped"}]))
 
 (defn proxy-table-view []
-  [box
-   :class "subbody rightelement"
-   :child [v-box
-           :class "element" :gap "20px"
-           :children [[title :label "Bond proxies" :level :level1] [proxy-table]]]])
+  [box :class "subbody rightelement"
+   :child [v-box :class "element" :gap "20px" :children [[title :label "Bond proxies" :level :level1] [proxy-table]]]])
 
 (defn portfolio-proxies []
-   [v-box
-    :class "element" :width "100%" :gap "20px"
+   [v-box :class "element" :width "100%" :gap "20px"
     :children [[title :label "Bond proxies" :level :level1] [portfolio-proxy-table]]])
 
 (defn active-home []
@@ -217,24 +178,16 @@
       :overview                       [v-box :width standard-box-width
                                        :gap "20px"
                                        :padding "80px 20px"
-                                       :class "rightelement"  :children [[h-box :align :start :children [[var-controller] ]]
-                                                                                   [h-box :align :start :children [[var-table-view] ]]
-                                                                                   [h-box :align :start :children [[backtest-chart]]]
+                                       :class "rightelement"  :children [[h-box :align :start :children [[var-controller]]]
+                                                                         [h-box :align :start :children [[var-table-view] ]]
+                                                                         [h-box :align :start :children [[backtest-chart]]]
                                                                          [h-box :align :start :children [[histogram-chart]]]
                                                                          [h-box :align :start :children [[regression-chart]]]
-                                                                         ;[h-box :align :start :children [[portfolio-proxies]]]
                                                                          ]]
-      :marginal                       [marginal]
-      :proxies [v-box :width standard-box-width
-                :gap "20px"
-                :padding "80px 20px"
-                :class "rightelement"  :children [[h-box :align :start :children [[portfolio-proxies]]]]]
-      ;[proxy-table-view]
+      :proxies [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"
+                :children [[h-box :align :start :children [[portfolio-proxies]]]]]
       [:div.output "nothing to display"])))
 
 
 (defn var-view []
-  [h-box :gap "10px"
-   ;:style {:overflow "hidden"}
-   :padding "0px"
-   :children [[nav-var-bar] [active-home]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-var-bar] [active-home]]])

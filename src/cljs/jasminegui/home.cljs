@@ -40,6 +40,7 @@
       :single-portfolio               [riskviews/single-portfolio-risk-controller]
       :all-portfolios                 [riskviews/multiple-portfolio-risk-controller]
       :portfolio-alignment            [riskviews/portfolio-alignment-risk-controller]
+      :trade-history                  [riskviews/trade-history]
       [:div.output "nothing to display"])))
 
 

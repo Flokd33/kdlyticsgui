@@ -1,9 +1,15 @@
 goog.provide('jasminegui.tools');
 goog.require('cljs.core');
+jasminegui.tools.int_to_gdate = (function jasminegui$tools$int_to_gdate(x){
+return (new goog.date.UtcDateTime.fromIsoString(cljs.core.str.cljs$core$IFn$_invoke$arity$1(x)));
+});
+jasminegui.tools.gdate_to_yyyymmdd = (function jasminegui$tools$gdate_to_yyyymmdd(x){
+return cljs.core.subs.cljs$core$IFn$_invoke$arity$3(x.toString(),(0),(8));
+});
 jasminegui.tools.vector_of_maps__GT_csv = (function jasminegui$tools$vector_of_maps__GT_csv(vector_of_maps){
 var cols = cljs.core.keys(cljs.core.last(vector_of_maps));
-return cljs.core.reduce.cljs$core$IFn$_invoke$arity$3((function (p1__52675_SHARP_,p2__52676_SHARP_){
-return [cljs.core.str.cljs$core$IFn$_invoke$arity$1(p1__52675_SHARP_),clojure.string.join.cljs$core$IFn$_invoke$arity$2(",",cljs.core.mapv.cljs$core$IFn$_invoke$arity$2(p2__52676_SHARP_,cols)),"\n"].join('');
+return cljs.core.reduce.cljs$core$IFn$_invoke$arity$3((function (p1__72261_SHARP_,p2__72262_SHARP_){
+return [cljs.core.str.cljs$core$IFn$_invoke$arity$1(p1__72261_SHARP_),clojure.string.join.cljs$core$IFn$_invoke$arity$2(",",cljs.core.mapv.cljs$core$IFn$_invoke$arity$2(p2__72262_SHARP_,cols)),"\n"].join('');
 }),[clojure.string.join.cljs$core$IFn$_invoke$arity$2(",",cljs.core.map.cljs$core$IFn$_invoke$arity$2(cljs.core.name,cols)),"\n"].join(''),vector_of_maps);
 });
 jasminegui.tools.download_object_as_csv = (function jasminegui$tools$download_object_as_csv(text,export_name){

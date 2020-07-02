@@ -6,13 +6,12 @@
     [cljs-http.client :as http]
     [cljs.core.async :refer [<!]]
     [jasminegui.tables :as tables]
+    [jasminegui.tools :as tools]
+    [cljs-time.core :refer [today]]
     ;[re-pressed.core :as rp]
     )
   (:require-macros [cljs.core.async.macros :refer [go]])
   )
-
-
-
 
 
 (def default-db {
@@ -102,7 +101,12 @@
                  :single-bond-trade-history/bond                     nil
                  :single-bond-trade-history/show-modal               false
                  :single-bond-trade-history/show-flat-modal          false
-                 :single-bond-trade-history/show-throbber            true
+                 :single-bond-trade-history/show-throbber            false
+                 :portfolio-trade-history/data                       []
+                 :portfolio-trade-history/portfolio                  "OGEMCORD"
+                 :portfolio-trade-history/start-date                 (tools/int-to-gdate 20200101)
+                 :portfolio-trade-history/end-date                   (tools/int-to-gdate (today))
+                 :portfolio-trade-history/performance                "No"
 
                  :portfolio-review/portfolio                         "OGEMCORD"
                  :portfolio-review/active-tab                        :summary
@@ -180,6 +184,10 @@
            :single-bond-trade-history/data
            :single-bond-trade-history/bond
            :single-bond-trade-history/show-throbber
+           :portfolio-trade-history/portfolio
+           :portfolio-trade-history/start-date
+           :portfolio-trade-history/end-date
+           :portfolio-trade-history/performance
 
            :portfolio-review/portfolio
            :portfolio-review/active-tab
@@ -190,8 +198,6 @@
            :portfolio-review/marginal-beta-chart-data
            :portfolio-review/historical-beta-chart-data
            :portfolio-review/historical-performance-chart-data
-
-
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -211,29 +217,18 @@
                 :multiple-portfolio-risk/selected-portfolios (set portfolios)
                 :multiple-portfolio-attribution/selected-portfolios (set portfolios))))
 
-(rf/reg-event-db
-  :single-portfolio-risk/filter
-  (fn [db [_ id f]] (assoc-in db [:single-portfolio-risk/filter id] f)))
-
-(rf/reg-event-db
-  :multiple-portfolio-risk/filter
-  (fn [db [_ id f]] (assoc-in db [:multiple-portfolio-risk/filter id] f)))
-
-(rf/reg-event-db
-  :portfolio-alignment/filter
-  (fn [db [_ id f]] (assoc-in db [:portfolio-alignment/filter id] f)))
+(doseq [k [:single-portfolio-risk/filter
+           :multiple-portfolio-risk/filter
+           :portfolio-alignment/filter
+           :single-portfolio-attribution/filter
+           :multiple-portfolio-attribution/filter]]
+  (rf/reg-event-db
+    k
+    (fn [db [_ id f]] (assoc-in db [k id] f))))
 
 (rf/reg-event-db
   :qt-date
   (fn [db [_ qt-date]] (assoc db :qt-date (clojure.string/replace qt-date "\"" ""))))
-
-(rf/reg-event-db
-  :single-portfolio-attribution/filter
-  (fn [db [_ id f]] (assoc-in db [:single-portfolio-attribution/filter id] f)))
-
-(rf/reg-event-db
-  :multiple-portfolio-attribution/filter
-  (fn [db [_ id f]] (assoc-in db [:multiple-portfolio-attribution/filter id] f)))
 
 (rf/reg-event-db
   :attribution-date
@@ -309,15 +304,12 @@
                            :dispatch-key [(:dis-key line)]
                            :kwk          true}})))
 
-
-
 (rf/reg-event-fx
   :get-var-data
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "var-data?portfolio=" portfolio)
                          :dispatch-key [:var/data]
                          :kwk          true}}))
-
 
 (rf/reg-event-fx
   :get-portfolio-var
@@ -326,7 +318,6 @@
      :http-get-dispatch {:url          (str static/server-address "var-data?portfolio=" portfolio)
                          :dispatch-key [:var/data]
                          :kwk          true}}))
-
 
 
 (rf/reg-event-fx
