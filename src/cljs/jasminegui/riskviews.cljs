@@ -457,7 +457,6 @@
       :getTrProps     go-to-portfolio-risk
       :className      "-striped -highlight"}]]]])
 
-
 (defn portfolio-history-table []
   (let [data @(rf/subscribe [:portfolio-trade-history/data])]
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
@@ -466,25 +465,23 @@
        :child
                [:> ReactTable
                 {:data           data
-                 :columns        [
-                                  {:Header "Date" :accessor "TradeDate" :width 100 :Cell jasminegui.tradehistory/subs10}
-                                  {:Header "Type" :accessor "TransactionTypeName" :width 100}
-                                  {:Header "Instrument" :accessor "IssueName" :width 400}
-                                  {:Header "SEDOL" :accessor "SEDOL" :width 75}
-                                  {:Header "CCY" :accessor "LocalCcy" :width 60}
-                                  {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell jasminegui.tradehistory/nfh} ;
-                                  {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
-                                  {:Header "Counterparty" :accessor "counterparty_code" :width 100}
-                                  ]
+                 :columns        (concat [{:Header "Date" :accessor "TradeDate" :width 100 :Cell jasminegui.tradehistory/subs10}
+                                          {:Header "Type" :accessor "TransactionTypeName" :width 100}
+                                          ;{:Header "Instrument" :accessor "IssueName" :width 400}
+                                          {:Header "Instrument" :accessor "NAME" :width 200}
+                                          {:Header "SEDOL" :accessor "SEDOL" :width 100}
+                                          {:Header "CCY" :accessor "LocalCcy" :width 60}
+                                          {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell jasminegui.tradehistory/nfh} ;
+                                          {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
+                                          {:Header "Counterparty" :accessor "counterparty_code" :width 100}]
+                                         (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
+                                           [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}
+                                            {:Header "Total return" :accessor "total-return" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
+                                            {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}]))
                  :showPagination (> (count data) 50)
                  :pageSize       (min 50 (count data))
-                 :className      "-striped -highlight"}]]
-
-      ))
-  )
-
-
-
+                 :filterable     true
+                 :className      "-striped -highlight"}]])))
 
 (defn trade-history []
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])

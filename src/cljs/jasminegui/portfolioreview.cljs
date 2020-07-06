@@ -418,7 +418,9 @@
 (defn ytd-performance []
   (let [data @(rf/subscribe [:portfolio-review/historical-performance-chart-data])
         monthmap {"01" "Jan" "02" "Feb" "03" "Mar" "04" "Apr" "05" "May" "06" "Jun"
-                  "07" "Jul" "08" "Aug" "09" "Sep" "10" "Oct" "11" "Nov" "12" "Dec"}]
+                  "07" "Jul" "08" "Aug" "09" "Sep" "10" "Oct" "11" "Nov" "12" "Dec"}
+        total-alpha (get-in @(rf/subscribe [:portfolio-review/summary-data]) [:ytd :alpha])
+        gamma (- total-alpha (reduce + (map :value (filter #(= (:group %) "Total-Effect") data))))]
     (portfolio-review-box-template
       [[h-box :gap "20px"
         :children [[oz/vega-lite (grouped-vertical-bars
@@ -427,14 +429,18 @@
                                                    (update line :group #({"Fund-Contribution"  @(rf/subscribe [:portfolio-review/portfolio])
                                                                           "Index-Contribution" "Index"} %)))
                                                  (remove #(= (:group %) "Total-Effect") data))) "Basis points")]
-                    [oz/vega-lite (vertical-waterfall (map (fn [line] (update line :date #(monthmap (subs % 4 6))))
-                                                           (filter #(= (:group %) "Total-Effect") data)) "")]]]])))
+                    [oz/vega-lite (vertical-waterfall
+                                    (concat
+                                      (map (fn [line] (update line :date #(monthmap (subs % 4 6))))
+                                           (filter #(= (:group %) "Total-Effect") data))
+                                      [{:date "Gamma" :group "Total-Effect" :value gamma}]) "")]]]])))
 
 (defn contribution-or-alpha-chart [data]
   (portfolio-review-box-template
     [[oz/vega-lite (grouped-horizontal-bars data "Basis points")]
      [gap :size "1"]
-     [box :width "100%" :align :end :child [p {:style {:text-align "right" :z-index 500}} "UST categorized as cash"]]]))
+     [v-box :width "100%" :gap "0px" :align :end :children [[p {:style {:text-align "right" :z-index 500}} @(rf/subscribe [:attribution-date])]
+                                                 [p {:style {:text-align "right" :z-index 500}} "UST categorized as cash"]]]]))
 
 (defn historical-beta []
   (portfolio-review-box-template [[oz/vega-lite (area-chart @(rf/subscribe [:portfolio-review/historical-beta-chart-data]))]]))
@@ -472,7 +478,7 @@
       [[oz/vega-lite (charting/backtest-chart
                        (take-last days (get-in dates [(line :frequency)]))
                        (take-last days (get-in data [:portfolio-value (line :frequency)]))
-                       (- standard-box-width-nb 200) (- standard-box-height-nb 300))]]) ))
+                       (- standard-box-width-nb 200) (- standard-box-height-nb 400))]]) ))
 
 (defn risk-betas []
   (let [data @(rf/subscribe [:portfolio-review/marginal-beta-chart-data])
