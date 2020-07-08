@@ -478,9 +478,10 @@
                                            [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}
                                             {:Header "Total return" :accessor "total-return" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
                                             {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}]))
-                 :showPagination (> (count data) 50)
-                 :pageSize       (min 50 (count data))
+                 :showPagination    (> (count data) 50)
+                 :defaultPageSize   (min 50 (count data))
                  :filterable     true
+                 :defaultFilterMethod tables/case-insensitive-filter
                  :className      "-striped -highlight"}]])))
 
 (defn trade-history []

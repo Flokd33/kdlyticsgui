@@ -17,9 +17,11 @@
 (def default-db {
                  ;data
                  :positions                                          []
+                 :positions-new                                      {} ;map will be portfolio -> sub positions
                  :rating-to-score                                    nil
                  :pivoted-positions                                  []
                  :portfolios                                         []
+                 :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
                  :qt-date                                            "undefined"
                  :attribution-date                                   "undefined"
@@ -118,6 +120,8 @@
                  :portfolio-review/historical-beta-chart-data        nil
                  :portfolio-review/historical-performance-chart-data nil
 
+                 :betas/table                                        nil
+
 
                  })
 
@@ -199,6 +203,8 @@
            :portfolio-review/historical-beta-chart-data
            :portfolio-review/historical-performance-chart-data
 
+           :betas/table
+
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
@@ -209,6 +215,13 @@
     (assoc db :positions positions
               :navigation/show-mounting-modal false)))
 
+(rf/reg-event-db
+  :positions-new
+  (fn [db [_ portfolio positions]]
+    (-> db
+        (assoc-in [:positions-new portfolio] positions)
+        (assoc :navigation/show-mounting-modal false)
+        )))
 
 (rf/reg-event-db
   :portfolios
@@ -294,7 +307,8 @@
    {:get-key :get-total-positions   :url-tail "total-positions"   :dis-key :total-positions}
    {:get-key :get-qt-date           :url-tail "qt-date"           :dis-key :qt-date}
    {:get-key :get-var-proxies       :url-tail "var-proxies"       :dis-key :var/proxies}
-   {:get-key :get-var-dates         :url-tail "var-dates"         :dis-key :var/dates}])
+   {:get-key :get-var-dates         :url-tail "var-dates"         :dis-key :var/dates}
+   {:get-key :get-betas             :url-tail "beta-table"        :dis-key :betas/table}])
 
 (doseq [line simple-http-get-events]
   (rf/reg-event-fx
@@ -303,6 +317,13 @@
       {:http-get-dispatch {:url          (str static/server-address (:url-tail line))
                            :dispatch-key [(:dis-key line)]
                            :kwk          true}})))
+
+(rf/reg-event-fx
+  :get-positions-new
+  (fn [{:keys [db]} [_ portfolio]]
+    {:http-get-dispatch {:url          (str static/server-address "positions-new?portfolio=" portfolio)
+                         :dispatch-key [:positions-new portfolio]
+                         :kwk          true}}))
 
 (rf/reg-event-fx
   :get-var-data
@@ -318,7 +339,6 @@
      :http-get-dispatch {:url          (str static/server-address "var-data?portfolio=" portfolio)
                          :dispatch-key [:var/data]
                          :kwk          true}}))
-
 
 (rf/reg-event-fx
   :get-attribution-date

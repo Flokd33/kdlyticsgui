@@ -18,17 +18,32 @@
     [oz.core :as oz]))
 
 
+;(rf/reg-sub
+;  :var/table
+;  (fn [db]
+;    (let [regression (get-in db [:var/data :regression])
+;          risk (get-in db [:var/data :risk])]
+;      [{:id "Daily 1y"    :std (get-in risk [:daily :sd-1y])    :beta (get-in regression [:daily :beta-1y])   :rsq (get-in regression [:daily :rsq-1y])   :var95 (get-in risk [:daily :var-1y-95pct])   :var99 (get-in risk [:daily :var-1y-99pct])   :maxd (get-in risk [:daily :maxd-1y])}
+;       {:id "Daily 3y"    :std (get-in risk [:daily :sd-3y])    :beta (get-in regression [:daily :beta-3y])   :rsq (get-in regression [:daily :rsq-3y])   :var95 (get-in risk [:daily :var-3y-95pct])   :var99 (get-in risk [:daily :var-3y-99pct])   :maxd (get-in risk [:daily :maxd-3y])}
+;       {:id "Weekly 1y"   :std (get-in risk [:weekly :sd-1y])   :beta (get-in regression [:weekly :beta-1y])  :rsq (get-in regression [:weekly :rsq-1y])  :var95 (get-in risk [:weekly :var-1y-95pct])  :var99 (get-in risk [:weekly :var-1y-99pct])  :maxd (get-in risk [:weekly :maxd-1y])}
+;       {:id "Weekly 3y"   :std (get-in risk [:weekly :sd-3y])   :beta (get-in regression [:weekly :beta-3y])  :rsq (get-in regression [:weekly :rsq-3y])  :var95 (get-in risk [:weekly :var-3y-95pct])  :var99 (get-in risk [:weekly :var-3y-99pct])  :maxd (get-in risk [:weekly :maxd-3y])}
+;       {:id "Monthly 1y"  :std (get-in risk [:monthly :sd-1y])  :beta (get-in regression [:monthly :beta-1y]) :rsq (get-in regression [:monthly :rsq-1y]) :var95 (get-in risk [:monthly :var-1y-95pct]) :var99 (get-in risk [:monthly :var-1y-99pct]) :maxd (get-in risk [:monthly :maxd-1y])}
+;       {:id "Monthly 3y"  :std (get-in risk [:monthly :sd-3y])  :beta (get-in regression [:monthly :beta-3y]) :rsq (get-in regression [:monthly :rsq-3y]) :var95 (get-in risk [:monthly :var-3y-95pct]) :var99 (get-in risk [:monthly :var-3y-99pct]) :maxd (get-in risk [:monthly :maxd-3y])}])))
+
 (rf/reg-sub
   :var/table
   (fn [db]
     (let [regression (get-in db [:var/data :regression])
           risk (get-in db [:var/data :risk])]
-      [{:id "Daily 1y"    :std (get-in risk [:daily :sd-1y])    :beta (get-in regression [:daily :beta-1y])   :rsq (get-in regression [:daily :rsq-1y])   :var95 (get-in risk [:daily :var-1y-95pct])   :var99 (get-in risk [:daily :var-1y-99pct])   :maxd (get-in risk [:daily :maxd-1y])}
-       {:id "Daily 3y"    :std (get-in risk [:daily :sd-3y])    :beta (get-in regression [:daily :beta-3y])   :rsq (get-in regression [:daily :rsq-3y])   :var95 (get-in risk [:daily :var-3y-95pct])   :var99 (get-in risk [:daily :var-3y-99pct])   :maxd (get-in risk [:daily :maxd-3y])}
-       {:id "Weekly 1y"   :std (get-in risk [:weekly :sd-1y])   :beta (get-in regression [:weekly :beta-1y])  :rsq (get-in regression [:weekly :rsq-1y])  :var95 (get-in risk [:weekly :var-1y-95pct])  :var99 (get-in risk [:weekly :var-1y-99pct])  :maxd (get-in risk [:weekly :maxd-1y])}
-       {:id "Weekly 3y"   :std (get-in risk [:weekly :sd-3y])   :beta (get-in regression [:weekly :beta-3y])  :rsq (get-in regression [:weekly :rsq-3y])  :var95 (get-in risk [:weekly :var-3y-95pct])  :var99 (get-in risk [:weekly :var-3y-99pct])  :maxd (get-in risk [:weekly :maxd-3y])}
-       {:id "Monthly 1y"  :std (get-in risk [:monthly :sd-1y])  :beta (get-in regression [:monthly :beta-1y]) :rsq (get-in regression [:monthly :rsq-1y]) :var95 (get-in risk [:monthly :var-1y-95pct]) :var99 (get-in risk [:monthly :var-1y-99pct]) :maxd (get-in risk [:monthly :maxd-1y])}
-       {:id "Monthly 3y"  :std (get-in risk [:monthly :sd-3y])  :beta (get-in regression [:monthly :beta-3y]) :rsq (get-in regression [:monthly :rsq-3y]) :var95 (get-in risk [:monthly :var-3y-95pct]) :var99 (get-in risk [:monthly :var-3y-99pct]) :maxd (get-in risk [:monthly :maxd-3y])}])))
+      (into []
+            (for [d [:daily :weekly :monthly] y ["1y" "3y"]]
+              {:id    (str (clojure.string/capitalize (name d)) " " y)
+               :std   (get-in risk        [d (keyword (str "sd-" y))])
+               :beta  (get-in regression  [d (keyword (str "beta-" y))])
+               :rsq   (get-in regression  [d (keyword (str "rsq-" y))])
+               :var95 (get-in risk        [d (keyword (str "var-" y "-95pct"))])
+               :var99 (get-in risk        [d (keyword (str "var-" y "-99pct"))])
+               :maxd  (get-in risk        [d (keyword (str "maxd-" y))])})))))
 
 (rf/reg-sub
   :var/portfolio-proxies
