@@ -18,7 +18,7 @@
         default-beta-line {:width 75 :Cell tables/round2 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}]
     [box :padding "80px 25px" :child
      [v-box :class "subbody element"  :gap "20px"
-      :children [[h-box :align :center :children [[title :label (str "One year betas across portfolios") :level :level1]
+      :children [[h-box :align :center :children [[title :label (str "One year betas vs benchmarks") :level :level1]
                                                   [gap :size "1"]
                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "betas")]]]
                  [:> ReactTable

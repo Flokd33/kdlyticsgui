@@ -4,11 +4,13 @@
 (defn gdate-to-yyyymmdd [x] (subs (.toString x) 0 8))
 
 
-(defn vector-of-maps->csv [vector-of-maps]
-  (let [cols (keys (last vector-of-maps))]                  ;use last not first as first is totals that are different
-    (reduce #(str %1 (clojure.string/join "," (mapv %2 cols)) "\n")
-            (str (clojure.string/join "," (map name cols)) "\n")
-            vector-of-maps)))
+(defn vector-of-maps->csv
+  ([vector-of-maps]
+   (vector-of-maps->csv vector-of-maps (keys (last vector-of-maps)))) ;use last not first as first is totals that are different)
+  ([vector-of-maps cols]
+   (reduce #(str %1 (clojure.string/join "," (mapv %2 cols)) "\n")
+           (str (clojure.string/join "," (map name cols)) "\n")
+           vector-of-maps)))
 
 (defn download-object-as-csv [text export-name]
   "This creates a temporary download link"
@@ -21,5 +23,8 @@
     (.removeChild (.-body js/document) link)))
 
 
-(defn csv-link [data filename]
-  (download-object-as-csv (clj->js (vector-of-maps->csv data)) (str filename ".csv")))
+(defn csv-link
+  ([data filename]
+   (download-object-as-csv (clj->js (vector-of-maps->csv data)) (str filename ".csv")))
+  ([data filename cols]
+   (download-object-as-csv (clj->js (vector-of-maps->csv data cols)) (str filename ".csv"))))

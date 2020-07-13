@@ -82,8 +82,9 @@
   (let [
         modal-data @(rf/subscribe [:single-bond-trade-history/flat-data])
         show-modal @(rf/subscribe [:single-bond-trade-history/show-flat-modal])
+        bond-name @(rf/subscribe [:single-bond-trade-history/bond])
         display (reverse (sort-by :date (remove #(some #{(:trade %)} ["Coupon Payment" "Scrip Transfer"]) modal-data)))]
-    (println modal-data)
+    ;(println modal-data)
     (if show-modal
 
       [modal-panel
@@ -92,8 +93,8 @@
        :child
        [v-box :gap "20px"
         :children [[h-box :gap "20px" :align :center
-                    :children [[title :label (str @(rf/subscribe [:single-bond-trade-history/bond]) " trades since 2019-01-01") :level :level2]
-                               [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
+                    :children [[title :label (str bond-name " trades since 2019-01-01") :level :level2]
+                               [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display (str bond-name "-trade-history") (concat [:date :trade :price] (map keyword @(rf/subscribe [:portfolios]))))]]]
                                (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
                                  [box :align :center :child [throbber :size :large]]
                                  [:> ReactTable
