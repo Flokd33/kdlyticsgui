@@ -506,14 +506,14 @@
                                                      [title :label "Start:" :level :level3]
                                                      [datepicker-dropdown
                                                       :model start-date
-                                                      :minimum (tools/int-to-gdate 20200101)
+                                                      :minimum (tools/int-to-gdate 20120101)
                                                       :maximum (today)
                                                       :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:portfolio-trade-history/start-date %])]
                                                      [gap :size "20px"]
                                                      [title :label "End:" :level :level3]
                                                      [datepicker-dropdown
                                                       :model end-date
-                                                      :minimum (tools/int-to-gdate 20200101)
+                                                      :minimum (tools/int-to-gdate 20120101)
                                                       :maximum (today)
                                                       :format "dd/MM/yyyy" :show-today? false :on-change #(rf/dispatch [:portfolio-trade-history/end-date %])]
                                                      [gap :size "20px"]
