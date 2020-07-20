@@ -15,7 +15,8 @@
     ["react-table" :as rt :default ReactTable]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.tables :as tables]
-    [jasminegui.tools :as tools])
+    [jasminegui.tools :as tools]
+    [oz.core :as oz])
   )
 
 
@@ -32,6 +33,35 @@
       [:div  (tables/nf x)]
       "")))
 
+
+(defn trade-history-chart [price-data trade-data name width height]
+  (let [data (filter (comp some? :price) price-data)
+        ymin (* 0.99 (apply min (map :price data)))
+        ymax (* 1.01 (apply max (map :price data)))
+        buys (into [] (for [line (filter (comp pos? :Quantity) trade-data)] {:date (clojure.string/replace (subs (:TradeDate line) 0 10) "-" "") :buy (:PriceLcl line)}))
+        sells (into [] (for [line (filter (comp neg? :Quantity) trade-data)] {:date (clojure.string/replace (subs (:TradeDate line) 0 10) "-" "") :sell  (:PriceLcl line)}))
+        all-data (concat data buys sells)
+        bydate (map (partial apply merge) (vals (group-by :date all-data)))]
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+     :title   (str name " trading history")
+     :width   width
+     :height  height
+     :data    {:values bydate :format {:parse {:date "date:'%Y%m%d'" :price "quantitative" :buy "quantitative" :sell "quantitative"}}}
+     :layer
+              [{:mark     "line",
+                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                           :y {:field "price" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
+               {:mark     {:type "point", :shape "triangle-up", :color "green"}
+                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                           :y {:field "buy" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
+               {:mark     {:type "point", :shape "triangle-down", :color "red"}
+                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                           :y {:field "sell" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
+
+               ]}))
+
+
+
 (rf/reg-event-db
   :single-bond-trade-history/close-modal
   (fn [db [_]]
@@ -47,7 +77,7 @@
         modal-data (get-in @(rf/subscribe [:single-bond-trade-history/data]) [(keyword @(rf/subscribe [:single-portfolio-risk/portfolio]))])
         show-modal @(rf/subscribe [:single-bond-trade-history/show-modal])
         display (reverse (remove #(= (:TransactionTypeName %) "Coupon Payment") modal-data))]
-    ;(println modal-data)
+
     (if show-modal
 
       [modal-panel
@@ -62,17 +92,22 @@
                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
                    (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
                      [box :align :center :child [throbber :size :large]]
-                     [:> ReactTable
-                                        {:data           display
-                                         :columns        [{:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
-                                                          {:Header "Type" :accessor "TransactionTypeName" :width 100}
-                                                          {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh}
-                                                          {:Header "Price" :accessor "PriceLcl" :width 100 :style {:textAlign "right"} :Cell tables/round2}
-                                                          {:Header "Counterparty" :accessor "counterparty_code" :width 100}
-                                                          ]
-                                         :showPagination false
-                                         :pageSize       (count display)
-                                         :className      "-striped -highlight"}])]]])))
+                     [h-box :gap "20px" :children [
+                                                   [v-box :children [[:> ReactTable
+                                                                      {:data           display
+                                                                       :columns        [{:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
+                                                                                        {:Header "Type" :accessor "TransactionTypeName" :width 100}
+                                                                                        {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh}
+                                                                                        {:Header "Price" :accessor "PriceLcl" :width 100 :style {:textAlign "right"} :Cell tables/round2}
+                                                                                        {:Header "Counterparty" :accessor "counterparty_code" :width 100}
+                                                                                        ]
+                                                                       :showPagination false
+                                                                       :pageSize       (count display)
+                                                                       :className      "-striped -highlight"}]]]
+
+                                       [oz/vega-lite (trade-history-chart @(rf/subscribe [:bond-price-history/price]) display @(rf/subscribe [:bond-price-history/name]) 600 400)]
+
+                                       ]])]]])))
 
 ;(tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv"))
 ;[title :label "Download:" :level :level3]

@@ -122,6 +122,9 @@
 
                  :betas/table                                        nil
 
+                 :bond-price-history/price                          []
+                 :bond-price-history/name                          []
+
 
                  })
 
@@ -204,6 +207,9 @@
            :portfolio-review/historical-performance-chart-data
 
            :betas/table
+
+           :bond-price-history/price
+           :bond-price-history/name
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))

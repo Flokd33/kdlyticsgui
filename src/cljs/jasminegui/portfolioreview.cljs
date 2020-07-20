@@ -568,7 +568,8 @@
 
 (defn portfolio-change [portfolio]
   (rf/dispatch [:portfolio-review/portfolio portfolio])
-  (rf/dispatch [:get-portfolio-review-summary-data portfolio]))
+  (rf/dispatch [:get-portfolio-review-summary-data portfolio])
+  (go-to-page 0 portfolio))
 
 (defn nav []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])

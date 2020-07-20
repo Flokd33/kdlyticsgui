@@ -37,6 +37,14 @@
                          :kwk          true}}))
 
 (rf/reg-event-fx
+  :get-bond-price-history
+  (fn [{:keys [db]} [_ name start-date end-date]]
+    {:db (assoc db :bond-price-history/name name)
+     :http-get-dispatch {:url          (str static/server-address "bond-price-history?name=" name "&start-date=" start-date "&end-date=" end-date)
+                         :dispatch-key [:bond-price-history/price]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
   :get-single-bond-flat-history
   (fn [{:keys [db]} [_ name bond-sedol portfolios start-date end-date]]
     {:db (assoc db :single-bond-trade-history/bond name
@@ -205,13 +213,18 @@
 (def mini-dropdown-width "75px")
 
 (defn single-bond-trade-history [state rowInfo instance]
-  (clj->js {:onClick #(rf/dispatch [:get-single-bond-history
-                                    (aget rowInfo "row" "_original" "NAME")
-                                    (aget rowInfo "row" "_original" "id")
-                                    [@(rf/subscribe [:single-portfolio-risk/portfolio])]
-                                    "01Jan2019"
-                                    @(rf/subscribe [:qt-date])])
-            :style {:cursor "pointer"}}))
+  (clj->js {:onClick #(do (rf/dispatch [:get-single-bond-history
+                                        (aget rowInfo "row" "_original" "NAME")
+                                        (aget rowInfo "row" "_original" "id")
+                                        [@(rf/subscribe [:single-portfolio-risk/portfolio])]
+                                        "01Jan2019"
+                                        @(rf/subscribe [:qt-date])])
+                          (rf/dispatch [:get-bond-price-history
+                                        (aget rowInfo "row" "_original" "NAME")
+                                        "01Jan19"
+                                        @(rf/subscribe [:qt-date])])
+                          )
+                          :style {:cursor "pointer"}}))
 
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])
@@ -438,7 +451,9 @@
 (defn summary-display []
    [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
-      :children [[title :label (str "Summary " @(rf/subscribe [:qt-date])) :level :level1]
+      :children [[h-box :align :center :children [[title :label (str "Summary " @(rf/subscribe [:qt-date])) :level :level1]
+                                                  [gap :size "1"]
+                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:summary-display/table]) "summary")]]]
     [:> ReactTable
      {:data           @(rf/subscribe [:summary-display/table])
       :columns        [{:Header "Portfolio" :accessor "portfolio" :width 120}
@@ -462,8 +477,7 @@
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align :center :child [throbber :size :large]]
       [box :align :center
-       :child
-               [:> ReactTable
+       :child [:> ReactTable
                 {:data           data
                  :columns        (concat [{:Header "Date" :accessor "TradeDate" :width 100 :Cell jasminegui.tradehistory/subs10}
                                           {:Header "Type" :accessor "TransactionTypeName" :width 100}
@@ -478,9 +492,9 @@
                                            [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}
                                             {:Header "Total return" :accessor "total-return" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
                                             {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}]))
-                 :showPagination    (> (count data) 50)
-                 :defaultPageSize   (min 50 (count data))
-                 :filterable     true
+                 :showPagination  (> (count data) 50)
+                 :defaultPageSize (min 50 (count data))
+                 :filterable      true
                  :defaultFilterMethod tables/case-insensitive-filter
                  :className      "-striped -highlight"}]])))
 
@@ -494,10 +508,8 @@
      [v-box :class "element" :gap "20px"
       :children [[title :label (str "Trade history for " @portfolio) :level :level1]
                  [h-box :gap "50px"
-                  :children [
-                             [v-box :gap "15px"
-                              :children [
-                                         [h-box
+                  :children [[v-box :gap "15px"
+                              :children [[h-box
                                           :width "1200px"
                                           :gap "10px"
                                           :children [[title :label "Portfolio:" :level :level3]
@@ -522,13 +534,5 @@
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
                                                      [gap :size "20px"]
-                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio)]
-                                                     ]]
-
-                                         ]
-
-
-                              ]]]
-                 [portfolio-history-table]]]])
-
-  )
+                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio)]]]]]]]
+                 [portfolio-history-table]]]]))
