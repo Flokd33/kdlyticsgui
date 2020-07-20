@@ -23,7 +23,7 @@
                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "betas")]]]
                  [:> ReactTable
                   {:data                (sort-by (juxt :qt-risk-country-name :qt-jpm-sector :NAME) data)
-                   :columns             [{:Header "Description"   :columns (mapv tables/risk-table-columns [:name :country :sector])}
+                   :columns             [{:Header "Description"   :columns (mapv tables/risk-table-columns [:name :isin :country :sector])}
                                          {:Header "Pricing"       :columns (mapv tables/risk-table-columns [:yield :g-spread :z-spread :duration])}
                                          {:Header "Total return"  :columns (mapv tables/risk-table-columns [:total-return-ytd :jensen-ytd])}
                                          {:Header  "CEMBI"
@@ -45,7 +45,13 @@
                                                                         {:Header "USHY"     :accessor "beta-vs-ushy"}
                                                                         {:Header "UST5-7Y"  :accessor "beta-vs-ust"}
                                                                         {:Header "BLEND"    :accessor "beta-vs-blend"}]]
-                                                              (merge line default-beta-line)))}]
+                                                              (merge line default-beta-line)))}
+                                         {:Header  "Excess return (wip!!)"
+                                          :columns (into [] (for [line [{:Header "6M"     :accessor "xsr-6m"}
+                                                                        {:Header "9M"     :accessor "xsr-9m"}
+                                                                        {:Header "12M"  :accessor "xsr-12m"}]]
+                                                              (merge line default-beta-line)))}
+                                         ]
                    :showPagination      true
                    :defaultPageSize     20
                    :filterable          true
