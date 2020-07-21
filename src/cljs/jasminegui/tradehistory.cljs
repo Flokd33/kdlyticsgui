@@ -34,33 +34,35 @@
       "")))
 
 
-(defn trade-history-chart [price-data trade-data name width height]
-  (let [data (filter (comp some? :price) price-data)
-        ymin (* 0.99 (apply min (map :price data)))
-        ymax (* 1.01 (apply max (map :price data)))
-        buys (into [] (for [line (filter (comp pos? :Quantity) trade-data)] {:date (clojure.string/replace (subs (:TradeDate line) 0 10) "-" "") :buy (:PriceLcl line)}))
-        sells (into [] (for [line (filter (comp neg? :Quantity) trade-data)] {:date (clojure.string/replace (subs (:TradeDate line) 0 10) "-" "") :sell  (:PriceLcl line)}))
-        all-data (concat data buys sells)
-        bydate (map (partial apply merge) (vals (group-by :date all-data)))]
+(defn facet-trade-history-chart []
+  (let [data @(rf/subscribe [:single-bond-trade-history/chart-data])
+        ymin (* 0.99 (apply min (remove nil? (map :price data))))
+        ymax (* 1.01 (apply max (remove nil? (map :price data))))]
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
-     :title   (str name " trading history")
-     :width   width
-     :height  height
-     :data    {:values bydate :format {:parse {:date "date:'%Y%m%d'" :price "quantitative" :buy "quantitative" :sell "quantitative"}}}
-     :layer
-              [{:mark     "line",
-                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                           :y {:field "price" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
-               {:mark     {:type "point", :shape "triangle-up", :color "green"}
-                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                           :y {:field "buy" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
-               {:mark     {:type "point", :shape "triangle-down", :color "red"}
-                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                           :y {:field "sell" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
+     :title   nil                                           ;(str @(rf/subscribe [:single-bond-trade-history/bond]) " trading history")
+     :data    {:values data :format {:parse {:date "date:'%Y%m%d'" :price "quantitative" :buy "quantitative" :sell "quantitative"}}}
+     :vconcat [{:layer
+                [{:mark     "line",
+                  :width 600
+                  :height 400
+                  :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                             :y {:field "price" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title "Price"}}
+                             }}
+                 {:mark     {:type "point", :shape "triangle-up", :color "green"}
+                  :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                             :y {:field "buy" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
+                 {:mark     {:type "point", :shape "triangle-down", :color "red"}
+                  :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                             :y {:field "sell" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
 
+                 ]}
+               {:mark     "line",
+                :height   200
+                :width    600
+                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                           :y {:field "nav" :type "quantitative" :scale {:domain [0 (int (inc (apply max (remove nil? (map :nav data)))))]} :axis {:title "NAV %"}}
+                           }}
                ]}))
-
-
 
 (rf/reg-event-db
   :single-bond-trade-history/close-modal
@@ -71,12 +73,31 @@
               :single-bond-trade-history/show-modal false
               :single-bond-trade-history/show-flat-modal false)))
 
+(rf/reg-sub
+  :single-bond-trade-history/chart-data
+  (fn [db]
+    (let [portfolio (db :single-portfolio-risk/portfolio)
+          name (db :bond-price-history/name)
+          data (filter (comp some? :price) (db :bond-price-history/price))
+          trade-data (reverse (remove #(= (:TransactionTypeName %) "Coupon Payment") (get-in (db :single-bond-trade-history/data) [(keyword portfolio)])))
+          buys (into [] (for [line (filter (comp pos? :Quantity) trade-data)] {:date (clojure.string/replace (subs (:TradeDate line) 0 10) "-" "") :buy (:PriceLcl line) :value (* 0.01 (:PriceLcl line) (:Quantity line))}))
+          sells (into [] (for [line (filter (comp neg? :Quantity) trade-data)] {:date (clojure.string/replace (subs (:TradeDate line) 0 10) "-" "") :sell  (:PriceLcl line) :value (* 0.01 (:PriceLcl line) (:Quantity line))}))
+          all-data (concat data buys sells)
+          bydate (sort-by :date (map (partial apply merge) (vals (group-by :date all-data))))
+          pos-line (first (filter #(and (= (:NAME %) name) (= (:portfolio %) portfolio)) (db :positions)))
+          nav (:weight pos-line)
+          fund-nav (/ (:local-value pos-line) nav)
+          rbydate (map #(assoc % :trade-nav (if-let [x (:value %)] (/ x fund-nav) 0.0)) (reverse bydate))
+          rwchange (reverse (map #(assoc %1 :nav (- nav %2)) rbydate (conj (drop-last (reductions + (map :trade-nav rbydate))) 0))) ;here we put a zero *at the beginning*
+          final (map #(update % :nav * 100) rwchange)]
+      final)))
 
 (defn modal-single-bond-trade-history []
   (let [
         modal-data (get-in @(rf/subscribe [:single-bond-trade-history/data]) [(keyword @(rf/subscribe [:single-portfolio-risk/portfolio]))])
         show-modal @(rf/subscribe [:single-bond-trade-history/show-modal])
         display (reverse (remove #(= (:TransactionTypeName %) "Coupon Payment") modal-data))]
+    @(rf/subscribe [:single-bond-trade-history/chart-data])
 
     (if show-modal
 
@@ -104,10 +125,7 @@
                                                                        :showPagination false
                                                                        :pageSize       (count display)
                                                                        :className      "-striped -highlight"}]]]
-
-                                       [oz/vega-lite (trade-history-chart @(rf/subscribe [:bond-price-history/price]) display @(rf/subscribe [:bond-price-history/name]) 600 400)]
-
-                                       ]])]]])))
+                                                   [oz/vega-lite (facet-trade-history-chart)]]])]]])))
 
 ;(tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv"))
 ;[title :label "Download:" :level :level3]
