@@ -125,6 +125,11 @@
                  :bond-price-history/price                          []
                  :bond-price-history/name                          []
 
+                 :esg/refinitiv-ids                       nil
+                 :esg/active-home                         :find-issuers
+                 :esg/selected-companies                  []
+
+
 
                  })
 
@@ -210,6 +215,9 @@
 
            :bond-price-history/price
            :bond-price-history/name
+
+           :esg/refinitiv-ids
+           :esg/active-home
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -314,7 +322,9 @@
    {:get-key :get-qt-date           :url-tail "qt-date"           :dis-key :qt-date}
    {:get-key :get-var-proxies       :url-tail "var-proxies"       :dis-key :var/proxies}
    {:get-key :get-var-dates         :url-tail "var-dates"         :dis-key :var/dates}
-   {:get-key :get-betas             :url-tail "beta-table"        :dis-key :betas/table}])
+   {:get-key :get-betas             :url-tail "beta-table"        :dis-key :betas/table}
+   {:get-key :get-refinitiv-ids     :url-tail "refinitiv-ids"     :dis-key :esg/refinitiv-ids}
+   ])
 
 (doseq [line simple-http-get-events]
   (rf/reg-event-fx

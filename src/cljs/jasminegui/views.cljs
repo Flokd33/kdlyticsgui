@@ -16,6 +16,7 @@
     [jasminegui.administration :as administration]
     [jasminegui.portfolioreview :as pr]
     [jasminegui.betas :as betas]
+    [jasminegui.esg :as esg]
     ))
 
 (defn nav-bar []
@@ -123,6 +124,7 @@
       :var    [var/var-view]
       :portfolio-review [pr/view]
       :betas            [betas/view]
+      :esg              [esg/esg-view]
       ;:trade-drilldown  [tradeview/trade-description-view]
       ;:trade-entry      [tradeentry/trade-entry-view]
       ;:sim-trades       [tables/simulated-trades-view]

@@ -8,6 +8,7 @@
    {:code :var              :name "VaR"               :dispatch :var              :subs nil}
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil}
+   {:code :esg              :name "ESG (wip)"               :dispatch :esg              :subs nil}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}])
 
@@ -27,6 +28,11 @@
   [{:code :overview            :name "Overview"}
    ;   {:code :marginal            :name "Marginals"}
    {:code :proxies             :name "Proxies"}])
+
+(def esg-navigation
+  [{:code :find-issuers            :name "Find issuer"}
+   {:code :table-top-view             :name "Top level results"}
+   {:code :table-detailed-view             :name "Detailed results"}])
 
 (def risk-choice-map [{:id "None"         :label "None"}
                       {:id :region        :label "Region"}

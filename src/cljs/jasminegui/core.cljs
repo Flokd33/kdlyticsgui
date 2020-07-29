@@ -38,6 +38,7 @@
 (rf/dispatch [:get-multiple-attribution "Total Effect" "ytd"])
 (rf/dispatch [:get-portfolio-review-summary-data "OGEMCORD"])
 (rf/dispatch [:get-betas])
+(rf/dispatch [:get-refinitiv-ids])
 
 ;letter v or V, then t or T
 (rf/dispatch [::rp/set-keypress-rules {:event-keys [[[:cycle-shortcut] [{:keyCode 86}] [{:keyCode 118}]]
