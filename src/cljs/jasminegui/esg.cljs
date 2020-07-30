@@ -3,7 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as reagent]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink typeahead
+                         single-dropdown hyperlink typeahead md-circle-icon-button
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -16,7 +16,8 @@
     [jasminegui.static :as static]
     [jasminegui.charting :as charting]
     [oz.core :as oz]
-    [reagent.core :as r]))
+    [reagent.core :as r]
+    [jasminegui.tools :as tools]))
 
 (def standard-box-width "1000px")
 (def dropdown-width "150px")
@@ -32,13 +33,16 @@
   (fn [db [_]]
     (assoc db :esg/selected-companies [])))
 
+(rf/reg-event-db :esg/data (fn [db [_ data]] (assoc db :esg/data (js->clj (.parse js/JSON data)))))
+
 (rf/reg-event-fx
   :esg/fetch-data
   (fn [{:keys [db]} [_]]
+    (println (db :esg/selected-companies))
     {:db                db
-     :http-get-dispatch {:url          (str static/server-address "refinitiv-data?companies=" (db :esg/selected-companies))
+     :http-get-dispatch {:url          (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))))
                          :dispatch-key [:esg/data]
-                         :kwk          true}}))
+                         :kwk          false}}))
 
 
 (defn find-issuers []
@@ -61,7 +65,7 @@
                                                :status-tooltip ""
                                                :width "300px"
                                                :placeholder "Type company name here"
-                                               :on-change #(do (reset! typeahead-on-change-value %)  (rf/dispatch [:esg/add-company %]))
+                                               :on-change #(do (reset! typeahead-on-change-value %) (if (not= "" %) (rf/dispatch [:esg/add-company %])))
                                                :change-on-blur? true
                                                :immediate-model-update? false
                                                :rigid? false
@@ -76,12 +80,36 @@
                                                 :pageSize       10
                                                 :showPagination false
                                                 :className      "-striped -highlight"}]]]
-                [h-box :gap "10px" :children [[button :label "Fetch data" :disabled? true :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/fetch-data])]
+                [h-box :gap "10px" :children [[button :label "Fetch data"  :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/fetch-data])]
                                               [button :label "Clear table" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/clear-table])]]]
 
                 ]]))
 
-(defn table-top-view [] nil)
+(defn table-top-view []
+  (let [data @(rf/subscribe [:esg/data])
+        headers (conj (keys (first data)) "Name")
+        no-space-headers (map #(keyword (clojure.string/replace % " " "_")) headers)
+        zheadersmap (zipmap headers no-space-headers)
+        names-map (into {} (for [line @(rf/subscribe [:esg/selected-companies])] [(:id line) (:name line)]))
+        clean-data (mapv #(assoc % "Name" (names-map (% "Refinitiv ID"))) data)
+        clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)
+        ]
+    (println clean-keys-data)
+    (println headers)
+
+    [v-box :width standard-box-width :gap "20px" :class "element"
+     :children [[h-box :align :center :children [[title :label "Scores" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
+                [:> ReactTable
+                 {:data           (sort-by #(get-in % "Name") clean-keys-data)
+                  :columns        (into [] (for [h no-space-headers] (merge {:Header (clojure.string/replace (name h) "_" " ") :headerStyle {:overflow    nil
+                                                                                                                                             :white-space " pre-line"
+                                                                                                                                             :word-wrap   " break-word"}
+                                                                             :accessor h  :Cell tables/round2-if-nb} (if (not= h :Name) {:width 100 :style {:textAlign "right"}} {:width 200}))))
+                  :pageSize       10
+                  :showPagination false
+                  :className      "-striped -highlight"}]
+                ]]))
+
 (defn table-detailed-view [] nil)
 
 (defn nav-esg-bar []
@@ -101,7 +129,7 @@
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-esg
       :find-issuers [box :padding "80px 20px" :class "rightelement" :child [find-issuers]]
-      :table-top-view                     [table-top-view]
+      :table-top-view                     [box :padding "80px 20px" :class "rightelement" :child [table-top-view]]
       :table-detailed-view                     [table-detailed-view]
 
       ;:proxies [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"

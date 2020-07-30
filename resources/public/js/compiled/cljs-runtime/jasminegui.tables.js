@@ -56,9 +56,9 @@ jasminegui.tables.txt_format = (function jasminegui$tables$txt_format(fmt,m,this
 return reagent.core.as_element((function (){var temp__5733__auto__ = (this$["value"]);
 if(cljs.core.truth_(temp__5733__auto__)){
 var x = temp__5733__auto__;
-var G__55672 = fmt;
-var G__55673 = (m * x);
-return goog.string.format(G__55672,G__55673);
+var G__91236 = fmt;
+var G__91237 = (m * x);
+return goog.string.format(G__91236,G__91237);
 } else {
 return "-";
 }
@@ -70,23 +70,37 @@ jasminegui.tables.round1 = cljs.core.partial.cljs$core$IFn$_invoke$arity$3(jasmi
 jasminegui.tables.yield_format = cljs.core.partial.cljs$core$IFn$_invoke$arity$3(jasminegui.tables.txt_format,"%.2f%",1.0);
 jasminegui.tables.zspread_format = cljs.core.partial.cljs$core$IFn$_invoke$arity$3(jasminegui.tables.txt_format,"%.0fbps",1.0);
 jasminegui.tables.round2_STAR_100 = cljs.core.partial.cljs$core$IFn$_invoke$arity$3(jasminegui.tables.txt_format,"%.2f",100.0);
-jasminegui.tables.rating_sort = (function jasminegui$tables$rating_sort(a,b){
-var t = cljs.core.deref((function (){var G__55678 = new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"rating-to-score","rating-to-score",1762452516)], null);
-return (re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1(G__55678) : re_frame.core.subscribe.call(null,G__55678));
+jasminegui.tables.round2_if_nb = (function jasminegui$tables$round2_if_nb(this$){
+return reagent.core.as_element((function (){var temp__5733__auto__ = (this$["value"]);
+if(cljs.core.truth_(temp__5733__auto__)){
+var x = temp__5733__auto__;
+if(typeof x === 'number'){
+return goog.string.format("%.2f",x);
+} else {
+return x;
+}
+} else {
+return "-";
+}
 })());
-return ((function (){var G__55679 = cljs.core.keyword.cljs$core$IFn$_invoke$arity$1(a);
-return (t.cljs$core$IFn$_invoke$arity$1 ? t.cljs$core$IFn$_invoke$arity$1(G__55679) : t.call(null,G__55679));
-})() <= (function (){var G__55680 = cljs.core.keyword.cljs$core$IFn$_invoke$arity$1(b);
-return (t.cljs$core$IFn$_invoke$arity$1 ? t.cljs$core$IFn$_invoke$arity$1(G__55680) : t.call(null,G__55680));
+});
+jasminegui.tables.rating_sort = (function jasminegui$tables$rating_sort(a,b){
+var t = cljs.core.deref((function (){var G__91238 = new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"rating-to-score","rating-to-score",1762452516)], null);
+return (re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1 ? re_frame.core.subscribe.cljs$core$IFn$_invoke$arity$1(G__91238) : re_frame.core.subscribe.call(null,G__91238));
+})());
+return ((function (){var G__91239 = cljs.core.keyword.cljs$core$IFn$_invoke$arity$1(a);
+return (t.cljs$core$IFn$_invoke$arity$1 ? t.cljs$core$IFn$_invoke$arity$1(G__91239) : t.call(null,G__91239));
+})() <= (function (){var G__91240 = cljs.core.keyword.cljs$core$IFn$_invoke$arity$1(b);
+return (t.cljs$core$IFn$_invoke$arity$1 ? t.cljs$core$IFn$_invoke$arity$1(G__91240) : t.call(null,G__91240));
 })());
 });
 jasminegui.tables.roundpc = (function jasminegui$tables$roundpc(fmt,this$){
 return reagent.core.as_element((function (){var temp__5733__auto__ = (this$["value"]);
 if(cljs.core.truth_(temp__5733__auto__)){
 var x = temp__5733__auto__;
-return new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"div","div",1057191632),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"style","style",-496642736),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"color","color",1011675173),(((x < (0)))?"red":"black")], null)], null),(function (){var G__55685 = fmt;
-var G__55686 = ((100) * x);
-return goog.string.format(G__55685,G__55686);
+return new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"div","div",1057191632),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"style","style",-496642736),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"color","color",1011675173),(((x < (0)))?"red":"black")], null)], null),(function (){var G__91245 = fmt;
+var G__91246 = ((100) * x);
+return goog.string.format(G__91245,G__91246);
 })()], null);
 } else {
 return "-";
@@ -101,9 +115,9 @@ return reagent.core.as_element((function (){var temp__5733__auto__ = (this$["val
 if(cljs.core.truth_(temp__5733__auto__)){
 var x = temp__5733__auto__;
 var style = cljs.core.merge.cljs$core$IFn$_invoke$arity$variadic(cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([(((x < (0)))?new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"color","color",1011675173),"red"], null):new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"color","color",1011675173),"black"], null)),(cljs.core.truth_((this$["row"]["thisyear"]))?new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"font-style","font-style",-773672352),"italic"], null):cljs.core.PersistentArrayMap.EMPTY)], 0));
-return new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"div","div",1057191632),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"style","style",-496642736),style], null),(function (){var G__55688 = "%.1f%";
-var G__55689 = ((100) * x);
-return goog.string.format(G__55688,G__55689);
+return new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"div","div",1057191632),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"style","style",-496642736),style], null),(function (){var G__91251 = "%.1f%";
+var G__91252 = ((100) * x);
+return goog.string.format(G__91251,G__91252);
 })()], null);
 } else {
 return "-";
@@ -114,8 +128,8 @@ jasminegui.tables.compare_nb = (function jasminegui$tables$compare_nb(filterfn,r
 
 var input = (filterfn["value"]);
 var rowval = (row[(filterfn["id"])]);
-var G__55690 = cljs.core.subs.cljs$core$IFn$_invoke$arity$3(input,(0),(1));
-switch (G__55690) {
+var G__91253 = cljs.core.subs.cljs$core$IFn$_invoke$arity$3(input,(0),(1));
+switch (G__91253) {
 case ">":
 return (rowval > cljs.reader.read_string.cljs$core$IFn$_invoke$arity$1(cljs.core.subs.cljs$core$IFn$_invoke$arity$2(input,(1))));
 
@@ -133,8 +147,8 @@ jasminegui.tables.compare_nb_d100 = (function jasminegui$tables$compare_nb_d100(
 
 var input = (filterfn["value"]);
 var rowval = (row[(filterfn["id"])]);
-var G__55691 = cljs.core.subs.cljs$core$IFn$_invoke$arity$3(input,(0),(1));
-switch (G__55691) {
+var G__91259 = cljs.core.subs.cljs$core$IFn$_invoke$arity$3(input,(0),(1));
+switch (G__91259) {
 case ">":
 return (rowval > (0.01 * cljs.reader.read_string.cljs$core$IFn$_invoke$arity$1(cljs.core.subs.cljs$core$IFn$_invoke$arity$2(input,(1)))));
 

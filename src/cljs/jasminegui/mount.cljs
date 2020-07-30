@@ -128,6 +128,7 @@
                  :esg/refinitiv-ids                       nil
                  :esg/active-home                         :find-issuers
                  :esg/selected-companies                  []
+                 :esg/data                                []
 
 
 
