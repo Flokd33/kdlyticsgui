@@ -129,6 +129,7 @@
                  :esg/active-home                         :find-issuers
                  :esg/selected-companies                  []
                  :esg/data                                []
+                 :esg/data-detailed                                []
 
 
 

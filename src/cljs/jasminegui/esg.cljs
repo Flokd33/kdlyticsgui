@@ -19,7 +19,7 @@
     [reagent.core :as r]
     [jasminegui.tools :as tools]))
 
-(def standard-box-width "1000px")
+(def standard-box-width "1600px")
 (def dropdown-width "150px")
 
 
@@ -31,17 +31,19 @@
 (rf/reg-event-db
   :esg/clear-table
   (fn [db [_]]
-    (assoc db :esg/selected-companies [])))
+    (assoc db :esg/selected-companies []
+              :esg/data []
+              :esg/data-detailed [])))
 
 (rf/reg-event-db :esg/data (fn [db [_ data]] (assoc db :esg/data (js->clj (.parse js/JSON data)))))
+(rf/reg-event-db :esg/data-detailed (fn [db [_ data]] (assoc db :esg/data-detailed (js->clj (.parse js/JSON data)))))
 
 (rf/reg-event-fx
   :esg/fetch-data
-  (fn [{:keys [db]} [_]]
-    (println (db :esg/selected-companies))
+  (fn [{:keys [db]} [_ detail]]
     {:db                db
-     :http-get-dispatch {:url          (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))))
-                         :dispatch-key [:esg/data]
+     :http-get-dispatch {:url          (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail)
+                         :dispatch-key (if (= detail "top") [:esg/data] [:esg/data-detailed])
                          :kwk          false}}))
 
 
@@ -80,7 +82,7 @@
                                                 :pageSize       10
                                                 :showPagination false
                                                 :className      "-striped -highlight"}]]]
-                [h-box :gap "10px" :children [[button :label "Fetch data"  :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/fetch-data])]
+                [h-box :gap "10px" :children [[button :label "Fetch data"  :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:esg/fetch-data "top"]) (rf/dispatch [:esg/fetch-data "detailed"]))]
                                               [button :label "Clear table" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/clear-table])]]]
 
                 ]]))
@@ -95,22 +97,40 @@
         clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)
         ]
     (println clean-keys-data)
-    (println headers)
-
     [v-box :width standard-box-width :gap "20px" :class "element"
-     :children [[h-box :align :center :children [[title :label "Scores" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
+     :children [[h-box :align :center :children [[title :label "Top level scores" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
                 [:> ReactTable
                  {:data           (sort-by #(get-in % "Name") clean-keys-data)
                   :columns        (into [] (for [h no-space-headers] (merge {:Header (clojure.string/replace (name h) "_" " ") :headerStyle {:overflow    nil
-                                                                                                                                             :white-space " pre-line"
-                                                                                                                                             :word-wrap   " break-word"}
+                                                                                                                                             :white-space "pre-line"
+                                                                                                                                             :word-wrap   "break-word"}
                                                                              :accessor h  :Cell tables/round2-if-nb} (if (not= h :Name) {:width 100 :style {:textAlign "right"}} {:width 200}))))
                   :pageSize       10
                   :showPagination false
                   :className      "-striped -highlight"}]
                 ]]))
 
-(defn table-detailed-view [] nil)
+(defn table-detailed-view []
+  (let [data @(rf/subscribe [:esg/data-detailed])
+        headers (conj (keys (first data)) "Name")
+        no-space-headers (map #(keyword (clojure.string/replace % " " "_")) headers)
+        zheadersmap (zipmap headers no-space-headers)
+        names-map (into {} (for [line @(rf/subscribe [:esg/selected-companies])] [(:id line) (:name line)]))
+        clean-data (mapv #(assoc % "Name" (names-map (% "Refinitiv ID"))) data)
+        clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)]
+
+    [v-box :width standard-box-width :gap "20px" :class "element"
+     :children [[h-box :align :center :children [[title :label "Detailed data" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
+                [:> ReactTable
+                 {:data           (sort-by #(get-in % "Name") clean-keys-data)
+                  :columns        (into [] (for [h no-space-headers] (merge {:Header (clojure.string/replace (name h) "_" " ") :headerStyle {:overflow    nil
+                                                                                                                                             :white-space "pre-line"
+                                                                                                                                             :word-wrap   "break-word"}
+                                                                             :accessor h :Cell tables/dash-for-nil } (if (not= h :Name) {:width 150 :style {:textAlign "right"}} {:width 200}))))
+                  :pageSize       10
+                  :showPagination false
+                  :className      "-striped -highlight"}]
+                ]]))
 
 (defn nav-esg-bar []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
@@ -127,15 +147,17 @@
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
-    (case active-esg
-      :find-issuers [box :padding "80px 20px" :class "rightelement" :child [find-issuers]]
-      :table-top-view                     [box :padding "80px 20px" :class "rightelement" :child [table-top-view]]
-      :table-detailed-view                     [table-detailed-view]
+    [box :padding "80px 20px" :class "rightelement" :child (case active-esg
+                                                             :find-issuers [find-issuers]
+                                                             :table-top-view                     [table-top-view]
+                                                             :table-detailed-view                     [table-detailed-view]
+                                                             [:div.output "nothing to display"])]
+    ))
 
-      ;:proxies [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"
-      ;          :children [[h-box :align :start :children [[portfolio-proxies]]]]]
-      [:div.output "nothing to display"])))
+
 
 (defn esg-view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home]]])
+  ;[h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home]]]
+  [v-box :gap "20px" :padding "80px 20px" :class "body" :children [[find-issuers] [table-top-view] [table-detailed-view]]]
+  )
 

@@ -1,1 +1,0 @@
-{"version":3,"sources":["cljsjs/vega_embed.cljs"],"mappings":";;;AAGA,AAAA,AAACA,AAAiCC","names":["js/goog.exportSymbol","js/module$node_modules$vega_embed$build$vega_embed"],"sourcesContent":["(ns cljsjs.vega-embed\n  (:require [\"vega-embed\" :as vega-embed]))\n\n(js/goog.exportSymbol \"vegaEmbed\" vega-embed)"]}

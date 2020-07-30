@@ -1,1 +1,0 @@
-{"version":3,"sources":["cljsjs/vega.cljs"],"mappings":";;;AAGA,AAAA,AAACA,AAA4BC","names":["js/goog.exportSymbol","js/module$node_modules$vega$build$vega_node"],"sourcesContent":["(ns cljsjs.vega\n  (:require [\"vega\" :as vega]))\n\n(js/goog.exportSymbol \"vega\" vega)"]}
