@@ -56,7 +56,7 @@
 (def zspread-format (partial txt-format "%.0fbps" 1.))
 (def round2*100     (partial txt-format "%.2f" 100.))
 (defn round2-if-nb [this] (r/as-element (if-let [x (aget this "value")] (if (number? x) (gstring/format "%.2f" x) x) "-")))
-(defn dash-for-nil [this] (r/as-element (if-let [x (aget this "value")] x "-")))
+(defn dash-for-nil-and-big-nb [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (> x 1000.)) (nf x) x) "-")))
 
 (defn rating-sort [a b]
   (let [t @(rf/subscribe [:rating-to-score])] (<= (t (keyword a)) (t (keyword b)))))

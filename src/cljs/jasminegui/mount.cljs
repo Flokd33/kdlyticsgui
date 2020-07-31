@@ -130,6 +130,7 @@
                  :esg/selected-companies                  []
                  :esg/data                                []
                  :esg/data-detailed                                []
+                 :esg/refinitiv-structure                 []
 
 
 
@@ -220,6 +221,7 @@
 
            :esg/refinitiv-ids
            :esg/active-home
+           :esg/refinitiv-structure
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -316,16 +318,17 @@
 
 
 (def simple-http-get-events
-  [{:get-key :get-positions         :url-tail "positions"         :dis-key :positions}
-   {:get-key :get-rating-to-score   :url-tail "rating-to-score"   :dis-key :rating-to-score}
-   {:get-key :get-portfolios        :url-tail "portfolios"        :dis-key :portfolios}
-   {:get-key :get-pivoted-positions :url-tail "pivoted-positions" :dis-key :pivoted-positions}
-   {:get-key :get-total-positions   :url-tail "total-positions"   :dis-key :total-positions}
-   {:get-key :get-qt-date           :url-tail "qt-date"           :dis-key :qt-date}
-   {:get-key :get-var-proxies       :url-tail "var-proxies"       :dis-key :var/proxies}
-   {:get-key :get-var-dates         :url-tail "var-dates"         :dis-key :var/dates}
-   {:get-key :get-betas             :url-tail "beta-table"        :dis-key :betas/table}
-   {:get-key :get-refinitiv-ids     :url-tail "refinitiv-ids"     :dis-key :esg/refinitiv-ids}
+  [{:get-key :get-positions           :url-tail "positions"           :dis-key :positions}
+   {:get-key :get-rating-to-score     :url-tail "rating-to-score"     :dis-key :rating-to-score}
+   {:get-key :get-portfolios          :url-tail "portfolios"          :dis-key :portfolios}
+   {:get-key :get-pivoted-positions   :url-tail "pivoted-positions"   :dis-key :pivoted-positions}
+   {:get-key :get-total-positions     :url-tail "total-positions"     :dis-key :total-positions}
+   {:get-key :get-qt-date             :url-tail "qt-date"             :dis-key :qt-date}
+   {:get-key :get-var-proxies         :url-tail "var-proxies"         :dis-key :var/proxies}
+   {:get-key :get-var-dates           :url-tail "var-dates"           :dis-key :var/dates}
+   {:get-key :get-betas               :url-tail "beta-table"          :dis-key :betas/table}
+   {:get-key :get-refinitiv-ids       :url-tail "refinitiv-ids"       :dis-key :esg/refinitiv-ids}
+   {:get-key :get-refinitiv-structure :url-tail "refinitiv-structure" :dis-key :esg/refinitiv-structure}
    ])
 
 (doseq [line simple-http-get-events]

@@ -8,7 +8,7 @@
    {:code :var              :name "VaR"               :dispatch :var              :subs nil}
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil}
-   {:code :esg              :name "ESG (wip)"               :dispatch :esg              :subs nil}
+   {:code :esg              :name "Refinitiv"         :dispatch :esg              :subs nil}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}])
 

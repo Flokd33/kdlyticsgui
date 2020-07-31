@@ -3,7 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as reagent]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink typeahead md-circle-icon-button
+                         single-dropdown hyperlink typeahead md-circle-icon-button selection-list
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -46,6 +46,10 @@
                          :dispatch-key (if (= detail "top") [:esg/data] [:esg/data-detailed])
                          :kwk          false}}))
 
+(rf/reg-sub
+  :esg/refinitiv-pillars
+  (fn [db]
+    (sort (distinct (map :pillar_title (:esg/refinitiv-structure db))))))
 
 (defn find-issuers []
   (let [choices  @(rf/subscribe [:esg/refinitiv-ids])
@@ -96,7 +100,6 @@
         clean-data (mapv #(assoc % "Name" (names-map (% "Refinitiv ID"))) data)
         clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)
         ]
-    (println clean-keys-data)
     [v-box :width standard-box-width :gap "20px" :class "element"
      :children [[h-box :align :center :children [[title :label "Top level scores" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
                 [:> ReactTable
@@ -110,27 +113,37 @@
                   :className      "-striped -highlight"}]
                 ]]))
 
+(def selected-pillars (r/atom (set @(rf/subscribe [:esg/refinitiv-pillars]))))
+
 (defn table-detailed-view []
   (let [data @(rf/subscribe [:esg/data-detailed])
+        structure @(rf/subscribe [:esg/refinitiv-structure])
         headers (conj (keys (first data)) "Name")
         no-space-headers (map #(keyword (clojure.string/replace % " " "_")) headers)
         zheadersmap (zipmap headers no-space-headers)
         names-map (into {} (for [line @(rf/subscribe [:esg/selected-companies])] [(:id line) (:name line)]))
         clean-data (mapv #(assoc % "Name" (names-map (% "Refinitiv ID"))) data)
-        clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)]
-
+        clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)
+        header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
     [v-box :width standard-box-width :gap "20px" :class "element"
      :children [[h-box :align :center :children [[title :label "Detailed data" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
+                [box :width "200px" :child [selection-list :width "200px" :model selected-pillars :choices (into [] (for [p @(rf/subscribe [:esg/refinitiv-pillars])] {:id p :label p})) :on-change #(reset! selected-pillars %)]]
                 [:> ReactTable
                  {:data           (sort-by #(get-in % "Name") clean-keys-data)
-                  :columns        (into [] (for [h no-space-headers] (merge {:Header (clojure.string/replace (name h) "_" " ") :headerStyle {:overflow    nil
-                                                                                                                                             :white-space "pre-line"
-                                                                                                                                             :word-wrap   "break-word"}
-                                                                             :accessor h :Cell tables/dash-for-nil } (if (not= h :Name) {:width 150 :style {:textAlign "right"}} {:width 200}))))
+                  :columns        (into []
+                                        (for [[pillar group] (sort-by first (group-by :pillar_title structure)) [category sub-group] (sort-by first (group-by :category_title group)) :when (contains? @selected-pillars pillar)]
+                                          {:Header      (str pillar ": " category " >>>>>>>>>>")
+                                           :headerStyle (merge header-style {:text-align "left"})
+                                           :columns
+                                                        (into []
+                                                              (for [h (sort no-space-headers) :when (some (fn [a] (clojure.string/includes? a (clojure.string/replace (name h) "_" " "))) (map :item_title sub-group))]
+                                                                (merge {:Header   (clojure.string/replace (name h) "_" " ") :headerStyle header-style ;(clojure.string/replace (name h) "_" " ")
+                                                                        :accessor h :Cell tables/dash-for-nil-and-big-nb} (if (not= h :Name) {:width 150 :style {:textAlign "right"}} {:width 200}))))
+
+                                           }))
                   :pageSize       10
                   :showPagination false
-                  :className      "-striped -highlight"}]
-                ]]))
+                  :className      "-striped -highlight"}]]]))
 
 (defn nav-esg-bar []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
