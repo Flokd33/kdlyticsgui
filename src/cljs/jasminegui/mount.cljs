@@ -131,6 +131,7 @@
                  :esg/data                                []
                  :esg/data-detailed                                []
                  :esg/refinitiv-structure                 []
+                 :esg/selected-pillars                    (set nil)
 
 
 
@@ -221,7 +222,7 @@
 
            :esg/refinitiv-ids
            :esg/active-home
-           :esg/refinitiv-structure
+           :esg/selected-pillars
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
