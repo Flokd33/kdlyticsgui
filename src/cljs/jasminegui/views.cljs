@@ -17,6 +17,7 @@
     [jasminegui.portfolioreview :as pr]
     [jasminegui.betas :as betas]
     [jasminegui.esg :as esg]
+    [goog.string :as gstring]
     ))
 
 (defn nav-bar []
@@ -37,7 +38,7 @@
                                             [[gap :size "1"]
                                              [box :align-self :center :height "50%" :width "3px" :child [line :color "#CA3E47" :size "3px"]]
                                              [box :width "3px" :child ""] ;this is just equal to line above - ugly hack
-                                             [box :width "150px" :class "dropdown" :child [hyperlink :label "Jasmine" :on-click nil]]]))
+                                             [box :width "150px" :class "dropdown" :child [hyperlink :label (gstring/unescapeEntities "pampar &trade;") :on-click nil]]]))
 
 
                  ;[(for [item static/main-navigation]
