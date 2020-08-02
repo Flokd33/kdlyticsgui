@@ -286,6 +286,7 @@
                          :aggregate tables/sum-rows
                          :Cell (get-in tables/risk-table-columns [display-key-one :Cell])
                          :filterable false}))]
+    ;(println display-one)
     [:> ReactTable
      {:data                display-one
       :defaultFilterMethod tables/case-insensitive-filter
@@ -392,6 +393,7 @@
         field-one (rf/subscribe [:multiple-portfolio-risk/field-one])
         field-two (rf/subscribe [:multiple-portfolio-risk/field-two])
         hide-zero-risk (rf/subscribe [:multiple-portfolio-risk/hide-zero-holdings])
+        download-columns (concat (map keyword portfolios) (map keyword (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))) [:isin :description])
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
@@ -417,7 +419,7 @@
                                :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter)))]
                                           [h-box :gap "10px" :children (shortcut-row :multiple-portfolio-risk/shortcut)]
                                           [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
-                                                                        [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:multiple-portfolio-risk/table]) "pivot")]]]]]]]
+                                                                        [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:multiple-portfolio-risk/table]) "pivot" download-columns)]]]]]]]
                  [multiple-portfolio-risk-display]]]]))
 
 (defn portfolio-alignment-risk-controller []

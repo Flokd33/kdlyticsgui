@@ -134,7 +134,6 @@
                  :esg/selected-pillars                    (set nil)
 
 
-
                  })
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
