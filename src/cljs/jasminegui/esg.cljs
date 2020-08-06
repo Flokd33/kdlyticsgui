@@ -73,24 +73,17 @@
                                                :width "300px"
                                                :placeholder "Type company name here"
                                                :on-change #(do (reset! typeahead-on-change-value %) (if (not= "" %) (rf/dispatch [:esg/add-company %])))
-                                               :change-on-blur? true
-                                               :immediate-model-update? false
-                                               :rigid? false
-                                               :disabled? false
+                                               :change-on-blur? true :immediate-model-update? false :rigid? false :disabled? false
                                                ]
                                               [:> ReactTable
                                                {:data           (sort-by :name @(rf/subscribe [:esg/selected-companies]))
                                                 :columns        [{:Header "ID" :accessor "id" :width 200}
-                                                                 {:Header "Name" :accessor "name" :width 300}
-                                                                 ;{:Header "Remove?" :accessor "remove" :width 70}
-                                                                 ]
+                                                                 {:Header "Name" :accessor "name" :width 300}]
                                                 :pageSize       10
                                                 :showPagination false
                                                 :className      "-striped -highlight"}]]]
                 [h-box :gap "10px" :children [[button :label "Fetch data"  :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:esg/fetch-data "top"]) (rf/dispatch [:esg/fetch-data "detailed"]))]
-                                              [button :label "Clear table" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/clear-table])]]]
-
-                ]]))
+                                              [button :label "Clear table" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/clear-table])]]]]]))
 
 (defn table-top-view []
   (let [data @(rf/subscribe [:esg/data])
@@ -99,8 +92,7 @@
         zheadersmap (zipmap headers no-space-headers)
         names-map (into {} (for [line @(rf/subscribe [:esg/selected-companies])] [(:id line) (:name line)]))
         clean-data (mapv #(assoc % "Name" (names-map (% "Refinitiv ID"))) data)
-        clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)
-        ]
+        clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)]
     [v-box :width standard-box-width :gap "20px" :class "element"
      :children [[h-box :align :center :children [[title :label "Top level scores" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
                 [:> ReactTable
@@ -111,8 +103,7 @@
                                                                              :accessor h  :Cell tables/round2-if-nb} (if (not= h :Name) {:width 100 :style {:textAlign "right"}} {:width 200}))))
                   :pageSize       10
                   :showPagination false
-                  :className      "-striped -highlight"}]
-                ]]))
+                  :className      "-striped -highlight"}]]]))
 
 
 (defn table-detailed-view []
@@ -139,9 +130,7 @@
                                                         (into []
                                                               (for [h (sort no-space-headers) :when (some (fn [a] (clojure.string/includes? a (clojure.string/replace (name h) "_" " "))) (map :item_title sub-group))]
                                                                 (merge {:Header   (clojure.string/replace (name h) "_" " ") :headerStyle header-style ;(clojure.string/replace (name h) "_" " ")
-                                                                        :accessor h :Cell tables/dash-for-nil-and-big-nb} (if (not= h :Name) {:width 150 :style {:textAlign "right"}} {:width 200}))))
-
-                                           }))
+                                                                        :accessor h :Cell tables/dash-for-nil-and-big-nb} (if (not= h :Name) {:width 150 :style {:textAlign "right"}} {:width 200}))))}))
                   :pageSize       10
                   :showPagination false
                   :className      "-striped -highlight"}]]]))
@@ -165,13 +154,11 @@
                                                              :find-issuers [find-issuers]
                                                              :table-top-view                     [table-top-view]
                                                              :table-detailed-view                     [table-detailed-view]
-                                                             [:div.output "nothing to display"])]
-    ))
+                                                             [:div.output "nothing to display"])]))
 
 
 
 (defn esg-view []
   ;[h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home]]]
-  [v-box :gap "20px" :padding "80px 20px" :class "body" :children [[find-issuers] [table-top-view] [table-detailed-view]]]
-  )
+  [v-box :gap "20px" :padding "80px 20px" :class "body" :children [[find-issuers] [table-top-view] [table-detailed-view]]])
 

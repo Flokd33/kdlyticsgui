@@ -23,37 +23,38 @@
                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "betas")]]]
                  [:> ReactTable
                   {:data                (sort-by (juxt :qt-risk-country-name :qt-jpm-sector :NAME) data)
-                   :columns             [{:Header "Description"   :columns (mapv tables/risk-table-columns [:name :isin :country :sector])}
-                                         {:Header "Pricing"       :columns (mapv tables/risk-table-columns [:yield :g-spread :z-spread :duration])}
-                                         {:Header "Total return"  :columns (mapv tables/risk-table-columns [:total-return-ytd :jensen-ytd])}
-                                         {:Header  "CEMBI"
-                                          :columns (into [] (for [line [{:Header "Broad"    :accessor "cembi-beta-last-year"}
+                   :columns             [{:Header "Description" :columns (concat [{:Header "Name" :accessor "NAME" :width 140 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}] (mapv tables/risk-table-columns [:isin :country :sector]))}
+                                         {:Header "Pricing" :columns (mapv tables/risk-table-columns [:yield :g-spread :z-spread :duration])}
+                                         {:Header "Total return" :columns (mapv tables/risk-table-columns [:total-return-ytd :jensen-ytd])}
+                                         {:Header  "Excess return"
+                                          :columns (into [] (for [line [{:Header "6M" :accessor "xsr-6m"}
+                                                                        {:Header "9M" :accessor "xsr-9m"}
+                                                                        {:Header "12M" :accessor "xsr-12m"}]]
+                                                              (merge line default-beta-line)))}
+                                         {:Header  "CEMBI betas"
+                                          :columns (into [] (for [line [{:Header "Broad" :accessor "cembi-beta-last-year"}
                                                                         {:Header "Broad LY" :accessor "cembi-beta-previous-year"}
-                                                                        {:Header "IG"       :accessor "beta-vs-cembi-ig"}
-                                                                        {:Header "HY"       :accessor "beta-vs-cembi-hy"}
-                                                                        {:Header "Country"  :accessor "beta-vs-cembi-country"}
-                                                                        {:Header "Rating"   :accessor "beta-vs-cembi-rating"}
-                                                                        {:Header "Sector"   :accessor "beta-vs-cembi-sector"}
+                                                                        {:Header "IG" :accessor "beta-vs-cembi-ig"}
+                                                                        {:Header "HY" :accessor "beta-vs-cembi-hy"}
+                                                                        {:Header "Country" :accessor "beta-vs-cembi-country"}
+                                                                        {:Header "Rating" :accessor "beta-vs-cembi-rating"}
+                                                                        {:Header "Sector" :accessor "beta-vs-cembi-sector"}
                                                                         {:Header "Duration" :accessor "beta-vs-cembi-duration"}]]
                                                               (merge line default-beta-line)))}
-                                         {:Header  "EMBI"
-                                          :columns (into [] (for [line [{:Header "Broad"    :accessor "beta-vs-embi"}
-                                                                        {:Header "Country"  :accessor "beta-vs-embi-country"}]]
+                                         {:Header  "EMBI betas"
+                                          :columns (into [] (for [line [{:Header "Broad" :accessor "beta-vs-embi"}
+                                                                        {:Header "Country" :accessor "beta-vs-embi-country"}]]
                                                               (merge line default-beta-line)))}
-                                         {:Header  "Other"
-                                          :columns (into [] (for [line [{:Header "USIG"     :accessor "beta-vs-usig"}
-                                                                        {:Header "USHY"     :accessor "beta-vs-ushy"}
-                                                                        {:Header "UST5-7Y"  :accessor "beta-vs-ust"}
-                                                                        {:Header "BLEND"    :accessor "beta-vs-blend"}]]
-                                                              (merge line default-beta-line)))}
-                                         {:Header  "Excess return (wip!!)"
-                                          :columns (into [] (for [line [{:Header "6M"     :accessor "xsr-6m"}
-                                                                        {:Header "9M"     :accessor "xsr-9m"}
-                                                                        {:Header "12M"  :accessor "xsr-12m"}]]
+                                         {:Header  "Other betas"
+                                          :columns (into [] (for [line [{:Header "USIG" :accessor "beta-vs-usig"}
+                                                                        {:Header "USHY" :accessor "beta-vs-ushy"}
+                                                                        {:Header "UST5-7Y" :accessor "beta-vs-ust"}
+                                                                        {:Header "BLEND" :accessor "beta-vs-blend"}]]
                                                               (merge line default-beta-line)))}
                                          ]
                    :showPagination      true
-                   :defaultPageSize     20
+                   :defaultPageSize     15
+                   :pageSizeOptions    [15 25 50 100]
                    :filterable          true
                    :defaultFilterMethod tables/case-insensitive-filter
                    :className           "-striped -highlight"}]]]]))
