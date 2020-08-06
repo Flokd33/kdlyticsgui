@@ -486,7 +486,7 @@
                                           {:Header "Type" :accessor "TransactionTypeName" :width 100}
                                           ;{:Header "Instrument" :accessor "IssueName" :width 400}
                                           {:Header "Instrument" :accessor "NAME" :width 200}
-                                          {:Header "ISIN" :accessor "ISIN" :width 100}
+                                          {:Header "ISIN" :accessor "ISIN" :width 125}
                                           {:Header "CCY" :accessor "LocalCcy" :width 60}
                                           {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell th/nfh} ;
                                           {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
