@@ -97,14 +97,15 @@
      :children [[h-box :align :center :children [[title :label "Top level scores" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
                 [:> ReactTable
                  {:data           (sort-by #(get-in % "Name") clean-keys-data)
-                  :columns        (into [] (for [h no-space-headers] (merge {:Header (clojure.string/replace (name h) "_" " ") :headerStyle {:overflow    nil
+                  :columns        (into [{:Header "Name" :accessor :Name :width 200 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}]
+                                        (for [h no-space-headers :when (not= h :Name)] (merge {:Header (clojure.string/replace (name h) "_" " ") :headerStyle {:overflow    nil
                                                                                                                                              :white-space "pre-line"
                                                                                                                                              :word-wrap   "break-word"}
                                                                              :accessor h  :Cell tables/round2-if-nb} (if (not= h :Name) {:width 100 :style {:textAlign "right"}} {:width 200}))))
                   :pageSize       10
                   :showPagination false
                   :className      "-striped -highlight"}]]]))
-
+; :className "sticky-rt-column" :headerClassName "sticky-rt-column"
 
 (defn table-detailed-view []
   (let [data @(rf/subscribe [:esg/data-detailed])
@@ -122,13 +123,13 @@
                 [box :width "200px" :child [selection-list :width "200px" :model selected-pillars :choices (into [] (for [p (sort (distinct (map :pillar_title @(rf/subscribe [:esg/refinitiv-structure])))) ] {:id p :label p})) :on-change #(rf/dispatch [:esg/selected-pillars %])]]
                 [:> ReactTable
                  {:data           (sort-by #(get-in % "Name") clean-keys-data)
-                  :columns        (into []
+                  :columns        (into [{:Header "Name" :accessor :Name :width 200 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}]
                                         (for [[pillar group] (sort-by first (group-by :pillar_title structure)) [category sub-group] (sort-by first (group-by :category_title group)) :when (contains? @selected-pillars pillar)]
                                           {:Header      (str pillar ": " category " >>>>>>>>>>")
                                            :headerStyle (merge header-style {:text-align "left"})
                                            :columns
                                                         (into []
-                                                              (for [h (sort no-space-headers) :when (some (fn [a] (clojure.string/includes? a (clojure.string/replace (name h) "_" " "))) (map :item_title sub-group))]
+                                                              (for [h (sort no-space-headers) :when (and (not= h :Name) (some (fn [a] (clojure.string/includes? a (clojure.string/replace (name h) "_" " "))) (map :item_title sub-group)))]
                                                                 (merge {:Header   (clojure.string/replace (name h) "_" " ") :headerStyle header-style ;(clojure.string/replace (name h) "_" " ")
                                                                         :accessor h :Cell tables/dash-for-nil-and-big-nb} (if (not= h :Name) {:width 150 :style {:textAlign "right"}} {:width 200}))))}))
                   :pageSize       10
