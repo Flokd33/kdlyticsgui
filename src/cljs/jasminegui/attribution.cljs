@@ -235,8 +235,7 @@
                  :className      "-striped -highlight"}]]]]))
 
 (defn index-returns-display []
-  (let [
-        original-table (filter (comp pos? :Average-Index-Weight) @(rf/subscribe [:attribution-index-returns/table]))
+  (let [original-table (filter (comp pos? :Average-Index-Weight) @(rf/subscribe [:attribution-index-returns/table]))
         xkey (keyword (get-in tables/attribution-table-columns [@(rf/subscribe [:attribution-index-returns/x-filter]) :accessor]))
         ykey (keyword (get-in tables/attribution-table-columns [@(rf/subscribe [:attribution-index-returns/y-filter]) :accessor]))
         table (if (or (= xkey :Duration-Bucket) (= ykey :Duration-Bucket))
@@ -255,33 +254,34 @@
                 original-table)
         xlabel (:label (first (filter #(= (:id %) @(rf/subscribe [:attribution-index-returns/x-filter])) static/attribution-choice-map)))
         ycolumns (sort (distinct (map ykey table)))
-        pivot (conj (into []
-                          (for [[x g] (sort-by first (group-by xkey table))]
-                            (merge
-                              {:xlabel x
-                               :total  (let [w (reduce + (map :Average-Index-Weight g))] (if (pos? w) (/ (reduce + (map :Index-Contribution g)) w)))}
-                              (into {}
-                                    (for [[y subg] (group-by ykey g)]
-                                      [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight subg))] (if (pos? w) (/ (reduce + (map :Index-Contribution subg)) w)))])))))
+        pivot-pre-total (into []
+                              (for [[x g] (sort-by first (group-by xkey table))]
+                                (merge
+                                  {:xlabel x :total  (let [w (reduce + (map :Average-Index-Weight g))] (if (pos? w) (/ (reduce + (map :Index-Contribution g)) w)))}
+                                  (into {} (for [[y subg] (group-by ykey g)]
+                                             [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight subg))] (if (pos? w) (/ (reduce + (map :Index-Contribution subg)) w)))])))))
+        ;top-15-weights (take-last 15 (sort-by :weight ()))
+        pivot (conj
+                (if @(rf/subscribe [:attribution-index-returns/x-top-15])
+                  pivot-pre-total
+                  pivot-pre-total)
                     (merge
-                      {:xlabel "Total"
-                       :total  (/ (reduce + (map :Index-Contribution table)) 100.)}
-                      (into {}
-                            (for [y ycolumns]
-                              [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight (filter #(= (ykey %) y) table)))] (if (pos? w) (/ (reduce + (map :Index-Contribution (filter #(= (ykey %) y) table))) w)))])))
+                      {:xlabel "Total" :total  (/ (reduce + (map :Index-Contribution table)) 100.)}
+                      (into {} (for [y ycolumns]
+                                 [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight (filter #(= (ykey %) y) table)))] (if (pos? w) (/ (reduce + (map :Index-Contribution (filter #(= (ykey %) y) table))) w)))])))
                     )
         ]
-    (println xkey ykey)
     [:> ReactTable
      {:data                pivot
       :defaultFilterMethod tables/case-insensitive-filter
-      :columns             (concat [{:Header xlabel ::accessor "xlabel" :width 200}
-                                    {:Header "Total" :accessor "total" :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100}]
-                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100})))
+      :columns             (concat [{:Header xlabel ::accessor "xlabel" :width 200 :filterMethod tables/case-insensitive-filter}
+                                    {:Header "Total" :accessor "total" :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100 :filterMethod tables/compare-nb-d100}]
+                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100 :filterMethod tables/compare-nb-d100})))
       :showPagination      false
       :sortable            true
       :pageSize            (count pivot)
       :className           "-striped -highlight"
+      :filterable          true
       ;
       }]
 

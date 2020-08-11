@@ -103,6 +103,7 @@
                  :attribution-index-returns/x-filter                :sector
                  :attribution-index-returns/y-filter                :region
                  :attribution-index-returns/table                   []
+                 :attribution-index-returns/x-top-15                false
 
                  :single-bond-trade-history/data                     []
                  :single-bond-trade-history/flat-data                []
@@ -204,6 +205,7 @@
            :attribution-index-returns/x-filter
            :attribution-index-returns/y-filter
            :attribution-index-returns/table
+           :attribution-index-returns/x-top-15
 
            :single-bond-trade-history/show-flat-modal
            :single-bond-trade-history/flat-data
