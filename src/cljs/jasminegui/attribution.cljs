@@ -21,7 +21,8 @@
   )
 
 
-
+(defn period-choices []
+  (into static/attribution-period-choices (for [m @(rf/subscribe [:attribution/available-months])] {:id m :label m})))
 
 
 ;
@@ -47,7 +48,6 @@
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/attribution-choice-map))
         accessors (mapv :accessor grouping-columns)
         display  @(rf/subscribe [:single-portfolio-attribution/clean-table])]
-    ;(println additional-des-cols)
     [:> ReactTable
      {:data                display
       :defaultFilterMethod tables/case-insensitive-filter
@@ -152,7 +152,7 @@
                                           :children [
                                                      [title :label "Period:" :level :level3]
                                                      [gap :size "1"]
-                                                     [single-dropdown :width dropdown-width :model period :choices static/attribution-period-choices :on-change #(rf/dispatch [:change-single-attribution-period %])]]]
+                                                     [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-single-attribution-period %])]]]
                                          ]]
                              [v-box :gap "10px" :children [
                                                            [h-box :gap "10px" :children
@@ -188,7 +188,7 @@
                    [v-box :gap "20px"
                     :children [
                                [h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
-                               [h-box :gap "10px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices static/attribution-period-choices :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
+                               [h-box :gap "10px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
                                [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(rf/dispatch [:change-multiple-attribution-target %])]]]]]
                    [v-box :gap "10px"
                     :children [[title :label "Portfolios:" :level :level3]
@@ -307,7 +307,7 @@
                                          [h-box
                                           :gap "10px"
                                           :children [[title :label "Period:" :level :level3] [gap :size "1"]
-                                                     [single-dropdown :width dropdown-width :model period :choices static/attribution-period-choices :on-change #(rf/dispatch [:get-attribution-index-returns-period %])]]]]]
+                                                     [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:get-attribution-index-returns-period %])]]]]]
                              [v-box :gap "15px"
                               :children [
                                          [h-box

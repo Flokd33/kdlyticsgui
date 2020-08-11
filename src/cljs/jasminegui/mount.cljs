@@ -97,6 +97,7 @@
                  :multiple-portfolio-attribution/table               []
 
                  :attribution/summary                                []
+                 :attribution/available-months                       []
 
                  :attribution-index-returns/portfolio               "OGEMCORD"
                  :attribution-index-returns/period                  "ytd"
@@ -199,6 +200,7 @@
            :multiple-portfolio-attribution/period
 
            :attribution/summary
+           :attribution/available-months
 
            :attribution-index-returns/portfolio
            :attribution-index-returns/period
@@ -438,6 +440,14 @@
   (fn [{:keys [db]} [_]]
     {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=summary")
                          :dispatch-key [:attribution/summary]
+                         :kwk          true}}))
+
+;SUMMARY ATTRIBUTION
+(rf/reg-event-fx
+  :get-attribution-available-months
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=available-months")
+                         :dispatch-key [:attribution/available-months]
                          :kwk          true}}))
 
 ;INDEX RETURNS
