@@ -234,6 +234,93 @@
                  :getTrProps     go-to-attribution-risk
                  :className      "-striped -highlight"}]]]]))
 
+(defn index-returns-display []
+  (let [
+        original-table (filter (comp pos? :Average-Index-Weight) @(rf/subscribe [:attribution-index-returns/table]))
+        xkey (keyword (get-in tables/attribution-table-columns [@(rf/subscribe [:attribution-index-returns/x-filter]) :accessor]))
+        ykey (keyword (get-in tables/attribution-table-columns [@(rf/subscribe [:attribution-index-returns/y-filter]) :accessor]))
+        table (if (or (= xkey :Duration-Bucket) (= ykey :Duration-Bucket))
+                (mapv
+                  (fn [line]
+                    (update line :Duration-Bucket
+                            #(case %
+                               "0-3Y" "0 0-3Y"
+                               "3-5Y" "1 0-3Y"
+                               "5-7Y" "2 0-3Y"
+                               "7-10Y" "3 0-3Y"
+                               "10-15Y" "4 0-3Y"
+                               "15+Y" "5 0-3Y"
+                               (str "6 " %))))
+                  original-table)
+                original-table)
+        xlabel (:label (first (filter #(= (:id %) @(rf/subscribe [:attribution-index-returns/x-filter])) static/attribution-choice-map)))
+        ycolumns (sort (distinct (map ykey table)))
+        pivot (conj (into []
+                          (for [[x g] (sort-by first (group-by xkey table))]
+                            (merge
+                              {:xlabel x
+                               :total  (let [w (reduce + (map :Average-Index-Weight g))] (if (pos? w) (/ (reduce + (map :Index-Contribution g)) w)))}
+                              (into {}
+                                    (for [[y subg] (group-by ykey g)]
+                                      [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight subg))] (if (pos? w) (/ (reduce + (map :Index-Contribution subg)) w)))])))))
+                    (merge
+                      {:xlabel "Total"
+                       :total  (/ (reduce + (map :Index-Contribution table)) 100.)}
+                      (into {}
+                            (for [y ycolumns]
+                              [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight (filter #(= (ykey %) y) table)))] (if (pos? w) (/ (reduce + (map :Index-Contribution (filter #(= (ykey %) y) table))) w)))])))
+                    )
+        ]
+    (println xkey ykey)
+    [:> ReactTable
+     {:data                pivot
+      :defaultFilterMethod tables/case-insensitive-filter
+      :columns             (concat [{:Header xlabel ::accessor "xlabel" :width 200}
+                                    {:Header "Total" :accessor "total" :width 100 :style {:textAlign "right"} :Cell tables/round2*100}]
+                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :style {:textAlign "right"} :Cell tables/round2*100})))
+      :showPagination      false
+      :sortable            true
+      :pageSize            (count pivot)
+      :className           "-striped -highlight"
+      ;
+      }]
+
+    ))
+
+
+(defn index-returns-controller []
+  (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        x-axis (rf/subscribe [:attribution-index-returns/x-filter])
+        y-axis (rf/subscribe [:attribution-index-returns/y-filter])
+        portfolio (rf/subscribe [:attribution-index-returns/portfolio])
+        period (rf/subscribe [:attribution-index-returns/period])]
+    [box :class "subbody rightelement" :child
+     [v-box :class "element" :align-self :center :justify :center :gap "20px"
+      :children [[title :label (str "Index returns " @(rf/subscribe [:attribution-date])) :level :level1]
+                 [h-box :gap "50px"
+                  :children [[v-box :gap "15px"
+                              :children [
+                                         [h-box
+                                          :gap "10px"
+                                          :children [[title :label "Portfolio:" :level :level3] [gap :size "1"]
+                                                     [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:get-attribution-index-returns-portfolio %])]]]
+                                         [h-box
+                                          :gap "10px"
+                                          :children [[title :label "Period:" :level :level3] [gap :size "1"]
+                                                     [single-dropdown :width dropdown-width :model period :choices static/attribution-period-choices :on-change #(rf/dispatch [:get-attribution-index-returns-period %])]]]]]
+                             [v-box :gap "15px"
+                              :children [
+                                         [h-box
+                                          :gap "10px"
+                                          :children [[title :label "X axis:" :level :level3] [gap :size "1"]
+                                                     [single-dropdown :width dropdown-width :model x-axis :choices (rest static/attribution-choice-map) :on-change #(rf/dispatch [:attribution-index-returns/x-filter %])]]]
+                                         [h-box
+                                          :gap "10px"
+                                          :children [[title :label "Y axis:" :level :level3] [gap :size "1"]
+                                                     [single-dropdown :width dropdown-width :model y-axis :choices (rest static/attribution-choice-map) :on-change #(rf/dispatch [:attribution-index-returns/y-filter %])]]]]]]]
+                 [title :label "Warning: these are weighted average returns from StatPro. Totals won't add-up nor will they match real sub index time series." :level :level3]
+                 [index-returns-display]]]]))
+
 
 (defn nav-attribution-bar []
   (let [active-home @(rf/subscribe [:navigation/active-attribution])]
@@ -259,6 +346,7 @@
     :summary                        [summary-display]
     :single-portfolio               [single-portfolio-attribution-controller]
     :all-portfolios                 [multiple-portfolio-attribution-controller]
+    :index-returns                  [index-returns-controller]
     [:div.output "nothing to display"]))
 
 

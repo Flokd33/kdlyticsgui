@@ -98,6 +98,12 @@
 
                  :attribution/summary                                []
 
+                 :attribution-index-returns/portfolio               "OGEMCORD"
+                 :attribution-index-returns/period                  "ytd"
+                 :attribution-index-returns/x-filter                :sector
+                 :attribution-index-returns/y-filter                :region
+                 :attribution-index-returns/table                   []
+
                  :single-bond-trade-history/data                     []
                  :single-bond-trade-history/flat-data                []
                  :single-bond-trade-history/bond                     nil
@@ -192,6 +198,12 @@
            :multiple-portfolio-attribution/period
 
            :attribution/summary
+
+           :attribution-index-returns/portfolio
+           :attribution-index-returns/period
+           :attribution-index-returns/x-filter
+           :attribution-index-returns/y-filter
+           :attribution-index-returns/table
 
            :single-bond-trade-history/show-flat-modal
            :single-bond-trade-history/flat-data
@@ -426,3 +438,19 @@
                          :dispatch-key [:attribution/summary]
                          :kwk          true}}))
 
+;INDEX RETURNS
+(rf/reg-event-fx
+  :get-attribution-index-returns-portfolio
+  (fn [{:keys [db]} [_ portfolio]]
+    {:db (assoc db :attribution-index-returns/portfolio portfolio)
+     :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:attribution-index-returns/period db))
+                         :dispatch-key [:attribution-index-returns/table]
+                         :kwk          true}}))
+
+(rf/reg-event-fx
+  :get-attribution-index-returns-period
+  (fn [{:keys [db]} [_ period]]
+    {:db (assoc db :attribution-index-returns/period period)
+     :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" (:attribution-index-returns/portfolio db) "&period=" period)
+                         :dispatch-key [:attribution-index-returns/table]
+                         :kwk          true}}))

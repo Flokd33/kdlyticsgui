@@ -22,7 +22,8 @@
 (def attribution-navigation
   [{:code :summary             :name "Overview"}
    {:code :single-portfolio    :name "Single portfolio"}
-   {:code :all-portfolios      :name "Multiple portfolios"}])
+   {:code :all-portfolios      :name "Multiple portfolios"}
+   {:code :index-returns       :name "Index returns"}])
 
 (def var-navigation
   [{:code :overview            :name "Overview"}

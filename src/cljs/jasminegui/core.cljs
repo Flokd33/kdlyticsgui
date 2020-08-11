@@ -35,6 +35,7 @@
 (rf/dispatch [:get-attribution-date])
 (rf/dispatch [:get-attribution-summary])
 (rf/dispatch [:get-single-attribution "OGEMCORD" "ytd"])
+(rf/dispatch [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"])
 (rf/dispatch [:get-multiple-attribution "Total Effect" "ytd"])
 (rf/dispatch [:get-portfolio-review-summary-data "OGEMCORD"])
 (rf/dispatch [:get-betas])
