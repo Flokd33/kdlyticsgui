@@ -244,11 +244,11 @@
                     (update line :Duration-Bucket
                             #(case %
                                "0-3Y" "0 0-3Y"
-                               "3-5Y" "1 0-3Y"
-                               "5-7Y" "2 0-3Y"
-                               "7-10Y" "3 0-3Y"
-                               "10-15Y" "4 0-3Y"
-                               "15+Y" "5 0-3Y"
+                               "3-5Y" "1 3-5Y"
+                               "5-7Y" "2 5-7Y"
+                               "7-10Y" "3 7-10Y"
+                               "10-15Y" "4 10-15Y"
+                               "15+Y" "5 15+Y"
                                (str "6 " %))))
                   original-table)
                 original-table)
