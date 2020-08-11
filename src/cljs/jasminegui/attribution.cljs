@@ -276,8 +276,8 @@
      {:data                pivot
       :defaultFilterMethod tables/case-insensitive-filter
       :columns             (concat [{:Header xlabel ::accessor "xlabel" :width 200}
-                                    {:Header "Total" :accessor "total" :width 100 :style {:textAlign "right"} :Cell tables/round2*100}]
-                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :style {:textAlign "right"} :Cell tables/round2*100})))
+                                    {:Header "Total" :accessor "total" :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100}]
+                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100})))
       :showPagination      false
       :sortable            true
       :pageSize            (count pivot)

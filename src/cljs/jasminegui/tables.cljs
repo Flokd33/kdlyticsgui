@@ -109,6 +109,15 @@
           :else "-"))
       "-")))
 
+(defn round2colpct*100  [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      (letfn [(colorize [c v] [:div {:style {:color c}} (gstring/format "%.2f%" (* 100. v))])]
+        (cond
+          (>= x 0.0) (colorize "black" x)
+          (< x 0.0) (colorize "red" x)
+          :else "-"))
+      "-")))
 
 (defn rating-score-to-string [this] (aget this "row" "qt-iam-int-lt-median-rating"))
 
