@@ -17,8 +17,15 @@
     [jasminegui.portfolioreview :as pr]
     [jasminegui.betas :as betas]
     [jasminegui.esg :as esg]
-    [goog.string :as gstring]
-    ))
+    [jasminegui.quantscores :as quantscores]
+    [goog.string :as gstring]))
+
+
+(defn navigation-event [item]
+  "This is really not pure. But it saves loading time at mount."
+  (doseq [k (:load-events item)]
+    (rf/dispatch [k]))
+  (rf/dispatch [:navigation/active-view (:code item)]))
 
 (defn nav-bar []
   (let [active-view @(rf/subscribe [:navigation/active-view])]
@@ -34,7 +41,7 @@
                                                         :class (if (= active-view (:code item)) "dropdown-active" "dropdown")
                                                         :child (if (:href item)
                                                                  [hyperlink-href :label (:name item) :href (:href item)]
-                                                                 [hyperlink :label (:name item) :on-click #(rf/dispatch [:navigation/active-view (:code item)])])]))
+                                                                 [hyperlink :label (:name item) :on-click #(navigation-event item)])])) ;#(rf/dispatch [:navigation/active-view (:code item)])
                                             [[gap :size "1"]
                                              [box :align-self :center :height "50%" :width "3px" :child [line :color "#CA3E47" :size "3px"]]
                                              [box :width "3px" :child ""] ;this is just equal to line above - ugly hack
@@ -125,6 +132,7 @@
       :var    [var/var-view]
       :portfolio-review [pr/view]
       :betas            [betas/view]
+      :quant-scores     [quantscores/view]
       :esg              [esg/esg-view]
       ;:trade-drilldown  [tradeview/trade-description-view]
       ;:trade-entry      [tradeentry/trade-entry-view]

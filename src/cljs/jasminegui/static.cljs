@@ -5,10 +5,11 @@
 (def main-navigation
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil}
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil}
-   {:code :var              :name "VaR"               :dispatch :var              :subs nil}
-   {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil}
+   {:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events [:get-var-proxies]}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil}
-   {:code :esg              :name "Refinitiv"         :dispatch :esg              :subs nil}
+   {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]}
+   {:code :quant-scores     :name "Quant scores WIP"  :dispatch :quant-scores     :subs nil :load-events [:get-quant-model]}
+   {:code :esg              :name "Refinitiv"         :dispatch :esg              :subs nil :load-events [:get-refinitiv-ids :get-refinitiv-structure]}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}])
 
@@ -32,30 +33,33 @@
 
 (def esg-navigation
   [{:code :find-issuers            :name "Find issuer"}
-   {:code :table-top-view             :name "Top level results"}
-   {:code :table-detailed-view             :name "Detailed results"}])
+   {:code :table-top-view          :name "Top level results"}
+   {:code :table-detailed-view     :name "Detailed results"}])
 
-(def risk-choice-map [{:id "None"         :label "None"}
-                      {:id :region        :label "Region"}
-                      {:id :country       :label "Country"}
-                      {:id :issuer        :label "Issuer"}
-                      {:id :rating-score  :label "Rating"}
-                      {:id :sector        :label "Sector"}
-                      {:id :maturity-band :label "Maturity"}])
+(def risk-choice-map
+  [{:id "None"         :label "None"}
+   {:id :region        :label "Region"}
+   {:id :country       :label "Country"}
+   {:id :issuer        :label "Issuer"}
+   {:id :rating-score  :label "Rating"}
+   {:id :sector        :label "Sector"}
+   {:id :maturity-band :label "Maturity"}])
 
-(def attribution-choice-map [{:id "None"         :label "None"}
-                             {:id :region        :label "Region"}
-                             {:id :country       :label "Country"}
-                             {:id :issuer        :label "Issuer"}
-                             {:id :invrtg        :label "Rating"}
-                             {:id :sector        :label "Sector"}
-                             {:id :maturity-band :label "Maturity"}])
+(def attribution-choice-map
+  [{:id "None"         :label "None"}
+   {:id :region        :label "Region"}
+   {:id :country       :label "Country"}
+   {:id :issuer        :label "Issuer"}
+   {:id :invrtg        :label "Rating"}
+   {:id :sector        :label "Sector"}
+   {:id :maturity-band :label "Maturity"}])
 
 
-(def portfolio-alignment-groups [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IBSGEMD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
-                                 {:id :allianz :label "Allianz" :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-                                 {:id :ig      :label "IG"      :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD"]}
-                                 {:id :talanx  :label "Talanx"  :portfolios ["ITLNXEMD" "ITLXEMD" "ITLXEMD3"]}])
+(def portfolio-alignment-groups
+  [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IBSGEMD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
+   {:id :allianz :label "Allianz" :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
+   {:id :ig      :label "IG"      :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD"]}
+   {:id :talanx  :label "Talanx"  :portfolios ["ITLNXEMD" "ITLXEMD" "ITLXEMD3"]}])
 
 (def risk-field-choices
   [{:id "None"            :label "None"}

@@ -23,8 +23,8 @@
                  :portfolios                                         []
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
-                 :qt-date                                            "undefined"
-                 :attribution-date                                   "undefined"
+                 :qt-date                                            nil
+                 :attribution-date                                   nil
 
                  ;navigation
                  :navigation/active-view                             :home
@@ -141,6 +141,8 @@
                  :esg/refinitiv-structure                 []
                  :esg/selected-pillars                    (set nil)
 
+                 :quant-model/model-output                []
+
 
                  })
 
@@ -238,6 +240,8 @@
            :esg/refinitiv-ids
            :esg/active-home
            :esg/selected-pillars
+
+           :quant-model/model-output
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -345,15 +349,17 @@
    {:get-key :get-betas               :url-tail "beta-table"          :dis-key :betas/table}
    {:get-key :get-refinitiv-ids       :url-tail "refinitiv-ids"       :dis-key :esg/refinitiv-ids}
    {:get-key :get-refinitiv-structure :url-tail "refinitiv-structure" :dis-key :esg/refinitiv-structure}
+   {:get-key :get-quant-model         :url-tail "quant-model-output"  :dis-key :quant-model/model-output}
    ])
 
 (doseq [line simple-http-get-events]
   (rf/reg-event-fx
     (:get-key line)
     (fn [{:keys [db]} [_]]
-      {:http-get-dispatch {:url          (str static/server-address (:url-tail line))
-                           :dispatch-key [(:dis-key line)]
-                           :kwk          true}})))
+      (if (zero? (count (get-in db [(:dis-key line)])))     ;if it wasn't mounted yet we need to load it
+        {:http-get-dispatch {:url           (str static/server-address (:url-tail line))
+                             :dispatch-key  [(:dis-key line)]
+                             :kwk           true}}))))
 
 (rf/reg-event-fx
   :get-positions-new

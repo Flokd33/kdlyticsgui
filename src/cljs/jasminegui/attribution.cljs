@@ -24,20 +24,6 @@
 (defn period-choices []
   (into static/attribution-period-choices (for [m @(rf/subscribe [:attribution/available-months])] {:id m :label m})))
 
-
-;
-;
-;(defn strategy-pop-up [this]
-;  (r/as-element [:div [:span {:title (aget this "row" "strategy")} (aget this "row" "strategy-shortcut")]]))
-;
-;(defn last-price-props [this]
-;  (if-not (nil? this)
-;    (let [status (aget this "row" "status")
-;          prefix (if (= status "CLOSED") "(c) " "")]
-;      (r/as-element (str prefix (gstring/format "%.2f" (aget this "value")))))
-;    (clj->js {:style nil})))
-;
-
 (def dropdown-width "150px")
 
 (defn single-portfolio-attribution-display []
@@ -51,13 +37,11 @@
     [:> ReactTable
      {:data                display
       :defaultFilterMethod tables/case-insensitive-filter
-      :columns [
-                {:Header "Groups" :columns grouping-columns}
+      :columns [{:Header "Groups" :columns grouping-columns}
                 {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
                 {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
                 {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
-                {:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}
-                            ]
+                {:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}]
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
@@ -65,11 +49,7 @@
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-attribution/table-filter]))
-      :onFilteredChange    #(rf/dispatch [:single-portfolio-attribution/table-filter %])
-      ;
-      }]
-
-    ))
+      :onFilteredChange    #(rf/dispatch [:single-portfolio-attribution/table-filter %])}]))
 
 
 (defn multiple-portfolio-attribution-display []
@@ -94,8 +74,7 @@
       :defaultFilterMethod tables/case-insensitive-filter
       :columns             [{:Header "Groups" :columns grouping-columns}
                             {:Header (str "Portfolio " (name display-key-one)) :columns cols}
-                            {:Header "Description" :columns (mapv tables/attribution-table-columns [:code :rating])}
-                            ]
+                            {:Header "Description" :columns (mapv tables/attribution-table-columns [:code :rating])}]
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
@@ -103,9 +82,7 @@
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:multiple-portfolio-attribution/table-filter])) ; [{:id "analyst" :value "Tammy"}]
-      :onFilteredChange    #(rf/dispatch [:multiple-portfolio-attribution/table-filter %])}]
-
-    ))
+      :onFilteredChange    #(rf/dispatch [:multiple-portfolio-attribution/table-filter %])}]))
 
 
 (defn shortcut-row [key]
@@ -204,9 +181,7 @@
                                [h-box :gap "10px" :children (shortcut-row :multiple-portfolio-attribution/shortcut)]
                                [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
                                                              [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(csv-link @(rf/subscribe [:multiple-portfolio-attribution/table]) "pivot")]]]]]]]
-                 [multiple-portfolio-attribution-display]
-                 ]]]
-    ))
+                 [multiple-portfolio-attribution-display]]]]))
 
 
 
@@ -268,9 +243,7 @@
                     (merge
                       {:xlabel "Total" :total  (/ (reduce + (map :Index-Contribution table)) 100.)}
                       (into {} (for [y ycolumns]
-                                 [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight (filter #(= (ykey %) y) table)))] (if (pos? w) (/ (reduce + (map :Index-Contribution (filter #(= (ykey %) y) table))) w)))])))
-                    )
-        ]
+                                 [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight (filter #(= (ykey %) y) table)))] (if (pos? w) (/ (reduce + (map :Index-Contribution (filter #(= (ykey %) y) table))) w)))]))))]
     [:> ReactTable
      {:data                pivot
       :defaultFilterMethod tables/case-insensitive-filter
@@ -281,11 +254,7 @@
       :sortable            true
       :pageSize            (count pivot)
       :className           "-striped -highlight"
-      :filterable          true
-      ;
-      }]
-
-    ))
+      :filterable          true}]))
 
 
 (defn index-returns-controller []
