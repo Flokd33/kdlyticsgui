@@ -30,6 +30,7 @@
                  :navigation/active-view                             :home
                  :navigation/active-home                             :summary
                  :navigation/active-var                              :overview
+                 :navigation/active-qs                               :table
                  :navigation/active-attribution                      :summary
                  :navigation/success-modal                           {:show false :on-close nil :response nil}
                  :navigation/show-mounting-modal                     true
@@ -153,6 +154,7 @@
 (doseq [k [:navigation/active-view
            :navigation/active-home
            :navigation/active-var
+           :navigation/active-qs
            :navigation/active-attribution
            :rating-to-score
            :pivoted-positions

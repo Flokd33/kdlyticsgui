@@ -35,6 +35,12 @@
       [:div  (nf (int x))]
       "-")))
 
+(defn nfcell2 [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [:div  (.format nff x)]
+      "-")))
+
 
 (defn case-insensitive-filter [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box"

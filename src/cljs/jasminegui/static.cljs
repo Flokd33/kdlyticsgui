@@ -31,6 +31,12 @@
    ;   {:code :marginal            :name "Marginals"}
    {:code :proxies             :name "Proxies"}])
 
+(def qs-navigation
+  [{:code :table              :name "Table"}
+   {:code :calculator         :name "Calculator"}
+   {:code :spot-charts        :name "Spot charts"}
+   {:code :historical-charts  :name "Historical charts"}])
+
 (def esg-navigation
   [{:code :find-issuers            :name "Find issuer"}
    {:code :table-top-view          :name "Top level results"}
