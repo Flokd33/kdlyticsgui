@@ -33,9 +33,9 @@
 
 (def qs-navigation
   [{:code :table              :name "Table"}
-   {:code :calculator         :name "Calculator"}
-   {:code :spot-charts        :name "Spot charts"}
-   {:code :historical-charts  :name "Historical charts"}])
+   {:code :calculator         :name "Calculator - WIP"}
+   {:code :spot-charts        :name "Spot charts - WIP"}
+   {:code :historical-charts  :name "Historical charts - WIP"}])
 
 (def esg-navigation
   [{:code :find-issuers            :name "Find issuer"}
