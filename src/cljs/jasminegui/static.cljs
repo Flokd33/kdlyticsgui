@@ -8,7 +8,7 @@
    {:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events [:get-var-proxies]}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil}
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]}
-   {:code :quant-scores     :name "Quant scores WIP"  :dispatch :quant-scores     :subs nil :load-events [:get-quant-model]}
+   {:code :quant-scores     :name "Quant scores WIP"  :dispatch :quant-scores     :subs nil :load-events [:get-quant-model :get-country-codes]}
    {:code :esg              :name "Refinitiv"         :dispatch :esg              :subs nil :load-events [:get-refinitiv-ids :get-refinitiv-structure]}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}])
@@ -33,7 +33,7 @@
 
 (def qs-navigation
   [{:code :table              :name "Table"}
-   {:code :calculator         :name "Calculator - WIP"}
+   {:code :calculator         :name "Calculator"}
    {:code :spot-charts        :name "Spot charts - WIP"}
    {:code :historical-charts  :name "Historical charts - WIP"}])
 

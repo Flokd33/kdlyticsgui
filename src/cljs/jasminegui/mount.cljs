@@ -25,6 +25,7 @@
                  :total-positions                                    {}
                  :qt-date                                            nil
                  :attribution-date                                   nil
+                 :country-codes                                      nil
 
                  ;navigation
                  :navigation/active-view                             :home
@@ -143,6 +144,7 @@
                  :esg/selected-pillars                    (set nil)
 
                  :quant-model/model-output                []
+                 :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
 
 
                  })
@@ -157,6 +159,7 @@
            :navigation/active-qs
            :navigation/active-attribution
            :rating-to-score
+           :country-codes
            :pivoted-positions
            :total-positions
            :var/proxies
@@ -244,6 +247,7 @@
            :esg/selected-pillars
 
            :quant-model/model-output
+           :quant-model/calculator-spreads
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -352,6 +356,7 @@
    {:get-key :get-refinitiv-ids       :url-tail "refinitiv-ids"       :dis-key :esg/refinitiv-ids}
    {:get-key :get-refinitiv-structure :url-tail "refinitiv-structure" :dis-key :esg/refinitiv-structure}
    {:get-key :get-quant-model         :url-tail "quant-model-output"  :dis-key :quant-model/model-output}
+   {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
    ])
 
 (doseq [line simple-http-get-events]

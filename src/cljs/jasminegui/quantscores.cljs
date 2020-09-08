@@ -12,9 +12,18 @@
     [jasminegui.tables :as tables]
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
-    [reagent.core :as reagent])
+    [reagent.core :as reagent]
+    [reagent.core :as r]
+    [oz.core :as oz])
   )
 
+(rf/reg-event-fx
+  :get-calculator-spread
+  (fn [{:keys [db]} [_ country sector rating duration]]
+    ;warning country and sector have ampersands & - this is a killer
+    {:http-get-dispatch {:url          (str static/server-address "quant-model-calculator?country=" (.replace country "&" "@") "&sector=" (.replace sector "&" "@") "&rating=" rating "&duration=" duration)
+                         :dispatch-key [:quant-model/calculator-spreads]
+                         :kwk          true}}))
 
 (defn nav-qs-bar []
   (let [active-var @(rf/subscribe [:navigation/active-qs])]
@@ -180,13 +189,10 @@
 
 
 (def table-style (reagent/atom "Summary"))
-(defn qs-table []
-  (let [data @(rf/subscribe [:quant-model/model-output])
-        default-beta-line {:width 75 :Cell tables/round2 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}
-        ]
-    [box :padding "80px 10px" :class "rightelement"  :child
+
+(defn qs-table [mytitle data]
      [v-box :class "element"  :gap "20px" :width "1620px"
-      :children [[h-box :align :center :children [[title :label (str "Quant model output") :level :level1]
+      :children [[h-box :align :center :children [[title :label mytitle :level :level1]
                                                   [gap :size "1"]
                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "quant-model-output")]]]
                  [h-box :align :center :gap "20px"
@@ -257,9 +263,84 @@
                    :pageSizeOptions     [15 25 50 100]
                    :filterable          true
                    :defaultFilterMethod tables/case-insensitive-filter
-                   :className           "-striped -highlight"}]]]]))
+                   :className           "-striped -highlight"}]]])
 
+(def calculator-sector (r/atom "Oil & Gas"))
+(def calculator-country (r/atom "BR"))
+(def calculator-duration (r/atom "9.0"))
+(def calculator-rating (r/atom "13"))
 
+(defn comparable-chart [duration legacy new svr table]
+  (let [data
+        (concat
+          (into [] (for [line table] {:field "comp" :duration (line :Used_Duration) :spread (line :Used_ZTW)}))
+          [{:field "legacy" :duration duration :spread legacy}
+           {:field "new" :duration duration :spread new}
+           {:field "svr" :duration duration :spread svr}])
+        vega-spec
+        {:title    nil
+         :data     {:values data}
+         :layer [
+                 {:mark {:type "point" :filled true}
+                  :encoding {:x {:field "duration" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}}
+                             :y {:field "spread" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                             :color {:field "field" :legend {:labelFontSize 14 :title nil}}}}]
+         :width    1000
+         :height   500}]
+    [v-box :class "element"  :gap "20px" :width "1620px"
+     :children [[title :label "Comparables chart" :level :level1] [oz/vega-lite vega-spec]]]))
+
+(defn calculator-controller []
+  (let [country-codes @(rf/subscribe [:country-codes])
+        data @(rf/subscribe [:quant-model/model-output])
+        sectors (mapv (fn [x] {:id x :label x}) (sort (distinct (map :Sector data))))
+        countries (mapv (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) country-codes)))}) (sort (distinct (map :Country data))))
+        rating-to-score @(rf/subscribe [:rating-to-score])
+        get-implied-rating (fn [txt] (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) rating-to-score)))] (name x) "error"))
+        comparables (sort-by
+                      (juxt :Used_Duration)
+                      (filter #(and (= (:Country %) @calculator-country)
+                                    (= (:Sector %) @calculator-sector)
+                                    (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating)))
+                              data))]
+    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+     :children [
+                [v-box :class "element" :gap "0px" :width "1620px"
+                 :children [[title :label "New issue calculator" :level :level1]
+                            [gap :size "20px"]
+                            [h-box :gap "10px" :align :start
+                             :children [[label :width "200px" :label "Country"]
+                                        [label :width "200px" :label "Sector"]
+                                        [label :width "100px" :label "Duration"]
+                                        [label :width "100px" :label "Rating score"]
+                                        [label :width "100px" :label "Rating"]
+                                        [gap :size "100px"]
+                                        [gap :size "20px"]
+                                        [label :width "100px" :label "Legacy"]
+                                        [label :width "100px" :label "New"]
+                                        [label :width "100px" :label "SVR"]]]
+                            [h-box :gap "10px" :align :center
+                             :children [[single-dropdown :width "200px" :model calculator-country :choices countries :on-change #(do (reset! calculator-country %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                        [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (reset! calculator-sector %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                        [input-text :width "100px" :model calculator-duration :on-change #(do (reset! calculator-duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                        [input-text :width "100px" :model calculator-rating :on-change #(do (reset! calculator-rating %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                        [label :width "100px" :label (get-implied-rating @calculator-rating)]
+                                        [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread @calculator-country @calculator-sector @calculator-rating @calculator-duration])]
+                                        [gap :size "20px"]
+                                        [label :width "100px" :label (str (:legacy @(rf/subscribe [:quant-model/calculator-spreads])) "bps")]
+                                        [label :width "100px" :label (str (:new @(rf/subscribe [:quant-model/calculator-spreads])) "bps")]
+                                        [label :width "100px" :label (str (:svr @(rf/subscribe [:quant-model/calculator-spreads])) "bps")]
+                                        [label :label (str (count (filter #(and (= (:Country %) @calculator-country)
+                                                                                (= (:Sector %) @calculator-sector)
+                                                                                (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating)))
+                                                                          data)) " direct comparables.")]]]]]
+                [comparable-chart
+                 (cljs.reader/read-string @calculator-duration)
+                 (:legacy @(rf/subscribe [:quant-model/calculator-spreads]))
+                 (:new @(rf/subscribe [:quant-model/calculator-spreads]))
+                 (:svr @(rf/subscribe [:quant-model/calculator-spreads]))
+                 comparables]
+                [qs-table (str "Comparables table") comparables]]]))
 
 
 (defn qs-controller []
@@ -271,12 +352,15 @@
    :padding "80px 20px"
    :class "rightelement"  :children [[qs-controller] [qs-table]]])
 
+(defn qs-table-container []
+  [box :padding "80px 10px" :class "rightelement"  :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-qs
-      :table                       [qs-table]
-      :calculator [qs-table-view]
+      :table                       [qs-table-container]
+      :calculator [calculator-controller]
       :spot-charts [qs-table-view]
       :historical-charts [qs-table-view]
       [:div.output "nothing to display"])))
