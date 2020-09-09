@@ -269,14 +269,31 @@
 (def calculator-country (r/atom "BR"))
 (def calculator-duration (r/atom "9.0"))
 (def calculator-rating (r/atom "13"))
+(def chart-other-countries (r/atom false))
+(def chart-rating-neighbours (r/atom false))
+
+(defn get-implied-rating [txt]
+  (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) @(rf/subscribe [:rating-to-score]))))] (name x) "error"))
+
+(def performance-colors [    "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
 
 (defn comparable-chart [duration legacy new svr table]
-  (let [data
+  (let [prepare-data (fn [tbl txt] (for [line tbl] {:field txt :duration (line :Used_Duration) :spread (line :Used_ZTW) :txt (line :Bond)}))
+        rating-score (cljs.reader/read-string @calculator-rating)
+        other (str "Other " (get-implied-rating (str rating-score)))
+        rating-up (get-implied-rating (str (inc rating-score)))
+        rating-dw (get-implied-rating (str (dec rating-score)))
+        data
         (concat
-          (into [] (for [line table] {:field "comp" :duration (line :Used_Duration) :spread (line :Used_ZTW)}))
-          [{:field "legacy" :duration duration :spread legacy}
-           {:field "new" :duration duration :spread new}
-           {:field "svr" :duration duration :spread svr}])
+          (prepare-data table "comp")
+          [{:field "legacy" :duration duration :spread legacy :txt "legacy"}
+           {:field "new" :duration duration :spread new :txt "new"}
+           {:field "svr" :duration duration :spread svr :txt "svr"}]
+          (if @chart-other-countries (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) rating-score) (not= (:Country %) @calculator-country)) @(rf/subscribe [:quant-model/model-output])) other))
+          (if @chart-rating-neighbours (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (inc rating-score))) @(rf/subscribe [:quant-model/model-output])) rating-up))
+          (if @chart-rating-neighbours (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (dec rating-score))) @(rf/subscribe [:quant-model/model-output])) rating-dw))
+          )
+        color-domain-scale (merge {"comp" "#134848" "legacy" "red" "new" "orange" "svr" "blue"} (if @chart-other-countries {other "#009D80"}) (if @chart-rating-neighbours {rating-up "#FDAA94" rating-dw "#74908D"}))
         vega-spec
         {:title    nil
          :data     {:values data}
@@ -284,25 +301,35 @@
                  {:mark {:type "point" :filled true}
                   :encoding {:x {:field "duration" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}}
                              :y {:field "spread" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
-                             :color {:field "field" :legend {:labelFontSize 14 :title nil}}}}]
+                             :color {:field "field"  :scale {:domain (keys color-domain-scale) :range (vals color-domain-scale) } :legend {:labelFontSize 14 :title nil}}
+                             :tooltip [{:field "txt" :type "ordinal" :title "Bond"}
+                                       {:field "duration" :type "quantitative", :title "Duration"}
+                                       {:field "spread" :type "quantitative", :title "Spread"}]}}]
          :width    1000
          :height   500}]
     [v-box :class "element"  :gap "20px" :width "1620px"
-     :children [[title :label "Comparables chart" :level :level1] [oz/vega-lite vega-spec]]]))
+     :children [[title :label "Comparables chart" :level :level1]
+                [h-box :gap "50px" :children [[checkbox :model chart-other-countries :label "Plot other countries (same sector/rating)" :on-change #(reset! chart-other-countries %)]
+                                              [checkbox :model chart-rating-neighbours :label "Plot rating neighbours (same sector)" :on-change #(reset! chart-rating-neighbours %)]]]
+                [oz/vega-lite vega-spec]]]))
 
 (defn calculator-controller []
   (let [country-codes @(rf/subscribe [:country-codes])
         data @(rf/subscribe [:quant-model/model-output])
         sectors (mapv (fn [x] {:id x :label x}) (sort (distinct (map :Sector data))))
         countries (mapv (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) country-codes)))}) (sort (distinct (map :Country data))))
-        rating-to-score @(rf/subscribe [:rating-to-score])
-        get-implied-rating (fn [txt] (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) rating-to-score)))] (name x) "error"))
         comparables (sort-by
-                      (juxt :Used_Duration)
+                      :Used_Duration
                       (filter #(and (= (:Country %) @calculator-country)
                                     (= (:Sector %) @calculator-sector)
                                     (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating)))
-                              data))]
+                              data))
+        infer-rating-fn (fn [country] (reset! calculator-rating (str (:Used_Rating_Score (first (filter #(and (= (:Country %) country) (= (:Sector %) "Sovereign")) data))))))
+        update-sector-fn (fn [sector] (do (reset! calculator-sector sector)
+                                          (when (= sector "Sovereign") (reset! calculator-rating (infer-rating-fn @calculator-country)))))
+        update-country-fn (fn [country] (do (reset! calculator-country country)
+                                            (when (= @calculator-sector "Sovereign") (reset! calculator-rating (infer-rating-fn @calculator-country)))))
+        ]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [
                 [v-box :class "element" :gap "0px" :width "1620px"
@@ -320,8 +347,8 @@
                                         [label :width "100px" :label "New"]
                                         [label :width "100px" :label "SVR"]]]
                             [h-box :gap "10px" :align :center
-                             :children [[single-dropdown :width "200px" :model calculator-country :choices countries :on-change #(do (reset! calculator-country %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                        [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (reset! calculator-sector %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                             :children [[single-dropdown :width "200px" :model calculator-country :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                        [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
                                         [input-text :width "100px" :model calculator-duration :on-change #(do (reset! calculator-duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
                                         [input-text :width "100px" :model calculator-rating :on-change #(do (reset! calculator-rating %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
                                         [label :width "100px" :label (get-implied-rating @calculator-rating)]
@@ -342,27 +369,17 @@
                  comparables]
                 [qs-table (str "Comparables table") comparables]]]))
 
-
-(defn qs-controller []
-  nil)
-
-(defn qs-table-view []
-  [v-box                                                    ;:width standard-box-width
-   :gap "20px"
-   :padding "80px 20px"
-   :class "rightelement"  :children [[qs-controller] [qs-table]]])
-
 (defn qs-table-container []
-  [box :padding "80px 10px" :class "rightelement"  :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
+  [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
 
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-qs
-      :table                       [qs-table-container]
+      :table      [qs-table-container]
       :calculator [calculator-controller]
-      :spot-charts [qs-table-view]
-      :historical-charts [qs-table-view]
+      :spot-charts [qs-table-container]
+      :historical-charts [qs-table-container]
       [:div.output "nothing to display"])))
 
 
