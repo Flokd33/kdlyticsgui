@@ -145,6 +145,7 @@
 
                  :quant-model/model-output                []
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
+                 :quant-model/rating-curves               []
 
 
                  })
@@ -158,6 +159,7 @@
            :navigation/active-var
            :navigation/active-qs
            :navigation/active-attribution
+           :navigation/show-mounting-modal
            :rating-to-score
            :country-codes
            :pivoted-positions
@@ -246,8 +248,10 @@
            :esg/active-home
            :esg/selected-pillars
 
-           :quant-model/model-output
+
            :quant-model/calculator-spreads
+           :quant-model/rating-curves               []
+
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -257,6 +261,12 @@
   :positions
   (fn [db [_ positions]]
     (assoc db :positions positions
+              :navigation/show-mounting-modal false)))
+
+(rf/reg-event-db
+  :quant-model/model-output
+  (fn [db [_ model]]
+    (assoc db :quant-model/model-output model
               :navigation/show-mounting-modal false)))
 
 (rf/reg-event-db
@@ -355,7 +365,8 @@
    {:get-key :get-betas               :url-tail "beta-table"          :dis-key :betas/table}
    {:get-key :get-refinitiv-ids       :url-tail "refinitiv-ids"       :dis-key :esg/refinitiv-ids}
    {:get-key :get-refinitiv-structure :url-tail "refinitiv-structure" :dis-key :esg/refinitiv-structure}
-   {:get-key :get-quant-model         :url-tail "quant-model-output"  :dis-key :quant-model/model-output}
+   {:get-key :get-quant-model         :url-tail "quant-model-output"  :dis-key :quant-model/model-output :mounting-modal true}
+   {:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
    ])
 
@@ -364,7 +375,8 @@
     (:get-key line)
     (fn [{:keys [db]} [_]]
       (if (zero? (count (get-in db [(:dis-key line)])))     ;if it wasn't mounted yet we need to load it
-        {:http-get-dispatch {:url           (str static/server-address (:url-tail line))
+        {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
+         :http-get-dispatch {:url           (str static/server-address (:url-tail line))
                              :dispatch-key  [(:dis-key line)]
                              :kwk           true}}))))
 

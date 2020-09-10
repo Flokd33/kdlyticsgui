@@ -2,7 +2,7 @@
   (:require
     [re-frame.core :as rf]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink md-circle-icon-button
+                         single-dropdown hyperlink md-circle-icon-button selection-list
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -372,14 +372,61 @@
 (defn qs-table-container []
   [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
 
+(def spot-chart-model-choice (r/atom "Legacy"))
+(def spot-chart-rating-choice (r/atom (set nil)))
+(def spot-chart-issuer-choice (r/atom (set nil)))
+(defn spot-chart []
+  (let [data @(rf/subscribe [:quant-model/model-output])]
+    [box :padding "80px 10px" :class "rightelement" :child
+     [v-box :class "element" :gap "50px" :width "1620px" :children
+      [[title :label "Spot charts" :level :level1]
+       [h-box :gap "50px" :children
+        [[v-box :gap "10px" :width "125px" :children
+          [(concat
+             (into [[title :label "Model type" :level :level3]]
+                   (for [c ["Legacy" "New" "SVR"]]
+                     ^{:key c}                              ;; key should be unique among siblings
+                     [radio-button
+                      :label c
+                      :value c
+                      :model spot-chart-model-choice
+                      :on-change #(reset! spot-chart-model-choice %)]))
+             [[gap :size "10px"]
+              [title :label "Rating curves" :level :level3]
+              [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]])]]
+         [v-box :gap "0px" :width "150px" :children
+          [[title :label "Issuers" :level :level3]
+           [selection-list :model spot-chart-issuer-choice :width "100%" :height "600px" :choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data))))) :on-change #(reset! spot-chart-issuer-choice %)]]]
+         [p "chart comes here"]                             ;[oz/vega-lite nil]
+         ]]]]]))
+
+(defn methodology []
+  [box :padding "80px 10px" :class "rightelement" :child
+   [v-box :class "element" :children
+    [[title :label "Methodology" :level :level1]
+     [gap :size "20px"]
+     [title :label "General" :level :level3]
+     [p "We are running a four factor model, regressing spreads against country, sector, rating and duration. Country and sector are categorical variables while rating and duration are numerical. The latter are normalised before the regression."]
+     [title :label "Legacy model" :level :level3]
+     [p "We run log(spread) = a.Duration + b.Rating + categorical variables. This correctly takes into account spreads widening faster as we go down credit ratings. However, it will be misleading (too high spreads) for long dated bonds, especially low rated credits, as it will keep curves quite steep."]
+     [title :label "New model" :level :level3]
+     [p "We run log(spread) = a.log(Duration) + b.Rating + categorical variables. This correctly takes into account spreads widening faster as we go down credit ratings. It also creates curves that are flatter (better) in the long end, but too steep in the short end (too low spreads), especially for low rated credits."]
+     [title :label "Support vector regression (SVR)" :level :level3]
+     [p "We run spread = SVR(Duration, Rating, categorical variables), using the RBF Kernel and C=1000, e=0.01. C and e are roughly calibrated to match the explanatory power of the legacy and new model. The SVR model moves the data into a hyperspace where it can better be linearly explained. It will correctly reflect that high grade credit curves are steep while high yield ones are flat to inverted. On the other hand, it may overfit curves with very few bonds. For more on SVR: " [hyperlink-href :label "Wikipedia" :href "https://en.wikipedia.org/wiki/Support_vector_machine"]]
+     [title :label "Curve shapes: the big issue with the legacy and new model" :level :level3]
+     [p "In effect the legacy and new model will give the same curve steepness to all credits, no matter where they trade: the steepness is independent from the spread level which is intuitively and factually wrong. This is made even slightly worse by the fact HY durations are lower than IG ones, so 10x30s HY ends up steeper than 10x30s IG."]
+     ]]]
+  )
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-qs
       :table      [qs-table-container]
       :calculator [calculator-controller]
-      :spot-charts [qs-table-container]
+      :spot-charts [spot-chart]
       :historical-charts [qs-table-container]
+      :methodology [methodology]
       [:div.output "nothing to display"])))
 
 
