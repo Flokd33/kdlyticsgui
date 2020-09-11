@@ -372,32 +372,70 @@
 (defn qs-table-container []
   [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
 
-(def spot-chart-model-choice (r/atom "Legacy"))
-(def spot-chart-rating-choice (r/atom (set nil)))
-(def spot-chart-issuer-choice (r/atom (set nil)))
+(def spot-chart-model-choice (r/atom "SVR"))
+(def spot-chart-rating-choice (r/atom #{3 6 9 12 15 18}))               ;3 6 9 12 15 18
+(def spot-chart-issuer-choice (r/atom (set nil)))           ;["BRAZIL"]
+
+(defn spot-chart-vega-spec [model ratings issuers]
+  (let [raw-data @(rf/subscribe [:quant-model/rating-curves])
+        data (filter #(contains? ratings (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
+        target (case model "Legacy" "predicted_spread_legacy" "New" "predicted_spread_new" "SVR" "predicted_spread_svr")
+        ktarget (keyword target)
+        bonds (filter #(contains? issuers (:Ticker %)) @(rf/subscribe [:quant-model/model-output]))
+        bond-data (map #(select-keys % [:Bond :rule-max :rule-min :cheap :Used_Duration :Used_ZTW ktarget :Duration :Rating])
+                       (map #(assoc %
+                               :rule-max (max (ktarget %) (:Used_ZTW %))
+                               :rule-min (min (ktarget %) (:Used_ZTW %))
+                               :cheap (if (< (ktarget %) (:Used_ZTW %)) "cheap" "expensive"))
+                            bonds))]
+    {:title  nil
+     :data   {:values (concat bond-data data)}
+     :layer  [
+              {:mark     {:type "line"}
+               :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}} ;:scale {:domain [0. 30.]}
+                          :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                          :color {:field "Rating" :type "quantitative" :legend nil}}}
+              {:mark     {:type "rule"}
+               :encoding {:x       {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+                          :y       {:field "rule-min" :type "quantitative"}
+                          :y2      {:field "rule-max" :type "quantitative"}
+                          :color   {:field "cheap" :type "nominal" :scale {:domain ["cheap" "expensive"] :range ["#134848" "#FDAA94"]} :legend {:title nil :labelFontSize 14}}
+                          :tooltip [{:field "Bond" :type "ordinal" :title "Bond"}
+                                    {:field "Used_Duration" :type "quantitative", :title "Duration"}
+                                    {:field "Used_ZTW" :type "quantitative", :title "Spread"}
+                                    {:field target :type "quantitative", :title "Model"}]}}
+              {:mark     {:type "point" :filled true}
+               :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+                          :y     {:field "Used_ZTW" :type "quantitative"}
+                          :color {:value "black"}}}
+              ]
+     :width  1000
+     :height 625}))
+
 (defn spot-chart []
   (let [data @(rf/subscribe [:quant-model/model-output])]
     [box :padding "80px 10px" :class "rightelement" :child
      [v-box :class "element" :gap "50px" :width "1620px" :children
       [[title :label "Spot charts" :level :level1]
        [h-box :gap "50px" :children
-        [[v-box :gap "10px" :width "125px" :children
-          [(concat
-             (into [[title :label "Model type" :level :level3]]
-                   (for [c ["Legacy" "New" "SVR"]]
-                     ^{:key c}                              ;; key should be unique among siblings
-                     [radio-button
-                      :label c
-                      :value c
-                      :model spot-chart-model-choice
-                      :on-change #(reset! spot-chart-model-choice %)]))
-             [[gap :size "10px"]
-              [title :label "Rating curves" :level :level3]
-              [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]])]]
+        [[v-box :gap "0px" :width "125px" :children
+          (into [] (concat
+                      (into [[title :label "Model type" :level :level3]]
+                            (for [c ["Legacy" "New" "SVR"]]
+                              ^{:key c}                     ;; key should be unique among siblings
+                              [radio-button
+                               :label c
+                               :value c
+                               :model spot-chart-model-choice
+                               :on-change #(reset! spot-chart-model-choice %)]))
+                      [[gap :size "10px"]
+                       [title :label "Rating curves" :level :level3]
+                       [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]]))
+          ]
          [v-box :gap "0px" :width "150px" :children
           [[title :label "Issuers" :level :level3]
            [selection-list :model spot-chart-issuer-choice :width "100%" :height "600px" :choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data))))) :on-change #(reset! spot-chart-issuer-choice %)]]]
-         [p "chart comes here"]                             ;[oz/vega-lite nil]
+         [oz/vega-lite (spot-chart-vega-spec @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice)]                                                 ; [p "chart comes here"]                             ;[oz/vega-lite nil]
          ]]]]]))
 
 (defn methodology []
