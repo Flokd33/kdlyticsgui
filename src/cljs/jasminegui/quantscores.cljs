@@ -400,14 +400,15 @@
                           :y       {:field "rule-min" :type "quantitative"}
                           :y2      {:field "rule-max" :type "quantitative"}
                           :color   {:field "cheap" :type "nominal" :scale {:domain ["cheap" "expensive"] :range ["#134848" "#FDAA94"]} :legend {:title nil :labelFontSize 14}}
+}}
+              {:mark     {:type "point" :filled true}
+               :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+                          :y     {:field "Used_ZTW" :type "quantitative"}
+                          :color {:value "black"}
                           :tooltip [{:field "Bond" :type "ordinal" :title "Bond"}
                                     {:field "Used_Duration" :type "quantitative", :title "Duration"}
                                     {:field "Used_ZTW" :type "quantitative", :title "Spread"}
                                     {:field target :type "quantitative", :title "Model"}]}}
-              {:mark     {:type "point" :filled true}
-               :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
-                          :y     {:field "Used_ZTW" :type "quantitative"}
-                          :color {:value "black"}}}
               ]
      :width  1000
      :height 625}))
