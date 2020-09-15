@@ -94,7 +94,8 @@
     (case (subs input 0 1)
       ">" (> rowval (cljs.reader/read-string (subs input 1)))
       "<" (< rowval (cljs.reader/read-string (subs input 1)))
-      (> rowval (cljs.reader/read-string input)))))
+      "=" (= rowval (cljs.reader/read-string (subs input 1)))
+      (= rowval (cljs.reader/read-string input)))))
 
 (defn compare-nb-d100 [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box"
@@ -103,7 +104,8 @@
     (case (subs input 0 1)
       ">" (> rowval (* 0.01 (cljs.reader/read-string (subs input 1))))
       "<" (< rowval (* 0.01 (cljs.reader/read-string (subs input 1))))
-      (> rowval (* 0.01 (cljs.reader/read-string input))))))
+      "=" (= rowval (* 0.01 (cljs.reader/read-string (subs input 1))))
+      (= rowval (* 0.01 (cljs.reader/read-string input))))))
 
 (defn round2colpct  [this]
   (r/as-element

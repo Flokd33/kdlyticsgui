@@ -28,13 +28,17 @@
                  :country-codes                                      nil
 
                  ;navigation
-                 :navigation/active-view                             :home
+                 :navigation/active-view                             :entry ;:home
                  :navigation/active-home                             :summary
                  :navigation/active-var                              :overview
                  :navigation/active-qs                               :table
                  :navigation/active-attribution                      :summary
                  :navigation/success-modal                           {:show false :on-close nil :response nil}
-                 :navigation/show-mounting-modal                     true
+                 :navigation/show-mounting-modal                     false ;
+
+                 ;time machine
+                 :time-machine/enabled                               false
+                 :time-machine/date                                  (tools/int-to-gdate 20191231)
 
                  ;single-portfolio view
                  :single-portfolio-risk/display-style                "Tree"
@@ -252,6 +256,8 @@
            :quant-model/calculator-spreads
            :quant-model/rating-curves               []
 
+           :time-machine/enabled
+           :time-machine/date
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -354,7 +360,7 @@
 
 
 (def simple-http-get-events
-  [{:get-key :get-positions           :url-tail "positions"           :dis-key :positions}
+  [{:get-key :get-positions           :url-tail "positions"           :dis-key :positions :mounting-modal true}
    {:get-key :get-rating-to-score     :url-tail "rating-to-score"     :dis-key :rating-to-score}
    {:get-key :get-portfolios          :url-tail "portfolios"          :dis-key :portfolios}
    {:get-key :get-pivoted-positions   :url-tail "pivoted-positions"   :dis-key :pivoted-positions}

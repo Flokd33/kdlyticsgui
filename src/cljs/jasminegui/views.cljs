@@ -122,11 +122,13 @@
              :heading [box  :align :center :child [throbber :size :large]]
              :closeable? false]]))
 
+(defn entry [] [box :padding "80px 0px" :class "subbody" :child [box :align-self :center :class "element" :child [label :label "Please select an item at the top."]]])
 
 (defn active-view []
   (let [active-view @(rf/subscribe [:navigation/active-view])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-view
+      :entry [entry]
       :home   [home/home-view]
       :attribution [attribution/home-view]
       :var    [var/var-view]

@@ -13,7 +13,9 @@
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
 
-    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]])
+    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
+    [jasminegui.tools :as tools]
+    [cljs-time.core :refer [today]])
   )
 
 (rf/reg-event-fx
@@ -70,9 +72,42 @@
                ]]
   )
 
+
+(defn time-machine []
+  [v-box
+   :gap "10px"
+   :width "400px"
+   :class "subbody element"
+   :children [[title :label "Time machine" :level :level1]
+              [h-box  :gap "10px" :align :center
+               :children (into [[label :label "Enable time machine:"]]
+                               (for [[c v] [["OFF" false] ["ON" true]]]
+                                 ^{:key c}                     ;; key should be unique among siblings
+                                 [radio-button
+                                  :label c
+                                  :value v
+                                  :model (rf/subscribe [:time-machine/enabled])
+                                  :on-change #(rf/dispatch [:time-machine/enabled %])]))]
+              [h-box  :gap "10px" :align :center
+               :children [[label :label "Date:"]
+                          [datepicker-dropdown
+                           :model (rf/subscribe [:time-machine/date])
+                           :minimum (tools/int-to-gdate 20190101)
+                           :maximum (today)
+                           :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:time-machine/date %])]
+                          ]]
+              [button :style {:width "100%"} :label "Take me there!" :on-click #(rf/dispatch [:rebuild-time-machine @(rf/subscribe [:time-machine/date])])]
+
+
+
+
+
+              ]]
+  )
+
 (defn administration-view []
   [v-box                                                  ;:gap "10px"
    :gap "10px"
    :padding "80px 25px"
-   :children [[modal-success] [debug-operations]]]
+   :children [[modal-success] [debug-operations] [time-machine]]]
   )

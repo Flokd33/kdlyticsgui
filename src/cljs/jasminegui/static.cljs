@@ -3,7 +3,7 @@
 (def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
 
 (def main-navigation
-  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil}
+  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events [:get-positions :get-pivoted-positions :get-total-positions] :mounting-modal true}
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil}
    {:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events [:get-var-proxies]}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil}
