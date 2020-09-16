@@ -3,7 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as reagent]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink
+                         single-dropdown hyperlink alert-box
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -20,12 +20,13 @@
 
 (defn nav-home-bar []
   (let [active-home @(rf/subscribe [:navigation/active-home])]
-    (println active-home)
     [h-box
      :children [[v-box
                  :gap "20px"
                  :class "leftnavbar"
-                 :children (into []
+                 :children (into (if @(rf/subscribe [:time-machine/enabled])
+                                   [[alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " (subs (str @(rf/subscribe [:time-machine/date])) 0 8))]]
+                                   [])
                                  (for [item static/risk-navigation]
                                    [button
                                     :class (str "btn btn-primary btn-block" (if (and (= active-home (:code item))) " active"))

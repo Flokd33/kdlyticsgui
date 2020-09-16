@@ -271,6 +271,7 @@
 (def calculator-rating (r/atom "13"))
 (def chart-other-countries (r/atom false))
 (def chart-rating-neighbours (r/atom false))
+(def chart-country-neighbours (r/atom false))
 
 (defn get-implied-rating [txt]
   (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) @(rf/subscribe [:rating-to-score]))))] (name x) "error"))
@@ -281,6 +282,7 @@
   (let [prepare-data (fn [tbl txt] (for [line tbl] {:field txt :duration (line :Used_Duration) :spread (line :Used_ZTW) :txt (line :Bond)}))
         rating-score (cljs.reader/read-string @calculator-rating)
         other (str "Other " (get-implied-rating (str rating-score)))
+        other-country (str "Other " @calculator-country " " (get-implied-rating (str rating-score)))
         rating-up (get-implied-rating (str (inc rating-score)))
         rating-dw (get-implied-rating (str (dec rating-score)))
         data
@@ -292,8 +294,12 @@
           (if @chart-other-countries (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) rating-score) (not= (:Country %) @calculator-country)) @(rf/subscribe [:quant-model/model-output])) other))
           (if @chart-rating-neighbours (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (inc rating-score))) @(rf/subscribe [:quant-model/model-output])) rating-up))
           (if @chart-rating-neighbours (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (dec rating-score))) @(rf/subscribe [:quant-model/model-output])) rating-dw))
+          (if @chart-country-neighbours (prepare-data (filter #(and (= (:Country %) @calculator-country) (= (:Used_Rating_Score %) rating-score) (not= (:Sector %) @calculator-sector)) @(rf/subscribe [:quant-model/model-output])) other-country))
           )
-        color-domain-scale (merge {"comp" "#134848" "legacy" "red" "new" "orange" "svr" "blue"} (if @chart-other-countries {other "#009D80"}) (if @chart-rating-neighbours {rating-up "#FDAA94" rating-dw "#74908D"}))
+        color-domain-scale (merge {"comp" "#134848" "legacy" "red" "new" "orange" "svr" "blue"}
+                                  (if @chart-other-countries {other "#009D80"})
+                                  (if @chart-rating-neighbours {rating-up "#FDAA94" rating-dw "#74908D"})
+                                  (if @chart-country-neighbours {other-country "#591739"}))
         vega-spec
         {:title    nil
          :data     {:values data}
@@ -307,10 +313,12 @@
                                        {:field "spread" :type "quantitative", :title "Spread"}]}}]
          :width    1000
          :height   500}]
+    (println (prepare-data (filter #(and (= (:Country %) @calculator-country) (= (:Used_Rating_Score %) rating-score) (not= (:Sector %) @calculator-sector)) @(rf/subscribe [:quant-model/model-output])) other-country))
     [v-box :class "element"  :gap "20px" :width "1620px"
      :children [[title :label "Comparables chart" :level :level1]
-                [h-box :gap "50px" :children [[checkbox :model chart-other-countries :label "Plot other countries (same sector/rating)" :on-change #(reset! chart-other-countries %)]
-                                              [checkbox :model chart-rating-neighbours :label "Plot rating neighbours (same sector)" :on-change #(reset! chart-rating-neighbours %)]]]
+                [h-box :gap "50px" :children [[checkbox :model chart-other-countries :label "Other countries (same sector and rating)" :on-change #(reset! chart-other-countries %)]
+                                              [checkbox :model chart-rating-neighbours :label "Rating neighbours (same sector, rating up/down a notch)" :on-change #(reset! chart-rating-neighbours %)]
+                                              [checkbox :model chart-country-neighbours :label "Country neighbours (same country and rating)" :on-change #(reset! chart-country-neighbours %)]]]
                 [oz/vega-lite vega-spec]]]))
 
 (defn calculator-controller []
@@ -453,7 +461,7 @@
      [title :label "Support vector regression (SVR)" :level :level3]
      [p "We run spread = SVR(Duration, Rating, categorical variables), using the RBF Kernel and C=1000, e=0.01. C and e are roughly calibrated to match the explanatory power of the legacy and new model. The SVR model moves the data into a hyperspace where it can better be linearly explained. It will correctly reflect that high grade credit curves are steep while high yield ones are flat to inverted. On the other hand, it may overfit curves with very few bonds. For more on SVR: " [hyperlink-href :label "Wikipedia" :href "https://en.wikipedia.org/wiki/Support_vector_machine"]]
      [title :label "Curve shapes: the big issue with the legacy and new model" :level :level3]
-     [p "In effect the legacy and new model will give the same curve steepness to all credits, no matter where they trade: the steepness is independent from the spread level which is intuitively and factually wrong. This is made even slightly worse by the fact HY durations are lower than IG ones, so 10x30s HY ends up steeper than 10x30s IG."]
+     [p "The legacy and new model will give the same curve steepness to all credits: the steepness is independent from the spread level which is intuitively and factually wrong. In the legacy model, the spread ratio between durations is a fixed ratio of the duration difference, while in the new model, it's a fixed ratio of the duration ratio. Convexity makes the approach slightly better in the legacy model, and even worse in the new model."]
      ]]]
   )
 
