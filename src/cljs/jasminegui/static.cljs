@@ -4,9 +4,9 @@
 
 (def main-navigation
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events [:get-positions :get-pivoted-positions :get-total-positions] :mounting-modal true}
-   {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil}
+   {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months]}
    {:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events [:get-var-proxies]}
-   {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil}
+   {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events [:get-positions :get-pivoted-positions :get-total-positions :get-attribution-date :get-attribution-summary :get-attribution-available-months] :mounting-modal true}
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]}
    {:code :quant-scores     :name "Quant scores WIP"  :dispatch :quant-scores     :subs nil :load-events [:get-quant-model :get-country-codes :get-quant-rating-curves] :mounting-modal true}
    {:code :esg              :name "Refinitiv"         :dispatch :esg              :subs nil :load-events [:get-refinitiv-ids :get-refinitiv-structure]}

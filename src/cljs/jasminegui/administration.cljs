@@ -73,6 +73,12 @@
   )
 
 
+(rf/reg-event-db
+  :rebuild-time-machine
+  (fn [db [_ enabled date]]
+    (assoc mount/default-db :time-machine/enabled enabled :time-machine/date date)))
+
+
 (defn time-machine []
   [v-box
    :gap "10px"
@@ -96,7 +102,7 @@
                            :maximum (today)
                            :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:time-machine/date %])]
                           ]]
-              [button :style {:width "100%"} :label "Take me there!" :on-click #(rf/dispatch [:rebuild-time-machine @(rf/subscribe [:time-machine/date])])]
+              [button :style {:width "100%"} :label "Take me there!" :on-click #(rf/dispatch [:rebuild-time-machine @(rf/subscribe [:time-machine/enabled]) @(rf/subscribe [:time-machine/date])])]
 
 
 
