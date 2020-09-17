@@ -23,8 +23,8 @@
                  :portfolios                                         []
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
-                 :qt-date                                            nil
-                 :attribution-date                                   nil
+                 :qt-date                                            ""
+                 :attribution-date                                   ""
                  :country-codes                                      nil
 
                  ;navigation
@@ -38,7 +38,8 @@
 
                  ;time machine
                  :time-machine/enabled                               false
-                 :time-machine/date                                  (tools/int-to-gdate 20191231)
+                 :time-machine/date                                  (tools/int-to-gdate 20191230)
+                 :time-machine/has-rebuilt                           nil
 
                  ;single-portfolio view
                  :single-portfolio-risk/display-style                "Tree"
@@ -374,6 +375,7 @@
    {:get-key :get-quant-model         :url-tail "quant-model-output"  :dis-key :quant-model/model-output :mounting-modal true}
    {:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
+   {:get-key :get-time-machine-status :url-tail "time-machine-status" :dis-key :time-machine-status}
    ])
 
 (doseq [line simple-http-get-events]

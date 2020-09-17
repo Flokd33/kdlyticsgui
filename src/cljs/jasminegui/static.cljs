@@ -3,9 +3,9 @@
 (def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
 
 (def main-navigation
-  (let [home-events [:get-positions :get-pivoted-positions :get-total-positions]
+  (let [home-events [:get-qt-date :get-positions :get-pivoted-positions :get-total-positions]
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
-        var-events  [:get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
+        var-events  [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events attr-events}
    {:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events var-events}

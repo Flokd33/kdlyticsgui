@@ -78,6 +78,28 @@
   (fn [db [_ enabled date]]
     (assoc mount/default-db :time-machine/enabled enabled :time-machine/date date)))
 
+(rf/reg-event-db
+  :time-machine-status
+  (fn [db [_ m]]
+    (println m)
+    (println (= (:enabled m) true))
+    (assoc db :time-machine/enabled (:enabled m) :time-machine/date (tools/int-to-gdate (:date m)))))
+
+(rf/reg-event-fx
+  :rebuild-time-machine
+  (fn [{:keys [db]} [_ enabled date]]
+    {:db                 (assoc mount/default-db :time-machine/enabled enabled :time-machine/date date :navigation/show-mounting-modal true :portfolios (:portfolios db) :rating-to-score (:rating-to-score db))
+     :http-post-dispatch {:url          (str static/server-address "time-machine")
+                          :edn-params   {:enabled enabled :date (tools/gdate-to-yyyymmdd date)}
+                          :dispatch-key [:time-machine/has-rebuilt]
+                          :kwk          true}}))
+
+(rf/reg-event-db
+  :time-machine/has-rebuilt
+  (fn [db [_ msg]]
+    (println msg)
+    (assoc db :time-machine/has-rebuilt msg
+              :navigation/show-mounting-modal false)))
 
 (defn time-machine []
   [v-box
@@ -115,5 +137,5 @@
   [v-box                                                  ;:gap "10px"
    :gap "10px"
    :padding "80px 25px"
-   :children [[modal-success] [debug-operations] [time-machine]]]
+   :children [[modal-success] [time-machine] [debug-operations] ]]
   )

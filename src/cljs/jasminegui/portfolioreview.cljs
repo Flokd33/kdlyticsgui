@@ -390,9 +390,9 @@
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
         data @(rf/subscribe [:portfolio-review/summary-data])
         positions (filter #(= (:portfolio %) portfolio) @(rf/subscribe [:positions]))
-        f (fn [x] (gstring/format "%.0fbps" (* 100 x)))
-        g (fn [x] (gstring/format "%.2f" x))
-        h (fn [x] (gstring/format "%.1f" x))]
+        f (fn [x] (if x (gstring/format "%.0fbps" (* 100 x)) ""))
+        g (fn [x] (if x (gstring/format "%.2f" x) ""))
+        h (fn [x] (if x (gstring/format "%.1f" x) ""))]
     (portfolio-review-box-template [[title :level :level2 :label (str "MTD, " portfolio " returned " (f (get-in data [:mtd :portfolio])) " vs " (f (get-in data [:mtd :index])) " for the index, " (f (get-in data [:mtd :alpha])) " of alpha.")]
                                     [title :level :level2 :label (str "YTD, " portfolio " returned " (f (get-in data [:ytd :portfolio])) " vs " (f (get-in data [:ytd :index])) " for the index, " (f (get-in data [:ytd :alpha])) " of alpha.")]
                                     [title :level :level2 :label (str "The portfolio yield is " (g (* 100 (reduce + (map :contrib-yield positions)))) "% vs " (g (* 100 (reduce + (map :bm-contrib-yield positions)))) "% for the index.")]
