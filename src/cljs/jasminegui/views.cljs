@@ -24,7 +24,7 @@
 (defn navigation-event [item]
   "This is really not pure. But it saves loading time at mount."
   (doseq [k (:load-events item)]
-    (rf/dispatch [k]))                                      ;send http-requests sequentially
+    (rf/dispatch (if (vector? k) k [k])))                                      ;send http-requests sequentially
   (rf/dispatch [:navigation/active-view (:code item)]))
 
 (defn nav-bar []

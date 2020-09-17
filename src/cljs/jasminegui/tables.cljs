@@ -41,7 +41,7 @@
       [:div  (.format nff x)]
       "-")))
 
-
+;todo add comma into filter
 (defn case-insensitive-filter [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box"
   ;(println row)

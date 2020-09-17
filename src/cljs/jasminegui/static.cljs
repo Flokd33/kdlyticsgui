@@ -3,15 +3,18 @@
 (def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
 
 (def main-navigation
-  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events [:get-positions :get-pivoted-positions :get-total-positions] :mounting-modal true}
-   {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months]}
-   {:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events [:get-var-proxies]}
-   {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events [:get-positions :get-pivoted-positions :get-total-positions :get-attribution-date :get-attribution-summary :get-attribution-available-months] :mounting-modal true}
+  (let [home-events [:get-positions :get-pivoted-positions :get-total-positions]
+        attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
+        var-events  [:get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
+  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
+   {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events attr-events}
+   {:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events var-events}
+   {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events var-events) :mounting-modal true}
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]}
    {:code :quant-scores     :name "Quant scores WIP"  :dispatch :quant-scores     :subs nil :load-events [:get-quant-model :get-country-codes :get-quant-rating-curves] :mounting-modal true}
    {:code :esg              :name "Refinitiv"         :dispatch :esg              :subs nil :load-events [:get-refinitiv-ids :get-refinitiv-structure]}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
-   {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}])
+   {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}]))
 
 (def risk-navigation
   [{:code :summary             :name "Overview"}
