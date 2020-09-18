@@ -41,11 +41,24 @@
       [:div  (.format nff x)]
       "-")))
 
-;todo add comma into filter
+;;
+;(defn case-insensitive-filter-old [filterfn row]
+;  "filterfn is {id: column_name value: text_in_filter_box"
+;  ;(println row)
+;  (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))
+;
+;  ;(or
+;  ;  (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))
+;  ;  (.includes (.toLowerCase (str (aget row (aget filterfn "_pivotId")))) (.toLowerCase (aget filterfn "value")))
+;  ;  )
+;
+;  )
+
 (defn case-insensitive-filter [filterfn row]
-  "filterfn is {id: column_name value: text_in_filter_box"
-  ;(println row)
-  (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))
+  "filterfn is {id: column_name value: text_in_filter_box
+  OR through comma separation"
+  (let [filter-values (clojure.string/split (.toLowerCase ^string (aget filterfn "value")) ",")]
+    (some true? (map #(.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) %) filter-values)))
 
   ;(or
   ;  (.includes (.toLowerCase (str (aget row (aget filterfn "id")))) (.toLowerCase (aget filterfn "value")))
