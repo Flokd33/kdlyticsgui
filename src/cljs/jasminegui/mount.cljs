@@ -39,6 +39,7 @@
                  ;time machine
                  :time-machine/enabled                               false
                  :time-machine/date                                  (tools/int-to-gdate 20191230)
+                 :time-machine/model                                 "None"
                  :time-machine/has-rebuilt                           nil
 
                  ;single-portfolio view
@@ -259,6 +260,7 @@
 
            :time-machine/enabled
            :time-machine/date
+           :time-machine/model
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))

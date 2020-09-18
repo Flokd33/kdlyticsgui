@@ -579,13 +579,13 @@
      :children [[v-box
                  :gap "20px"
                  :class "leftnavbar"
-                 :children (into [
-                                  [h-box :children [[box    :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Previous" :on-click previous-page!]]
-                                                    [box :size "1" :align :center  :child [label :label (str (inc @current-page) "/" maximum-page) :style {:width "70px" :color "white" :text-align "center"}]]
-                                                    [box    :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Next"  :on-click next-page!]]]]
-                                  [line :color "#CA3E47" :class "separatornavline"]
-                                  [single-dropdown :width "100%" :model portfolio :choices portfolio-map :on-change portfolio-change]
-                                  [line :color "#CA3E47" :class "separatornavline"]]
+                 :children (into (vec (remove nil? [(if @(rf/subscribe [:time-machine/enabled]) [alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " (subs (str @(rf/subscribe [:time-machine/date])) 0 8))])
+                                                    [h-box :children [[box :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Previous" :on-click previous-page!]]
+                                                                      [box :size "1" :align :center :child [label :label (str (inc @current-page) "/" maximum-page) :style {:width "70px" :color "white" :text-align "center"}]]
+                                                                      [box :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Next" :on-click next-page!]]]]
+                                                    [line :color "#CA3E47" :class "separatornavline"]
+                                                    [single-dropdown :width "100%" :model portfolio :choices portfolio-map :on-change portfolio-change]
+                                                    [line :color "#CA3E47" :class "separatornavline"]]))
                                  (for [item portfolio-review-navigation]
                                    [button
                                     :class (str "btn btn-primary btn-block" (if (and (= active-tab (:code item))) " active"))

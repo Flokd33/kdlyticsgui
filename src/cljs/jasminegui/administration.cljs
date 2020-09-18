@@ -87,8 +87,14 @@
 
 (rf/reg-event-fx
   :rebuild-time-machine
-  (fn [{:keys [db]} [_ enabled date]]
-    {:db                 (assoc mount/default-db :time-machine/enabled enabled :time-machine/date date :navigation/show-mounting-modal true :portfolios (:portfolios db) :rating-to-score (:rating-to-score db))
+  (fn [{:keys [db]} [_ enabled date model]]
+    {:db                 (assoc mount/default-db
+                           :time-machine/enabled enabled
+                           :time-machine/date date
+                           :time-machine/model model
+                           :navigation/show-mounting-modal true
+                           :portfolios (:portfolios db)
+                           :rating-to-score (:rating-to-score db))
      :http-post-dispatch {:url          (str static/server-address "time-machine")
                           :edn-params   {:enabled enabled :date (tools/gdate-to-yyyymmdd date)}
                           :dispatch-key [:time-machine/has-rebuilt]
@@ -104,7 +110,7 @@
 (defn time-machine []
   [v-box
    :gap "10px"
-   :width "400px"
+   :width "600px"
    :class "subbody element"
    :children [[title :label "Time machine" :level :level1]
               [h-box  :gap "10px" :align :center
@@ -124,7 +130,12 @@
                            :maximum (today)
                            :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:time-machine/date %])]
                           ]]
-              [button :style {:width "100%"} :label "Take me there!" :on-click #(rf/dispatch [:rebuild-time-machine @(rf/subscribe [:time-machine/enabled]) @(rf/subscribe [:time-machine/date])])]
+              [h-box :gap "10px" :align :center
+               :children [[label :label "OGEMCORD dummy:"]
+                          [single-dropdown :model (rf/subscribe [:time-machine/model]) :on-change #(rf/dispatch [:time-machine/model]) :choices (into [] (for [i ["None" "GIC special [not implemented] "]] {:id i :label i}))]
+                          ]]
+              [button :style {:width "100%"} :class "btn btn-primary btn-block" :label "Take me there!" :on-click #(rf/dispatch [:rebuild-time-machine @(rf/subscribe [:time-machine/enabled]) @(rf/subscribe [:time-machine/date]) @(rf/subscribe [:time-machine/model])])]
+              [p "Note: takes about 5 minutes to load. Tested dates include 30/12/19, 21/01/20, 23/03/20, 20/05/20, and July 2020 onwards (20/07/20 for GIC). Ask Alex for any other date."]
 
 
 
