@@ -439,8 +439,9 @@
   (portfolio-review-box-template
     [[oz/vega-lite (grouped-horizontal-bars data "Basis points")]
      [gap :size "1"]
-     [v-box :width "100%" :gap "0px" :align :end :children [[p {:style {:text-align "right" :z-index 500}} @(rf/subscribe [:attribution-date])]
-                                                 [p {:style {:text-align "right" :z-index 500}} "UST categorized as cash"]]]]))
+     [v-box :width "100%" :gap "0px" :align :end
+      :children [[p {:style {:text-align "right" :z-index 500}} @(rf/subscribe [:attribution-date])]
+                 [p {:style {:text-align "right" :z-index 500}} "UST categorized as cash"]]]]))
 
 (defn historical-beta []
   (portfolio-review-box-template [[oz/vega-lite (area-chart @(rf/subscribe [:portfolio-review/historical-beta-chart-data]))]]))

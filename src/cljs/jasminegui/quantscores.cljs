@@ -269,6 +269,7 @@
 (def calculator-country (r/atom "BR"))
 (def calculator-duration (r/atom "9.0"))
 (def calculator-rating (r/atom "13"))
+(def show-bond-labels (r/atom true))
 (def chart-other-countries (r/atom false))
 (def chart-rating-neighbours (r/atom false))
 (def chart-country-neighbours (r/atom false))
@@ -301,21 +302,27 @@
                                   (if @chart-rating-neighbours {rating-up "#FDAA94" rating-dw "#74908D"})
                                   (if @chart-country-neighbours {other-country "#591739"}))
         vega-spec
-        {:title    nil
-         :data     {:values data}
-         :layer [
-                 {:mark {:type "point" :filled true}
-                  :encoding {:x {:field "duration" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}}
-                             :y {:field "spread" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
-                             :color {:field "field"  :scale {:domain (keys color-domain-scale) :range (vals color-domain-scale) } :legend {:labelFontSize 14 :title nil}}
-                             :tooltip [{:field "txt" :type "ordinal" :title "Bond"}
-                                       {:field "duration" :type "quantitative", :title "Duration"}
-                                       {:field "spread" :type "quantitative", :title "Spread"}]}}]
-         :width    1000
-         :height   500}]
+        {:title nil
+         :data  {:values data}
+         :layer (concat [{:mark     {:type "point" :filled true}
+                          :encoding {:x       {:field "duration" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}}
+                                     :y       {:field "spread" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                                     :color   {:field "field" :scale {:domain (keys color-domain-scale) :range (vals color-domain-scale)} :legend {:labelFontSize 14 :title nil}}
+                                     :tooltip [{:field "txt" :type "nominal" :title "Bond"}
+                                               {:field "duration" :type "quantitative", :title "Duration"}
+                                               {:field "spread" :type "quantitative", :title "Spread"}]}}]
+                        (if @show-bond-labels
+                          [{:mark     {:type "text" :dx 6 :align "left"}
+                            :encoding {:x    {:field "duration" :type "quantitative"}
+                                       :y    {:field "spread" :type "quantitative"}
+                                       :text {:field "txt" :type "nominal"}
+                                       }}]))
+         :width  1000
+         :height 500}]
     (println (prepare-data (filter #(and (= (:Country %) @calculator-country) (= (:Used_Rating_Score %) rating-score) (not= (:Sector %) @calculator-sector)) @(rf/subscribe [:quant-model/model-output])) other-country))
-    [v-box :class "element"  :gap "20px" :width "1620px"
+    [v-box :class "element"  :gap "10px" :width "1620px"
      :children [[title :label "Comparables chart" :level :level1]
+                [checkbox :model show-bond-labels :label "Bond labels" :on-change #(reset! show-bond-labels %)]
                 [h-box :gap "50px" :children [[checkbox :model chart-other-countries :label "Other countries (same sector and rating)" :on-change #(reset! chart-other-countries %)]
                                               [checkbox :model chart-rating-neighbours :label "Rating neighbours (same sector, rating up/down a notch)" :on-change #(reset! chart-rating-neighbours %)]
                                               [checkbox :model chart-country-neighbours :label "Country neighbours (same country and rating)" :on-change #(reset! chart-country-neighbours %)]]]
@@ -399,24 +406,31 @@
     {:title  nil
      :data   {:values (concat bond-data data)}
      :layer  [
-              {:mark     {:type "line"}
-               :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}} ;:scale {:domain [0. 30.]}
+              {:mark     {:type "line" :clip true}
+               :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [(max (dec (apply min (map :Used_Duration bond-data))) 0.) (min (inc (apply max (map :Used_Duration bond-data))) 25)]}} ;:scale {:domain [0. 30.]}
                           :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
                           :color {:field "Rating" :type "quantitative" :legend nil}}}
+              ;{:mark     {:type "text"}
+              ; :encoding {:x     {:field "Duration" :type "quantitative" :scale {:domain [1.,1.]}} ;:scale {:domain [0. 30.]}
+              ;            :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+              ;            :text {:field target :type "nominal"}}}
               {:mark     {:type "rule"}
                :encoding {:x       {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
                           :y       {:field "rule-min" :type "quantitative"}
                           :y2      {:field "rule-max" :type "quantitative"}
-                          :color   {:field "cheap" :type "nominal" :scale {:domain ["cheap" "expensive"] :range ["#134848" "#FDAA94"]} :legend {:title nil :labelFontSize 14}}
-}}
+                          :color   {:field "cheap" :type "nominal" :scale {:domain ["cheap" "expensive"] :range ["#134848" "#FDAA94"]} :legend {:title nil :labelFontSize 14}}}}
               {:mark     {:type "point" :filled true}
                :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
                           :y     {:field "Used_ZTW" :type "quantitative"}
                           :color {:value "black"}
-                          :tooltip [{:field "Bond" :type "ordinal" :title "Bond"}
+                          :tooltip [{:field "Bond" :type "nominal" :title "Bond"}
                                     {:field "Used_Duration" :type "quantitative", :title "Duration"}
                                     {:field "Used_ZTW" :type "quantitative", :title "Spread"}
                                     {:field target :type "quantitative", :title "Model"}]}}
+              {:mark     {:type "text" :dx 6 :align "left"}
+               :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+                          :y     {:field "Used_ZTW" :type "quantitative"}
+                          :text {:field "Bond" :type "nominal"}}}
               ]
      :width  1000
      :height 625}))

@@ -481,25 +481,29 @@
       [box :align :center :child [throbber :size :large]]
       [box :align :center
        :child [:> ReactTable
-                {:data           data
-                 :columns        (concat [{:Header "Date" :accessor "TradeDate" :width 100 :Cell th/subs10}
-                                          {:Header "Type" :accessor "TransactionTypeName" :width 100}
-                                          ;{:Header "Instrument" :accessor "IssueName" :width 400}
-                                          {:Header "Instrument" :accessor "NAME" :width 200}
-                                          {:Header "ISIN" :accessor "ISIN" :width 125}
-                                          {:Header "CCY" :accessor "LocalCcy" :width 60}
-                                          {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell th/nfh} ;
-                                          {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
-                                          {:Header "Counterparty" :accessor "counterparty_code" :width 100}]
-                                         (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
-                                           [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}
-                                            {:Header "Total return" :accessor "total-return" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
-                                            {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}]))
-                 :showPagination  (> (count data) 50)
-                 :defaultPageSize (min 50 (count data))
-                 :filterable      true
-                 :defaultFilterMethod tables/case-insensitive-filter
-                 :className      "-striped -highlight"}]])))
+               {:data                data
+                :columns             (concat [{:Header "Date" :accessor "TradeDate" :width 100 :Cell th/subs10}
+                                              {:Header "Type" :accessor "TransactionTypeName" :width 100}
+                                              ;{:Header "Instrument" :accessor "IssueName" :width 400}
+                                              {:Header "Instrument" :accessor "NAME" :width 200}
+                                              {:Header "ISIN" :accessor "ISIN" :width 125}
+                                              {:Header "CCY" :accessor "LocalCcy" :width 60}
+                                              {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell th/nfh} ;
+                                              {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Counterparty" :accessor "counterparty_code" :width 100}]
+                                             (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
+                                               [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}
+                                                {:Header "Total return" :accessor "total-return" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 1.)}
+                                                {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 ::getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 1.)}
+                                                ;{:Header "Total return" :accessor "total-return" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
+                                                ;{:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
+
+                                                ]))
+                :showPagination      (> (count data) 50)
+                :defaultPageSize     (min 50 (count data))
+                :filterable          true
+                :defaultFilterMethod tables/case-insensitive-filter
+                :className           "-striped -highlight"}]])))
 
 (defn trade-history []
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
