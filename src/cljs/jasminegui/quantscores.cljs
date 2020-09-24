@@ -402,12 +402,16 @@
                                :rule-max (max (ktarget %) (:Used_ZTW %))
                                :rule-min (min (ktarget %) (:Used_ZTW %))
                                :cheap (if (< (ktarget %) (:Used_ZTW %)) "cheap" "expensive"))
-                            bonds))]
+                            bonds))
+        min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
+        max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)
+        rating-text-data (into [] (for [line (filter #(= (:Duration %) (Math/round (* 0.5 (+ min-domain max-domain)))) data)] {:Duration (:Duration %) :spread (target %) :txt (get-implied-rating (str (:Rating %)))}))]
+    (print rating-text-data)
     {:title  nil
      :data   {:values (concat bond-data data)}
      :layer  [
               {:mark     {:type "line" :clip true}
-               :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [(max (dec (apply min (map :Used_Duration bond-data))) 0.) (min (inc (apply max (map :Used_Duration bond-data))) 25)]}} ;:scale {:domain [0. 30.]}
+               :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [min-domain max-domain]}} ;:scale {:domain [0. 30.]}
                           :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
                           :color {:field "Rating" :type "quantitative" :legend nil}}}
               ;{:mark     {:type "text"}
