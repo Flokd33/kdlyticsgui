@@ -405,21 +405,21 @@
                             bonds))
         min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
         max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)
-        rating-text-data (into [] (for [line (filter #(= (:Duration %) (Math/round (* 0.5 (+ min-domain max-domain)))) data)] {:Duration (:Duration %) :spread (target %) :txt (get-implied-rating (str (:Rating %)))}))]
-    (print rating-text-data)
+        rating-text-data (into [] (for [line (filter #(= (:Duration %) (Math/round (* 0.25 (+ min-domain max-domain)))) data)] {:Duration (:Duration line) :spread (ktarget line) :txt (get-implied-rating (str (:Rating line)))}))
+        ]
     {:title  nil
-     :data   {:values (concat bond-data data)}
+     :data   {:values (concat bond-data data rating-text-data)}
      :layer  [
               {:mark     {:type "line" :clip true}
                :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [min-domain max-domain]}} ;:scale {:domain [0. 30.]}
                           :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
                           :color {:field "Rating" :type "quantitative" :legend nil}}}
-              ;{:mark     {:type "text"}
-              ; :encoding {:x     {:field "Duration" :type "quantitative" :scale {:domain [1.,1.]}} ;:scale {:domain [0. 30.]}
-              ;            :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
-              ;            :text {:field target :type "nominal"}}}
+              {:mark     {:type "text" :dy -10}
+               :encoding {:x     {:field "Duration" :type "quantitative"}
+                          :y     {:field "spread" :type "quantitative"}
+                          :text {:field "txt" :type "nominal"}}}
               {:mark     {:type "rule"}
-               :encoding {:x       {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+               :encoding {:x       {:field "Used_Duration" :type "quantitative"}
                           :y       {:field "rule-min" :type "quantitative"}
                           :y2      {:field "rule-max" :type "quantitative"}
                           :color   {:field "cheap" :type "nominal" :scale {:domain ["cheap" "expensive"] :range ["#134848" "#FDAA94"]} :legend {:title nil :labelFontSize 14}}}}

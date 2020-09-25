@@ -322,6 +322,7 @@
       :defaultFilterMethod tables/case-insensitive-filter
       :columns
                            [{:Header "Groups" :columns grouping-columns}
+                            {:Header "Actual NAV" :columns [{:Header base-portfolio :accessor base-portfolio :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}]}
                             {:Header  (str "Portfolio " (name display-key) " vs " base-portfolio)
                              :columns (into [] (for [p portfolios] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}))}
                             {:Header  "Description"
@@ -445,7 +446,10 @@
                     :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :portfolio-alignment/filter)))]
                                [h-box :gap "10px" :children (shortcut-row :portfolio-alignment/shortcut)]
                                [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
-                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-alignment/table]) "alignment")]]]]]]]
+                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-alignment/table])
+                                                                                                                                             "alignment"
+                                                                                                                                             (concat [:NAME :description  :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups)))))
+                                                                                                                                             )]]]]]]]
                  [portfolio-alignment-risk-display]]]]))
 
 
