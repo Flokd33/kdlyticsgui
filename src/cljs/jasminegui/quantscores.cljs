@@ -483,6 +483,33 @@
      ]]]
   )
 
+(def trade-finder-isin (r/atom nil))
+(defn trade-finder []
+  (let [data @(rf/subscribe [:quant-model/model-output])
+        bond-data (first (filter #(= (:ISIN %) @trade-finder-isin) data))
+        duration (:Used_Duration bond-data)
+        rating (:Used_Rating_Score bond-data)
+        cheapness (:difference_svr bond-data)
+        bond-name (:Bond bond-data)
+        comparables (->> data
+                         (remove (comp nil? :Used_Duration))
+                         (remove (comp nil? :Used_Rating_Score))
+                         (remove (comp nil? :difference_svr))
+                         (filter #(and
+                                    (<= (dec duration) (:Used_Duration %) (inc duration))
+                                    (<= (dec rating) (:Used_Rating_Score %) (inc rating))
+                                    (>= (:difference_svr %) cheapness))) ;so we include the source bond - useful to see its score
+                         (sort-by :difference_svr)
+                         (reverse))]
+    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+     :children [
+                [v-box :class "element" :gap "10px" :width "1620px"
+                 :children [[title :label "Existing bond ISIN" :level :level1]
+                            [input-text :model trade-finder-isin :on-change #(reset! trade-finder-isin %)]
+                            [label :label bond-name]
+                            [p (str "We will look for bonds rated within 1 notch of the above, with duration within 1 year of the above, and scoring cheaper through the SVR model.")]]]
+                [qs-table (str (count comparables) " bonds scoring better") comparables]]]))
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -491,6 +518,7 @@
       :calculator [calculator-controller]
       :spot-charts [spot-chart]
       :historical-charts [qs-table-container]
+      :trade-finder [trade-finder]
       :methodology [methodology]
       [:div.output "nothing to display"])))
 
