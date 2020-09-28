@@ -42,6 +42,7 @@
       :all-portfolios                 [riskviews/multiple-portfolio-risk-controller]
       :portfolio-alignment            [riskviews/portfolio-alignment-risk-controller]
       :trade-history                  [riskviews/trade-history]
+      :large-exposures                [riskviews/large-exposures]
       [:div.output "nothing to display"])))
 
 

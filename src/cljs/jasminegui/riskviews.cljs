@@ -562,3 +562,24 @@
                                                      [gap :size "20px"]
                                                      [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio)]]]]]]]
                  [portfolio-history-table]]]]))
+
+
+(defn large-exposures []
+  [box :class "subbody rightelement" :child
+   [v-box :class "element" :align-self :center :justify :center :gap "20px"
+    :children [[h-box :align :center :children [[title :label (str "Large exposures (>5%) " @(rf/subscribe [:qt-date])) :level :level1]
+                                                [gap :size "1"]
+                                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:large-exposures]) "large_exposures")]]]
+               ;(println @(rf/subscribe [:large-exposures]))
+               [:> ReactTable
+                {:data           (reverse (sort-by :pct_held @(rf/subscribe [:large-exposures])))
+                 :columns        [(tables/risk-table-columns :name)
+                                  (tables/risk-table-columns :isin)
+                                  (tables/risk-table-columns :issuer)
+                                  {:Header "Held %" :accessor "pct_held" :width 100 :Cell (partial tables/nb-cell-format "%.1f%" 100.)  :style {:textAlign "right"}}
+                                  (tables/risk-table-columns :nominal)
+                                  {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 120 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
+                 :showPagination true
+                 :pageSize       30
+                 :showPageSizeOptions false
+                 :className      "-striped -highlight"}]]]])

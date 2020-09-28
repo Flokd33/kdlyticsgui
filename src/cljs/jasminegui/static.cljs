@@ -3,7 +3,7 @@
 (def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
 
 (def main-navigation
-  (let [home-events [:get-qt-date :get-positions :get-pivoted-positions :get-total-positions]
+  (let [home-events [:get-qt-date :get-positions :get-pivoted-positions :get-total-positions :get-large-exposures]
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
         var-events  [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
@@ -21,7 +21,8 @@
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
    {:code :portfolio-alignment :name "Portfolio alignment"}
-   {:code :trade-history       :name "Trade history"}])
+   {:code :trade-history       :name "Trade history"}
+   {:code :large-exposures     :name "Large exposures"}])
 
 (def attribution-navigation
   [{:code :summary             :name "Overview"}

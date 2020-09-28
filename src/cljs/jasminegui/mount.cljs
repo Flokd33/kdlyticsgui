@@ -26,6 +26,7 @@
                  :qt-date                                            ""
                  :attribution-date                                   ""
                  :country-codes                                      nil
+                 :large-exposures                                    []
 
                  ;navigation
                  :navigation/active-view                             :entry ;:home
@@ -168,6 +169,7 @@
            :navigation/show-mounting-modal
            :rating-to-score
            :country-codes
+           :large-exposures
            :pivoted-positions
            :total-positions
            :var/proxies
@@ -369,6 +371,7 @@
    {:get-key :get-pivoted-positions   :url-tail "pivoted-positions"   :dis-key :pivoted-positions}
    {:get-key :get-total-positions     :url-tail "total-positions"     :dis-key :total-positions}
    {:get-key :get-qt-date             :url-tail "qt-date"             :dis-key :qt-date}
+   {:get-key :get-large-exposures     :url-tail "large-exposures"     :dis-key :large-exposures}
    {:get-key :get-var-proxies         :url-tail "var-proxies"         :dis-key :var/proxies}
    {:get-key :get-var-dates           :url-tail "var-dates"           :dis-key :var/dates}
    {:get-key :get-betas               :url-tail "beta-table"          :dis-key :betas/table}
