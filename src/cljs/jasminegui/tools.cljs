@@ -22,9 +22,11 @@
     (.click link)
     (.removeChild (.-body js/document) link)))
 
-
 (defn csv-link
   ([data filename]
    (download-object-as-csv (clj->js (vector-of-maps->csv data)) (str filename ".csv")))
   ([data filename cols]
    (download-object-as-csv (clj->js (vector-of-maps->csv data cols)) (str filename ".csv"))))
+
+(defn react-table-to-csv [view filename cols]
+  (csv-link (js->clj (. (.getResolvedState view) -sortedData)) filename cols))

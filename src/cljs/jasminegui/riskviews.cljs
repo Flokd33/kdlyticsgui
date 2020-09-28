@@ -227,6 +227,8 @@
                           )
                           :style {:cursor "pointer"}}))
 
+(def single-portfolio-risk-display-view (atom nil))
+
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])
         portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])
@@ -253,6 +255,7 @@
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
+      :ref                 #(reset! single-portfolio-risk-display-view %)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) portfolio-positions)))) 25) ;(inc (count display))
       :showPageSizeOptions false
       :className           "-striped -highlight"
@@ -269,6 +272,8 @@
                                    "01Jan2019"
                                    @(rf/subscribe [:qt-date])])
             :style {:cursor "pointer"}}))
+
+(def multiple-portfolio-risk-display-view (atom nil))
 
 (defn multiple-portfolio-risk-display []
   (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
@@ -291,18 +296,21 @@
      {:data                display-one
       :defaultFilterMethod tables/case-insensitive-filter
       :columns             [{:Header "Groups" :columns grouping-columns}
-                            {:Header  (str "Portfolio " (name display-key-one)) :columns cols}
-                            {:Header  "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
+                            {:Header (str "Portfolio " (name display-key-one)) :columns cols}
+                            {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
       :showPagination      (not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display-one)))) 25)
       :showPageSizeOptions false
+      :ref                 #(reset! multiple-portfolio-risk-display-view %)
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :getTrProps          single-bond-trade-flat-history
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:multiple-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
       :onFilteredChange    #(rf/dispatch [:multiple-portfolio-risk/table-filter %])}]))
+
+(def portfolio-alignment-risk-display-view (atom nil))
 
 (defn portfolio-alignment-risk-display []
   (let [
@@ -332,6 +340,7 @@
       :filterable          (not is-tree)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display)))) 25)
       :showPageSizeOptions false
+      :ref                 #(reset! portfolio-alignment-risk-display-view %)
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:portfolio-alignment/table-filter])) ; [{:id "analyst" :value "Tammy"}]
@@ -382,7 +391,10 @@
                                                                                                    (shortcut-row :single-portfolio-risk/shortcut)
                                                                                                    [[gap :size "50px"]
                                                                                                     [title :label "Download:" :level :level3]
-                                                                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:single-portfolio-risk/table]) @portfolio)]]))]]]]]
+                                                                                                     [md-circle-icon-button :md-icon-name "zmdi-download"
+                                                                                                      :on-click #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio (concat ["NAME" "isin" "description"] (map name (keys (last @(rf/subscribe [:single-portfolio-risk/table]))))))
+                                                                                                      ;ls/csv-link @(rf/subscribe [:single-portfolio-risk/table]) @portfolio)
+                                                                                                      ]]))]]]]]
                  [single-portfolio-risk-display]]]]))
 
 (defn multiple-portfolio-risk-controller []
@@ -394,7 +406,8 @@
         field-one (rf/subscribe [:multiple-portfolio-risk/field-one])
         field-two (rf/subscribe [:multiple-portfolio-risk/field-two])
         hide-zero-risk (rf/subscribe [:multiple-portfolio-risk/hide-zero-holdings])
-        download-columns (concat (map keyword portfolios) (map keyword (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))) [:isin :description])
+        download-columns-old (concat (map keyword portfolios) (map keyword (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))) [:isin :description])
+        download-columns (concat ["NAME" "isin" "description"] portfolios (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
@@ -419,8 +432,8 @@
                               [v-box :gap "20px"
                                :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter)))]
                                           [h-box :gap "10px" :children (shortcut-row :multiple-portfolio-risk/shortcut)]
-                                          [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
-                                                                        [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:multiple-portfolio-risk/table]) "pivot" download-columns)]]]]]]]
+                                          [h-box :gap "10px" :children [[title :label "Download:" :level :level3]
+                                                                        [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "pivot" download-columns)]]]]]]]
                  [multiple-portfolio-risk-display]]]]))
 
 (defn portfolio-alignment-risk-controller []
@@ -446,9 +459,9 @@
                     :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :portfolio-alignment/filter)))]
                                [h-box :gap "10px" :children (shortcut-row :portfolio-alignment/shortcut)]
                                [h-box :gap "10px" :children [[title :label "Download:" :level :level3]
-                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-alignment/table])
+                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @portfolio-alignment-risk-display-view
                                                                                                                                              "alignment"
-                                                                                                                                             (concat [:NAME :description  :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups))))))]]]]]]]
+                                                                                                                                                       (map name (concat [:NAME :description :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups)))))))]]]]]]]
                  [portfolio-alignment-risk-display]]]]))
 
 
