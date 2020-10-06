@@ -570,7 +570,6 @@
     :children [[h-box :align :center :children [[title :label (str "Large exposures (>5%) " @(rf/subscribe [:qt-date])) :level :level1]
                                                 [gap :size "1"]
                                                 [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:large-exposures]) "large_exposures")]]]
-               ;(println @(rf/subscribe [:large-exposures]))
                [:> ReactTable
                 {:data           (reverse (sort-by :pct_held @(rf/subscribe [:large-exposures])))
                  :columns        [(tables/risk-table-columns :name)

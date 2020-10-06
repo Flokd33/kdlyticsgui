@@ -204,7 +204,7 @@
                                         :model table-style
                                         :on-change #(reset! table-style %)]))]
                  [:> ReactTable
-                  {:data                (sort-by (juxt :Country :Ticker :Used_Duration) data)
+                  {:data                data
                    :columns             (case @table-style
                                           "Summary"
                                           [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector])}
@@ -219,7 +219,7 @@
                                            {:Header "Model prediction" :columns (mapv quant-score-table-columns [:predicted_spread_legacy_1 :predicted_spread_new_1 :predicted_spread_svr_1])}
                                            {:Header "Cheapness (>0)" :columns (mapv quant-score-table-columns [:difference_legacy_1 :difference_new_1 :difference_svr_1])}
                                            {:Header "Universe score detail" :columns (mapv quant-score-table-columns [:URS_legacy_1 :URS_new_1 :URS_svr_1])}
-                                           {:Header "Historical score detail" :columns (mapv quant-score-table-columns [:URS_legacy_1 :URS_new_1 :URS_svr_1])}
+                                           {:Header "Historical score detail" :columns (mapv quant-score-table-columns [:HRS_legacy_1 :HRS_new_1 :HRS_svr_1])}
                                            {:Header "Universe score" :columns (mapv quant-score-table-columns [:URV_legacy_1 :URV_new_1 :URV_svr_1])}
                                            {:Header "Historical score" :columns (mapv quant-score-table-columns [:HRV_legacy_1 :HRV_new_1 :HRV_svr_1])}
                                            {:Header "Implied rating" :columns (mapv quant-score-table-columns [:implied_rating_legacy_1 :implied_rating_new_1 :implied_rating_svr_1])}
@@ -382,10 +382,10 @@
                  (:new @(rf/subscribe [:quant-model/calculator-spreads]))
                  (:svr @(rf/subscribe [:quant-model/calculator-spreads]))
                  comparables]
-                [qs-table (str "Comparables table") comparables]]]))
+                [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
 (defn qs-table-container []
-  [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
+  [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" (sort-by (juxt :Country :Ticker :Used_Duration) @(rf/subscribe [:quant-model/model-output]))]])
 
 (def spot-chart-model-choice (r/atom "SVR"))
 (def spot-chart-rating-choice (r/atom #{3 6 9 12 15 18}))               ;3 6 9 12 15 18
