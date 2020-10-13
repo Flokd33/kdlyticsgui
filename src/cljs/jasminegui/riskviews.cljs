@@ -506,7 +506,10 @@
                                               {:Header "CCY" :accessor "LocalCcy" :width 60}
                                               {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell th/nfh} ;
                                               {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Counterparty" :accessor "counterparty_code" :width 100}]
+                                              {:Header "Counterparty" :accessor "counterparty_code" :width 100}
+                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 75}
+                                              {:Header "Region" :accessor "JPMRegion" :width 100}
+                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 125}]
                                              (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
                                                [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}
                                                 {:Header "Total return" :accessor "total-return" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
