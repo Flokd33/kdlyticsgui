@@ -44,7 +44,7 @@
                  :time-machine/has-rebuilt                           nil
 
                  ;single-portfolio view
-                 :single-portfolio-risk/display-style                "Tree"
+                 :single-portfolio-risk/display-style                "Table"
                  :single-portfolio-risk/portfolio                    "OGEMCORD"
                  :single-portfolio-risk/filter                       {1 :region 2 :country 3 :issuer}
                  :single-portfolio-risk/hide-zero-holdings           true

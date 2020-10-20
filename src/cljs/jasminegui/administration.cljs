@@ -81,8 +81,8 @@
 (rf/reg-event-db
   :time-machine-status
   (fn [db [_ m]]
-    (println m)
-    (println (= (:enabled m) true))
+    ;(println m)
+    ;(println (= (:enabled m) true))
     (assoc db :time-machine/enabled (:enabled m) :time-machine/date (tools/int-to-gdate (:date m)))))
 
 (rf/reg-event-fx

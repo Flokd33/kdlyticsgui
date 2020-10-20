@@ -14,7 +14,9 @@
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
     [jasminegui.riskviews :as riskviews]
-    [jasminegui.tradehistory :as tradehistory])
+    [jasminegui.tradehistory :as tradehistory]
+    [reagent-contextmenu.menu :as rcm]
+    )
   )
 
 
@@ -51,5 +53,7 @@
    :children [[nav-home-bar]
               [active-home]
               [tradehistory/modal-single-bond-trade-history]
-              [tradehistory/modal-single-bond-flat-trade-history]]])
+              [tradehistory/modal-single-bond-flat-trade-history]
+              [rcm/context-menu]
+              ]])
 

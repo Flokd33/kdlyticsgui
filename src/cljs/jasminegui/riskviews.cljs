@@ -18,6 +18,7 @@
     [jasminegui.tradehistory :as th]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [cljs-time.core :refer [today]]
+    [reagent-contextmenu.menu :as rcm]
     )
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
@@ -213,21 +214,45 @@
 (def dropdown-width "150px")
 (def mini-dropdown-width "75px")
 
-(defn single-bond-trade-history [state rowInfo instance]
-  (clj->js {:onClick #(do (rf/dispatch [:get-single-bond-history
-                                        (aget rowInfo "row" "_original" "NAME")
-                                        (aget rowInfo "row" "_original" "id")
-                                        [@(rf/subscribe [:single-portfolio-risk/portfolio])]
-                                        "01Jan2019"
-                                        @(rf/subscribe [:qt-date])])
-                          (rf/dispatch [:get-bond-price-history
-                                        (aget rowInfo "row" "_original" "NAME")
-                                        "01Jan19"
-                                        @(rf/subscribe [:qt-date])])
-                          )
-                          :style {:cursor "pointer"}}))
+(defn single-bond-trade-history-event [state rowInfo instance]
+  (do (rf/dispatch [:get-single-bond-history
+                    (aget rowInfo "row" "_original" "NAME")
+                    (aget rowInfo "row" "_original" "id")
+                    [@(rf/subscribe [:single-portfolio-risk/portfolio])]
+                    "01Jan2019"
+                    @(rf/subscribe [:qt-date])])
+      (rf/dispatch [:get-bond-price-history
+                    (aget rowInfo "row" "_original" "NAME")
+                    "01Jan19"
+                    @(rf/subscribe [:qt-date])])
+      ))
+
+
+;(defn single-bond-trade-history [state rowInfo instance]
+;  (clj->js {:onClick #(single-bond-trade-history-event state rowInfo instance)
+;                          :style {:cursor "pointer"}}))
 
 (def single-portfolio-risk-display-view (atom nil))
+
+(defn copy-to-clipboard [val]
+  (let [el (js/document.createElement "textarea")]
+    (set! (.-value el) val)
+    (.appendChild js/document.body el)
+    (.select el)
+    (js/document.execCommand "copy")
+    (.removeChild js/document.body el)))
+
+(defn fnevt [state rowInfo instance evt]
+  (rcm/context!
+    evt
+    [(aget rowInfo "original" "NAME")                                         ; <---- string is a section title
+     ["Copy ISIN" (fn [] (copy-to-clipboard (aget rowInfo "original" "isin")))]
+     ["Trade history" (fn [] (single-bond-trade-history-event state rowInfo instance))]         ; <---- the name is a span
+     ;["Build ticket" (fn [] (prn "my-fn"))]
+     ]))
+
+(defn on-click-context [state rowInfo instance]
+  (clj->js {:onClick (fn [evt] (fnevt state rowInfo instance evt)) :style {:cursor "pointer"}}))
 
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])
@@ -260,7 +285,7 @@
       :showPageSizeOptions false
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
-      :getTrProps          single-bond-trade-history
+      :getTrProps          on-click-context                 ;single-bond-trade-history
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
       :onFilteredChange    #(rf/dispatch [:single-portfolio-risk/table-filter %])}]))
 
