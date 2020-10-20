@@ -328,6 +328,25 @@
                                               [checkbox :model chart-country-neighbours :label "Country neighbours (same country and rating)" :on-change #(reset! chart-country-neighbours %)]]]
                 [oz/vega-lite vega-spec]]]))
 
+(defn calculator-result-table []
+  (let [data @(rf/subscribe [:quant-model/model-output])
+        calc-data @(rf/subscribe [:quant-model/calculator-spreads])
+        display (into [] (for [[k txt c] [[:d4 "Four factor" (count (filter #(and (= (:Country %) @calculator-country) (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating))) data))]
+                                          [:d3country (str @calculator-country " " @calculator-duration "y " (get-implied-rating @calculator-rating)) (count (filter #(and (= (:Country %) @calculator-country) (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating))) data))]
+                                          [:d3sector (str @calculator-sector " " @calculator-duration "y " (get-implied-rating @calculator-rating)) (count (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating))) data))]
+                                          [:d2 (str @calculator-duration "y " (get-implied-rating @calculator-rating)) (count (filter #(and (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating))) data))]]]
+                           {:model txt :svr (get-in calc-data [:svr k]) :legacy (get-in calc-data [:legacy k]) :new (get-in calc-data [:new k]) :comps c}))]
+    [:> ReactTable
+     {:data           display
+      :columns        [{:Header "Model" :accessor "model" :width 200}
+                       {:Header "Legacy" :accessor "legacy" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                       {:Header "New" :accessor "new" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                       {:Header "SVR" :accessor "svr" :width 60 :style {:textAlign "right" :background-color "lightgrey"} :Cell tables/zspread-format}
+                       {:Header "Comparables" :accessor "comps" :width 100 :style {:textAlign "right"}}]
+      :showPagination false
+      :pageSize       4
+      :filterable     false}]))
+
 (defn calculator-controller []
   (let [country-codes @(rf/subscribe [:country-codes])
         data @(rf/subscribe [:quant-model/model-output])
@@ -350,37 +369,23 @@
                 [v-box :class "element" :gap "0px" :width "1620px"
                  :children [[title :label "New issue calculator" :level :level1]
                             [gap :size "20px"]
-                            [h-box :gap "10px" :align :start
-                             :children [[label :width "200px" :label "Country"]
-                                        [label :width "200px" :label "Sector"]
-                                        [label :width "100px" :label "Duration"]
-                                        [label :width "100px" :label "Rating score"]
-                                        [label :width "100px" :label "Rating"]
-                                        [gap :size "100px"]
-                                        [gap :size "20px"]
-                                        [label :width "100px" :label "Legacy"]
-                                        [label :width "100px" :label "New"]
-                                        [label :width "100px" :label "SVR"]]]
-                            [h-box :gap "10px" :align :center
-                             :children [[single-dropdown :width "200px" :model calculator-country :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                        [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                        [input-text :width "100px" :model calculator-duration :on-change #(do (reset! calculator-duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                        [input-text :width "100px" :model calculator-rating :on-change #(do (reset! calculator-rating %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                        [label :width "100px" :label (get-implied-rating @calculator-rating)]
+                            [h-box :gap "50px" :align :center
+                             :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"]]]
+                                                                                     [h-box :gap "10px" :children [[single-dropdown :width "200px" :model calculator-country :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil])) :filter-box? true]
+                                                                                                                   [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]]]
+                                                                                     [gap :size "20px"]
+                                                                                     [h-box :gap "10px" :children [[label :width "100px" :label "Duration"] [label :width "100px" :label "Rating score"] [label :width "100px" :label "Rating"]]]
+                                                                                     [h-box :gap "10px" :align :center :children [[input-text :width "100px" :model calculator-duration :on-change #(do (reset! calculator-duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                                                                                                   [input-text :width "100px" :model calculator-rating :on-change #(do (reset! calculator-rating %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                                                                                                   [label :width "100px" :label (get-implied-rating @calculator-rating)]]]]]
+
                                         [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread @calculator-country @calculator-sector @calculator-rating @calculator-duration])]
-                                        [gap :size "20px"]
-                                        [label :width "100px" :label (str (:legacy @(rf/subscribe [:quant-model/calculator-spreads])) "bps")]
-                                        [label :width "100px" :label (str (:new @(rf/subscribe [:quant-model/calculator-spreads])) "bps")]
-                                        [label :width "100px" :label (str (:svr @(rf/subscribe [:quant-model/calculator-spreads])) "bps")]
-                                        [label :label (str (count (filter #(and (= (:Country %) @calculator-country)
-                                                                                (= (:Sector %) @calculator-sector)
-                                                                                (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating)))
-                                                                          data)) " direct comparables.")]]]]]
+                                        [calculator-result-table]]]]]
                 [comparable-chart
                  (cljs.reader/read-string @calculator-duration)
-                 (:legacy @(rf/subscribe [:quant-model/calculator-spreads]))
-                 (:new @(rf/subscribe [:quant-model/calculator-spreads]))
-                 (:svr @(rf/subscribe [:quant-model/calculator-spreads]))
+                 (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:legacy :d4])
+                 (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:new :d4])
+                 (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:svr :d4])
                  comparables]
                 [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
