@@ -192,7 +192,7 @@
 
 (defn grouped-vertical-bars [data title]
   "The data is of the form [{:date dt :group TXT :value 0}]"
-  (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
+  (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 40) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         colors (take (count (distinct (mapv :group data))) performance-colors)
         scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
     ;(println data)

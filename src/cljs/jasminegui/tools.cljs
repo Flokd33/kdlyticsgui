@@ -30,3 +30,11 @@
 
 (defn react-table-to-csv [view filename cols]
   (csv-link (js->clj (. (.getResolvedState view) -sortedData)) filename cols))
+
+(defn copy-to-clipboard [val]
+  (let [el (js/document.createElement "textarea")]
+    (set! (.-value el) val)
+    (.appendChild js/document.body el)
+    (.select el)
+    (js/document.execCommand "copy")
+    (.removeChild js/document.body el)))

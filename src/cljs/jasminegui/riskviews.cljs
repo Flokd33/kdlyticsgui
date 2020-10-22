@@ -234,25 +234,19 @@
 
 (def single-portfolio-risk-display-view (atom nil))
 
-(defn copy-to-clipboard [val]
-  (let [el (js/document.createElement "textarea")]
-    (set! (.-value el) val)
-    (.appendChild js/document.body el)
-    (.select el)
-    (js/document.execCommand "copy")
-    (.removeChild js/document.body el)))
-
 (defn fnevt [state rowInfo instance evt]
   (rcm/context!
     evt
     [(aget rowInfo "original" "NAME")                                         ; <---- string is a section title
-     ["Copy ISIN" (fn [] (copy-to-clipboard (aget rowInfo "original" "isin")))]
+     ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "isin")))]
      ["Trade history" (fn [] (single-bond-trade-history-event state rowInfo instance))]         ; <---- the name is a span
      ;["Build ticket" (fn [] (prn "my-fn"))]
      ]))
 
 (defn on-click-context [state rowInfo instance]
-  (clj->js {:onClick (fn [evt] (fnevt state rowInfo instance evt)) :style {:cursor "pointer"}}))
+  (clj->js {:onClick (partial fnevt state rowInfo instance) :style {:cursor "pointer"}})
+  ;(clj->js {:onClick (fn [evt] (fnevt state rowInfo instance evt)) :style {:cursor "pointer"}})
+  )
 
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])

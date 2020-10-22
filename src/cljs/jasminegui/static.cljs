@@ -40,6 +40,7 @@
    {:code :calculator         :name "Calculator"}
    {:code :spot-charts        :name "Spot charts"}
    {:code :historical-charts  :name "Historical charts - WIP"}
+   {:code :top-bottom         :name "Most expensive / cheap"}
    {:code :trade-finder       :name "Trade finder"}
    {:code :methodology        :name "Methodology"}])
 

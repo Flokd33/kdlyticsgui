@@ -21,6 +21,7 @@
   :get-calculator-spread
   (fn [{:keys [db]} [_ country sector rating duration]]
     ;warning country and sector have ampersands & - this is a killer
+    (println country)
     {:http-get-dispatch {:url          (str static/server-address "quant-model-calculator?country=" (.replace country "&" "@") "&sector=" (.replace sector "&" "@") "&rating=" rating "&duration=" duration)
                          :dispatch-key [:quant-model/calculator-spreads]
                          :kwk          true}}))
@@ -41,10 +42,11 @@
   {
    :ISIN                      {:Header "ISIN" :accessor "ISIN" :width 115}
    :Country                   {:Header "Country" :accessor "Country" :width 65}
-   :Sector                    {:Header "Sector" :accessor "Sector" :width 100}
+   :Sector                    {:Header "Sector" :accessor "Sector" :width 90}
    :Ticker                    {:Header "Ticker" :accessor "Ticker" :width 100}
    :Use                       {:Header "Use" :accessor "Use" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
-   :Bond                      {:Header "Bond" :accessor "Bond" :width 160}
+   :Bond                      {:Header "Bond" :accessor "Bond" :width 150}
+   :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 40}
    :Bond-sticky               {:Header "Bond" :accessor "Bond" :width 160 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                {:Header "Price" :accessor "Used_Price" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
    :Rating_String             {:Header "Rating source" :accessor "Rating_String" :width 120 :filterable true :filterMethod tables/compare-nb-d100}
@@ -188,10 +190,10 @@
 
 
 
-(def table-style (reagent/atom "Summary"))
+(def table-style (reagent/atom "SVR"))
 
 (defn qs-table [mytitle data]
-     [v-box :class "element"  :gap "20px" :width "1620px"
+     [v-box :class "element"  :gap "20px" :width "1640px"
       :children [[h-box :align :center :children [[title :label mytitle :level :level1]
                                                   [gap :size "1"]
                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "quant-model-output")]]]
@@ -207,14 +209,14 @@
                   {:data                data
                    :columns             (case @table-style
                                           "Summary"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model prediction" :columns (mapv quant-score-table-columns [:predicted_spread_legacy_1 :predicted_spread_new_1 :predicted_spread_svr_1])}
                                            {:Header "Cheapness (>0)" :columns (mapv quant-score-table-columns [:difference_legacy_1 :difference_new_1 :difference_svr_1])}
                                            {:Header "Universe score" :columns (mapv quant-score-table-columns [:URV_legacy_1 :URV_new_1 :URV_svr_1])}
                                            {:Header "Historical score" :columns (mapv quant-score-table-columns [:HRV_legacy_1 :HRV_new_1 :HRV_svr_1])}]
                                           "Full"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond-sticky :ISIN :Country :Sector])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond-sticky :ISIN :Country :Sector :SENIOR])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model prediction" :columns (mapv quant-score-table-columns [:predicted_spread_legacy_1 :predicted_spread_new_1 :predicted_spread_svr_1])}
                                            {:Header "Cheapness (>0)" :columns (mapv quant-score-table-columns [:difference_legacy_1 :difference_new_1 :difference_svr_1])}
@@ -235,21 +237,21 @@
                                            {:Header "Std group difference" :columns (mapv quant-score-table-columns [:std_rat_grp_diff_legacy_1 :std_rat_grp_diff_new_1 :std_rat_grp_diff_svr_1])}
                                            {:Header "Debugging: source data" :columns (mapv quant-score-table-columns [:FORCE_INCLUSION :AMT_OUTSTANDING :Use :Price-source :Used_YTW :ZTW-source :Duration-source :Rating-source :Override :OverrideRating :OverrideValuation :Workout_date :Workout_price])}]
                                           "Legacy"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector  :SENIOR])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_legacy_2 :difference_legacy_2 :URV_legacy_2 :HRV_legacy_2 :implied_rating_legacy_2])}
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_legacy_2 :URS_rank_legacy_1D_2 :URS_rank_legacy_1W_2 :URS_rank_legacy_1M_2])}
                                            {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_legacy_D1D_2 :URS_rank_legacy_D1W_2 :URS_rank_legacy_D1M_2])}
                                            ]
                                           "New"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_new_2 :difference_new_2 :URV_new_2 :HRV_new_2 :implied_rating_new_2])}
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_new_2 :URS_rank_new_1D_2 :URS_rank_new_1W_2 :URS_rank_new_1M_2])}
                                            {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_new_D1D_2 :URS_rank_new_D1W_2 :URS_rank_new_D1M_2])}
                                            ]
                                           "SVR"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :URV_svr_2 :HRV_svr_2 :implied_rating_svr_2])}
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_svr_2 :URS_rank_svr_1D_2 :URS_rank_svr_1W_2 :URS_rank_svr_1M_2])}
@@ -515,6 +517,83 @@
                             [p (str "We will look for bonds rated within 1 notch of the above, with duration within 1 year of the above, and scoring cheaper through the SVR model.")]]]
                 [qs-table (str (count comparables) " bonds scoring better") comparables]]]))
 
+(defn duration-grouping-fn
+  "we put .00001 because bbg duration is rounded to 2 digits"
+  [m]
+  (let [duration (:Used_Duration m)]
+    (cond
+      (< 0 duration 3.00001) "0-3Y"
+      (< 3.00001 duration 5.00001) "3-5Y"
+      (< 5.00001 duration 10.00001) "5-10Y"
+      (< 10.00001 duration 15.00001) "10-15Y"
+      (< 15.00001 duration) "15Y+"
+      :else "uncategorized")))
+
+(def top-bottom-ignore-subs? (r/atom false))
+(def top-bottom-ignore-sovs? (r/atom true))
+(def top-bottom-how-many (r/atom 3))
+
+(defn top-bottom-str [this]
+  (let [coll (js->clj (aget this "value"))]
+    (r/as-element
+      [v-box :children (mapv (fn [line]
+                               [label
+                                :style {:color (if (pos? (get-in line ["difference_svr"])) "darkgreen" "darkred")}
+                                :label (str (get-in line ["Bond"]) " (" (Math/round (get-in line ["difference_svr"])) ")")]) coll)]
+      )))
+
+(defn top-bottom []
+  (let [data @(rf/subscribe [:quant-model/model-output])
+        fdata (filter #(and
+                         (some? (:difference_svr %))
+                         (if @top-bottom-ignore-sovs? (not= (:Sector %) "Sovereign") true)
+                         (if @top-bottom-ignore-subs? (not= (:SENIOR %) "N") true))
+                      data)
+        res (into []
+                  (for [[duration-bucket durgrp] (group-by duration-grouping-fn fdata)]
+                      (apply merge
+                             {:duration-bucket duration-bucket}
+                             (for [[large-rating-group lrgroup] (group-by :Used_Large_Rating_Score durgrp)]
+                               {(keyword (str "LRG" large-rating-group)) (let [s (reverse (sort-by :difference_svr lrgroup))] (concat (take @top-bottom-how-many (filter (comp pos? :difference_svr) s)) (take-last @top-bottom-how-many (filter (comp neg? :difference_svr) s))))}))))
+        sres (->> res
+                  (remove #(= (:duration-bucket %) "uncategorized"))
+                  (sort-by #(.indexOf ["0-3Y" "3-5Y" "5-10Y" "10-15Y" "15Y+"] (:duration-bucket %))))]
+    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+     :children [[v-box :class "element" :gap "20px" :width "1620px"
+                 :children [[title :level :level1 :label "Most expensive / cheap bonds by category"]
+                            [h-box :gap "20px" :align :center
+                             :children [[checkbox :model top-bottom-ignore-sovs? :label "Ignore sovereign bonds?" :on-change #(reset! top-bottom-ignore-sovs? %)]
+                                        [checkbox :model top-bottom-ignore-subs? :label "Ignore subordinated bonds?" :on-change #(reset! top-bottom-ignore-subs? %)]
+                                        [label :label "How many:"] [single-dropdown :width "75px" :model top-bottom-how-many :choices [{:id 3 :label 3} {:id 5 :label 5} {:id 10 :label 10}] :on-change #(reset! top-bottom-how-many %)]]]
+                            [:> ReactTable
+                             {:data           sres
+                              :columns        [{:Header "Duration bucket" :accessor "duration-bucket" :width 200 :style {:textAlign "center" :display "flex" :flexDirection "column" :justifyContent "center"}}
+                                               {:Header "AA" :accessor "LRG1" :width 200 :Cell top-bottom-str}
+                                               {:Header "A" :accessor "LRG2" :width 200 :Cell top-bottom-str}
+                                               {:Header "BBB" :accessor "LRG3" :width 200 :Cell top-bottom-str}
+                                               {:Header "BB" :accessor "LRG4" :width 200 :Cell top-bottom-str}
+                                               {:Header "B" :accessor "LRG5" :width 200 :Cell top-bottom-str}
+                                               {:Header "C" :accessor "LRG6" :width 200 :Cell top-bottom-str}
+                                               ;{:Header "New" :accessor "new" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                                               ;{:Header "SVR" :accessor "svr" :width 60 :style {:textAlign "right" :background-color "lightgrey"} :Cell tables/zspread-format}
+                                               ;{:Header "Comparables" :accessor "comps" :width 100 :style {:textAlign "right"}}
+                                               ]
+                              ;getTdProps={() => ({
+                              ;                    style: {
+                              ;                            display: 'flex',
+                              ;                            flexDirection: 'column',
+                              ;                            justifyContent: 'center'
+                              ;                            }
+                              ;                    })
+                              ;
+                              ;:getTdProps #(clj->js {:style {:verticalAlign "center"}})
+                              :showPagination false
+                              :pageSize       5
+                              :filterable     false}]
+                            ]]]])
+  )
+
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -523,6 +602,7 @@
       :calculator [calculator-controller]
       :spot-charts [spot-chart]
       :historical-charts [qs-table-container]
+      :top-bottom [top-bottom]
       :trade-finder [trade-finder]
       :methodology [methodology]
       [:div.output "nothing to display"])))
