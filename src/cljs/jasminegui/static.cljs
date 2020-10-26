@@ -42,6 +42,7 @@
    {:code :historical-charts  :name "Historical charts - WIP"}
    {:code :top-bottom         :name "Most expensive / cheap"}
    {:code :trade-finder       :name "Trade finder"}
+   {:code :universe-des       :name "Universe overview"}
    {:code :methodology        :name "Methodology"}])
 
 (def esg-navigation

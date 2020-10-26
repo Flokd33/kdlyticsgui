@@ -524,7 +524,8 @@
     (cond
       (< 0 duration 3.00001) "0-3Y"
       (< 3.00001 duration 5.00001) "3-5Y"
-      (< 5.00001 duration 10.00001) "5-10Y"
+      (< 5.00001 duration 7.00001) "5-7Y"
+      (< 7.00001 duration 10.00001) "5-10Y"
       (< 10.00001 duration 15.00001) "10-15Y"
       (< 15.00001 duration) "15Y+"
       :else "uncategorized")))
@@ -557,7 +558,7 @@
                                {(keyword (str "LRG" large-rating-group)) (let [s (reverse (sort-by :difference_svr lrgroup))] (concat (take @top-bottom-how-many (filter (comp pos? :difference_svr) s)) (take-last @top-bottom-how-many (filter (comp neg? :difference_svr) s))))}))))
         sres (->> res
                   (remove #(= (:duration-bucket %) "uncategorized"))
-                  (sort-by #(.indexOf ["0-3Y" "3-5Y" "5-10Y" "10-15Y" "15Y+"] (:duration-bucket %))))]
+                  (sort-by #(.indexOf ["0-3Y" "3-5Y" "5-7Y" "7-10Y" "10-15Y" "15Y+"] (:duration-bucket %))))]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Most expensive / cheap bonds by category"]
@@ -594,6 +595,54 @@
   )
 
 
+(defn universe-str [this]
+  (let [coll (js->clj (aget this "value"))]
+    ;    (println this)
+    (r/as-element (if (= coll [0 0]) [p "-"]
+                                     [v-box :children [[label :label (str (first coll) " issuers")]
+                                                       [label :label (str (second coll) " bonds")]]])
+                  )))
+
+(defn cntry-translate [this]
+  (let [cntry (js->clj (aget this "value"))]
+    (r/as-element (if (= cntry "Total") "Total"
+                                        (:LongName (first (filter #(= (:CountryCode %) cntry) @(rf/subscribe [:country-codes])))))
+                  )))
+
+(defn universe-overview []
+  (let
+    [data @(rf/subscribe [:quant-model/model-output])
+     dsec (sort (distinct (map :Sector data)))
+     cgrp (group-by :Country data)
+     res (into [(merge
+                  (into {:Country "Total"} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) data)] [s [(count (distinct (map :Ticker bonds))) (count bonds)]])))
+                  {"Total" [(count (distinct (map :Ticker data))) (count data)]}
+                  )]
+               (for [[c grp] (sort-by first cgrp)]
+                 (merge
+                   (into {:Country c} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds)]])))
+                   {"Total" [(count (distinct (map :Ticker grp))) (count grp)]}
+                   )))
+
+     ]
+    ;(println (count cgrp))
+    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+     :children [[v-box :class "element" :gap "20px" :width "1620px"
+                 :children [[title :level :level1 :label "Universe overview"]
+                            [:> ReactTable
+                             {:data           res
+                              :columns        (concat [{:Header "Country" :accessor "Country" :width 100 :Cell cntry-translate}]
+                                                      (mapv (fn [s] {:Header s :accessor s :width 100 :Cell universe-str}) dsec)
+                                                      [{:Header "Total" :accessor "Total" :width 100 :Cell universe-str}])
+                              :showPagination false
+                              :pageSize       (count res)
+                              :filterable     false}]
+                            ]]]]
+    )
+
+  )
+
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -604,6 +653,7 @@
       :historical-charts [qs-table-container]
       :top-bottom [top-bottom]
       :trade-finder [trade-finder]
+      :universe-des [universe-overview]
       :methodology [methodology]
       [:div.output "nothing to display"])))
 

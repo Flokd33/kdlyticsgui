@@ -532,9 +532,8 @@
                                              (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
                                                [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}
                                                 {:Header "Total return" :accessor "total-return" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-                                                {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 ::getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-                                                ;{:Header "Total return" :accessor "total-return" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
-                                                ;{:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
+                                                {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
+                                                {:Header "TR vs CEMBIIG" :accessor "tr-vs-cembiig" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
 
                                                 ]))
                 :showPagination      (> (count data) 50)
