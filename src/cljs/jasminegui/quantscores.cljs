@@ -521,14 +521,23 @@
   "we put .00001 because bbg duration is rounded to 2 digits"
   [m]
   (let [duration (:Used_Duration m)]
-    (cond
-      (< 0 duration 3.00001) "0-3Y"
-      (< 3.00001 duration 5.00001) "3-5Y"
-      (< 5.00001 duration 7.00001) "5-7Y"
-      (< 7.00001 duration 10.00001) "5-10Y"
-      (< 10.00001 duration 15.00001) "10-15Y"
-      (< 15.00001 duration) "15Y+"
-      :else "uncategorized")))
+    (condp >= duration
+      3 "0-3Y"
+      5 "3-5Y"
+      7 "5-7Y"
+      10 "7-10Y"
+      15 "10-15Y"
+      100 "15Y+"
+      "uncategorized")))
+
+;(cond
+;  (< 0 duration 3.00001) "0-3Y"
+;  (< 3.00001 duration 5.00001) "3-5Y"
+;  (< 5.00001 duration 7.00001) "5-7Y"
+;  (< 7.00001 duration 10.00001) "7-10Y"
+;  (< 10.00001 duration 15.00001) "10-15Y"
+;  (< 15.00001 duration) "15Y+"
+;  :else "uncategorized")))
 
 (def top-bottom-ignore-subs? (r/atom false))
 (def top-bottom-ignore-sovs? (r/atom true))
@@ -589,7 +598,8 @@
                               ;
                               ;:getTdProps #(clj->js {:style {:verticalAlign "center"}})
                               :showPagination false
-                              :pageSize       5
+                              :pageSize       6
+                              :sortable       false
                               :filterable     false}]
                             ]]]])
   )
@@ -605,13 +615,18 @@
 
 (defn cntry-translate [this]
   (let [cntry (js->clj (aget this "value"))]
-    (r/as-element (if (= cntry "Total") "Total"
-                                        (:LongName (first (filter #(= (:CountryCode %) cntry) @(rf/subscribe [:country-codes])))))
-                  )))
+    (r/as-element (if (= cntry "Total") "Total" (:LongName (first (filter #(= (:CountryCode %) cntry) @(rf/subscribe [:country-codes]))))))))
+
+(def universe-ignore-sovs-govts? (r/atom true))
+(def universe-hyigall (r/atom :all))
 
 (defn universe-overview []
   (let
-    [data @(rf/subscribe [:quant-model/model-output])
+    [source-data @(rf/subscribe [:quant-model/model-output])
+     data (filter (fn [line] (and
+                             (if @universe-ignore-sovs-govts? (not (some #{(:Sector line)} ["Sovereign" "Government"])) true)
+                             (case @universe-hyigall :all true :ig (<= (:Used_Rating_Score line) 10) :hy (> (:Used_Rating_Score line) 10))))
+                  source-data)
      dsec (sort (distinct (map :Sector data)))
      cgrp (group-by :Country data)
      res (into [(merge
@@ -625,10 +640,15 @@
                    )))
 
      ]
-    ;(println (count cgrp))
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Universe overview"]
+                            [h-box :gap "20px" :align :center
+                             :children [[checkbox :model universe-ignore-sovs-govts? :label "Ignore sovereigns and provinces?" :on-change #(reset! universe-ignore-sovs-govts? %)]
+                                        [gap :size "20px"]
+                                        [radio-button :model universe-hyigall :label "All bonds" :value :all :on-change #(reset! universe-hyigall %)]
+                                        [radio-button :model universe-hyigall :label "IG only" :value :ig :on-change #(reset! universe-hyigall %)]
+                                        [radio-button :model universe-hyigall :label "HY only" :value :hy :on-change #(reset! universe-hyigall %)]]]
                             [:> ReactTable
                              {:data           res
                               :columns        (concat [{:Header "Country" :accessor "Country" :width 100 :Cell cntry-translate}]
