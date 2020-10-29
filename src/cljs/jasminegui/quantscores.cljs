@@ -14,7 +14,10 @@
     [jasminegui.tools :as tools]
     [reagent.core :as reagent]
     [reagent.core :as r]
-    [oz.core :as oz])
+    [oz.core :as oz]
+    [goog.string :as gstring]
+    [goog.string.format]
+    )
   )
 
 (rf/reg-event-fx
@@ -47,6 +50,7 @@
    :Use                       {:Header "Use" :accessor "Use" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
    :Bond                      {:Header "Bond" :accessor "Bond" :width 150}
    :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 40}
+   :CRNCY                     {:Header "Currency" :accessor "CRNCY" :width 60}
    :Bond-sticky               {:Header "Bond" :accessor "Bond" :width 160 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                {:Header "Price" :accessor "Used_Price" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
    :Rating_String             {:Header "Rating source" :accessor "Rating_String" :width 120 :filterable true :filterMethod tables/compare-nb-d100}
@@ -608,9 +612,11 @@
 (defn universe-str [this]
   (let [coll (js->clj (aget this "value"))]
     ;    (println this)
-    (r/as-element (if (= coll [0 0]) [p "-"]
+    (r/as-element (if (= coll [0 0 0]) [p "-"]
                                      [v-box :children [[label :label (str (first coll) " issuers")]
-                                                       [label :label (str (second coll) " bonds")]]])
+                                                       [label :label (str (second coll) " bonds")]
+                                                       [label :label (str (gstring/format "%.1f" (* 0.000000001 (last coll))) " bn $")]
+                                                       ]])
                   )))
 
 (defn cntry-translate [this]
@@ -623,6 +629,7 @@
 (defn universe-overview []
   (let
     [source-data @(rf/subscribe [:quant-model/model-output])
+     market-cap (fn [lines] (reduce + (remove nil? (map :AMT_OUTSTANDING (filter (fn [line] (some #{(:CRNCY line)} ["USD" "EUR" "GBP"])) lines)))))
      data (filter (fn [line] (and
                              (if @universe-ignore-sovs-govts? (not (some #{(:Sector line)} ["Sovereign" "Government"])) true)
                              (case @universe-hyigall :all true :ig (<= (:Used_Rating_Score line) 10) :hy (> (:Used_Rating_Score line) 10))))
@@ -630,14 +637,15 @@
      dsec (sort (distinct (map :Sector data)))
      cgrp (group-by :Country data)
      res (into [(merge
-                  (into {:Country "Total"} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) data)] [s [(count (distinct (map :Ticker bonds))) (count bonds)]])))
-                  {"Total" [(count (distinct (map :Ticker data))) (count data)]}
+                  (into {:Country "Total"} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) data)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
+                  {"Total" [(count (distinct (map :Ticker data))) (count data) (market-cap data)]}
                   )]
                (for [[c grp] (sort-by first cgrp)]
                  (merge
-                   (into {:Country c} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds)]])))
-                   {"Total" [(count (distinct (map :Ticker grp))) (count grp)]}
+                   (into {:Country c} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
+                   {"Total" [(count (distinct (map :Ticker grp))) (count grp) (market-cap grp)]}
                    )))
+     col-width (if @universe-ignore-sovs-govts? 120 100)
 
      ]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
@@ -651,16 +659,12 @@
                                         [radio-button :model universe-hyigall :label "HY only" :value :hy :on-change #(reset! universe-hyigall %)]]]
                             [:> ReactTable
                              {:data           res
-                              :columns        (concat [{:Header "Country" :accessor "Country" :width 100 :Cell cntry-translate}]
-                                                      (mapv (fn [s] {:Header s :accessor s :width 100 :Cell universe-str}) dsec)
-                                                      [{:Header "Total" :accessor "Total" :width 100 :Cell universe-str}])
+                              :columns        (concat [{:Header "Country" :accessor "Country" :width col-width :Cell cntry-translate}]
+                                                      (mapv (fn [s] {:Header s :accessor s :width col-width :Cell universe-str}) dsec)
+                                                      [{:Header "Total" :accessor "Total" :width col-width :Cell universe-str}])
                               :showPagination false
                               :pageSize       (count res)
-                              :filterable     false}]
-                            ]]]]
-    )
-
-  )
+                              :filterable     false}]]]]]))
 
 
 (defn active-home []

@@ -72,7 +72,7 @@
 (def portfolio-alignment-groups
   [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IBSGEMD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
    {:id :allianz :label "Allianz" :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-   {:id :ig      :label "IG"      :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD"]}
+   {:id :ig      :label "IG"      :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IYELEMCD"]}
    {:id :talanx  :label "Talanx"  :portfolios ["ITLNXEMD" "ITLXEMD" "ITLXEMD3"]}])
 
 (def risk-field-choices

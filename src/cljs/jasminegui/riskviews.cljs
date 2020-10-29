@@ -545,10 +545,10 @@
 (defn trade-history []
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
         performance (rf/subscribe [:portfolio-trade-history/performance])
-        portfolio-map (into [] (for [p (concat @(rf/subscribe [:portfolios])
-                                               ["FOGEMBLCR" "FU4EMBLCR" "FOLLCBLN" "FNYEMD" "FNYAKEMD" "ICOMPEMD" "ITOPEMD" "IWHITEMD" "INSWIEMD" "IGARDEMD" "OGEMMUL" "FAPFCEMD"] ;blend
-                                               ["OGGBOND" "OLLCGUF"] ;target return
-                                               )] {:id p :label p}))
+        portfolio-map (concat
+                        (into [] (for [p  @(rf/subscribe [:portfolios])]  {:id p :label p :group "EMCD"}))
+                        (into [] (for [p  ["FOGEMBLCR" "FU4EMBLCR" "FOLLCBLN" "FNYEMD" "FNYAKEMD" "ICOMPEMD" "ITOPEMD" "IWHITEMD" "INSWIEMD" "IGARDEMD" "OGEMMUL" "FAPFCEMD"]]  {:id p :label p :group "Blend"}))
+                        (into [] (for [p  ["OGGBOND" "OLLCGUF"]]  {:id p :label p :group "Target return"})))
         start-date (rf/subscribe [:portfolio-trade-history/start-date])
         end-date (rf/subscribe [:portfolio-trade-history/end-date])]
     [box :class "subbody rightelement" :child
