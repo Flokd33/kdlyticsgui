@@ -623,6 +623,8 @@
   (let [cntry (js->clj (aget this "value"))]
     (r/as-element (if (= cntry "Total") "Total" (:LongName (first (filter #(= (:CountryCode %) cntry) @(rf/subscribe [:country-codes]))))))))
 
+(defn cntry-translate-sub [code] (if (= code "Total") "Total" (:LongName (first (filter #(= (:CountryCode %) code) @(rf/subscribe [:country-codes]))))))
+
 (def universe-ignore-sovs-govts? (r/atom true))
 (def universe-hyigall (r/atom :all))
 
@@ -638,16 +640,12 @@
      cgrp (group-by :Country data)
      res (into [(merge
                   (into {:Country "Total"} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) data)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
-                  {"Total" [(count (distinct (map :Ticker data))) (count data) (market-cap data)]}
-                  )]
+                  {"Total" [(count (distinct (map :Ticker data))) (count data) (market-cap data)]})]
                (for [[c grp] (sort-by first cgrp)]
                  (merge
-                   (into {:Country c} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
-                   {"Total" [(count (distinct (map :Ticker grp))) (count grp) (market-cap grp)]}
-                   )))
-     col-width (if @universe-ignore-sovs-govts? 120 100)
-
-     ]
+                   (into {:Country (cntry-translate-sub c)} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
+                   {"Total" [(count (distinct (map :Ticker grp))) (count grp) (market-cap grp)]})))
+     col-width (if @universe-ignore-sovs-govts? 120 100)]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Universe overview"]
@@ -659,12 +657,11 @@
                                         [radio-button :model universe-hyigall :label "HY only" :value :hy :on-change #(reset! universe-hyigall %)]]]
                             [:> ReactTable
                              {:data           res
-                              :columns        (concat [{:Header "Country" :accessor "Country" :width col-width :Cell cntry-translate}]
-                                                      (mapv (fn [s] {:Header s :accessor s :width col-width :Cell universe-str}) dsec)
-                                                      [{:Header "Total" :accessor "Total" :width col-width :Cell universe-str}])
-                              :showPagination false
-                              :pageSize       (count res)
-                              :filterable     false}]]]]]))
+                              :columns        (concat [{:Header "Country" :accessor "Country" :width col-width :filterable true :filterMethod tables/case-insensitive-filter}]
+                                                      (mapv (fn [s] {:Header s :accessor s :width col-width :Cell universe-str  :filterable false}) dsec)
+                                                      [{:Header "Total" :accessor "Total" :width col-width :Cell universe-str :filterable false}])
+                              :showPagination true
+                              :pageSize       8}]]]]]))
 
 
 (defn active-home []
