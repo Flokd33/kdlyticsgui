@@ -12,7 +12,7 @@
     [re-com.util :refer [px]]
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
-    ["react-table" :as rt :default ReactTable]
+    ["react-table-v6" :as rt :default ReactTable]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.tables :as tables]
     [jasminegui.tools :as tools]

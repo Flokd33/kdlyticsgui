@@ -7,7 +7,7 @@
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    ["react-table" :as rt :default ReactTable]
+    ["react-table-v6" :as rt :default ReactTable]
     [jasminegui.mount :as mount]
     [jasminegui.tables :as tables]
     [jasminegui.static :as static]
@@ -628,6 +628,23 @@
 (def universe-ignore-sovs-govts? (r/atom true))
 (def universe-hyigall (r/atom :all))
 
+(defn flag-fn [this]
+  (let [code (aget this "value")]
+    (r/as-element (if (= code "Total") "-" [:img {:src (str "assets/png100px/" (.toLowerCase code) ".png")}]))
+    )
+  )
+
+(defn country-display-fn [this]
+  (let [country (aget this "value")]
+    (r/as-element
+      [v-box :children [[label :label country]
+                        (if (or (= country "Total") (= country "Supranational"))
+                          [p ""]
+                          [:img {:src (str "assets/png100px/" (.toLowerCase (:CountryCode (first (filter #(= (:LongName %) country) @(rf/subscribe [:country-codes]))))) ".png")}])
+                        ]]))
+
+  )
+
 (defn universe-overview []
   (let
     [source-data @(rf/subscribe [:quant-model/model-output])
@@ -643,7 +660,7 @@
                   {"Total" [(count (distinct (map :Ticker data))) (count data) (market-cap data)]})]
                (for [[c grp] (sort-by first cgrp)]
                  (merge
-                   (into {:Country (cntry-translate-sub c)} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
+                   (into {:Country (cntry-translate-sub c) } (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
                    {"Total" [(count (distinct (map :Ticker grp))) (count grp) (market-cap grp)]})))
      col-width (if @universe-ignore-sovs-govts? 120 100)]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
@@ -657,11 +674,13 @@
                                         [radio-button :model universe-hyigall :label "HY only" :value :hy :on-change #(reset! universe-hyigall %)]]]
                             [:> ReactTable
                              {:data           res
-                              :columns        (concat [{:Header "Country" :accessor "Country" :width col-width :filterable true :filterMethod tables/case-insensitive-filter}]
+                              :columns        (concat [{:Header "Country" :accessor "Country" :width col-width :Cell country-display-fn :filterable true :filterMethod tables/case-insensitive-filter}]
                                                       (mapv (fn [s] {:Header s :accessor s :width col-width :Cell universe-str  :filterable false}) dsec)
                                                       [{:Header "Total" :accessor "Total" :width col-width :Cell universe-str :filterable false}])
                               :showPagination true
-                              :pageSize       8}]]]]]))
+                              :showPageSizeOptions true
+                              :pageSizeOptions [6 10 20]
+                              :defaultPageSize    6}]]]]]))
 
 
 (defn active-home []

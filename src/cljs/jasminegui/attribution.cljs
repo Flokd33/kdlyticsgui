@@ -9,7 +9,7 @@
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
-    ["react-table" :as rt :default ReactTable]
+    ["react-table-v6" :as rt :default ReactTable]
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]

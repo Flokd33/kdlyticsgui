@@ -8,7 +8,7 @@
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    ["react-table" :as rt :default ReactTable]
+    ["react-table-v6" :as rt :default ReactTable]
     [goog.string :as gstring]
     [goog.string.format]
     [jasminegui.mount :as mount]
