@@ -628,22 +628,17 @@
 (def universe-ignore-sovs-govts? (r/atom true))
 (def universe-hyigall (r/atom :all))
 
-(defn flag-fn [this]
-  (let [code (aget this "value")]
-    (r/as-element (if (= code "Total") "-" [:img {:src (str "assets/png100px/" (.toLowerCase code) ".png")}]))
-    )
-  )
+;(defn flag-fn [this]
+;  (let [code (aget this "value")]
+;    (r/as-element (if (= code "Total") "-" [:img {:src (str "assets/png100px/" (.toLowerCase code) ".png")}]))
+;    )
+;  )
 
 (defn country-display-fn [this]
   (let [country (aget this "value")]
     (r/as-element
       [v-box :children [[label :label country]
-                        (if (or (= country "Total") (= country "Supranational"))
-                          [p ""]
-                          [:img {:src (str "assets/png100px/" (.toLowerCase (:CountryCode (first (filter #(= (:LongName %) country) @(rf/subscribe [:country-codes]))))) ".png")}])
-                        ]]))
-
-  )
+                        (if (or (= country "Total") (= country "Supranational")) [p ""] [:img {:src (str "assets/png100px/" (.toLowerCase (aget this "row" "_original" "code")) ".png")}])]])))
 
 (defn universe-overview []
   (let
@@ -656,11 +651,11 @@
      dsec (sort (distinct (map :Sector data)))
      cgrp (group-by :Country data)
      res (into [(merge
-                  (into {:Country "Total"} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) data)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
+                  (into {:Country "Total" :code "Total"} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) data)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
                   {"Total" [(count (distinct (map :Ticker data))) (count data) (market-cap data)]})]
                (for [[c grp] (sort-by first cgrp)]
                  (merge
-                   (into {:Country (cntry-translate-sub c) } (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
+                   (into {:Country (cntry-translate-sub c) :code c} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
                    {"Total" [(count (distinct (map :Ticker grp))) (count grp) (market-cap grp)]})))
      col-width (if @universe-ignore-sovs-govts? 120 100)]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"

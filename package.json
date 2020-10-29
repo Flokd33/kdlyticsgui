@@ -7,14 +7,12 @@
   },
   "dependencies": {
     "create-react-class": "15.6.3",
-    "react": "16.8.6",
-    "react-dom": "^16.8.6",
-    "react-table": "^7.6.1",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
     "react-table-v6": "^6.8.6",
-    "svg-country-flags": "^1.2.9",
     "vega": "^5.17.0",
     "vega-embed": "^6.12.2",
     "vega-lite": "^4.17.0",
-    "vega-tooltip": "^0.24.2"
+    "vega-tooltip": "^0.19.1"
   }
 }
