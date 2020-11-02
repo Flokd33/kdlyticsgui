@@ -73,20 +73,23 @@
 ;               {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "price" :price target-price :dt (:date (last data))}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}
 ;               ]}))
 
-(defn backtest-chart [portfolio-dates portfolio-value width height]
-  (let [data (mapv (fn [a b] {:date a :price (* 100 b)}) portfolio-dates portfolio-value)
+(defn backtest-chart [portfolio-dates portfolio-value benchmark-value width height]
+  (let [pv (mapv (fn [a b] {:date a :price (* 100 b) :category "Portfolio"}) portfolio-dates portfolio-value)
+        bv (if benchmark-value (mapv (fn [a b] {:date a :price (/ b (last benchmark-value) 0.01) :category "Benchmark"}) portfolio-dates benchmark-value) [])
+        data (concat pv (take-last 125 bv))                 ;super hacky - for portfolio review - as indices have carry
         ymin (* 0.99 (apply min (map :price data)))
-        ymax (* 1.01 (apply max (map :price data)))
-        ]
+        ymax (* 1.01 (apply max (map :price data)))]
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
-     :title nil
-     :width width
-     :height height
-     :data {:values data :format {:parse {:date "date:'%Y-%m-%d'" :return "quantitative"}}}
-     :mark "line",
+     :title   nil
+     :width   (if benchmark-value (- width 75) width)             ; 75 for the legend
+     :height  height
+     :data    {:values data :format {:parse {:date "date:'%Y-%m-%d'" :price "number" :benchmark "number"}}}
+     :mark    "line",
      :encoding
-              {:x 	   {:field "date"  :type "temporal" :axis {:format "%b-%y", :labelFontSize 14 :title nil} :sort "descending"}
-               :y     {:field "price" :type "quantitative"  :scale {:domain [ymin ymax]}  :axis {:labelFontSize 14 :title nil}}}}))
+              (merge {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 14 :title nil} :sort "descending"}
+                      :y {:field "price" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:labelFontSize 14 :title nil}}}
+                     (if benchmark-value
+                       {:color {:field "category" :legend {:title nil :labelFontSize 14} :scale {:domain ["Portfolio" "Benchmark"], :range ["#134848" "#009D80"]}}}))}))
 
 (defn r5 [x] (* 5 (int (/ (+ x 4) 5))))
 

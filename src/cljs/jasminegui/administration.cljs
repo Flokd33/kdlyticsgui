@@ -73,11 +73,11 @@
   )
 
 
-(rf/reg-event-db
-  :rebuild-time-machine
-  (fn [db [_ enabled date]]
-    (assoc mount/default-db :time-machine/enabled enabled :time-machine/date date)))
-
+;(rf/reg-event-db
+;  :rebuild-time-machine
+;  (fn [db [_ enabled date]]
+;    (assoc mount/default-db :time-machine/enabled enabled :time-machine/date date)))
+;
 (rf/reg-event-db
   :time-machine-status
   (fn [db [_ m]]

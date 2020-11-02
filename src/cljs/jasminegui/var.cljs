@@ -121,6 +121,7 @@
                  [oz/vega-lite (charting/backtest-chart
                                  (take-last days (get-in dates [(line :frequency)]))
                                  (take-last days (get-in data [:portfolio-value (line :frequency)]))
+                                 nil
                                  (- (cljs.reader/read-string (subs standard-box-width 0 3)) 150) 550)]]]))
 
 (defn histogram-chart []

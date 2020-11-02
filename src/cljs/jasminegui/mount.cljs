@@ -227,9 +227,9 @@
            :attribution-index-returns/x-top-15
 
            :single-bond-trade-history/show-flat-modal
-           :single-bond-trade-history/flat-data
+           ;:single-bond-trade-history/flat-data ; dispatched elsewhere
            :single-bond-trade-history/show-modal
-           :single-bond-trade-history/data
+           ;:single-bond-trade-history/data ; dispatched elsewhere
            :single-bond-trade-history/bond
            :single-bond-trade-history/show-throbber
            :portfolio-trade-history/portfolio

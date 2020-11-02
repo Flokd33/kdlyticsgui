@@ -479,7 +479,10 @@
       [[oz/vega-lite (charting/backtest-chart
                        (take-last days (get-in dates [(line :frequency)]))
                        (take-last days (get-in data [:portfolio-value (line :frequency)]))
-                       (- standard-box-width-nb 200) (- standard-box-height-nb 400))]]) ))
+                       (take-last days (get-in data [:benchmark-value (line :frequency)]))
+                       (- standard-box-width-nb 200) (- standard-box-height-nb 400))]
+       [p {:style {:width "250px" :min-width "250px"}} "Note that portfolio is price move only, but benchmark includes carry hence only 100d displayed" ]
+       ]) ))
 
 (defn risk-betas []
   (let [data @(rf/subscribe [:portfolio-review/marginal-beta-chart-data])
