@@ -15,10 +15,13 @@
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
     [jasminegui.tables :as tables]
+    [cljs-time.core :as cljs-time]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [oz.core :as oz]
-    [jasminegui.charting :as charting])
+    [jasminegui.charting :as charting]
+    [jasminegui.riskviews :as riskviews]
+    [jasminegui.tradehistory :as th])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
@@ -329,6 +332,11 @@
              :data-request (if (= p "beta contribution") [:get-portfolio-review-marginal-beta-chart-data "portfolio" (second k)])}))
     end-page))
 
+(def activity-pages
+  [
+   {:title "Trades over the past 15 days" :nav-request :activity :data-request [:get-portfolio-trade-history "portfolio" (tools/gdate-to-yyyymmdd (cljs-time/plus (cljs-time/today) (cljs-time/days -15))) (tools/gdate-to-yyyymmdd (cljs-time/today))]}
+   ;(str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
+   ])
 
 (def pages (into {} (map-indexed
                       vector
@@ -339,16 +347,19 @@
                          top-bottom-pages
                          jensen-pages
                         [{:title "Three year daily backtest"   :nav-request :backtest-history  :data-request nil}]
+                        activity-pages
                         risk-pages))))
 
 (def portfolio-review-navigation
-  [{:code :summary          :name "Summary"           :page-start 0}
-   {:code :contribution     :name "Contribution"      :page-start (apply min (keys (filter #(= (:nav-request (second %)) :contribution) pages)))}
-   {:code :alpha            :name "Alpha"             :page-start (apply min (keys (filter #(= (:nav-request (second %)) :alpha) pages)))}
-   {:code :top-bottom       :name "Top contributors"  :page-start (apply min (keys (filter #(= (:nav-request (second %)) :top-bottom) pages)))}
-   {:code :jensen           :name "Jensen"            :page-start (apply min (keys (filter #(= (:nav-request (second %)) :jensen) pages)))}
-   {:code :backtest-history :name "Backtest"          :page-start (apply min (keys (filter #(= (:nav-request (second %)) :backtest-history) pages)))}
-   {:code :risk             :name "Risk"              :page-start (apply min (keys (filter #(= (:nav-request (second %)) :risk) pages)))}])
+  (mapv (fn [line] (assoc line :page-start (apply min (keys (filter #(= (:nav-request (second %)) (:code line)) pages)))))
+        [{:code :summary          :name "Summary"           }
+         {:code :contribution     :name "Contribution"      }
+         {:code :alpha            :name "Alpha"             }
+         {:code :top-bottom       :name "Top contributors"  }
+         {:code :jensen           :name "Jensen"            }
+         {:code :backtest-history :name "Backtest"          }
+         {:code :activity         :name "Activity"          }
+         {:code :risk             :name "Risk"              }]))
 
 (def maximum-page (count pages))
 (def current-page (r/atom 0))
@@ -555,6 +566,43 @@
     (clojure.string/includes? (get-in pages [@current-page :title]) "deviation")  [risk-deltas]
     :else [p "no data"]))
 
+(defn aggregate-trade-table []
+  (let [data @(rf/subscribe [:portfolio-trade-history/data])
+        nav (:base-value (first (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:summary-display/table]))))
+        grp (group-by :NAME data)
+        grouped-data (into [] (for [[n g] grp]
+                                (let [proceeds (Math/round (- (reduce + (map #(* %1 %2 0.01) (map :Quantity g) (map :PriceLcl g)))))]
+                                  (assoc (first g) :TotalQuantity (reduce + (map :Quantity g))
+                                                   :Proceeds proceeds
+                                                   :ProceedsNAV (/ proceeds nav)))))
+        display (conj (sort-by :Proceeds grouped-data) {:NAME " Total" :ISIN " Total" :LocalCcy "USD" :TotalQuantity (reduce + (map :TotalQuantity grouped-data)) :Proceeds (reduce + (map :Proceeds grouped-data)) :ProceedsNAV (reduce + (map :ProceedsNAV grouped-data))})
+        ]
+    (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
+      [box :align :center :child [throbber :size :large]]
+      [box :align :center
+       :child [:> ReactTable
+               {:data                display
+                :columns             (concat [{:Header "Instrument" :accessor "NAME" :width 200}
+                                              {:Header "ISIN" :accessor "ISIN" :width 125}
+                                              {:Header "CCY" :accessor "LocalCcy" :width 60}
+                                              {:Header "Notional" :accessor "TotalQuantity" :width 100 :style {:textAlign "right"} :Cell th/nfh} ;
+                                              {:Header "Proceeds" :accessor "Proceeds" :width 100 :style {:textAlign "right"} :Cell th/nfh}
+                                              {:Header "NAV proceeds" :accessor "ProceedsNAV" :width 100 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
+                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 75}
+                                              {:Header "Region" :accessor "JPMRegion" :width 100}
+                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 125}])
+                :showPagination      (> (count display) 15)
+                :defaultPageSize     (min 15 (count display))
+                :filterable          true
+                :defaultFilterMethod tables/case-insensitive-filter
+                :className           "-striped -highlight"}]]))
+
+  )
+
+(defn activity []
+  (portfolio-review-box-template [[aggregate-trade-table]])
+  )
+
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -566,6 +614,7 @@
       :top-bottom                    [top-contributors]
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
       :backtest-history              [backtest-history]
+      :activity                      [activity]
       :risk                          [risk]
       :end                           [end]
       [:div.output "nothing to display"])))
