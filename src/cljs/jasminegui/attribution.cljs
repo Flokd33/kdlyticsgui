@@ -43,7 +43,7 @@
                 {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
                 {:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}]
       :showPagination      (not is-tree)
-      :sortable            (not is-tree)
+      :sortable            true                             ;(not is-tree)
       :filterable          (not is-tree)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display)))) 25) ;(inc (count display))
       :className           "-striped -highlight"

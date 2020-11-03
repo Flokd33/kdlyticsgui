@@ -272,7 +272,7 @@
                             {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}
                             {:Header "Description" :columns (mapv tables/risk-table-columns (into [] (concat [:rating :isin] additional-des-cols [:description])))}]
       :showPagination      (not is-tree)
-      :sortable            (not is-tree)
+      :sortable            true                             ;(not is-tree)
       :filterable          (not is-tree)
       :ref                 #(reset! single-portfolio-risk-display-view %)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) portfolio-positions)))) 25) ;(inc (count display))
