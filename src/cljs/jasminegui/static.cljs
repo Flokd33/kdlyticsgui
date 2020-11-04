@@ -70,7 +70,7 @@
 
 
 (def portfolio-alignment-groups
-  [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IBSGEMD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
+  [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD" "IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
    {:id :allianz :label "Allianz" :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
    {:id :ig      :label "IG"      :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IYELEMCD"]}
    {:id :talanx  :label "Talanx"  :portfolios ["ITLNXEMD" "ITLXEMD" "ITLXEMD3"]}])
@@ -86,7 +86,10 @@
    {:id :contrib-yield    :label "Yield contribution"}
    {:id :contrib-zspread  :label "Z-spread contribution"}
    {:id :contrib-gspread  :label "G-spread contribution"}
-   {:id :contrib-beta     :label "Beta contribution"}])
+   {:id :contrib-beta     :label "Beta contribution"}
+   {:id :quant-value-4d   :label "Quant value 4D"}
+   {:id :quant-value-2d   :label "Quant value 2D"}
+   ])
 
 (def attribution-field-choices
   [{:id "None"            :label "None"}

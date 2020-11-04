@@ -204,7 +204,7 @@
     (into [] (for [p (:portfolios db)]
                (merge
                  {:portfolio       p}
-                 (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score :contrib-beta-1y-daily]] [k (get-in (:total-positions db) [(keyword p) k])]))
+                 (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score :contrib-beta-1y-daily :quant-value-4d :quant-value-2d]] [k (get-in (:total-positions db) [(keyword p) k])]))
                  {:contrib-bond-yield (- (get-in (:total-positions db) [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (not= (:asset-class %) "BONDS")) (:positions db)))))})))))
 
 ;;;;;;;;;
@@ -267,6 +267,7 @@
                             {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
                             {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
                             {:Header "Beta"  :columns (mapv tables/risk-table-columns [:contrib-beta])}
+                            {:Header "Quant model" :columns (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d])}
                             {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
                             ;{:Header "Index contribution" :columns (mapv tables/table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
                             {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}
@@ -504,6 +505,8 @@
                                                   (assoc (tables/risk-table-columns :contrib-zspread) :Header "Z-spread")
                                                   (assoc (tables/risk-table-columns :contrib-gspread) :Header "G-spread")
                                                   (assoc (tables/risk-table-columns :contrib-beta) :Header "Beta")
+                                                  (assoc (tables/risk-table-columns :quant-value-4d) :Header "4D")
+                                                  (assoc (tables/risk-table-columns :quant-value-2d) :Header "2D")
                                                   ]}]
       :showPagination false
       :pageSize       (count @(rf/subscribe [:portfolios]))

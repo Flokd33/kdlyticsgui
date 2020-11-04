@@ -69,7 +69,10 @@
   "filterfn is {id: column_name value: text_in_filter_box}
   OR through comma separation"
   (let [filter-values (clojure.string/split (.toLowerCase ^string (aget filterfn "value")) ",")]
-    (some true? (map #(.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) %) filter-values))))
+    (some true? (map (fn [s]  (if (= (.charAt s 0) "-")
+                                (not (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) (.substring s 1)))
+                                (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) s)))
+                     filter-values))))
 
 (defn txt-format [fmt m this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt (* m x)) "-")))
 (def round3         (partial txt-format "%.3f" 1.))
@@ -190,7 +193,10 @@
      :cembi-beta-last-year     {:Header "1y beta" :accessor "cembi-beta-last-year" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
      :cembi-beta-previous-year {:Header "LY beta" :accessor "cembi-beta-previous-year" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
      :total-return-ytd         {:Header "YTD TR" :accessor "total-return-ytd" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
-     :jensen-ytd               {:Header "Jensen" :accessor "jensen-ytd" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
+     :jensen-ytd               {:Header "Jensen" :accessor "jensen-ytd" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb}
+     :quant-value-2d           {:Header "2D" :accessor "quant-value-2d" :width 60 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f" 1.) :getProps red-negatives :filterable true :filterMethod compare-nb}
+     :quant-value-4d           {:Header "4D" :accessor "quant-value-4d" :width 60 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f" 1.) :getProps red-negatives :filterable true :filterMethod compare-nb}
+
      }))
 
 (defn invrtg-to-string [this] (aget this "row" "Rating"))

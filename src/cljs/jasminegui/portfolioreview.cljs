@@ -575,7 +575,10 @@
                                   (assoc (first g) :TotalQuantity (reduce + (map :Quantity g))
                                                    :Proceeds proceeds
                                                    :ProceedsNAV (/ proceeds nav)))))
-        display (conj (sort-by :Proceeds grouped-data) {:NAME " Total" :ISIN " Total" :LocalCcy "USD" :TotalQuantity (reduce + (map :TotalQuantity grouped-data)) :Proceeds (reduce + (map :Proceeds grouped-data)) :ProceedsNAV (reduce + (map :ProceedsNAV grouped-data))})
+        display (concat [{:NAME "Total (net)" :ISIN "" :LocalCcy "USD" :TotalQuantity (reduce + (map :TotalQuantity grouped-data)) :Proceeds (reduce + (map :Proceeds grouped-data)) :ProceedsNAV (reduce + (map :ProceedsNAV grouped-data))}
+                         (let [g (filter (comp pos? :TotalQuantity) grouped-data)] {:NAME "Total (buys)" :ISIN "" :LocalCcy "USD" :TotalQuantity (reduce + (map :TotalQuantity g)) :Proceeds (reduce + (map :Proceeds g)) :ProceedsNAV (reduce + (map :ProceedsNAV g))})
+                         (let [g (filter (comp neg? :TotalQuantity) grouped-data)] {:NAME "Total (sells)" :ISIN "" :LocalCcy "USD" :TotalQuantity (reduce + (map :TotalQuantity g)) :Proceeds (reduce + (map :Proceeds g)) :ProceedsNAV (reduce + (map :ProceedsNAV g))})]
+                        (sort-by :Proceeds grouped-data))
         ]
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align :center :child [throbber :size :large]]

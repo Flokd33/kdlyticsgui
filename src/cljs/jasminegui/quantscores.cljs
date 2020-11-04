@@ -522,7 +522,6 @@
                 [qs-table (str (count comparables) " bonds scoring better") comparables]]]))
 
 (defn duration-grouping-fn
-  "we put .00001 because bbg duration is rounded to 2 digits"
   [m]
   (let [duration (:Used_Duration m)]
     (condp >= duration
@@ -530,8 +529,7 @@
       5 "3-5Y"
       7 "5-7Y"
       10 "7-10Y"
-      15 "10-15Y"
-      100 "15Y+"
+      100 "10Y+"
       "uncategorized")))
 
 ;(cond
@@ -571,7 +569,7 @@
                                {(keyword (str "LRG" large-rating-group)) (let [s (reverse (sort-by :difference_svr lrgroup))] (concat (take @top-bottom-how-many (filter (comp pos? :difference_svr) s)) (take-last @top-bottom-how-many (filter (comp neg? :difference_svr) s))))}))))
         sres (->> res
                   (remove #(= (:duration-bucket %) "uncategorized"))
-                  (sort-by #(.indexOf ["0-3Y" "3-5Y" "5-7Y" "7-10Y" "10-15Y" "15Y+"] (:duration-bucket %))))]
+                  (sort-by #(.indexOf ["0-3Y" "3-5Y" "5-7Y" "7-10Y" "10Y+"] (:duration-bucket %))))]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Most expensive / cheap bonds by category"]
