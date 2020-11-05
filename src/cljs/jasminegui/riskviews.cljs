@@ -525,7 +525,7 @@
                                               {:Header "Instrument" :accessor "NAME" :width 200}
                                               {:Header "ISIN" :accessor "ISIN" :width 125}
                                               {:Header "CCY" :accessor "LocalCcy" :width 60}
-                                              {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell th/nfh} ;
+                                              {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell th/nfh :filterMethod tables/compare-nb}
                                               {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
                                               {:Header "Counterparty" :accessor "counterparty_code" :width 100}
                                               {:Header "Country" :accessor "CNTRY_OF_RISK" :width 75}
