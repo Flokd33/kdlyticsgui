@@ -189,6 +189,20 @@
    [v-box :class "element" :width "100%" :gap "20px"
     :children [[title :label "Bond proxies" :level :level1] [portfolio-proxy-table]]])
 
+(defn main-var-view []
+  [v-box :width standard-box-width
+   :gap "20px"
+   :padding "80px 20px"
+   :class "rightelement"  :children [[h-box :align :start :children [[var-controller]]]
+                                     [h-box :align :start :children [[var-table-view] ]]
+                                     [h-box :align :start :children [[backtest-chart]]]
+                                     [h-box :align :start :children [[histogram-chart]]]
+                                     [h-box :align :start :children [[regression-chart]]]
+                                     ]])
+(defn main-proxy-view []
+  [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"
+   :children [[h-box :align :start :children [[portfolio-proxies]]]]])
+
 (defn active-home []
   (let [active-var @(rf/subscribe [:navigation/active-var])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top

@@ -60,7 +60,6 @@
   :get-portfolio-trade-history
   (fn [{:keys [db]} [_ portfolio start-date end-date]]
     {:db (assoc db :portfolio-trade-history/data nil
-                   :single-bond-trade-history/show-throbber true
                    :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
                          :dispatch-key [:portfolio-trade-history/data]
@@ -516,7 +515,7 @@
 (defn portfolio-history-table []
   (let [data @(rf/subscribe [:portfolio-trade-history/data])]
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
-      [box :align :center :child [throbber :size :large]]
+      [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
        :child [:> ReactTable
                {:data                data
@@ -537,6 +536,8 @@
                                                 {:Header "Total return" :accessor "total-return" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
                                                 {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
                                                 {:Header "TR vs CEMBIIG" :accessor "tr-vs-cembiig" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
+                                                ;{:Header "TR vs EMBI" :accessor "tr-vs-embi" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
+                                                ;{:Header "TR vs EMBIIG" :accessor "tr-vs-embiig" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
 
                                                 ]))
                 :showPagination      (> (count data) 50)
@@ -551,11 +552,12 @@
         portfolio-map (concat
                         (into [] (for [p  @(rf/subscribe [:portfolios])]  {:id p :label p :group "EMCD"}))
                         (into [] (for [p  ["FOGEMBLCR" "FU4EMBLCR" "FOLLCBLN" "FNYEMD" "FNYAKEMD" "ICOMPEMD" "ITOPEMD" "IWHITEMD" "INSWIEMD" "IGARDEMD" "OGEMMUL" "FAPFCEMD"]]  {:id p :label p :group "Blend"}))
+                        (into [] (for [p  ["OGEMHCD" "IUSSEMD"]]  {:id p :label p :group "Hard currency"}))
                         (into [] (for [p  ["OGGBOND" "OLLCGUF"]]  {:id p :label p :group "Target return"})))
         start-date (rf/subscribe [:portfolio-trade-history/start-date])
         end-date (rf/subscribe [:portfolio-trade-history/end-date])]
-    [box :class "subbody rightelement" :child
-     [v-box :class "element" :gap "20px"
+    [box :class "subbody" :child
+     [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Trade history for " @portfolio) :level :level1]
                  [h-box :gap "50px"
                   :children [[v-box :gap "15px"

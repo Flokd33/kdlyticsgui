@@ -18,6 +18,7 @@
     [jasminegui.betas :as betas]
     [jasminegui.esg :as esg]
     [jasminegui.quantscores :as quantscores]
+    [jasminegui.riskviews :as riskviews]
     [goog.string :as gstring]))
 
 
@@ -128,10 +129,11 @@
   (let [active-view @(rf/subscribe [:navigation/active-view])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-view
-      :entry [entry]
-      :home   [home/home-view]
-      :attribution [attribution/home-view]
-      :var    [var/var-view]
+      :entry            [entry]
+      :home             [home/home-view]
+      :trade-history    [riskviews/trade-history]
+      :attribution      [attribution/home-view]
+      :var              [var/var-view]
       :portfolio-review [pr/view]
       :betas            [betas/view]
       :quant-scores     [quantscores/view]

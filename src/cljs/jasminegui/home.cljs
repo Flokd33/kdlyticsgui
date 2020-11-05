@@ -15,6 +15,7 @@
     [jasminegui.static :as static]
     [jasminegui.riskviews :as riskviews]
     [jasminegui.tradehistory :as tradehistory]
+    [jasminegui.var :as var]
     [reagent-contextmenu.menu :as rcm]
     )
   )
@@ -45,6 +46,8 @@
       :portfolio-alignment            [riskviews/portfolio-alignment-risk-controller]
       :trade-history                  [riskviews/trade-history]
       :large-exposures                [riskviews/large-exposures]
+      :var                            [var/main-var-view]
+      :proxies                        [var/main-proxy-view]
       [:div.output "nothing to display"])))
 
 
