@@ -279,6 +279,49 @@
      :config
              {:text {:fontWeight "bold", :color "#404040"}}}))
 
+(defn quant-value-waterfall-chart [data max-total]
+  "The data is of the form [{:date dt :group TXT :value 0}]"
+  (let [new-data (map (fn [line] (update line :value #(/ (Math/round (* 100 %)) 100))) (concat data [{:group "Total", :value 0}]))]
+    {:$schema
+             "https://vega.github.io/schema/vega-lite/v4.json",
+     :data   {:values new-data},
+     :width  1100,
+     :height (- standard-box-height-nb 400),
+     :title  nil
+     :transform                                             ;
+             [{:window [{:op "sum", :field "value", :as "sum"}]}
+              {:window [{:op "lead", :field "group", :as "lead"}]}
+              {:calculate "datum.lead === null ? datum.group : datum.lead", :as "lead"}
+              {:calculate "datum.group === 'Total' ? 0 : datum.sum - datum.value", :as "previous_sum"}
+              {:calculate "datum.group === 'Total' ? datum.sum : datum.value", :as "value"}
+              {:calculate "(datum.group !== 'Begin' && datum.group !== 'Total' && datum.value > 0 ? '+' : '') + datum.value", :as "text_amount"}
+              {:calculate "(datum.sum + datum.previous_sum) / 2", :as "center"}
+              {:calculate "datum.sum < datum.previous_sum ? datum.sum : ''", :as "sum_dec"}
+              {:calculate "datum.sum > datum.previous_sum ? datum.sum : ''", :as "sum_inc"}],
+     :encoding
+             {:x
+              {:field "group", :type "nominal", :sort nil, :axis {:labelAngle 0, :title nil :labelFontSize chart-text-size}}},
+     :layer
+             [{:mark {:type "bar", :size 70},
+               :encoding
+                     {:y {:field "previous_sum", :type "quantitative", :title "Cheapness", :scale {:domain [0 max-total]}
+     :axis   {:labelFontSize chart-text-size :titleFontSize chart-text-size}},
+                      :y2 {:field "sum"},
+                      :color
+                          {:condition
+                                  [{:test "datum.group === 'Begin' || datum.group === 'Total'", :value (second performance-colors)}
+                                   {:test "datum.sum < datum.previous_sum", :value (nth performance-colors 4)}],
+                           :value (first performance-colors)}}}
+              {:mark {:type "rule", :color "#404040", :opacity 1, :strokeWidth 2, :xOffset -35, :x2Offset 35}, :encoding {:x2 {:field "lead"}, :y {:field "sum", :type "quantitative"}}}
+              {:mark {:type "text", :dy -4, :baseline "bottom"},              :encoding {:y {:field "sum_inc", :type "quantitative"}, :text {:field "sum_inc", :type "nominal" :format "0.2f"}}}
+              {:mark {:type "text", :dy 4, :baseline "top"},                  :encoding {:y {:field "sum_dec", :type "quantitative"}, :text {:field "sum_dec", :type "nominal"}}}
+              {:mark {:type "text", :fontWeight "bold", :baseline "middle"},  :encoding {:y {:field "center", :type "quantitative"}, :text {:field "text_amount", :type "nominal" :format "0.2f"},
+                :color
+                   {:condition [{:test "datum.group === 'Begin' || datum.group === 'Total'", :value "white"}],
+                    :value     "white"}}}],
+     :config
+             {:text {:fontWeight "bold", :color "#404040"}}}))
+
 ;;;;;;;;;;;;;;;;
 ;;;NAVIGATION;;;
 ;;;;;;;;;;;;;;;;
@@ -338,6 +381,23 @@
    ;(str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
    ])
 
+(def quant-value-pages
+  (into []
+        (for [k risk-breakdowns p ["curve normalisation (4D)" "sector and country normalisation (2D)"]]
+          {:title        (str "Quant value by " (first k) ": " p)
+           :nav-request  :quant-value
+           :grouping     k
+           :subgrouping  p
+           :data-request nil}))
+    )
+
+;(def quant-value-pages
+;  [
+;   {:title "Quant value 4D: curve normalisation" :nav-request :quant-value :data-request []}
+;   {:title "Quant value 2D: country & sector normalisation" :nav-request :quant-value :data-request []}
+;   ;(str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
+;   ])
+
 (def pages (into {} (map-indexed
                       vector
                       (concat
@@ -348,6 +408,7 @@
                          jensen-pages
                         [{:title "Three year daily backtest"   :nav-request :backtest-history  :data-request nil}]
                         activity-pages
+                        quant-value-pages
                         risk-pages))))
 
 (def portfolio-review-navigation
@@ -359,6 +420,7 @@
          {:code :jensen           :name "Jensen"            }
          {:code :backtest-history :name "Backtest"          }
          {:code :activity         :name "Activity"          }
+         {:code :quant-value      :name "Quant value"       }
          {:code :risk             :name "Risk"              }]))
 
 (def maximum-page (count pages))
@@ -598,13 +660,45 @@
                 :defaultPageSize     (min 15 (count display))
                 :filterable          true
                 :defaultFilterMethod tables/case-insensitive-filter
-                :className           "-striped -highlight"}]]))
+                :className           "-striped -highlight"}]])))
 
-  )
+(defn activity [] (portfolio-review-box-template [[aggregate-trade-table]]))
 
-(defn activity []
-  (portfolio-review-box-template [[aggregate-trade-table]])
-  )
+
+(defn quant-value []
+  (let [g (second (get-in pages [@current-page :grouping]))
+        r (if (clojure.string/includes? (get-in pages [@current-page :title]) "4D") :quant-value-4d :quant-value-2d)
+        grouping (case g
+                   "Region" :jpm-region
+                   "Country" :qt-risk-country-name
+                   "Sector" :qt-jpm-sector
+                   "RatingGroup" :rating-group
+                   "Duration Bucket" :qt-final-maturity-band)
+        data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
+        total (reduce + (map r data))
+        max-total (apply max (map #(reduce + (map % data)) [:quant-value-4d :quant-value-2d]))
+        grp (group-by grouping data)
+        chart-data (into [] (for [[k g] grp] {:group k :value (reduce + (map r g))}))
+        clean-data (case g
+                     "Region" (reverse (sort-by :value (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash"]) chart-data)))
+                     "Country" (let [top-countries (map :group (take-last 8 (sort-by #(Math/abs (:value %)) chart-data)))
+                                     top-countries-values (sort-by :value (filter #(some #{(:group %)} top-countries) chart-data))]
+                                 (reverse (conj top-countries-values {:group "Rest" :value (- total (reduce + (map :value top-countries-values)))})))
+                     "RatingGroup" (let [top-ratings (remove #(some #{%} ["01 AAA" "02 AA" "08 C" "08 D" "09 NM"]) (map :group chart-data))
+                                         top-ratings-values (reverse (sort-by :group (filter #(some #{(:group %)} top-ratings) chart-data)))]
+                                     (reverse (conj  top-ratings-values {:group "99 Rest" :value (- total (reduce + (map :value top-ratings-values)))})))
+                     "Sector" (reverse (sort-by :value (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)))
+                     chart-data)
+        clean-data-sorted (case g
+                            "RatingGroup" (map #(update % :group subs 3) clean-data)
+                            "Duration Bucket" (sort-by (fn [x] (.indexOf ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"] (:group x))) clean-data)
+                            clean-data
+                            )]
+    (println chart-data)
+    (portfolio-review-box-template [
+                                    [oz/vega-lite (quant-value-waterfall-chart clean-data-sorted max-total)]
+                                    ])))
+
 
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
@@ -618,6 +712,7 @@
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
       :backtest-history              [backtest-history]
       :activity                      [activity]
+      :quant-value                   [quant-value]
       :risk                          [risk]
       :end                           [end]
       [:div.output "nothing to display"])))

@@ -536,8 +536,8 @@
                                                 {:Header "Total return" :accessor "total-return" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
                                                 {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
                                                 {:Header "TR vs CEMBIIG" :accessor "tr-vs-cembiig" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-                                                ;{:Header "TR vs EMBI" :accessor "tr-vs-embi" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-                                                ;{:Header "TR vs EMBIIG" :accessor "tr-vs-embiig" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
+                                                {:Header "TR vs EMBI" :accessor "tr-vs-embi" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
+                                                {:Header "TR vs EMBIIG" :accessor "tr-vs-embiig" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
 
                                                 ]))
                 :showPagination      (> (count data) 50)
