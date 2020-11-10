@@ -5,7 +5,6 @@
 (def main-navigation
   (let [home-events [:get-qt-date :get-pivoted-positions :get-total-positions :get-large-exposures :get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"] :get-positions]
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
-        ;var-events  [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         ]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil}
@@ -23,7 +22,7 @@
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
    {:code :portfolio-alignment :name "Portfolio alignment"}
-   {:code :trade-history       :name "Trade history"}
+   ;{:code :trade-history       :name "Trade history"}
    {:code :large-exposures     :name "Large exposures"}
    {:code :var                 :name "VaR and Beta"}
    {:code :proxies             :name "Bond proxies"}
@@ -37,7 +36,6 @@
 
 (def var-navigation
   [{:code :overview            :name "Overview"}
-   ;   {:code :marginal            :name "Marginals"}
    {:code :proxies             :name "Proxies"}])
 
 (def qs-navigation
@@ -93,8 +91,7 @@
    {:id :contrib-gspread  :label "G-spread contribution"}
    {:id :contrib-beta     :label "Beta contribution"}
    {:id :quant-value-4d   :label "Quant value 4D"}
-   {:id :quant-value-2d   :label "Quant value 2D"}
-   ])
+   {:id :quant-value-2d   :label "Quant value 2D"}])
 
 (def attribution-field-choices
   [{:id "None"            :label "None"}
@@ -122,8 +119,7 @@
    {:id :threequarters  :label "0.75"}
    {:id :one            :label "1.00"}])
 
-(def tree-table-choices
-  [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}])
+(def tree-table-choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}])
 
 (def var-charts-choice-map [{:id :daily-1y   :label "Daily 1y"   :frequency :daily   :period 1}
                             {:id :daily-3y   :label "Daily 3y"   :frequency :daily   :period 3}

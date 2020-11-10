@@ -64,6 +64,15 @@
   [this]
   (if-let [x (aget this "value")] (.format (NumberFormat. Format/DECIMAL) (str (js/Math.round x))) "-"))
 
+;(defn boolean-cell-to-yes-no [this] (if (aget this "value") "Y" "N")) ; nil and false are the same
+;
+;(defn boolean-filter-yes-no [filterfn row]
+;  (let [yes-no (aget filterfn "value")
+;        rowval (aget row (aget filterfn "id"))]
+;    (cond
+;      (or (= yes-no "Y") (= yes-no "y")) rowval
+;      (or (= yes-no "Y") (= yes-no "y")) (not rowval)
+;      :else false)))
 
 (defn case-insensitive-filter [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box}

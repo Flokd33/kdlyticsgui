@@ -282,8 +282,7 @@
 (defn quant-value-waterfall-chart [data max-total]
   "The data is of the form [{:date dt :group TXT :value 0}]"
   (let [new-data (map (fn [line] (update line :value #(/ (Math/round (* 100 %)) 100))) (concat data [{:group "Total", :value 0}]))]
-    {:$schema
-             "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :data   {:values new-data},
      :width  1100,
      :height (- standard-box-height-nb 400),
@@ -298,9 +297,7 @@
               {:calculate "(datum.sum + datum.previous_sum) / 2", :as "center"}
               {:calculate "datum.sum < datum.previous_sum ? datum.sum : ''", :as "sum_dec"}
               {:calculate "datum.sum > datum.previous_sum ? datum.sum : ''", :as "sum_inc"}],
-     :encoding
-             {:x
-              {:field "group", :type "nominal", :sort nil, :axis {:labelAngle 0, :title nil :labelFontSize chart-text-size}}},
+     :encoding {:x {:field "group", :type "nominal", :sort nil, :axis {:labelAngle 0, :title nil :labelFontSize chart-text-size}}},
      :layer
              [{:mark {:type "bar", :size 70},
                :encoding
@@ -308,19 +305,15 @@
      :axis   {:labelFontSize chart-text-size :titleFontSize chart-text-size}},
                       :y2 {:field "sum"},
                       :color
-                          {:condition
-                                  [{:test "datum.group === 'Begin' || datum.group === 'Total'", :value (second performance-colors)}
-                                   {:test "datum.sum < datum.previous_sum", :value (nth performance-colors 4)}],
+                          {:condition [{:test "datum.group === 'Begin' || datum.group === 'Total'", :value (second performance-colors)} {:test "datum.sum < datum.previous_sum", :value (nth performance-colors 4)}],
                            :value (first performance-colors)}}}
               {:mark {:type "rule", :color "#404040", :opacity 1, :strokeWidth 2, :xOffset -35, :x2Offset 35}, :encoding {:x2 {:field "lead"}, :y {:field "sum", :type "quantitative"}}}
               {:mark {:type "text", :dy -4, :baseline "bottom"},              :encoding {:y {:field "sum_inc", :type "quantitative"}, :text {:field "sum_inc", :type "nominal" :format "0.2f"}}}
               {:mark {:type "text", :dy 4, :baseline "top"},                  :encoding {:y {:field "sum_dec", :type "quantitative"}, :text {:field "sum_dec", :type "nominal"}}}
-              {:mark {:type "text", :fontWeight "bold", :baseline "middle"},  :encoding {:y {:field "center", :type "quantitative"}, :text {:field "text_amount", :type "nominal" :format "0.2f"},
-                :color
-                   {:condition [{:test "datum.group === 'Begin' || datum.group === 'Total'", :value "white"}],
-                    :value     "white"}}}],
-     :config
-             {:text {:fontWeight "bold", :color "#404040"}}}))
+              {:mark {:type "text", :fontWeight "bold", :baseline "middle"},
+               :encoding {:y {:field "center", :type "quantitative"}, :text {:field "text_amount", :type "nominal" :format "0.2f"},
+                          :color {:condition [{:test "datum.group === 'Begin' || datum.group === 'Total'", :value "white"}], :value     "white"}}}],
+     :config {:text {:fontWeight "bold", :color "#404040"}}}))
 
 ;;;;;;;;;;;;;;;;
 ;;;NAVIGATION;;;

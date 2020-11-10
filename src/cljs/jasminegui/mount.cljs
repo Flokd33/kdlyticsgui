@@ -271,8 +271,16 @@
 (rf/reg-event-db
   :positions
   (fn [db [_ positions]]
-    (assoc db :positions positions
+    (assoc db                                               ;:positions positions
+              :positions (mapv #(into {} (for [k (keys positions)] [k (nth (positions k) %)])) (range (count (positions (first (keys positions))))))
               :navigation/show-mounting-modal false)))
+
+;(rf/reg-event-db
+;  :pivoted-positions
+;  (fn [db [_ pivoted-positions]]
+;    (assoc db                                               ;:positions positions
+;      :pivoted-positions (mapv #(into {} (for [k (keys pivoted-positions)] [k (nth (pivoted-positions k) %)])) (range (count (pivoted-positions (first (keys pivoted-positions))))))
+;      :navigation/show-mounting-modal false)))
 
 (rf/reg-event-db
   :quant-model/model-output
@@ -365,10 +373,12 @@
 
 
 (def simple-http-get-events
-  [{:get-key :get-positions           :url-tail "positions"           :dis-key :positions :mounting-modal true}
+  [                                                         ;{:get-key :get-positions           :url-tail "positions"           :dis-key :positions :mounting-modal true}
+   {:get-key :get-positions           :url-tail "position-array"           :dis-key :positions :mounting-modal true}
    {:get-key :get-rating-to-score     :url-tail "rating-to-score"     :dis-key :rating-to-score}
    {:get-key :get-portfolios          :url-tail "portfolios"          :dis-key :portfolios}
    {:get-key :get-pivoted-positions   :url-tail "pivoted-positions"   :dis-key :pivoted-positions}
+   ;{:get-key :get-pivoted-positions   :url-tail "pivoted-position-array"   :dis-key :pivoted-positions}
    {:get-key :get-total-positions     :url-tail "total-positions"     :dis-key :total-positions}
    {:get-key :get-qt-date             :url-tail "qt-date"             :dis-key :qt-date}
    {:get-key :get-large-exposures     :url-tail "large-exposures"     :dis-key :large-exposures}

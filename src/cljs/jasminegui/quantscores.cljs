@@ -50,6 +50,9 @@
    :Use                       {:Header "Use" :accessor "Use" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
    :Bond                      {:Header "Bond" :accessor "Bond" :width 150}
    :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 40}
+   :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 80 :style {:textAlign "center"}}
+   :cembi                     {:Header "CEMBI" :accessor "cembi" :width 80 :style {:textAlign "center"}}
+   :cembi-ig                  {:Header "CEMBI IG" :accessor "cembi-ig" :width 80  :style {:textAlign "center"}}
    :CRNCY                     {:Header "Currency" :accessor "CRNCY" :width 60}
    :Bond-sticky               {:Header "Bond" :accessor "Bond" :width 160 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                {:Header "Price" :accessor "Used_Price" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
@@ -194,7 +197,7 @@
 
 
 
-(def table-style (reagent/atom "SVR"))
+(def table-style (reagent/atom "Screener (SVR)"))
 
 (defn qs-table [mytitle data]
      [v-box :class "element"  :gap "20px" :width "1640px"
@@ -202,7 +205,7 @@
                                                   [gap :size "1"]
                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "quant-model-output")]]]
                  [h-box :align :center :gap "20px"
-                  :children (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR"]]
+                  :children (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Screener (SVR)"]]
                                        ^{:key c}            ;; key should be unique among siblings
                                        [radio-button
                                         :label c
@@ -261,8 +264,11 @@
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_svr_2 :URS_rank_svr_1D_2 :URS_rank_svr_1W_2 :URS_rank_svr_1M_2])}
                                            {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}
                                            ]
-
-
+                                          "Screener (SVR)"
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :cembi :cembi-ig])}
+                                           {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
+                                           {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2])}
+                                           ]
                                           )
                    :showPagination      true
                    :defaultPageSize     15
@@ -325,7 +331,6 @@
                                        }}]))
          :width  1000
          :height 500}]
-    ;(println (prepare-data (filter #(and (= (:Country %) @calculator-country) (= (:Used_Rating_Score %) rating-score) (not= (:Sector %) @calculator-sector)) @(rf/subscribe [:quant-model/model-output])) other-country))
     [v-box :class "element"  :gap "10px" :width "1620px"
      :children [[title :label "Comparables chart" :level :level1]
                 [checkbox :model show-bond-labels :label "Bond labels" :on-change #(reset! show-bond-labels %)]
@@ -532,15 +537,6 @@
       100 "10Y+"
       "uncategorized")))
 
-;(cond
-;  (< 0 duration 3.00001) "0-3Y"
-;  (< 3.00001 duration 5.00001) "3-5Y"
-;  (< 5.00001 duration 7.00001) "5-7Y"
-;  (< 7.00001 duration 10.00001) "7-10Y"
-;  (< 10.00001 duration 15.00001) "10-15Y"
-;  (< 15.00001 duration) "15Y+"
-;  :else "uncategorized")))
-
 (def top-bottom-ignore-subs? (r/atom false))
 (def top-bottom-ignore-sovs? (r/atom true))
 (def top-bottom-how-many (r/atom 3))
@@ -551,8 +547,7 @@
       [v-box :children (mapv (fn [line]
                                [label
                                 :style {:color (if (pos? (get-in line ["difference_svr"])) "darkgreen" "darkred")}
-                                :label (str (get-in line ["Bond"]) " (" (Math/round (get-in line ["difference_svr"])) ")")]) coll)]
-      )))
+                                :label (str (get-in line ["Bond"]) " (" (Math/round (get-in line ["difference_svr"])) ")")]) coll)])))
 
 (defn top-bottom []
   (let [data @(rf/subscribe [:quant-model/model-output])
@@ -585,37 +580,19 @@
                                                {:Header "BBB" :accessor "LRG3" :width 200 :Cell top-bottom-str}
                                                {:Header "BB" :accessor "LRG4" :width 200 :Cell top-bottom-str}
                                                {:Header "B" :accessor "LRG5" :width 200 :Cell top-bottom-str}
-                                               {:Header "C" :accessor "LRG6" :width 200 :Cell top-bottom-str}
-                                               ;{:Header "New" :accessor "new" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
-                                               ;{:Header "SVR" :accessor "svr" :width 60 :style {:textAlign "right" :background-color "lightgrey"} :Cell tables/zspread-format}
-                                               ;{:Header "Comparables" :accessor "comps" :width 100 :style {:textAlign "right"}}
-                                               ]
-                              ;getTdProps={() => ({
-                              ;                    style: {
-                              ;                            display: 'flex',
-                              ;                            flexDirection: 'column',
-                              ;                            justifyContent: 'center'
-                              ;                            }
-                              ;                    })
-                              ;
-                              ;:getTdProps #(clj->js {:style {:verticalAlign "center"}})
+                                               {:Header "C" :accessor "LRG6" :width 200 :Cell top-bottom-str}]
                               :showPagination false
                               :pageSize       6
                               :sortable       false
-                              :filterable     false}]
-                            ]]]])
-  )
+                              :filterable     false}]]]]]))
 
 
 (defn universe-str [this]
   (let [coll (js->clj (aget this "value"))]
-    ;    (println this)
     (r/as-element (if (= coll [0 0 0]) [p "-"]
                                      [v-box :children [[label :label (str (first coll) " issuers")]
                                                        [label :label (str (second coll) " bonds")]
-                                                       [label :label (str (gstring/format "%.1f" (* 0.000000001 (last coll))) " bn $")]
-                                                       ]])
-                  )))
+                                                       [label :label (str (gstring/format "%.1f" (* 0.000000001 (last coll))) " bn $")]]]))))
 
 (defn cntry-translate [this]
   (let [cntry (js->clj (aget this "value"))]
@@ -625,12 +602,6 @@
 
 (def universe-ignore-sovs-govts? (r/atom true))
 (def universe-hyigall (r/atom :all))
-
-;(defn flag-fn [this]
-;  (let [code (aget this "value")]
-;    (r/as-element (if (= code "Total") "-" [:img {:src (str "assets/png100px/" (.toLowerCase code) ".png")}]))
-;    )
-;  )
 
 (defn country-display-fn [this]
   (let [country (aget this "value")]
@@ -680,14 +651,14 @@
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-qs
-      :table      [qs-table-container]
-      :calculator [calculator-controller]
-      :spot-charts [spot-chart]
-      :historical-charts [qs-table-container]
-      :top-bottom [top-bottom]
-      :trade-finder [trade-finder]
-      :universe-des [universe-overview]
-      :methodology [methodology]
+      :table              [qs-table-container]
+      :calculator         [calculator-controller]
+      :spot-charts        [spot-chart]
+      :historical-charts  [qs-table-container]
+      :top-bottom         [top-bottom]
+      :trade-finder       [trade-finder]
+      :universe-des       [universe-overview]
+      :methodology        [methodology]
       [:div.output "nothing to display"])))
 
 

@@ -148,7 +148,6 @@
           accessors-k (mapv keyword (mapv :accessor grouping-columns))]
       (conj (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) data) portfolio-total-line))))
 
-
 (rf/reg-sub
   :multiple-portfolio-risk/table
   (fn [db]
@@ -223,13 +222,7 @@
       (rf/dispatch [:get-bond-price-history
                     (aget rowInfo "row" "_original" "NAME")
                     "01Jan19"
-                    @(rf/subscribe [:qt-date])])
-      ))
-
-
-;(defn single-bond-trade-history [state rowInfo instance]
-;  (clj->js {:onClick #(single-bond-trade-history-event state rowInfo instance)
-;                          :style {:cursor "pointer"}}))
+                    @(rf/subscribe [:qt-date])])))
 
 (def single-portfolio-risk-display-view (atom nil))
 
@@ -243,9 +236,7 @@
      ]))
 
 (defn on-click-context [state rowInfo instance]
-  (clj->js {:onClick (partial fnevt state rowInfo instance) :style {:cursor "pointer"}})
-  ;(clj->js {:onClick (fn [evt] (fnevt state rowInfo instance evt)) :style {:cursor "pointer"}})
-  )
+  (clj->js {:onClick (partial fnevt state rowInfo instance) :style {:cursor "pointer"}}))
 
 (defn single-portfolio-risk-display []
   (let [positions @(rf/subscribe [:positions])
@@ -310,7 +301,6 @@
                          :aggregate tables/sum-rows
                          :Cell (get-in tables/risk-table-columns [display-key-one :Cell])
                          :filterable false}))]
-    ;(println display-one)
     [:> ReactTable
      {:data                display-one
       :defaultFilterMethod tables/case-insensitive-filter
@@ -532,14 +522,10 @@
                                               {:Header "Region" :accessor "JPMRegion" :width 100}
                                               {:Header "Sector" :accessor "JPM_SECTOR" :width 125}]
                                              (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
-                                               [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}
-                                                {:Header "Total return" :accessor "total-return" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-                                                {:Header "TR vs CEMBI" :accessor "tr-vs-cembi" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-                                                {:Header "TR vs CEMBIIG" :accessor "tr-vs-cembiig" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-                                                {:Header "TR vs EMBI" :accessor "tr-vs-embi" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-                                                {:Header "TR vs EMBIIG" :accessor "tr-vs-embiig" :width 100 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}
-
-                                                ]))
+                                               (into [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}]
+                                                     (for [[h a] [["Total return" "total-return"] ["TR vs CEMBI" "tr-vs-cembi"] ["TR vs CEMBIIG" "tr-vs-cembiig"] ["TR vs EMBI" "tr-vs-embi"] ["TR vs EMBIIG" "tr-vs-embiig"]]]
+                                                       {:Header h :accessor a :width 110 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)})
+                                                     )))
                 :showPagination      (> (count data) 50)
                 :defaultPageSize     (min 50 (count data))
                 :filterable          true

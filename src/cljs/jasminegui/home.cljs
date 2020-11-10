@@ -57,6 +57,5 @@
               [active-home]
               [tradehistory/modal-single-bond-trade-history]
               [tradehistory/modal-single-bond-flat-trade-history]
-              [rcm/context-menu]
-              ]])
+              [rcm/context-menu]]])
 

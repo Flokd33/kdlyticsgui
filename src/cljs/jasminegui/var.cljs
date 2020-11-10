@@ -18,18 +18,6 @@
     [oz.core :as oz]))
 
 
-;(rf/reg-sub
-;  :var/table
-;  (fn [db]
-;    (let [regression (get-in db [:var/data :regression])
-;          risk (get-in db [:var/data :risk])]
-;      [{:id "Daily 1y"    :std (get-in risk [:daily :sd-1y])    :beta (get-in regression [:daily :beta-1y])   :rsq (get-in regression [:daily :rsq-1y])   :var95 (get-in risk [:daily :var-1y-95pct])   :var99 (get-in risk [:daily :var-1y-99pct])   :maxd (get-in risk [:daily :maxd-1y])}
-;       {:id "Daily 3y"    :std (get-in risk [:daily :sd-3y])    :beta (get-in regression [:daily :beta-3y])   :rsq (get-in regression [:daily :rsq-3y])   :var95 (get-in risk [:daily :var-3y-95pct])   :var99 (get-in risk [:daily :var-3y-99pct])   :maxd (get-in risk [:daily :maxd-3y])}
-;       {:id "Weekly 1y"   :std (get-in risk [:weekly :sd-1y])   :beta (get-in regression [:weekly :beta-1y])  :rsq (get-in regression [:weekly :rsq-1y])  :var95 (get-in risk [:weekly :var-1y-95pct])  :var99 (get-in risk [:weekly :var-1y-99pct])  :maxd (get-in risk [:weekly :maxd-1y])}
-;       {:id "Weekly 3y"   :std (get-in risk [:weekly :sd-3y])   :beta (get-in regression [:weekly :beta-3y])  :rsq (get-in regression [:weekly :rsq-3y])  :var95 (get-in risk [:weekly :var-3y-95pct])  :var99 (get-in risk [:weekly :var-3y-99pct])  :maxd (get-in risk [:weekly :maxd-3y])}
-;       {:id "Monthly 1y"  :std (get-in risk [:monthly :sd-1y])  :beta (get-in regression [:monthly :beta-1y]) :rsq (get-in regression [:monthly :rsq-1y]) :var95 (get-in risk [:monthly :var-1y-95pct]) :var99 (get-in risk [:monthly :var-1y-99pct]) :maxd (get-in risk [:monthly :maxd-1y])}
-;       {:id "Monthly 3y"  :std (get-in risk [:monthly :sd-3y])  :beta (get-in regression [:monthly :beta-3y]) :rsq (get-in regression [:monthly :rsq-3y]) :var95 (get-in risk [:monthly :var-3y-95pct]) :var99 (get-in risk [:monthly :var-3y-99pct]) :maxd (get-in risk [:monthly :maxd-3y])}])))
-
 (rf/reg-sub
   :var/table
   (fn [db]
@@ -71,7 +59,6 @@
                                     :on-click #(rf/dispatch [:navigation/active-var (:code item)])]))]]]))
 
 (defn portfolio-proxy-table []
-  ;(println @(rf/subscribe [:var/portfolio-proxies]))
   [:> ReactTable
    {:data                @(rf/subscribe [:var/portfolio-proxies])
     :columns             [{:Header "Bond"             :accessor "bond"    :width 150}
@@ -197,8 +184,8 @@
                                      [h-box :align :start :children [[var-table-view] ]]
                                      [h-box :align :start :children [[backtest-chart]]]
                                      [h-box :align :start :children [[histogram-chart]]]
-                                     [h-box :align :start :children [[regression-chart]]]
-                                     ]])
+                                     [h-box :align :start :children [[regression-chart]]]]])
+
 (defn main-proxy-view []
   [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"
    :children [[h-box :align :start :children [[portfolio-proxies]]]]])
@@ -214,8 +201,7 @@
                                                                          [h-box :align :start :children [[var-table-view] ]]
                                                                          [h-box :align :start :children [[backtest-chart]]]
                                                                          [h-box :align :start :children [[histogram-chart]]]
-                                                                         [h-box :align :start :children [[regression-chart]]]
-                                                                         ]]
+                                                                         [h-box :align :start :children [[regression-chart]]]]]
       :proxies [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"
                 :children [[h-box :align :start :children [[portfolio-proxies]]]]]
       [:div.output "nothing to display"])))

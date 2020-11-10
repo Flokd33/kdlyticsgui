@@ -23,15 +23,11 @@
 
 (defn subs10 [this]
   (r/as-element
-    (if-let [x (aget this "value")]
-      [:div  (subs x 0 10)]
-      "-")))
+    (if-let [x (aget this "value")] [:div  (subs x 0 10)] "-")))
 
 (defn nfh [this]
   (r/as-element
-    (if-let [x (aget this "value")]
-      [:div  (tables/nf x)]
-      "")))
+    (if-let [x (aget this "value")] [:div  (tables/nf x)] "")))
 
 
 (defn facet-trade-history-chart []
@@ -46,22 +42,18 @@
                   :width 600
                   :height 400
                   :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                             :y {:field "price" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title "Price"}}
-                             }}
+                             :y {:field "price" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title "Price"}}}}
                  {:mark     {:type "point", :shape "triangle-up", :color "green"}
                   :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                              :y {:field "buy" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
                  {:mark     {:type "point", :shape "triangle-down", :color "red"}
                   :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                             :y {:field "sell" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}
-
-                 ]}
+                             :y {:field "sell" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}]}
                {:mark     "line",
                 :height   200
                 :width    600
                 :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                           :y {:field "nav" :type "quantitative" :scale {:domain [0 (int (inc (apply max (remove nil? (map :nav data)))))]} :axis {:title "NAV %"}}
-                           }}
+                           :y {:field "nav" :type "quantitative" :scale {:domain [0 (int (inc (apply max (remove nil? (map :nav data)))))]} :axis {:title "NAV %"}}}}
                ]}))
 
 (rf/reg-event-db
@@ -93,23 +85,19 @@
       final)))
 
 (defn modal-single-bond-trade-history []
-  (let [
-        modal-data (get-in @(rf/subscribe [:single-bond-trade-history/data]) [(keyword @(rf/subscribe [:single-portfolio-risk/portfolio]))])
+  (let [modal-data (get-in @(rf/subscribe [:single-bond-trade-history/data]) [(keyword @(rf/subscribe [:single-portfolio-risk/portfolio]))])
         show-modal @(rf/subscribe [:single-bond-trade-history/show-modal])
         display (reverse (remove #(= (:TransactionTypeName %) "Coupon Payment") modal-data))]
     @(rf/subscribe [:single-bond-trade-history/chart-data])
 
     (if show-modal
-
       [modal-panel
        :wrap-nicely? true
        :backdrop-on-click #(rf/dispatch [:single-bond-trade-history/close-modal])
        :child
        [v-box :gap "10px"
-        :children [
-                   [h-box :gap "20px" :align :center
-                    :children [
-                               [title :label (str @(rf/subscribe [:single-bond-trade-history/bond]) " trades since 2019-01-01") :level :level2]
+        :children [[h-box :gap "20px" :align :center
+                    :children [[title :label (str @(rf/subscribe [:single-bond-trade-history/bond]) " trades since 2019-01-01") :level :level2]
                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
                    (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
                      [box :align :center :child [throbber :size :large]]
@@ -120,26 +108,18 @@
                                                                                         {:Header "Type" :accessor "TransactionTypeName" :width 100}
                                                                                         {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh}
                                                                                         {:Header "Price" :accessor "PriceLcl" :width 100 :style {:textAlign "right"} :Cell tables/round2}
-                                                                                        {:Header "Counterparty" :accessor "counterparty_code" :width 100}
-                                                                                        ]
+                                                                                        {:Header "Counterparty" :accessor "counterparty_code" :width 100}]
                                                                        :showPagination false
                                                                        :pageSize       (count display)
                                                                        :className      "-striped -highlight"}]]]
                                                    [oz/vega-lite (facet-trade-history-chart)]]])]]])))
 
-;(tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv"))
-;[title :label "Download:" :level :level3]
-;[md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(csv-link @(rf/subscribe [:single-portfolio-risk/table]) @portfolio)]]))]]]]]
-
 (defn modal-single-bond-flat-trade-history []
-  (let [
-        modal-data @(rf/subscribe [:single-bond-trade-history/flat-data])
+  (let [modal-data @(rf/subscribe [:single-bond-trade-history/flat-data])
         show-modal @(rf/subscribe [:single-bond-trade-history/show-flat-modal])
         bond-name @(rf/subscribe [:single-bond-trade-history/bond])
         display (reverse (sort-by :date (remove #(some #{(:trade %)} ["Coupon Payment" "Scrip Transfer"]) modal-data)))]
-    ;(println modal-data)
     (if show-modal
-
       [modal-panel
        :wrap-nicely? true
        :backdrop-on-click #(rf/dispatch [:single-bond-trade-history/close-modal])
@@ -157,8 +137,7 @@
                                                     {:Header "Price" :accessor "price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
                                                     {:Header "Portfolio" :columns (into []
                                                                                         (for [p @(rf/subscribe [:portfolios])]
-                                                                                          {:Header p :accessor p :width 90 :style {:textAlign "right"} :Cell nfh}))}
-                                                    ]
+                                                                                          {:Header p :accessor p :width 90 :style {:textAlign "right"} :Cell nfh}))}]
                                    :showPagination false
                                    :pageSize       (count display)
                                    :className      "-striped -highlight"}])]]])))
