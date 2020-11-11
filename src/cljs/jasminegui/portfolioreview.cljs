@@ -369,10 +369,7 @@
     end-page))
 
 (def activity-pages
-  [
-   {:title "Trades over the past 15 days" :nav-request :activity :data-request [:get-portfolio-trade-history "portfolio" (tools/gdate-to-yyyymmdd (cljs-time/plus (cljs-time/today) (cljs-time/days -15))) (tools/gdate-to-yyyymmdd (cljs-time/today))]}
-   ;(str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
-   ])
+  [{:title "Trades over the past 15 days" :nav-request :activity :data-request [:get-portfolio-trade-history "portfolio" (tools/gdate-to-yyyymmdd (cljs-time/plus (cljs-time/today) (cljs-time/days -15))) (tools/gdate-to-yyyymmdd (cljs-time/today))]}])
 
 (def quant-value-pages
   (into []
@@ -381,15 +378,8 @@
            :nav-request  :quant-value
            :grouping     k
            :subgrouping  p
-           :data-request nil}))
-    )
+           :data-request nil})))
 
-;(def quant-value-pages
-;  [
-;   {:title "Quant value 4D: curve normalisation" :nav-request :quant-value :data-request []}
-;   {:title "Quant value 2D: country & sector normalisation" :nav-request :quant-value :data-request []}
-;   ;(str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
-;   ])
 
 (def pages (into {} (map-indexed
                       vector
@@ -533,7 +523,7 @@
           :pageSize            20
           :className           "-striped -highlight"}]]])))
 
-(defn backtest-history []
+(defn backtest-history-page []
   (rf/dispatch [:get-portfolio-var @(rf/subscribe [:portfolio-review/portfolio])])
   (rf/dispatch [:var/chart-period :daily-3y])
   (let [dates @(rf/subscribe [:var/dates])
@@ -613,7 +603,7 @@
         :children [[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "weight") clean-data-sorted) "Weight vs index" ".0f" 1.5)]
                    [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]]]])))
 
-(defn risk []
+(defn risk-page []
   (cond
     (clojure.string/includes? (get-in pages [@current-page :title]) "evolution")  [historical-beta]
     (clojure.string/includes? (get-in pages [@current-page :title]) "weights")    [risk-weights]
@@ -655,46 +645,44 @@
                 :defaultFilterMethod tables/case-insensitive-filter
                 :className           "-striped -highlight"}]])))
 
-(defn activity [] (portfolio-review-box-template [[aggregate-trade-table]]))
+(defn activity-page [] (portfolio-review-box-template [[aggregate-trade-table]]))
 
 
-(defn quant-value []
-  (let [g (second (get-in pages [@current-page :grouping]))
-        r (if (clojure.string/includes? (get-in pages [@current-page :title]) "4D") :quant-value-4d :quant-value-2d)
-        grouping (case g
-                   "Region" :jpm-region
-                   "Country" :qt-risk-country-name
-                   "Sector" :qt-jpm-sector
-                   "RatingGroup" :rating-group
-                   "Duration Bucket" :qt-final-maturity-band)
-        data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
-        total (reduce + (map r data))
-        max-total (apply max (map #(reduce + (map % data)) [:quant-value-4d :quant-value-2d]))
-        grp (group-by grouping data)
-        chart-data (into [] (for [[k g] grp] {:group k :value (reduce + (map r g))}))
-        clean-data (case g
-                     "Region" (reverse (sort-by :value (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash"]) chart-data)))
-                     "Country" (let [top-countries (map :group (take-last 8 (sort-by #(Math/abs (:value %)) chart-data)))
-                                     top-countries-values (sort-by :value (filter #(some #{(:group %)} top-countries) chart-data))]
-                                 (reverse (conj top-countries-values {:group "Rest" :value (- total (reduce + (map :value top-countries-values)))})))
-                     "RatingGroup" (let [top-ratings (remove #(some #{%} ["01 AAA" "02 AA" "08 C" "08 D" "09 NM"]) (map :group chart-data))
-                                         top-ratings-values (reverse (sort-by :group (filter #(some #{(:group %)} top-ratings) chart-data)))]
-                                     (reverse (conj  top-ratings-values {:group "99 Rest" :value (- total (reduce + (map :value top-ratings-values)))})))
-                     "Sector" (reverse (sort-by :value (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)))
-                     chart-data)
-        clean-data-sorted (case g
-                            "RatingGroup" (map #(update % :group subs 3) clean-data)
-                            "Duration Bucket" (sort-by (fn [x] (.indexOf ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"] (:group x))) clean-data)
-                            clean-data
-                            )]
-    (println chart-data)
-    (portfolio-review-box-template [
-                                    [oz/vega-lite (quant-value-waterfall-chart clean-data-sorted max-total)]
-                                    ])))
-
+(defn quant-value-page []
+  (when (= (get-in pages [@current-page :nav-request]) :quant-value) ;there is a risk here from using re-frame + reagent atoms together - race condition, reagent updated beforey
+    (let [g (second (get-in pages [@current-page :grouping]))
+          r (if (clojure.string/includes? (get-in pages [@current-page :title]) "4D") :quant-value-4d :quant-value-2d)
+          grouping (case g
+                     "Region" :jpm-region
+                     "Country" :qt-risk-country-name
+                     "Sector" :qt-jpm-sector
+                     "RatingGroup" :rating-group
+                     "Duration Bucket" :qt-final-maturity-band)
+          data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
+          total (reduce + (map r data))
+          max-total (apply max (map #(reduce + (map % data)) [:quant-value-4d :quant-value-2d]))
+          grp (group-by grouping data)
+          chart-data (into [] (for [[k g] grp] {:group k :value (reduce + (map r g))}))
+          clean-data (case g
+                       "Region" (reverse (sort-by :value (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash"]) chart-data)))
+                       "Country" (let [top-countries (map :group (take-last 8 (sort-by #(Math/abs (:value %)) chart-data)))
+                                       top-countries-values (sort-by :value (filter #(some #{(:group %)} top-countries) chart-data))]
+                                   (reverse (conj top-countries-values {:group "Rest" :value (- total (reduce + (map :value top-countries-values)))})))
+                       "RatingGroup" (let [top-ratings (remove #(some #{%} ["01 AAA" "02 AA" "08 C" "08 D" "09 NM"]) (map :group chart-data))
+                                           top-ratings-values (reverse (sort-by :group (filter #(some #{(:group %)} top-ratings) chart-data)))]
+                                       (reverse (conj top-ratings-values {:group "99 Rest" :value (- total (reduce + (map :value top-ratings-values)))})))
+                       "Sector" (reverse (sort-by :value (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)))
+                       chart-data)
+          clean-data-sorted (case g
+                              "RatingGroup" (map #(update % :group subs 3) clean-data)
+                              "Duration Bucket" (sort-by (fn [x] (.indexOf ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"] (:group x))) clean-data)
+                              clean-data)]
+      (portfolio-review-box-template [[oz/vega-lite (quant-value-waterfall-chart clean-data-sorted max-total)]]))))
 
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
+    ;(println (sort-by first pages))
+    ;(println portfolio-review-navigation)
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-tab
       :summary                       [summary-text]
@@ -703,10 +691,10 @@
       :alpha                         [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/alpha-chart-data])] ;(sort-by :group (reverse (sort-by :performance @(rf/subscribe [:portfolio-review/alpha-chart-data]))))
       :top-bottom                    [top-contributors]
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
-      :backtest-history              [backtest-history]
-      :activity                      [activity]
-      :quant-value                   [quant-value]
-      :risk                          [risk]
+      :backtest-history              [backtest-history-page]
+      :activity                      [activity-page]
+      :quant-value                   [quant-value-page]
+      :risk                          [risk-page]
       :end                           [end]
       [:div.output "nothing to display"])))
 
