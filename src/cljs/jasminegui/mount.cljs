@@ -359,9 +359,10 @@
 
 (defn http-get-dispatch [request]
   (go (let [response (<! (http/get (:url request)))]
+        ;(println (:body response))
         (rf/dispatch (conj (:dispatch-key request)
                            (if (:kwk request)
-                             (js->clj (js/JSON.parse (:body response)) :keywordize-keys true)
+                             (js->clj (:body response) :keywordize-keys true)
                              (:body response))))
         (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
 
@@ -371,7 +372,7 @@
   (go (let [response (<! (http/post (:url request) {:edn-params (:edn-params request)}))]
         (rf/dispatch (conj (:dispatch-key request)
                            (if (:kwk request)
-                             (js->clj (js/JSON.parse (:body response)) :keywordize-keys true)
+                             (js->clj (:body response) :keywordize-keys true)
                              (:body response))))
         (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
 
