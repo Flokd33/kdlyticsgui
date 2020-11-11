@@ -282,10 +282,16 @@
 ;      :pivoted-positions (mapv #(into {} (for [k (keys pivoted-positions)] [k (nth (pivoted-positions k) %)])) (range (count (pivoted-positions (first (keys pivoted-positions))))))
 ;      :navigation/show-mounting-modal false)))
 
+;(rf/reg-event-db
+;  :quant-model/model-output
+;  (fn [db [_ model]]
+;    (assoc db :quant-model/model-output model
+;              :navigation/show-mounting-modal false)))
+
 (rf/reg-event-db
   :quant-model/model-output
   (fn [db [_ model]]
-    (assoc db :quant-model/model-output model
+    (assoc db :quant-model/model-output (mapv #(into {} (for [k (keys model)] [k (nth (model k) %)])) (range (count (model (first (keys model)))))) ;5 seconds faster
               :navigation/show-mounting-modal false)))
 
 (rf/reg-event-db
@@ -387,7 +393,8 @@
    {:get-key :get-betas               :url-tail "beta-table"          :dis-key :betas/table}
    {:get-key :get-refinitiv-ids       :url-tail "refinitiv-ids"       :dis-key :esg/refinitiv-ids}
    {:get-key :get-refinitiv-structure :url-tail "refinitiv-structure" :dis-key :esg/refinitiv-structure}
-   {:get-key :get-quant-model         :url-tail "quant-model-output"  :dis-key :quant-model/model-output :mounting-modal true}
+   ;{:get-key :get-quant-model         :url-tail "quant-model-output"  :dis-key :quant-model/model-output :mounting-modal true}
+   {:get-key :get-quant-model         :url-tail "quant-model-output-array"  :dis-key :quant-model/model-output :mounting-modal true}
    {:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
    {:get-key :get-time-machine-status :url-tail "time-machine-status" :dis-key :time-machine-status}

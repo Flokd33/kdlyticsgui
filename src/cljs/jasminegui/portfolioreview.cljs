@@ -329,16 +329,11 @@
 (def contribution-pages
   (into [{:title "Year to date monthly performance" :nav-request :ytd-performance :data-request [:get-portfolio-review-historical-performance-chart-data "portfolio"]}]
         (for [p [["MTD" "mtd"] ["YTD" "ytd"]] k risk-breakdowns]
-          {:title        (str (first p) " Contribution by " (first k))
-           :nav-request  :contribution
-           :data-request [:get-portfolio-review-contribution-chart-data "portfolio" (second p) (second k)]})))
+          {:title (str (first p) " Contribution by " (first k)) :nav-request :contribution :data-request [:get-portfolio-review-contribution-chart-data "portfolio" (second p) (second k)]})))
 
 (def alpha-pages
-  (into []
-        (for [k risk-breakdowns]
-          {:title        (str "Alpha by " (first k))
-           :nav-request  :alpha
-           :data-request [:get-portfolio-review-alpha-chart-data "portfolio" (second k)]})))
+  (into [] (for [k risk-breakdowns]
+             {:title (str "Alpha by " (first k)) :nav-request :alpha :data-request [:get-portfolio-review-alpha-chart-data "portfolio" (second k)]})))
 
 (def top-bottom-pages
   (into []
@@ -349,11 +344,8 @@
            :data-request [:get-single-attribution "portfolio" (second p)]})))
 
 (def jensen-pages
-  (into []
-        (for [k risk-breakdowns]
-          {:title        (str "Jensen by " (first k))
-           :nav-request  :jensen
-           :data-request [:get-portfolio-review-jensen-chart-data "portfolio" (second k)]})))
+  (into [] (for [k risk-breakdowns]
+             {:title (str "Jensen by " (first k)) :nav-request :jensen :data-request [:get-portfolio-review-jensen-chart-data "portfolio" (second k)]})))
 
 (def end-page {:title "The End" :nav-request :end :data-request nil})
 
@@ -369,27 +361,24 @@
     end-page))
 
 (def activity-pages
-  [{:title "Trades over the past 15 days" :nav-request :activity :data-request [:get-portfolio-trade-history "portfolio" (tools/gdate-to-yyyymmdd (cljs-time/plus (cljs-time/today) (cljs-time/days -15))) (tools/gdate-to-yyyymmdd (cljs-time/today))]}])
+  [{:title "Trades over the past 15 days"
+    :nav-request :activity
+    :data-request [:get-portfolio-trade-history "portfolio" (tools/gdate-to-yyyymmdd (cljs-time/plus (cljs-time/today) (cljs-time/days -15))) (tools/gdate-to-yyyymmdd (cljs-time/today))]}])
 
 (def quant-value-pages
-  (into []
-        (for [k risk-breakdowns p ["curve normalisation (4D)" "sector and country normalisation (2D)"]]
-          {:title        (str "Quant value by " (first k) ": " p)
-           :nav-request  :quant-value
-           :grouping     k
-           :subgrouping  p
-           :data-request nil})))
+  (into [] (for [k risk-breakdowns p ["curve normalisation (4D)" "sector and country normalisation (2D)"]]
+             {:title (str "Quant value by " (first k) ": " p) :nav-request :quant-value :grouping k :subgrouping p :data-request nil})))
 
 
 (def pages (into {} (map-indexed
                       vector
                       (concat
-                        [{:title "Summary"                      :nav-request :summary         :data-request nil}]
+                        [{:title "Summary" :nav-request :summary :data-request nil}]
                          contribution-pages
                          alpha-pages
                          top-bottom-pages
                          jensen-pages
-                        [{:title "Three year daily backtest"   :nav-request :backtest-history  :data-request nil}]
+                        [{:title "Three year daily backtest" :nav-request :backtest-history :data-request nil}]
                         activity-pages
                         quant-value-pages
                         risk-pages))))
@@ -517,11 +506,7 @@
                                 {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
                                 {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
                                 {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
-          :showPagination      false
-          :sortable            false
-          :filterable          false
-          :pageSize            20
-          :className           "-striped -highlight"}]]])))
+          :showPagination false :sortable false :filterable false :pageSize 20 :className "-striped -highlight"}]]])))
 
 (defn backtest-history-page []
   (rf/dispatch [:get-portfolio-var @(rf/subscribe [:portfolio-review/portfolio])])
@@ -537,8 +522,7 @@
                        (take-last days (get-in data [:portfolio-value (line :frequency)]))
                        (take-last days (get-in data [:benchmark-value (line :frequency)]))
                        (- standard-box-width-nb 200) (- standard-box-height-nb 400))]
-       [p {:style {:width "250px" :min-width "250px"}} "Note that portfolio is price move only, but benchmark includes carry hence only 100d displayed" ]
-       ]) ))
+       [p {:style {:width "250px" :min-width "250px"}} "Note that portfolio is price move only, but benchmark includes carry hence only 100d displayed" ]])))
 
 (defn risk-betas []
   (let [data @(rf/subscribe [:portfolio-review/marginal-beta-chart-data])
@@ -546,14 +530,16 @@
         new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)]
     (portfolio-review-box-template [[oz/vega-lite (stacked-vertical-bars new-data "Beta contribution")]])))
 
+(def group-name-to-key
+  {"Region"          :jpm-region
+   "Country"         :qt-risk-country-name
+   "Sector"          :qt-jpm-sector
+   "RatingGroup"     :rating-group
+   "Duration Bucket" :qt-final-maturity-band})
+
 (defn risk-weights []
   (let [g (second (get-in pages [@current-page :grouping]))
-        grouping (case g
-                   "Region" :jpm-region
-                   "Country" :qt-risk-country-name
-                   "Sector" :qt-jpm-sector
-                   "RatingGroup" :rating-group
-                   "Duration Bucket" :qt-final-maturity-band)
+        grouping (group-name-to-key g)
         data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
         totals (get-in @(rf/subscribe [:total-positions]) [(keyword @(rf/subscribe [:portfolio-review/portfolio]))])
         grp (group-by grouping data)
@@ -565,25 +551,18 @@
                                  (sort-by :group (filter #(some #{(:group %)} top-countries) chart-data)))
                      "RatingGroup" (remove #(some #{(:group %)} ["08 C" "08 CC" "08 D" "09 NM"]) chart-data)
                      "Sector" (remove #(some #{(:group %)} ["Collateral" "Forwards" "Equities" "Cash" "Corporate"]) chart-data)
-                     chart-data
-                     )
+                     chart-data)
         clean-data-sorted (case g
                             "RatingGroup" (map #(update % :group subs 3) (sort-by :group (reverse (sort-by :performance clean-data))))
                             "Duration Bucket" (sort-by (fn [x] (.indexOf ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"] (:group x))) (reverse (sort-by :performance clean-data)))
-                            (sort-by :group (reverse (sort-by :performance clean-data)))
-                            )]
+                            (sort-by :group (reverse (sort-by :performance clean-data))))]
     (portfolio-review-box-template [[oz/vega-lite (grouped-horizontal-bars clean-data-sorted "Share of total risk")]])))
 
 (defn risk-deltas []
   (let [g (second (get-in pages [@current-page :grouping]))
-        grouping (case g
-                   "Region" :jpm-region
-                   "Country" :qt-risk-country-name
-                   "Sector" :qt-jpm-sector
-                   "RatingGroup" :rating-group
-                   "Duration Bucket" :qt-final-maturity-band)
+        grouping (group-name-to-key g)
         data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
-        totals (get-in @(rf/subscribe [:total-positions]) [(keyword @(rf/subscribe [:portfolio-review/portfolio]))])
+        ;totals (get-in @(rf/subscribe [:total-positions]) [(keyword @(rf/subscribe [:portfolio-review/portfolio]))])
         grp (group-by grouping data)
         risks [["weight" :weight-delta] ["mod duration" :mdur-delta] ]
         chart-data (into [] (for [[k g] grp r risks] {:group k :performance (first r) :value (* (if (= (first r) "weight") 100. 1.) (reduce + (map (second r) g)))}))
@@ -623,8 +602,7 @@
         display (concat [{:NAME "Total (net)" :ISIN "" :LocalCcy "USD" :TotalQuantity (reduce + (map :TotalQuantity grouped-data)) :Proceeds (reduce + (map :Proceeds grouped-data)) :ProceedsNAV (reduce + (map :ProceedsNAV grouped-data))}
                          (let [g (filter (comp pos? :TotalQuantity) grouped-data)] {:NAME "Total (buys)" :ISIN "" :LocalCcy "USD" :TotalQuantity (reduce + (map :TotalQuantity g)) :Proceeds (reduce + (map :Proceeds g)) :ProceedsNAV (reduce + (map :ProceedsNAV g))})
                          (let [g (filter (comp neg? :TotalQuantity) grouped-data)] {:NAME "Total (sells)" :ISIN "" :LocalCcy "USD" :TotalQuantity (reduce + (map :TotalQuantity g)) :Proceeds (reduce + (map :Proceeds g)) :ProceedsNAV (reduce + (map :ProceedsNAV g))})]
-                        (sort-by :Proceeds grouped-data))
-        ]
+                        (sort-by :Proceeds grouped-data))]
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align :center :child [throbber :size :large]]
       [box :align :center
@@ -647,17 +625,11 @@
 
 (defn activity-page [] (portfolio-review-box-template [[aggregate-trade-table]]))
 
-
 (defn quant-value-page []
   (when (= (get-in pages [@current-page :nav-request]) :quant-value) ;there is a risk here from using re-frame + reagent atoms together - race condition, reagent updated beforey
     (let [g (second (get-in pages [@current-page :grouping]))
           r (if (clojure.string/includes? (get-in pages [@current-page :title]) "4D") :quant-value-4d :quant-value-2d)
-          grouping (case g
-                     "Region" :jpm-region
-                     "Country" :qt-risk-country-name
-                     "Sector" :qt-jpm-sector
-                     "RatingGroup" :rating-group
-                     "Duration Bucket" :qt-final-maturity-band)
+          grouping (group-name-to-key g)
           data (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions]))
           total (reduce + (map r data))
           max-total (apply max (map #(reduce + (map % data)) [:quant-value-4d :quant-value-2d]))
@@ -681,8 +653,6 @@
 
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
-    ;(println (sort-by first pages))
-    ;(println portfolio-review-navigation)
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-tab
       :summary                       [summary-text]
@@ -722,8 +692,6 @@
                                    [button
                                     :class (str "btn btn-primary btn-block" (if (and (= active-tab (:code item))) " active"))
                                     :label (:name item)
-                                    :on-click #(go-to-block! (:code item)) ;#(rf/dispatch [:portfolio-review/active-tab (:code item)])
-                                    ]))]]]))
+                                    :on-click #(go-to-block! (:code item))]))]]]))
 
-(defn view []
-  [h-box :gap "10px" :padding "0px" :children [[nav] [active-home]]])
+(defn view [] [h-box :gap "10px" :padding "0px" :children [[nav] [active-home]]])

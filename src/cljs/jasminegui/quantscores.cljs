@@ -248,27 +248,23 @@
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_legacy_2 :difference_legacy_2 :URV_legacy_2 :HRV_legacy_2 :implied_rating_legacy_2])}
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_legacy_2 :URS_rank_legacy_1D_2 :URS_rank_legacy_1W_2 :URS_rank_legacy_1M_2])}
-                                           {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_legacy_D1D_2 :URS_rank_legacy_D1W_2 :URS_rank_legacy_D1M_2])}
-                                           ]
+                                           {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_legacy_D1D_2 :URS_rank_legacy_D1W_2 :URS_rank_legacy_D1M_2])}]
                                           "New"
                                           [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_new_2 :difference_new_2 :URV_new_2 :HRV_new_2 :implied_rating_new_2])}
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_new_2 :URS_rank_new_1D_2 :URS_rank_new_1W_2 :URS_rank_new_1M_2])}
-                                           {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_new_D1D_2 :URS_rank_new_D1W_2 :URS_rank_new_D1M_2])}
-                                           ]
+                                           {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_new_D1D_2 :URS_rank_new_D1W_2 :URS_rank_new_D1M_2])}]
                                           "SVR"
                                           [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :URV_svr_2 :HRV_svr_2 :implied_rating_svr_2])}
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_svr_2 :URS_rank_svr_1D_2 :URS_rank_svr_1W_2 :URS_rank_svr_1M_2])}
-                                           {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}
-                                           ]
+                                           {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}]
                                           "Screener (SVR)"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :cembi :cembi-ig])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :cembi :cembi-ig :AMT_OUTSTANDING])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
-                                           {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2])}
-                                           ]
+                                           {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2])}]
                                           )
                    :showPagination      true
                    :defaultPageSize     15
@@ -289,7 +285,7 @@
 (defn get-implied-rating [txt]
   (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) @(rf/subscribe [:rating-to-score]))))] (name x) "error"))
 
-(def performance-colors [    "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
+(def performance-colors ["#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
 
 (defn comparable-chart [duration legacy new svr table]
   (let [prepare-data (fn [tbl txt] (for [line tbl] {:field txt :duration (line :Used_Duration) :spread (line :Used_ZTW) :txt (line :Bond)}))
@@ -327,8 +323,7 @@
                           [{:mark     {:type "text" :dx 6 :align "left"}
                             :encoding {:x    {:field "duration" :type "quantitative"}
                                        :y    {:field "spread" :type "quantitative"}
-                                       :text {:field "txt" :type "nominal"}
-                                       }}]))
+                                       :text {:field "txt" :type "nominal"}}}]))
          :width  1000
          :height 500}]
     [v-box :class "element"  :gap "10px" :width "1620px"
@@ -354,9 +349,7 @@
                        {:Header "New" :accessor "new" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
                        {:Header "SVR" :accessor "svr" :width 60 :style {:textAlign "right" :background-color "lightgrey"} :Cell tables/zspread-format}
                        {:Header "Comparables" :accessor "comps" :width 100 :style {:textAlign "right"}}]
-      :showPagination false
-      :pageSize       4
-      :filterable     false}]))
+      :showPagination false :pageSize 4 :filterable false}]))
 
 (defn calculator-controller []
   (let [country-codes @(rf/subscribe [:country-codes])
@@ -581,10 +574,7 @@
                                                {:Header "BB" :accessor "LRG4" :width 200 :Cell top-bottom-str}
                                                {:Header "B" :accessor "LRG5" :width 200 :Cell top-bottom-str}
                                                {:Header "C" :accessor "LRG6" :width 200 :Cell top-bottom-str}]
-                              :showPagination false
-                              :pageSize       6
-                              :sortable       false
-                              :filterable     false}]]]]]))
+                              :showPagination false :pageSize 6 :sortable false :filterable false}]]]]]))
 
 
 (defn universe-str [this]
@@ -641,10 +631,7 @@
                               :columns        (concat [{:Header "Country" :accessor "Country" :width col-width :Cell country-display-fn :filterable true :filterMethod tables/case-insensitive-filter}]
                                                       (mapv (fn [s] {:Header s :accessor s :width col-width :Cell universe-str  :filterable false}) dsec)
                                                       [{:Header "Total" :accessor "Total" :width col-width :Cell universe-str :filterable false}])
-                              :showPagination true
-                              :showPageSizeOptions true
-                              :pageSizeOptions [6 10 20]
-                              :defaultPageSize    6}]]]]]))
+                              :showPagination true :showPageSizeOptions true :pageSizeOptions [6 10 20] :defaultPageSize 6}]]]]]))
 
 
 (defn active-home []
