@@ -19,7 +19,7 @@
                  :positions                                          []
                  :positions-new                                      {} ;map will be portfolio -> sub positions
                  :rating-to-score                                    nil
-                 :pivoted-positions                                  []
+                 ;:pivoted-positions                                  []
                  :portfolios                                         []
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
@@ -170,7 +170,7 @@
            :rating-to-score
            :country-codes
            :large-exposures
-           :pivoted-positions
+           ;:pivoted-positions
            :total-positions
            :var/proxies
            :var/dates
@@ -274,6 +274,7 @@
     (let [res (mapv #(into {} (for [k (keys positions)] [k (nth (positions k) %)])) (range (count (positions (first (keys positions))))))]
       (assoc db                                             ;:positions positions
         :positions res
+        :all-instrument-ids (distinct (map :id res))
         ;:pivoted-positions (static/get-pivoted-data res)
         :navigation/show-mounting-modal false))))
 
@@ -386,7 +387,7 @@
    {:get-key :get-positions           :url-tail "position-array"           :dis-key :positions :mounting-modal true}
    {:get-key :get-rating-to-score     :url-tail "rating-to-score"     :dis-key :rating-to-score}
    {:get-key :get-portfolios          :url-tail "portfolios"          :dis-key :portfolios}
-   {:get-key :get-pivoted-positions   :url-tail "pivoted-positions"   :dis-key :pivoted-positions}
+   ;{:get-key :get-pivoted-positions   :url-tail "pivoted-positions"   :dis-key :pivoted-positions}
    ;{:get-key :get-pivoted-positions   :url-tail "pivoted-position-array"   :dis-key :pivoted-positions}
    {:get-key :get-total-positions     :url-tail "total-positions"     :dis-key :total-positions}
    {:get-key :get-qt-date             :url-tail "qt-date"             :dis-key :qt-date}

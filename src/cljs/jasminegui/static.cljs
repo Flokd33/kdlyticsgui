@@ -2,8 +2,8 @@
 
 (def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
 
-(def main-navigation                                        ;
-  (let [home-events [:get-pivoted-positions :get-qt-date :get-total-positions :get-large-exposures :get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"] :get-positions]
+(def main-navigation                                        ;:get-pivoted-positions                                       ;
+  (let [home-events [ :get-qt-date :get-total-positions :get-large-exposures :get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"] :get-positions]
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
         ]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
@@ -143,16 +143,3 @@
                             :weight-delta :mdur-delta :contrib-beta-1y-daily :quant-value-2d :quant-value-4d
                                ])
 
-
-(defn seek [coll] (first (remove nil? coll)))
-
-(defn get-pivoted-data [table]
-  (let [portfolios (distinct (map :portfolio table))
-        instruments (distinct (map :id table))
-        grp (group-by (juxt :id :portfolio) table)]
-    (into [] (for [instrument instruments]
-               (merge (first (seek (map #(get-in grp [[instrument %]]) portfolios))) ;the template
-                      (into {}
-                            (for [k position-pivot-fields]
-                              [k (into {} (for [p portfolios]
-                                            [(keyword p) (if-let [x (first (get-in grp [[instrument p]]))] (k x) 0.)]))])))))))

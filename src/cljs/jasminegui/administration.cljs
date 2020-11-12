@@ -32,7 +32,7 @@
   (fn [db [_ data]]
     (rf/dispatch [:get-portfolios])
     (rf/dispatch [:get-positions])
-    (rf/dispatch [:get-pivoted-positions])
+    ;(rf/dispatch [:get-pivoted-positions])
     (rf/dispatch [:get-total-positions])
     (rf/dispatch [:get-rating-to-score])
     (rf/dispatch [:get-qt-date])
