@@ -128,18 +128,7 @@
                             {:id :monthly-1y :label "Monthly 1y" :frequency :monthly :period 1}
                             {:id :monthly-3y :label "Monthly 3y" :frequency :monthly :period 3}])
 
-(def position-pivot-fields [:weight
-                            :original-quantity
-                            :base-value
-                            :local-value
-                            :contrib-yield
-                            :contrib-zspread
-                            :contrib-gspread
-                            :contrib-mdur
-                            :bm-weight
-                               :bm-contrib-eir-duration
-                               :bm-contrib-yield
-                               :bm-contrib-govt-spread
-                            :weight-delta :mdur-delta :contrib-beta-1y-daily :quant-value-2d :quant-value-4d
-                               ])
-
+(def other-portfolios
+  [{:strategy "Blend" :portfolios ["FOGEMBLCR" "FU4EMBLCR" "FOLLCBLN" "FNYEMD" "FNYAKEMD" "ICOMPEMD" "ITOPEMD" "IWHITEMD" "INSWIEMD" "IGARDEMD" "OGEMMUL" "FAPFCEMD"]}
+   {:strategy "Hard currency" :portfolios ["OGEMHCD" "IUSSEMD"]}
+   {:strategy "Target return" :portfolios ["OGGBOND" "OLLCGUF"]}])

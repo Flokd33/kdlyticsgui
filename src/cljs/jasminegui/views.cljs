@@ -19,7 +19,8 @@
     [jasminegui.esg :as esg]
     [jasminegui.quantscores :as quantscores]
     [jasminegui.riskviews :as riskviews]
-    [goog.string :as gstring]))
+    [goog.string :as gstring]
+    [jasminegui.tradehistory :as th]))
 
 
 (defn navigation-event [item]
@@ -79,7 +80,7 @@
     (case active-view
       :entry            [entry]
       :home             [home/home-view]
-      :trade-history    [riskviews/trade-history]
+      :trade-history    [th/trade-history]
       :attribution      [attribution/home-view]
       :var              [var/var-view]
       :portfolio-review [pr/view]

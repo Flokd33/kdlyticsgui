@@ -17,7 +17,7 @@
     [jasminegui.tradehistory :as tradehistory]
     [jasminegui.var :as var]
     [reagent-contextmenu.menu :as rcm]
-    )
+    [jasminegui.tradehistory :as th])
   )
 
 
@@ -44,7 +44,7 @@
       :single-portfolio               [riskviews/single-portfolio-risk-controller]
       :all-portfolios                 [riskviews/multiple-portfolio-risk-controller]
       :portfolio-alignment            [riskviews/portfolio-alignment-risk-controller]
-      :trade-history                  [riskviews/trade-history]
+      ;:trade-history                  [th/trade-history]
       :large-exposures                [riskviews/large-exposures]
       :var                            [var/main-var-view]
       :proxies                        [var/main-proxy-view]
