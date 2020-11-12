@@ -271,9 +271,11 @@
 (rf/reg-event-db
   :positions
   (fn [db [_ positions]]
-    (assoc db                                               ;:positions positions
-              :positions (mapv #(into {} (for [k (keys positions)] [k (nth (positions k) %)])) (range (count (positions (first (keys positions))))))
-              :navigation/show-mounting-modal false)))
+    (let [res (mapv #(into {} (for [k (keys positions)] [k (nth (positions k) %)])) (range (count (positions (first (keys positions))))))]
+      (assoc db                                             ;:positions positions
+        :positions res
+        ;:pivoted-positions (static/get-pivoted-data res)
+        :navigation/show-mounting-modal false))))
 
 ;(rf/reg-event-db
 ;  :pivoted-positions
