@@ -2,7 +2,7 @@
   (:require
     [re-frame.core :as rf]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink md-circle-icon-button selection-list
+                         single-dropdown hyperlink md-circle-icon-button selection-list modal-panel
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -281,6 +281,7 @@
 (def chart-other-countries (r/atom false))
 (def chart-rating-neighbours (r/atom false))
 (def chart-country-neighbours (r/atom false))
+(def show-duration-modal (r/atom false))
 
 (defn get-implied-rating [txt]
   (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) @(rf/subscribe [:rating-to-score]))))] (name x) "error"))
@@ -378,9 +379,11 @@
                                                                                      [h-box :gap "10px" :children [[single-dropdown :width "200px" :model calculator-country :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil])) :filter-box? true]
                                                                                                                    [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]]]
                                                                                      [gap :size "20px"]
-                                                                                     [h-box :gap "10px" :children [[label :width "100px" :label "Duration"] [label :width "100px" :label "Rating score"] [label :width "100px" :label "Rating"]]]
+                                                                                     [h-box :gap "10px" :children [[label :width "130px" :label "Duration"] [gap :size "50px"] [label :width "100px" :label "Rating score"] [label :width "100px" :label "Rating"]]]
                                                                                      [h-box :gap "10px" :align :center :children [[input-text :width "100px" :model calculator-duration :on-change #(do (reset! calculator-duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                                                                                                   [input-text :width "100px" :model calculator-rating :on-change #(do (reset! calculator-rating %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                                                                                                                  [box :width "20px" :child [md-circle-icon-button :md-icon-name "zmdi-help" :size :smaller :on-click #(reset! show-duration-modal true)]]
+                                                                                                                                  [gap :size "50px"]
+                                                                                                                                  [input-text :width "100px" :model calculator-rating :on-change #(do (reset! calculator-rating %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
                                                                                                                    [label :width "100px" :label (get-implied-rating @calculator-rating)]]]]]
 
                                         [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread @calculator-country @calculator-sector @calculator-rating @calculator-duration])]
@@ -633,6 +636,25 @@
                                                       [{:Header "Total" :accessor "Total" :width col-width :Cell universe-str :filterable false}])
                               :showPagination true :showPageSizeOptions true :pageSizeOptions [6 10 20] :defaultPageSize 6}]]]]]))
 
+(defn duration-modal []
+  (let [maturity (r/atom nil)
+        coupon (r/atom nil)]
+    (fn []
+      (if @show-duration-modal
+        [modal-panel
+         :wrap-nicely? true
+         :backdrop-on-click #(reset! show-duration-modal false)
+         :child [v-box :gap "10px" :align :center :children
+                 [[title :label "Calculate modified duration" :level :level2]
+                  [input-text :width "200px" :model maturity :placeholder "Maturity in years" :on-change #(reset! maturity %)]
+                  [input-text :width "200px" :model coupon :placeholder "Coupon in %" :on-change #(reset! coupon %)]
+                  [label :label "Assumes semi-annual coupons"]
+                  [button :label "OK" :on-click #(do
+                                                   (reset! calculator-duration
+                                                           (str (/ (Math/round (* 100 (tools/semi-bond-modified-duration
+                                                                                        (cljs.reader/read-string @maturity)
+                                                                                        (/ (cljs.reader/read-string @coupon) 100)))) 100)))
+                                                   (reset! show-duration-modal false))]]]]))))
 
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
@@ -650,4 +672,4 @@
 
 
 (defn view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal]]])

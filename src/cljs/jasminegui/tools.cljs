@@ -38,3 +38,14 @@
     (.select el)
     (js/document.execCommand "copy")
     (.removeChild js/document.body el)))
+
+(defn semi-bond-modified-duration [years coupon]
+  (let [periods (* 2 years)
+        semi-coupon (* 0.5 coupon)
+        discount-at-period (fn [n] (/ 1 (Math/pow (inc semi-coupon) n)))]
+    (/
+      (reduce +
+              (conj (map #(* 0.5 % semi-coupon (discount-at-period %)) (range 1 (inc periods)))
+                    (* 0.5 periods (discount-at-period periods))))
+      (inc semi-coupon))))
+

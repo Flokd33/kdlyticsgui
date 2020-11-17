@@ -192,3 +192,10 @@ background-color: #414141;/*#D6E0EA */
   z-index: 1;
   background-color: whitesmoke;
 }
+
+.sticky-rt-thead {
+  position: sticky !important;
+  top: 0;
+  z-index: 2;
+  background: red;
+}
