@@ -33,7 +33,7 @@
                    :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "single-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
                          :dispatch-key [:single-bond-trade-history/data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-bond-price-history
@@ -41,7 +41,7 @@
     {:db (assoc db :bond-price-history/name name)
      :http-get-dispatch {:url          (str static/server-address "bond-price-history?name=" name "&start-date=" start-date "&end-date=" end-date)
                          :dispatch-key [:bond-price-history/price]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-single-bond-flat-history
@@ -51,7 +51,7 @@
                    :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "flat-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
                          :dispatch-key [:single-bond-trade-history/flat-data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-portfolio-trade-history
@@ -60,7 +60,7 @@
                    :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
                          :dispatch-key [:portfolio-trade-history/data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-db
   :single-bond-trade-history/data

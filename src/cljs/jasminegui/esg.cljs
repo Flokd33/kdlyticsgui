@@ -41,10 +41,11 @@
 (rf/reg-event-fx
   :esg/fetch-data
   (fn [{:keys [db]} [_ detail]]
+    (println (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail))
     {:db                db
      :http-get-dispatch {:url          (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail)
                          :dispatch-key (if (= detail "top") [:esg/data] [:esg/data-detailed])
-                         :kwk          false}}))
+                         }}))
 
 (rf/reg-event-db
   :esg/refinitiv-structure

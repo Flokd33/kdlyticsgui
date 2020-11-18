@@ -35,49 +35,49 @@
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=summary&portfolio=" portfolio)
                          :dispatch-key [:portfolio-review/summary-data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-portfolio-review-contribution-chart-data
   (fn [{:keys [db]} [_ portfolio period grouping]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping=" grouping)
                          :dispatch-key [:portfolio-review/contribution-chart-data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-portfolio-review-alpha-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" grouping)
                          :dispatch-key [:portfolio-review/alpha-chart-data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-portfolio-review-jensen-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" grouping)
                          :dispatch-key [:portfolio-review/jensen-chart-data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-portfolio-review-marginal-beta-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=marginal-beta&portfolio=" portfolio "&grouping=" grouping)
                          :dispatch-key [:portfolio-review/marginal-beta-chart-data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-portfolio-review-historical-beta-chart-data
   (fn [{:keys [db]} [_ portfolio countries]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=historical-beta&portfolio=" portfolio "&countries=" countries)
                          :dispatch-key [:portfolio-review/historical-beta-chart-data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-portfolio-review-historical-performance-chart-data
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=history&portfolio=" portfolio)
                          :dispatch-key [:portfolio-review/historical-performance-chart-data]
-                         :kwk          true}}))
+                         }}))
 
 (def standard-box-width "1600px")
 (def standard-box-height "1024px")

@@ -25,7 +25,7 @@
      :http-post-dispatch {:url          (str static/server-address "rebuild")
                           :edn-params   {}
                           :dispatch-key [:has-rebuilt]
-                          :kwk          true}}))
+                          }}))
 
 (rf/reg-event-db
   :has-rebuilt
@@ -98,7 +98,7 @@
      :http-post-dispatch {:url          (str static/server-address "time-machine")
                           :edn-params   {:enabled enabled :date (tools/gdate-to-yyyymmdd date)}
                           :dispatch-key [:time-machine/has-rebuilt]
-                          :kwk          true}}))
+                          }}))
 
 (rf/reg-event-db
   :time-machine/has-rebuilt

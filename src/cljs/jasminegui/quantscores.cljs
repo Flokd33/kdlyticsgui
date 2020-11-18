@@ -24,10 +24,8 @@
   :get-calculator-spread
   (fn [{:keys [db]} [_ country sector rating duration]]
     ;warning country and sector have ampersands & - this is a killer
-    (println country)
     {:http-get-dispatch {:url          (str static/server-address "quant-model-calculator?country=" (.replace country "&" "@") "&sector=" (.replace sector "&" "@") "&rating=" rating "&duration=" duration)
-                         :dispatch-key [:quant-model/calculator-spreads]
-                         :kwk          true}}))
+                         :dispatch-key [:quant-model/calculator-spreads]}}))
 
 (defn nav-qs-bar []
   (let [active-var @(rf/subscribe [:navigation/active-qs])]

@@ -361,22 +361,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn http-get-dispatch [request]
+  "if response header is application/json keys will get keywordized automatically"
   (go (let [response (<! (http/get (:url request)))]
         ;(println (:body response))
-        (rf/dispatch (conj (:dispatch-key request)
-                           (if (:kwk request)
-                             (js->clj (:body response) :keywordize-keys true)
-                             (:body response))))
+        (rf/dispatch (conj (:dispatch-key request) (:body response)))
         (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
 
 (rf/reg-fx :http-get-dispatch http-get-dispatch)
 
 (defn http-post-dispatch [request]
+  "if response header is application/json keys will get keywordized automatically"
   (go (let [response (<! (http/post (:url request) {:edn-params (:edn-params request)}))]
-        (rf/dispatch (conj (:dispatch-key request)
-                           (if (:kwk request)
-                             (js->clj (:body response) :keywordize-keys true)
-                             (:body response))))
+        (rf/dispatch (conj (:dispatch-key request) (:body response)))
         (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
 
 (rf/reg-fx :http-post-dispatch http-post-dispatch)
@@ -402,7 +398,11 @@
    {:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
    {:get-key :get-time-machine-status :url-tail "time-machine-status" :dis-key :time-machine-status}
+   {:get-key :get-attribution-date    :url-tail "attribution?query-type=attribution-date" :dis-key :attribution-date}
+   {:get-key :get-attribution-summary    :url-tail "attribution?query-type=summary" :dis-key :attribution/summary}
+   {:get-key :get-attribution-available-months    :url-tail "attribution?query-type=available-months" :dis-key :attribution/available-months}
    ])
+
 
 (doseq [line simple-http-get-events]
   (rf/reg-event-fx
@@ -411,45 +411,35 @@
       (if (zero? (count (get-in db [(:dis-key line)])))     ;if it wasn't mounted yet we need to load it
         {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
          :http-get-dispatch {:url           (str static/server-address (:url-tail line))
-                             :dispatch-key  [(:dis-key line)]
-                             :kwk           true}}))))
+                             :dispatch-key  [(:dis-key line)]}}))))
 
 (rf/reg-event-fx
   :get-positions-new
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "positions-new?portfolio=" portfolio)
                          :dispatch-key [:positions-new portfolio]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-var-data
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "var-data?portfolio=" portfolio)
                          :dispatch-key [:var/data]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-portfolio-var
   (fn [{:keys [db]} [_ portfolio]]
     {:db (assoc db :var/portfolio portfolio)
      :http-get-dispatch {:url          (str static/server-address "var-data?portfolio=" portfolio)
-                         :dispatch-key [:var/data]
-                         :kwk          true}}))
-
-(rf/reg-event-fx
-  :get-attribution-date
-  (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=attribution-date")
-                         :dispatch-key [:attribution-date]
-                         :kwk          false}}))
+                         :dispatch-key [:var/data]}}))
 
 ;SINGLE ATTRIBUTION
 (rf/reg-event-fx
   :get-single-attribution
   (fn [{:keys [db]} [_ portfolio period]]
     {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" period)
-                         :dispatch-key [:single-portfolio-attribution/table]
-                         :kwk          true}}))
+                         :dispatch-key [:single-portfolio-attribution/table]}}))
 
 (rf/reg-event-fx
   :change-single-attribution-portfolio
@@ -457,7 +447,7 @@
     {:db (assoc db :single-portfolio-attribution/portfolio portfolio)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:single-portfolio-attribution/period db))
                          :dispatch-key [:single-portfolio-attribution/table]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :change-single-attribution-period
@@ -465,7 +455,7 @@
     {:db (assoc db :single-portfolio-attribution/period period)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" (:single-portfolio-attribution/portfolio db) "&period=" period)
                          :dispatch-key [:single-portfolio-attribution/table]
-                         :kwk          true}}))
+                         }}))
 
 ;MULTIPLE ATTRIBUTION
 (rf/reg-event-fx
@@ -473,7 +463,7 @@
   (fn [{:keys [db]} [_ target period]]
     {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
                          :dispatch-key [:multiple-portfolio-attribution/table]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :change-multiple-attribution-target
@@ -482,7 +472,7 @@
       {:db                (assoc db :multiple-portfolio-attribution/field-one ktarget)
        :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" (:multiple-portfolio-attribution/period db))
                            :dispatch-key [:multiple-portfolio-attribution/table]
-                           :kwk          true}})))
+                           }})))
 
 (rf/reg-event-fx
   :change-multiple-attribution-period
@@ -491,23 +481,8 @@
       {:db                (assoc db :multiple-portfolio-attribution/period period)
        :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
                            :dispatch-key [:multiple-portfolio-attribution/table]
-                           :kwk          true}})))
+                           }})))
 
-;SUMMARY ATTRIBUTION
-(rf/reg-event-fx
-  :get-attribution-summary
-  (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=summary")
-                         :dispatch-key [:attribution/summary]
-                         :kwk          true}}))
-
-;SUMMARY ATTRIBUTION
-(rf/reg-event-fx
-  :get-attribution-available-months
-  (fn [{:keys [db]} [_]]
-    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=available-months")
-                         :dispatch-key [:attribution/available-months]
-                         :kwk          true}}))
 
 ;INDEX RETURNS
 (rf/reg-event-fx
@@ -516,7 +491,7 @@
     {:db (assoc db :attribution-index-returns/portfolio portfolio)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:attribution-index-returns/period db))
                          :dispatch-key [:attribution-index-returns/table]
-                         :kwk          true}}))
+                         }}))
 
 (rf/reg-event-fx
   :get-attribution-index-returns-period
@@ -524,4 +499,4 @@
     {:db (assoc db :attribution-index-returns/period period)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" (:attribution-index-returns/portfolio db) "&period=" period)
                          :dispatch-key [:attribution-index-returns/table]
-                         :kwk          true}}))
+                         }}))
