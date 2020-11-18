@@ -44,8 +44,7 @@
     (println (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail))
     {:db                db
      :http-get-dispatch {:url          (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail)
-                         :dispatch-key (if (= detail "top") [:esg/data] [:esg/data-detailed])
-                         }}))
+                         :dispatch-key (if (= detail "top") [:esg/data] [:esg/data-detailed])}}))
 
 (rf/reg-event-db
   :esg/refinitiv-structure

@@ -2,7 +2,7 @@
   (:require
     [re-frame.core :as rf]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink md-circle-icon-button selection-list modal-panel
+                         single-dropdown hyperlink md-circle-icon-button selection-list modal-panel typeahead
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -24,7 +24,7 @@
   :get-calculator-spread
   (fn [{:keys [db]} [_ country sector rating duration]]
     ;warning country and sector have ampersands & - this is a killer
-    {:http-get-dispatch {:url          (str static/server-address "quant-model-calculator?country=" (.replace country "&" "@") "&sector=" (.replace sector "&" "@") "&rating=" rating "&duration=" duration)
+    {:http-get-dispatch {:url          (str static/server-address "quant-model-calculator?country=" (.replace ^string country "&" "@") "&sector=" (.replace ^string sector "&" "@") "&rating=" rating "&duration=" duration)
                          :dispatch-key [:quant-model/calculator-spreads]}}))
 
 (defn nav-qs-bar []
@@ -449,8 +449,12 @@
      :width  1000
      :height 625}))
 
+(def typeahead-model (atom nil))
+
 (defn spot-chart []
-  (let [data @(rf/subscribe [:quant-model/model-output])]
+  (let [data @(rf/subscribe [:quant-model/model-output])
+        issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data)))))
+        ]
     [box :padding "80px 10px" :class "rightelement" :child
      [v-box :class "element" :gap "50px" :width "1620px" :children
       [[title :label "Spot charts" :level :level1]
@@ -465,13 +469,24 @@
                                :value c
                                :model spot-chart-model-choice
                                :on-change #(reset! spot-chart-model-choice %)]))
-                      [[gap :size "10px"]
+                      [                                     [gap :size "10px"]
                        [title :label "Rating curves" :level :level3]
                        [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]]))
           ]
          [v-box :gap "0px" :width "150px" :children
           [[title :label "Issuers" :level :level3]
-           [selection-list :model spot-chart-issuer-choice :width "100%" :height "600px" :choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data))))) :on-change #(reset! spot-chart-issuer-choice %)]]]
+           [selection-list :model spot-chart-issuer-choice :width "100%" :height "460px" :choices issuer-choices :on-change #(reset! spot-chart-issuer-choice %)]
+           [gap :size "10px"]
+           [typeahead
+            :width "100%"
+            :model typeahead-model
+            :data-source (fn [s] (into [] (take 4 (for [n issuer-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
+            :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
+            :suggestion-to-string (fn [_] "")              ;#(:name %)
+            :placeholder "Or search here"
+            :on-change #(swap! spot-chart-issuer-choice (if (contains? @spot-chart-issuer-choice (:id %)) disj conj) (:id %))
+            :change-on-blur? true :immediate-model-update? false :rigid? false :disabled? false]]]
+
          [oz/vega-lite (spot-chart-vega-spec @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice)]                                                 ; [p "chart comes here"]                             ;[oz/vega-lite nil]
          ]]]]]))
 

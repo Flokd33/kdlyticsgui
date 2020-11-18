@@ -67,7 +67,7 @@
                  :portfolio-alignment/field                          :nav
                  :portfolio-alignment/filter                         {1 :region 2 :country 3 :issuer}
                  :portfolio-alignment/group                          :cembi
-                 :portfolio-alignment/threshold                      :quarter
+                 :portfolio-alignment/threshold                      :zero
                  :portfolio-alignment/shortcut                       1
                  :portfolio-alignment/table-filter                   []
 
@@ -302,8 +302,7 @@
   (fn [db [_ portfolio positions]]
     (-> db
         (assoc-in [:positions-new portfolio] positions)
-        (assoc :navigation/show-mounting-modal false)
-        )))
+        (assoc :navigation/show-mounting-modal false))))
 
 (rf/reg-event-db
   :portfolios
@@ -323,11 +322,11 @@
 
 (rf/reg-event-db
   :qt-date
-  (fn [db [_ qt-date]] (assoc db :qt-date (clojure.string/replace qt-date "\"" ""))))
+  (fn [db [_ qt-date]] (assoc db :qt-date (.replace ^string qt-date "\"" ""))))
 
 (rf/reg-event-db
   :attribution-date
-  (fn [db [_ attribution-date]] (assoc db :attribution-date (clojure.string/replace attribution-date "\"" ""))))
+  (fn [db [_ attribution-date]] (assoc db :attribution-date (.replace ^string attribution-date "\"" ""))))
 
 ;THIS IS A DUMMY - IN PRACTICE WE'D DO MORE THINGS HERE
 (rf/reg-event-db
@@ -361,7 +360,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn http-get-dispatch [request]
-  "if response header is application/json keys will get keywordized automatically"
+  "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
   (go (let [response (<! (http/get (:url request)))]
         ;(println (:body response))
         (rf/dispatch (conj (:dispatch-key request) (:body response)))
@@ -370,7 +369,7 @@
 (rf/reg-fx :http-get-dispatch http-get-dispatch)
 
 (defn http-post-dispatch [request]
-  "if response header is application/json keys will get keywordized automatically"
+  "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
   (go (let [response (<! (http/post (:url request) {:edn-params (:edn-params request)}))]
         (rf/dispatch (conj (:dispatch-key request) (:body response)))
         (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
@@ -413,19 +412,17 @@
          :http-get-dispatch {:url           (str static/server-address (:url-tail line))
                              :dispatch-key  [(:dis-key line)]}}))))
 
-(rf/reg-event-fx
-  :get-positions-new
-  (fn [{:keys [db]} [_ portfolio]]
-    {:http-get-dispatch {:url          (str static/server-address "positions-new?portfolio=" portfolio)
-                         :dispatch-key [:positions-new portfolio]
-                         }}))
+;(rf/reg-event-fx
+;  :get-positions-new
+;  (fn [{:keys [db]} [_ portfolio]]
+;    {:http-get-dispatch {:url          (str static/server-address "positions-new?portfolio=" portfolio)
+;                         :dispatch-key [:positions-new portfolio]}}))
 
 (rf/reg-event-fx
   :get-var-data
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "var-data?portfolio=" portfolio)
-                         :dispatch-key [:var/data]
-                         }}))
+                         :dispatch-key [:var/data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-var
@@ -446,42 +443,37 @@
   (fn [{:keys [db]} [_ portfolio]]
     {:db (assoc db :single-portfolio-attribution/portfolio portfolio)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:single-portfolio-attribution/period db))
-                         :dispatch-key [:single-portfolio-attribution/table]
-                         }}))
+                         :dispatch-key [:single-portfolio-attribution/table]}}))
 
 (rf/reg-event-fx
   :change-single-attribution-period
   (fn [{:keys [db]} [_ period]]
     {:db (assoc db :single-portfolio-attribution/period period)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" (:single-portfolio-attribution/portfolio db) "&period=" period)
-                         :dispatch-key [:single-portfolio-attribution/table]
-                         }}))
+                         :dispatch-key [:single-portfolio-attribution/table]}}))
 
 ;MULTIPLE ATTRIBUTION
 (rf/reg-event-fx
   :get-multiple-attribution
   (fn [{:keys [db]} [_ target period]]
     {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
-                         :dispatch-key [:multiple-portfolio-attribution/table]
-                         }}))
+                         :dispatch-key [:multiple-portfolio-attribution/table]}}))
 
 (rf/reg-event-fx
   :change-multiple-attribution-target
   (fn [{:keys [db]} [_ ktarget]]
-    (let [target (clojure.string.replace (get-in tables/attribution-table-columns [ktarget :accessor]) "-" " ")]
+    (let [target (.replace ^string (get-in tables/attribution-table-columns [ktarget :accessor]) "-" " ")]
       {:db                (assoc db :multiple-portfolio-attribution/field-one ktarget)
        :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" (:multiple-portfolio-attribution/period db))
-                           :dispatch-key [:multiple-portfolio-attribution/table]
-                           }})))
+                           :dispatch-key [:multiple-portfolio-attribution/table]}})))
 
 (rf/reg-event-fx
   :change-multiple-attribution-period
   (fn [{:keys [db]} [_ period]]
-    (let [target (clojure.string.replace (get-in tables/attribution-table-columns [(:multiple-portfolio-attribution/field-one db) :accessor]) "-" " ")]
+    (let [target (.replace ^string (get-in tables/attribution-table-columns [(:multiple-portfolio-attribution/field-one db) :accessor]) "-" " ")]
       {:db                (assoc db :multiple-portfolio-attribution/period period)
        :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
-                           :dispatch-key [:multiple-portfolio-attribution/table]
-                           }})))
+                           :dispatch-key [:multiple-portfolio-attribution/table]}})))
 
 
 ;INDEX RETURNS
@@ -490,13 +482,11 @@
   (fn [{:keys [db]} [_ portfolio]]
     {:db (assoc db :attribution-index-returns/portfolio portfolio)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:attribution-index-returns/period db))
-                         :dispatch-key [:attribution-index-returns/table]
-                         }}))
+                         :dispatch-key [:attribution-index-returns/table]}}))
 
 (rf/reg-event-fx
   :get-attribution-index-returns-period
   (fn [{:keys [db]} [_ period]]
     {:db (assoc db :attribution-index-returns/period period)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" (:attribution-index-returns/portfolio db) "&period=" period)
-                         :dispatch-key [:attribution-index-returns/table]
-                         }}))
+                         :dispatch-key [:attribution-index-returns/table]}}))
