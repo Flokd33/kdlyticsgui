@@ -17,7 +17,7 @@
 (def default-db {
                  ;data
                  :positions                                          []
-                 :positions-new                                      {} ;map will be portfolio -> sub positions
+                 ;:positions-new                                      {} ;map will be portfolio -> sub positions
                  :rating-to-score                                    nil
                  ;:pivoted-positions                                  []
                  :portfolios                                         []
@@ -268,10 +268,17 @@
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
 
+(defn array-of-lists->records [data]
+  (let [model (into {} (for [[k v] data] [k (vec v)]))]
+    (mapv #(into {} (for [k (keys model)] [k (nth (model k) %)]))
+          (range (count (model (first (keys model))))))))
+
+
 (rf/reg-event-db
   :positions
   (fn [db [_ positions]]
-    (let [res (mapv #(into {} (for [k (keys positions)] [k (nth (positions k) %)])) (range (count (positions (first (keys positions))))))]
+    ;(println positions)
+    (let [res (array-of-lists->records positions)]                                             ;(mapv #(into {} (for [k (keys positions)] [k (nth (positions k) %)])) (range (count (positions (first (keys positions))))))
       (assoc db                                             ;:positions positions
         :positions res
         :all-instrument-ids (distinct (map :id res))
@@ -294,15 +301,17 @@
 (rf/reg-event-db
   :quant-model/model-output
   (fn [db [_ model]]
-    (assoc db :quant-model/model-output (mapv #(into {} (for [k (keys model)] [k (nth (model k) %)])) (range (count (model (first (keys model)))))) ;5 seconds faster
+    (assoc db
+      ;:quant-model/model-output model
+      :quant-model/model-output (array-of-lists->records model)
               :navigation/show-mounting-modal false)))
 
-(rf/reg-event-db
-  :positions-new
-  (fn [db [_ portfolio positions]]
-    (-> db
-        (assoc-in [:positions-new portfolio] positions)
-        (assoc :navigation/show-mounting-modal false))))
+;(rf/reg-event-db
+;  :positions-new
+;  (fn [db [_ portfolio positions]]
+;    (-> db
+;        (assoc-in [:positions-new portfolio] positions)
+;        (assoc :navigation/show-mounting-modal false))))
 
 (rf/reg-event-db
   :portfolios
@@ -379,7 +388,8 @@
 
 (def simple-http-get-events
   [                                                         ;{:get-key :get-positions           :url-tail "positions"           :dis-key :positions :mounting-modal true}
-   {:get-key :get-positions           :url-tail "position-array"           :dis-key :positions :mounting-modal true}
+   ;{:get-key :get-positions           :url-tail "position-array"           :dis-key :positions :mounting-modal true}
+   {:get-key :get-positions           :url-tail "position-transit-array"           :dis-key :positions :mounting-modal true}
    {:get-key :get-rating-to-score     :url-tail "rating-to-score"     :dis-key :rating-to-score}
    {:get-key :get-portfolios          :url-tail "portfolios"          :dis-key :portfolios}
    ;{:get-key :get-pivoted-positions   :url-tail "pivoted-positions"   :dis-key :pivoted-positions}
@@ -393,7 +403,8 @@
    {:get-key :get-refinitiv-ids       :url-tail "refinitiv-ids"       :dis-key :esg/refinitiv-ids}
    {:get-key :get-refinitiv-structure :url-tail "refinitiv-structure" :dis-key :esg/refinitiv-structure}
    ;{:get-key :get-quant-model         :url-tail "quant-model-output"  :dis-key :quant-model/model-output :mounting-modal true}
-   {:get-key :get-quant-model         :url-tail "quant-model-output-array"  :dis-key :quant-model/model-output :mounting-modal true}
+   ;{:get-key :get-quant-model         :url-tail "quant-model-output-array"  :dis-key :quant-model/model-output :mounting-modal true}
+   {:get-key :get-quant-model         :url-tail "quant-model-output-transit-array"  :dis-key :quant-model/model-output :mounting-modal true}
    {:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
    {:get-key :get-time-machine-status :url-tail "time-machine-status" :dis-key :time-machine-status}
