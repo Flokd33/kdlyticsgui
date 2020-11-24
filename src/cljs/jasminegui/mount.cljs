@@ -153,6 +153,7 @@
                  :quant-model/model-output                []
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
+                 :quant-model/isin-history                []
 
 
                  })
@@ -259,6 +260,7 @@
 
            :quant-model/calculator-spreads
            :quant-model/rating-curves               []
+           :quant-model/isin-history []
 
            :time-machine/enabled
            :time-machine/date

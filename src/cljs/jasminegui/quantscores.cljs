@@ -27,6 +27,12 @@
     {:http-get-dispatch {:url          (str static/server-address "quant-model-calculator?country=" (.replace ^string country "&" "@") "&sector=" (.replace ^string sector "&" "@") "&rating=" rating "&duration=" duration)
                          :dispatch-key [:quant-model/calculator-spreads]}}))
 
+(rf/reg-event-fx
+  :get-historical-quant-scores
+  (fn [{:keys [db]} [_ isin]]
+    {:http-get-dispatch {:url          (str static/server-address "quant-model-isin-history?isin=" isin)
+                         :dispatch-key [:quant-model/isin-history]}}))
+
 (defn nav-qs-bar []
   (let [active-var @(rf/subscribe [:navigation/active-qs])]
     [h-box
@@ -669,6 +675,73 @@
                                                                                         (/ (cljs.reader/read-string @coupon) 100)))) 100)))
                                                    (reset! show-duration-modal false))]]]]))))
 
+
+(defn quant-isin-history-chart [cheapness? spread? universe? historical? rating?]
+  (let [data @(rf/subscribe [:quant-model/isin-history])]
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+     :title   nil                                           ;(str @(rf/subscribe [:single-bond-trade-history/bond]) " trading history")
+     :data    {:values data :format {:parse {:Date "date:'%Y%m%d'" :HRS_legacy "quantitative" :REH_legacy "quantitative" :HCS "quantitative" :URS_legacy "quantitative" :Median_Rating "quantitative"}}}
+     :vconcat (remove nil? [
+                            (if cheapness?
+                              {:mark "line" :width 800 :height 400
+                               :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                                          :y {:field "REH_legacy" :type "quantitative" :axis {:title "Cheapness (bps)"}}}})
+                            (if spread?
+                              {:mark "line" :width 800 :height 400
+                               :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                                          :y {:field "HCS" :type "quantitative" :axis {:title "Z-spread"}}}})
+                            (if universe?
+                              {:mark "line" :width 800 :height 400
+                               :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                                          :y {:field "URS_legacy" :type "quantitative" :axis {:title "Universe"}}}})
+                            (if historical?
+                              {:mark "line" :width 800 :height 400
+                               :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                                          :y {:field "HRS_legacy" :type "quantitative" :axis {:title "Historical"}}}})
+                            (if rating?
+                              {:mark "line" :width 800 :height 400
+                               :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                                          :y {:field "Median_Rating" :type "quantitative" :scale {:domain [(dec (apply min (map :Median_Rating data))) (inc (apply max (map :Median_Rating data)))]} :axis {:title "Rating"}}}})
+                            ])}))
+
+(def typeahead-bond-nickname (r/atom nil))
+(def isin-historical-charts (r/atom "ISIN not found"))
+(def bond-historical-charts (r/atom ""))
+(def show-historical-cheapness (r/atom true))
+(def show-historical-spreads (r/atom false))
+(def show-universe-scores (r/atom false))
+(def show-historical-scores (r/atom false))
+(def show-rating-history (r/atom false))
+
+(defn qs-historical-charts []
+  (let [source-data @(rf/subscribe [:quant-model/model-output])
+        bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data)))))]
+    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+     :children [[v-box :class "element" :gap "20px" :width "1620px"
+                 :children [[title :level :level1 :label "Historical charts"]
+                            [h-box :gap "100px" :align :start
+                             :children [[v-box :gap "10px" :children
+                                         [[checkbox :model show-historical-cheapness  :label "Show cheapness?"        :on-change #(reset! show-historical-cheapness %)]
+                                          [checkbox :model show-historical-spreads    :label "Show spreads?"          :on-change #(reset! show-historical-spreads %)]
+                                          [checkbox :model show-universe-scores       :label "Show universe score?"   :on-change #(reset! show-universe-scores %)]
+                                          [checkbox :model show-historical-scores     :label "Show historical score?" :on-change #(reset! show-historical-scores %)]
+                                          [checkbox :model show-rating-history        :label "Show rating history?"   :on-change #(reset! show-rating-history %)]
+                                          [gap :size "30px"]
+                                          [label :width "200px" :label (str @bond-historical-charts " " @isin-historical-charts)]
+                                          [typeahead
+                                           :width "200px"
+                                           :model typeahead-bond-nickname
+                                           :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
+                                           :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
+                                           :suggestion-to-string (fn [_] "")              ;#(:name %)
+                                           :placeholder "Search here"
+                                           :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))]
+                                                             (reset! isin-historical-charts isin)
+                                                             (reset! bond-historical-charts (:id %))
+                                                             (rf/dispatch [:get-historical-quant-scores isin])))
+                                           :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]]]
+                                        [oz/vega-lite (quant-isin-history-chart @show-historical-cheapness @show-historical-spreads @show-universe-scores @show-historical-scores @show-rating-history)]]]]]]]))
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -676,7 +749,7 @@
       :table              [qs-table-container]
       :calculator         [calculator-controller]
       :spot-charts        [spot-chart]
-      :historical-charts  [qs-table-container]
+      :historical-charts  [qs-historical-charts]
       :top-bottom         [top-bottom]
       :trade-finder       [trade-finder]
       :universe-des       [universe-overview]

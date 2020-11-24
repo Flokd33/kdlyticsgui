@@ -42,7 +42,7 @@
   [{:code :table              :name "Table"}
    {:code :calculator         :name "Calculator"}
    {:code :spot-charts        :name "Spot charts"}
-   ;{:code :historical-charts  :name "Historical charts - WIP"}
+   {:code :historical-charts  :name "Historical charts"}
    {:code :top-bottom         :name "Most expensive / cheap"}
    {:code :trade-finder       :name "Trade finder"}
    {:code :universe-des       :name "Universe overview"}
