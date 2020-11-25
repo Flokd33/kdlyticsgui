@@ -539,7 +539,7 @@
                             [input-text :model trade-finder-isin :on-change #(reset! trade-finder-isin %)]
                             [label :label bond-name]
                             [p (str "We will look for bonds rated within 1 notch of the above, with duration within 1 year of the above, and scoring cheaper through the SVR model.")]]]
-                [qs-table (str (count comparables) " bonds scoring better") comparables]]]))
+                [qs-table (str (dec (count comparables)) " bonds scoring better") comparables]]]))
 
 (defn duration-grouping-fn
   [m]
