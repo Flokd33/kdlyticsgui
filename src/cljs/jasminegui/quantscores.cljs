@@ -54,9 +54,11 @@
    :Use                       {:Header "Use" :accessor "Use" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
    :Bond                      {:Header "Bond" :accessor "Bond" :width 150}
    :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 40}
-   :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 80 :style {:textAlign "center"}}
-   :cembi                     {:Header "CEMBI" :accessor "cembi" :width 80 :style {:textAlign "center"}}
-   :cembi-ig                  {:Header "CEMBI IG" :accessor "cembi-ig" :width 80  :style {:textAlign "center"}}
+   :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 70 :style {:textAlign "center"}}
+   :HYBRID-WIDE               {:Header "Hybrid" :accessor "HYBRID" :width 70 :style {:textAlign "center"}}
+   :COUPON                    {:Header "Coupon" :accessor "COUPON" :width 70 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}
+   :cembi                     {:Header "CEMBI" :accessor "cembi" :width 70 :style {:textAlign "center"}}
+   :cembi-ig                  {:Header "CEMBI IG" :accessor "cembi-ig" :width 70  :style {:textAlign "center"}}
    :CRNCY                     {:Header "Currency" :accessor "CRNCY" :width 60}
    :Bond-sticky               {:Header "Bond" :accessor "Bond" :width 160 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                {:Header "Price" :accessor "Used_Price" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
@@ -266,7 +268,7 @@
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_svr_2 :URS_rank_svr_1D_2 :URS_rank_svr_1W_2 :URS_rank_svr_1M_2])}
                                            {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}]
                                           "Screener (SVR)"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :cembi :cembi-ig :AMT_OUTSTANDING])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig :AMT_OUTSTANDING :COUPON])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2])}]
                                           )
