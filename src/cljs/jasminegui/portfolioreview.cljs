@@ -34,22 +34,19 @@
   :get-portfolio-review-summary-data
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=summary&portfolio=" portfolio)
-                         :dispatch-key [:portfolio-review/summary-data]
-                         }}))
+                         :dispatch-key [:portfolio-review/summary-data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-contribution-chart-data
   (fn [{:keys [db]} [_ portfolio period grouping]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping=" grouping)
-                         :dispatch-key [:portfolio-review/contribution-chart-data]
-                         }}))
+                         :dispatch-key [:portfolio-review/contribution-chart-data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-alpha-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" grouping)
-                         :dispatch-key [:portfolio-review/alpha-chart-data]
-                         }}))
+                         :dispatch-key [:portfolio-review/alpha-chart-data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-jensen-chart-data
@@ -62,28 +59,24 @@
   :get-portfolio-review-marginal-beta-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=marginal-beta&portfolio=" portfolio "&grouping=" grouping)
-                         :dispatch-key [:portfolio-review/marginal-beta-chart-data]
-                         }}))
+                         :dispatch-key [:portfolio-review/marginal-beta-chart-data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-historical-beta-chart-data
   (fn [{:keys [db]} [_ portfolio countries]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=historical-beta&portfolio=" portfolio "&countries=" countries)
-                         :dispatch-key [:portfolio-review/historical-beta-chart-data]
-                         }}))
+                         :dispatch-key [:portfolio-review/historical-beta-chart-data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-historical-performance-chart-data
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=history&portfolio=" portfolio)
-                         :dispatch-key [:portfolio-review/historical-performance-chart-data]
-                         }}))
+                         :dispatch-key [:portfolio-review/historical-performance-chart-data]}}))
 
 (def standard-box-width "1600px")
 (def standard-box-height "1024px")
 (def standard-box-width-nb 1600)
 (def standard-box-height-nb 1024)
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -195,7 +188,7 @@
 
 (defn grouped-vertical-bars [data title]
   "The data is of the form [{:date dt :group TXT :value 0}]"
-  (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 40) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
+  (let [individual-weights (if (> (count (distinct (map :group data))) 10) 20 35) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         colors (take (count (distinct (mapv :group data))) performance-colors)
         scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
     ;(println data)
@@ -206,7 +199,7 @@
      :facet     {:column {:field "date", :type "temporal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "center" :format "%b"}}},
      :spec      {:layer
                  [{:mark     "bar",
-                   :width    individual-height,
+                   :width    individual-weights,
                    :height   (- standard-box-height-nb 400)
                    :encoding {:x     {:field "group", :type "nominal",
                                       :sort  (distinct (mapv :group data))

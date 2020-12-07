@@ -17,8 +17,20 @@
     [oz.core :as oz]
     [goog.string :as gstring]
     [goog.string.format]
-    )
+    [reagent-contextmenu.menu :as rcm])
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;Following used for historical charts
+(def typeahead-bond-nickname (r/atom nil))
+(def isin-historical-charts (r/atom "ISIN not found"))
+(def bond-historical-charts (r/atom ""))
+(def show-historical-cheapness (r/atom true))
+(def show-historical-spreads (r/atom false))
+(def show-universe-scores (r/atom false))
+(def show-historical-scores (r/atom false))
+(def show-rating-history (r/atom false))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (rf/reg-event-fx
   :get-calculator-spread
@@ -200,7 +212,19 @@
 ;Moodys-score
 ;
 
+(defn fnevt [state rowInfo instance evt]
+  (rcm/context!
+    evt
+    [(aget rowInfo "original" "Bond")                                         ; <---- string is a section title
+     ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "ISIN")))]
+     ["Historical charts" (fn [] ((reset! isin-historical-charts (aget rowInfo "original" "ISIN"))
+                                  (reset! bond-historical-charts (aget rowInfo "original" "Bond"))
+                                  (rf/dispatch [:navigation/active-qs :historical-charts]) (rf/dispatch [:get-historical-quant-scores (aget rowInfo "original" "ISIN")])))]         ; <---- the name is a span
+     ;["Build ticket" (fn [] (prn "my-fn"))]
+     ]))
 
+(defn on-click-context [state rowInfo instance]
+  (clj->js {:onClick (partial fnevt state rowInfo instance) :style {:cursor "pointer"}}))
 
 
 (def table-style (reagent/atom "Screener (SVR)"))
@@ -277,6 +301,7 @@
                    :pageSizeOptions     [15 25 50 100]
                    :filterable          true
                    :defaultFilterMethod tables/case-insensitive-filter
+                   :getTrProps          on-click-context
                    :className           "-striped -highlight"}]]])
 
 (def calculator-sector (r/atom "Oil & Gas"))
@@ -706,14 +731,6 @@
                                           :y {:field "Median_Rating" :type "quantitative" :scale {:domain [(dec (apply min (map :Median_Rating data))) (inc (apply max (map :Median_Rating data)))]} :axis {:title "Rating"}}}})
                             ])}))
 
-(def typeahead-bond-nickname (r/atom nil))
-(def isin-historical-charts (r/atom "ISIN not found"))
-(def bond-historical-charts (r/atom ""))
-(def show-historical-cheapness (r/atom true))
-(def show-historical-spreads (r/atom false))
-(def show-universe-scores (r/atom false))
-(def show-historical-scores (r/atom false))
-(def show-rating-history (r/atom false))
 
 (defn qs-historical-charts []
   (let [source-data @(rf/subscribe [:quant-model/model-output])
@@ -760,4 +777,4 @@
 
 
 (defn view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu]]])
