@@ -209,6 +209,7 @@
    :z1ymedian                                   {:Header "Median" :accessor "z1ymedian" :width 65  :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
    :z1yvalid                                    {:Header "Days" :accessor "z1yvalid" :width 65 :style {:textAlign "right"} :aggregate tables/median  :filterable true :filterMethod tables/compare-nb}
 
+   :difference_svr_2_d2                         {:Header "Delta 2D" :accessor "difference_svr-d2" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
    })
 
 
@@ -308,7 +309,7 @@
                                           "Screener (SVR)"
                                           [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig :AMT_OUTSTANDING :COUPON])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
-                                           {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2])}]
+                                           {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_d2])}]
                                           )
                    :showPagination      true
                    :defaultPageSize     15
