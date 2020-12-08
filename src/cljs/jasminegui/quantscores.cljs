@@ -58,8 +58,7 @@
                                     :on-click #(rf/dispatch [:navigation/active-qs (:code item)])]))]]]))
 
 (def quant-score-table-columns
-  {
-   :ISIN                      {:Header "ISIN" :accessor "ISIN" :width 115}
+  {:ISIN                      {:Header "ISIN" :accessor "ISIN" :width 115}
    :Country                   {:Header "Country" :accessor "Country" :width 65}
    :Sector                    {:Header "Sector" :accessor "Sector" :width 90}
    :Ticker                    {:Header "Ticker" :accessor "Ticker" :width 100}
@@ -196,9 +195,19 @@
    :URS_rank_legacy_D1M_2                        {:Header "1M" :accessor "URS_rank_legacy_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
    :URS_rank_new_D1M_2                           {:Header "1M"    :accessor "URS_rank_new_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
    :URS_rank_svr_D1M_2                           {:Header "1M"    :accessor "URS_rank_svr_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_legacy_2                        {:Header "Implied R" :accessor "implied_rating_legacy" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_new_2                           {:Header "Implied R"    :accessor "implied_rating_new" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_svr_2                           {:Header "Implied R"    :accessor "implied_rating_svr" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :implied_rating_legacy_2                      {:Header "Implied R" :accessor "implied_rating_legacy" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :implied_rating_new_2                         {:Header "Implied R"    :accessor "implied_rating_new" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :implied_rating_svr_2                         {:Header "Implied R"    :accessor "implied_rating_svr" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+
+   :gross-cheapness                               {:Header "Gross cheapness" :accessor "gross-cheapness" :style {:textAlign "right"} :aggregate tables/median :Cell tables/nb-thousand-cell-format :filterable true :filterMethod tables/compare-nb}
+
+   :upside1y                                    {:Header "Upside" :accessor "upside1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
+   :expected1y                                  {:Header "Median" :accessor "expected1y" :width 75  :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
+   :downside1y                                  {:Header "Downside" :accessor "downside1y" :width 75  :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
+   :z1ymin                                      {:Header "Tight" :accessor "z1ymin" :width 65  :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
+   :z1ymax                                      {:Header "Wide" :accessor "z1ymax" :width 65  :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
+   :z1ymedian                                   {:Header "Median" :accessor "z1ymedian" :width 65  :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
+   :z1yvalid                                    {:Header "Days" :accessor "z1yvalid" :width 65 :style {:textAlign "right"} :aggregate tables/median  :filterable true :filterMethod tables/compare-nb}
 
    })
 
@@ -235,7 +244,7 @@
                                                   [gap :size "1"]
                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "quant-model-output")]]]
                  [h-box :align :center :gap "20px"
-                  :children (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Screener (SVR)"]]
+                  :children (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Upside/Downside" "Screener (SVR)"]]
                                        ^{:key c}            ;; key should be unique among siblings
                                        [radio-button
                                         :label c
@@ -291,6 +300,11 @@
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :URV_svr_2 :HRV_svr_2 :implied_rating_svr_2])}
                                            {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_svr_2 :URS_rank_svr_1D_2 :URS_rank_svr_1W_2 :URS_rank_svr_1M_2])}
                                            {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}]
+                                          "Upside/Downside"
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig])}
+                                           {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration])}
+                                           {:Header "Target returns (%)" :columns (mapv quant-score-table-columns [:upside1y :expected1y :downside1y])}
+                                           {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}]
                                           "Screener (SVR)"
                                           [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig :AMT_OUTSTANDING :COUPON])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
@@ -639,8 +653,12 @@
 
 (defn cntry-translate-sub [code] (if (= code "Total") "Total" (:LongName (first (filter #(= (:CountryCode %) code) @(rf/subscribe [:country-codes]))))))
 
+;Navigation for universe overview
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def universe-ignore-sovs-govts? (r/atom true))
-(def universe-hyigall (r/atom :all))
+(def universe-hyigall (r/atom :all))                        ;one of :all :ig :hy
+(def statistics (r/atom :stats))                           ;one of :stats :d4 :d2
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn country-display-fn [this]
   (let [country (aget this "value")]
@@ -652,6 +670,7 @@
   (let
     [source-data @(rf/subscribe [:quant-model/model-output])
      market-cap (fn [lines] (reduce + (remove nil? (map :AMT_OUTSTANDING (filter (fn [line] (some #{(:CRNCY line)} ["USD" "EUR" "GBP"])) lines)))))
+     ;qvalue (fn [lines] (reduce + (remove nil? (map))))
      data (filter (fn [line] (and
                              (if @universe-ignore-sovs-govts? (not (some #{(:Sector line)} ["Sovereign" "Government"])) true)
                              (case @universe-hyigall :all true :ig (<= (:Used_Rating_Score line) 10) :hy (> (:Used_Rating_Score line) 10))))
