@@ -46,6 +46,7 @@
    {:code :top-bottom         :name "Most expensive / cheap"}
    {:code :trade-finder       :name "Trade finder"}
    {:code :universe-des       :name "Universe overview"}
+   {:code :universe-harvest   :name "Universe harvest"}
    {:code :methodology        :name "Methodology"}])
 
 (def esg-navigation
@@ -71,6 +72,11 @@
    {:id :sector        :label "Sector"}
    {:id :maturity-band :label "Maturity"}])
 
+(def quant-harvest-choice-map
+  [{:id "None"         :label "None"}
+   {:id :LongCountry   :label "Country"}
+   {:id :StringRating  :label "Rating"}
+   {:id :Sector        :label "Sector"}])
 
 (def portfolio-alignment-groups
   [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD" "IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
