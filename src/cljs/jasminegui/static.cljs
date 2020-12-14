@@ -76,7 +76,9 @@
   [{:id "None"         :label "None"}
    {:id :LongCountry   :label "Country"}
    {:id :StringRating  :label "Rating"}
-   {:id :Sector        :label "Sector"}])
+   {:id :Sector        :label "Sector"}
+   {:id :DurationGroup :label "Duration"}
+   ])
 
 (def portfolio-alignment-groups
   [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD" "IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}

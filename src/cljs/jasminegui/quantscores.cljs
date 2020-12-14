@@ -211,15 +211,18 @@
 
    :difference_svr_2_2d                         {:Header "Delta 2D" :accessor "difference_svr_2d" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
 
-   :gross_4d_value                              {:Header "4D value"    :accessor "gross_4d_value" :width 125 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/nb-thousand-cell-format :filterable true :filterMethod tables/compare-nb}
-   :gross_2d_value                              {:Header "2D value"    :accessor "gross_2d_value" :width 125 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/nb-thousand-cell-format :filterable true :filterMethod tables/compare-nb}
-   :gross_4d_value_pos                          {:Header "4D value"    :accessor "gross_4d_value_pos" :width 125 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/nb-thousand-cell-format :filterable true :filterMethod tables/compare-nb}
-   :gross_2d_value_pos                          {:Header "2D value"    :accessor "gross_2d_value_pos" :width 125 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/nb-thousand-cell-format :filterable true :filterMethod tables/compare-nb}
-   :gross_4d_value_pos_pct                      {:Header "4D value"    :accessor "gross_4d_value_pos_pct" :width 125 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
-   :gross_2d_value_pos_pct                      {:Header "2D value"    :accessor "gross_2d_value_pos_pct" :width 125 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
+   :gross_4d_value                              {:Header "4D value"    :accessor "gross_4d_value" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
+   :gross_2d_value                              {:Header "2D value"    :accessor "gross_2d_value" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
+   :gross_4d_value_pos                          {:Header "4D value"    :accessor "gross_4d_value_pos" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
+   :gross_2d_value_pos                          {:Header "2D value"    :accessor "gross_2d_value_pos" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
+   :gross_4d_value_neg                          {:Header "4D value"    :accessor "gross_4d_value_neg" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
+   :gross_2d_value_neg                          {:Header "2D value"    :accessor "gross_2d_value_neg" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
+   :gross_4d_value_pos_pct                      {:Header "4D value"    :accessor "gross_4d_value_pos_pct" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
+   :gross_2d_value_pos_pct                      {:Header "2D value"    :accessor "gross_2d_value_pos_pct" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
    :LongCountry                                 {:Header "Country"     :accessor "LongCountry" :width 125}
    :StringRating                                {:Header "Rating"     :accessor "StringRating" :width 125}
-
+   :AMT_OUTSTANDING_2                           {:Header "($ bn)"    :accessor "AMT_OUTSTANDING" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
+   :DurationGroup                               {:Header "Duration"  :accessor "DurationGroup" :width 125}
    })
 
 
@@ -343,6 +346,7 @@
   (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) @(rf/subscribe [:rating-to-score]))))] (name x) "error"))
 
 (def performance-colors ["#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
+(def performance-colors-harvest ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
 
 (defn comparable-chart [duration legacy new svr table]
   (let [prepare-data (fn [tbl txt] (for [line tbl] {:field txt :duration (line :Used_Duration) :spread (line :Used_ZTW) :txt (line :Bond)}))
@@ -791,13 +795,15 @@
                                            :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]]]
                                         [oz/vega-lite (quant-isin-history-chart @show-historical-cheapness @show-historical-spreads @show-universe-scores @show-historical-scores @show-rating-history)]]]]]]]))
 
+;;; HARVEST UNIVERSE STUFF ;;;
 (def exclude-outliers? (r/atom true))
 (def exclude-chinaHK? (r/atom false))
 (def harvest-filters (r/atom {1 :LongCountry 2 :Sector 3 "None"}))
 
+(def harvest-table-ref (r/atom nil))
+
 (defn harvest-table []
   (let [source-data @(rf/subscribe [:quant-model/model-output])
-        rating-map @(rf/subscribe [:rating-to-score])
         data (->> source-data
                   (filter (fn [line] (and
                                        (if @universe-ignore-sovs-govts? (not (some #{(:Sector line)} ["Sovereign" "Government"])) true)
@@ -805,11 +811,14 @@
                                        (if @exclude-outliers? (< -200 (:difference_svr_2d line) 200) true)
                                        (if @exclude-chinaHK? (not (some #{(:Country line)} ["CN" "HK"])) true))))
                   (map #(assoc % :LongCountry (cntry-translate-sub (:Country %))
+                                 :DurationGroup (duration-grouping-fn %)
                                  :StringRating (get-implied-rating (str (:Used_Rating_Score %)))
                                  :gross_4d_value_pos (if (pos? (:gross_4d_value %)) (:gross_4d_value %) 0)
-                                 :gross_2d_value_pos (if (pos? (:gross_2d_value %)) (:gross_2d_value %) 0))))
-        total-line (merge {:LongCountry "Total" :StringRating "Total" :Sector "Total"}
-                          (into {} (for [k [:gross_4d_value :gross_2d_value :gross_4d_value_pos :gross_2d_value_pos]] [k (reduce + (map k data))]))
+                                 :gross_2d_value_pos (if (pos? (:gross_2d_value %)) (:gross_2d_value %) 0)
+                                 :gross_4d_value_neg (if (neg? (:gross_4d_value %)) (:gross_4d_value %) 0)
+                                 :gross_2d_value_neg (if (neg? (:gross_2d_value %)) (:gross_2d_value %) 0))))
+        total-line (merge {:LongCountry "Total" :StringRating "Total" :Sector "Total" :Bond "Total" :DurationGroup "Total"}
+                          (into {} (for [k [:gross_4d_value :gross_2d_value :gross_4d_value_pos :gross_2d_value_pos :gross_4d_value_neg :gross_2d_value_neg :AMT_OUTSTANDING]] [k (reduce + (map k data))]))
                           {:difference_svr (tables/median (map :difference_svr data)) :difference_svr_2d (tables/median (map :difference_svr_2d data))})
         display (map
                   #(assoc % :gross_4d_value_pos_pct (/ (:gross_4d_value_pos %) (:gross_4d_value_pos total-line))
@@ -821,23 +830,21 @@
     [:> ReactTable
      {:data                display
       :columns             [{:Header "Groups" :columns (mapv #(assoc % :width 125) grouping-columns)}
+                            {:Header "Stock" :columns (mapv quant-score-table-columns [:AMT_OUTSTANDING_2])}
                             {:Header "Median cheapness" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:difference_svr_2 :difference_svr_2_2d]))}
-                            {:Header "Gross value" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:gross_4d_value :gross_2d_value]))}
-                            {:Header "Gross positive value" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:gross_4d_value_pos :gross_2d_value_pos]))}
-                            {:Header "Gross positive value %" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:gross_4d_value_pos_pct :gross_2d_value_pos_pct]))}
-                            ]
+                            {:Header "Gross value ($ bn)" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:gross_4d_value :gross_2d_value]))}
+                            {:Header "Gross negative value ($ bn)" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:gross_4d_value_neg :gross_2d_value_neg]))}
+                            {:Header "Gross positive value ($ bn)" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:gross_4d_value_pos :gross_2d_value_pos]))}
+                            {:Header "Gross positive value %" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:gross_4d_value_pos_pct :gross_2d_value_pos_pct]))}]
       :showPagination      false
-      :sortable            true                             ;(not is-tree)
-      :sorted              [{:id :gross_2d_value_pos :desc true}]
+      :sortable            true
+      :defaultSorted              [{:id :gross_2d_value_pos_pct :desc true}]
       :filterable          false
-      ;      :ref                 nil                              ;#(reset! single-portfolio-risk-display-view %)
-      :pageSize            (inc (count (distinct (map (keyword (first accessors)) display)))) ;(inc (count display))
+      :ref                 #(reset! harvest-table-ref %)
+      :pageSize            (count (distinct (map (keyword (first accessors)) display))) ;(inc (count display))
       :showPageSizeOptions false
       :className           "-striped -highlight"
       :pivotBy             accessors
-      ;      :getTrProps          nil                              ;on-click-context                 ;single-bond-trade-history
-      ;      :defaultFiltered     []                               ; (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
-      ;      :onFilteredChange    nil                              ;#(rf/dispatch [:single-portfolio-risk/table-filter %])
       }]))
 
 (def dropdown-width "150px")
@@ -845,24 +852,74 @@
 (defn filtering-row []
   (into [] (for [i (range 1 4)] [single-dropdown :width dropdown-width :model (r/cursor harvest-filters [i]) :choices static/quant-harvest-choice-map :on-change #(r/rswap! harvest-filters assoc i %)])))
 
+(defn add-mid-points [sd]
+  (let [points (conj (reductions + (map :value sd)) 0.0)
+        mids (map #(* 0.5 (+ %1 %2)) (rest points) (drop-last points))]
+    (map #(assoc %1 :mid %2) sd mids)))
+
+(defn get-harvest-plotting-data [harvest]
+  (if harvest
+    (let [data (js->clj (. (.getResolvedState harvest) -sortedData))
+          top5 (take 5 (rest (map #(select-keys % ["_pivotVal" "gross_4d_value_pos_pct" "gross_2d_value_pos_pct"]) data)))
+          addrest (conj (vec top5) {"_pivotVal" "Rest" "gross_4d_value_pos_pct" (- 1 (reduce + (map #(get % "gross_4d_value_pos_pct") top5))) "gross_2d_value_pos_pct" (- 1 (reduce + (map #(get % "gross_2d_value_pos_pct") top5)))})
+          d2 (add-mid-points (map (fn [line] {:performance "2D" :value (get line "gross_2d_value_pos_pct") :group (get line "_pivotVal")}) addrest))
+          d4 (add-mid-points (map (fn [line] {:performance "4D" :value (get line "gross_4d_value_pos_pct") :group (get line "_pivotVal")}) addrest))]
+      (concat d4 d2))))
+
+(defn stacked-vertical-bars [data]
+  (let [groups (distinct (mapv :group data))
+        colors (take (count (distinct (mapv :group data))) performance-colors-harvest)
+        new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)]
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+     :data    {:values new-data},
+     :width   800,
+     :height  600,
+     :layer
+              [{:mark "bar",
+                :scale {:padding-left 60}
+                :encoding
+                {:x     {:field "performance", :type "nominal",
+                         :axis {:title nil :labelFontSize 12 :labelAngle 0}
+                         :sort (distinct (mapv :performance data))
+                         :scale {:paddingInner 0.5}},
+                 :y     {:field "value", :type "quantitative", :axis {:title nil :labelFontSize 12}},
+                 :order {:field "order", :type "quantitative"}
+                 :color {:field "group", :type "nominal", :scale {:domain (distinct (map :group new-data)) :range colors} :legend nil}}}
+               {:mark {:type "text" :fontSize 12 :color "white"},
+                :encoding
+                      {:x    {:field "performance", :type "nominal", :axis {:title nil}, :sort (distinct (mapv :performance data))},
+                       :y    {:field "mid", :type "quantitative"},
+                       :text {:field "group", :type "nominal"}}}]}))
+
 (defn universe-harvest []
-  (let [a 3]
-    [box :class "subbody rightelement" :child
-     [v-box :class "element" :align-self :center :justify :center :gap "20px"
-      :children [[title :label "Universe harvest" :level :level1]
-                 [h-box :gap "50px"
-                  :children [
-                             [v-box :gap "10px" :children [
-                                                           [h-box :gap "10px" :children [[checkbox :model universe-ignore-sovs-govts? :label "Ignore sovereigns and provinces?" :on-change #(reset! universe-ignore-sovs-govts? %)] [gap :size "20px"]
-                                                                                         [checkbox :model exclude-outliers? :label "Exclude outliers (>200bps on 2D)?" :on-change #(reset! exclude-outliers? %)] [gap :size "20px"]
-                                                                                         [checkbox :model exclude-chinaHK? :label "Exclude China & HK?" :on-change #(reset! exclude-chinaHK? %)]]]
-                                                           [h-box :gap "10px" :align :center :children (into [] (concat [[radio-button :model universe-hyigall :label "All bonds" :value :all :on-change #(reset! universe-hyigall %)]
-                                                                                                          [radio-button :model universe-hyigall :label "IG only" :value :ig :on-change #(reset! universe-hyigall %)]
-                                                                                                          [radio-button :model universe-hyigall :label "HY only" :value :hy :on-change #(reset! universe-hyigall %)]]
-                                                                                                   [[gap :size "20px"] [title :label "Filter:" :level :level3]] (filtering-row)
-                                                                                                   ))]
-                                                           ]]]]
-                 [harvest-table]]]]))
+  [box :class "subbody rightelement" :child
+   [v-box :class "element" :align-self :center :justify :center :gap "20px"
+    :children [[title :label "Universe harvest" :level :level1]
+               [h-box :gap "50px"
+                :children [[v-box :gap "10px"
+                            :children [[h-box :gap "10px"
+                                        :children [[checkbox :model universe-ignore-sovs-govts? :label "Ignore sovereigns and provinces?" :on-change #(reset! universe-ignore-sovs-govts? %)] [gap :size "20px"]
+                                                   [checkbox :model exclude-outliers? :label "Exclude outliers (>200bps on 2D)?" :on-change #(reset! exclude-outliers? %)] [gap :size "20px"]
+                                                   [checkbox :model exclude-chinaHK? :label "Exclude China & HK?" :on-change #(reset! exclude-chinaHK? %)]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children (into [] (concat [[radio-button :model universe-hyigall :label "All bonds" :value :all :on-change #(reset! universe-hyigall %)]
+                                                                    [radio-button :model universe-hyigall :label "IG only" :value :ig :on-change #(reset! universe-hyigall %)]
+                                                                    [radio-button :model universe-hyigall :label "HY only" :value :hy :on-change #(reset! universe-hyigall %)]]
+                                                                   [[gap :size "20px"] [title :label "Filter:" :level :level3]] (filtering-row)))]]]]]
+               [harvest-table]
+               [gap :size "20px"]
+               [title :label "Gross positive contribution" :level :level1]
+               (if-let [d (get-harvest-plotting-data @harvest-table-ref)] [oz/vega-lite (stacked-vertical-bars d)] [p ""])
+               [gap :size "20px"]
+               [title :label "Outliers" :level :level1]
+               [:> ReactTable
+                {:data           (filter (fn [line] (>= (Math/abs (:difference_svr_2d line)) 200)) @(rf/subscribe [:quant-model/model-output]))
+                 :columns        [{:Header "Groups" :columns (mapv #(assoc % :width 125) (mapv quant-score-table-columns [:Bond :Country :Sector ]))}
+                                  {:Header "Stock" :columns (mapv quant-score-table-columns [:AMT_OUTSTANDING_2])}
+                                  {:Header "Cheapness" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:difference_svr_2 :difference_svr_2_2d]))}]
+                 :showPagination true :sortable true :defaultSorted [{:id :difference_svr_2d :desc true}] :pageSize 20 :className "-striped -highlight"}]]]])
+
+;;; END HARVEST UNIVERSE STUFF ;;;
 
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
