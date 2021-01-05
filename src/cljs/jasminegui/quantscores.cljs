@@ -857,10 +857,10 @@
         mids (map #(* 0.5 (+ %1 %2)) (rest points) (drop-last points))]
     (map #(assoc %1 :mid %2) sd mids)))
 
-(defn get-harvest-plotting-data [harvest]
+(defn get-harvest-bar-plot-data [harvest]
   (if harvest
     (let [data (js->clj (. (.getResolvedState harvest) -sortedData))
-          top5 (take 5 (rest (map #(select-keys % ["_pivotVal" "gross_4d_value_pos_pct" "gross_2d_value_pos_pct"]) data)))
+          top5 (take 7 (rest (map #(select-keys % ["_pivotVal" "gross_4d_value_pos_pct" "gross_2d_value_pos_pct"]) data)))
           addrest (conj (vec top5) {"_pivotVal" "Rest" "gross_4d_value_pos_pct" (- 1 (reduce + (map #(get % "gross_4d_value_pos_pct") top5))) "gross_2d_value_pos_pct" (- 1 (reduce + (map #(get % "gross_2d_value_pos_pct") top5)))})
           d2 (add-mid-points (map (fn [line] {:performance "2D" :value (get line "gross_2d_value_pos_pct") :group (get line "_pivotVal")}) addrest))
           d4 (add-mid-points (map (fn [line] {:performance "4D" :value (get line "gross_4d_value_pos_pct") :group (get line "_pivotVal")}) addrest))]
@@ -891,6 +891,50 @@
                        :y    {:field "mid", :type "quantitative"},
                        :text {:field "group", :type "nominal"}}}]}))
 
+(defn get-harvest-scatter-plot-data [harvest]
+  (if harvest
+    (let [data (js->clj (. (.getResolvedState harvest) -sortedData))
+          slice (remove #(= (get % "_pivotVal") "Total") (map #(select-keys % ["_pivotVal" "gross_4d_value" "gross_2d_value" "gross_4d_value_pos" "gross_2d_value_pos"]) data))
+          net (into [] (for [s slice] {:txt (get s "_pivotVal") :d2 (get s "gross_2d_value") :d4 (get s "gross_4d_value") :field "Net value"}))
+          positive (into [] (for [s slice] {:txt (get s "_pivotVal") :d2 (get s "gross_2d_value_pos") :d4 (get s "gross_4d_value_pos") :field "Positive value"}))
+          ]
+      (->> (concat net positive (map (fn [i] {:txt "" :r1 (/ i 100.)}) (range -100 101)))                           ;(map #({:r1 (/ % 100.)}) (range 0 101))
+           (map #(update % :d2 / 1000000000))
+           (map #(update % :d4 / 1000000000))
+           ))))
+
+(defn scatter-harvest-spec [data]
+  {:title nil
+   :data  {:values data}
+   :transform [{:calculate "sin(datum.r1 * PI)", :as "x"} {:calculate "cos(datum.r1 * PI)", :as "y"} {:calculate "2 * sin(datum.r1 * PI)", :as "x2"} {:calculate "2 * cos(datum.r1 * PI)", :as "y2"}]
+   :layer (concat [{:mark     {:type "point" :filled true}
+                    :encoding {:x       {:field "d2" :type "quantitative" :axis {:title "2D: rating bucket" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}} ;:scale {:domain [0. (inc (apply max (map d2 data)))]}
+                               :y       {:field "d4" :type "quantitative" :axis {:title "4D: curve fair value" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}}
+                               :color   {:field "field" :scale {:domain ["Net value" "Positive value"] :range ["#FDAA94" "#026E62"]} :legend {:labelFontSize 14 :title nil}} ;"#134848" "#009D80" ""
+                               :tooltip [{:field "txt" :type "nominal" :title "Item"}
+                                         {:field "d2" :type "quantitative", :title "2D value"}
+                                         {:field "d4" :type "quantitative", :title "4D value"}]}}]
+                    [{:mark     {:type "text" :dx 6 :align "left"}
+                      :encoding {:x    {:field "d2" :type "quantitative"}
+                                 :y    {:field "d4" :type "quantitative"}
+                                 :text {:field "txt" :type "nominal"}}}]
+                  [{:mark "line"
+                    :encoding {:x {:field "x" :type "quantitative"}
+                               :y {:field "y" :type "quantitative"}
+                               :order {:field "r1", :type "quantitative"}
+                               :color {:value "lightgrey"}
+                               }}]
+                  [{:mark "line"
+                    :encoding {:x {:field "x2" :type "quantitative"}
+                               :y {:field "y2" :type "quantitative"}
+                               :order {:field "r1", :type "quantitative"}
+                               :color {:value "lightgrey"}
+                               }}]
+                  )
+   :width  1000
+   :height 500}
+  )
+
 (defn universe-harvest []
   [box :class "subbody rightelement" :child
    [v-box :class "element" :align-self :center :justify :center :gap "20px"
@@ -909,7 +953,10 @@
                [harvest-table]
                [gap :size "20px"]
                [title :label "Gross positive contribution" :level :level1]
-               (if-let [d (get-harvest-plotting-data @harvest-table-ref)] [oz/vega-lite (stacked-vertical-bars d)] [p ""])
+               (if-let [d (get-harvest-bar-plot-data @harvest-table-ref)] [oz/vega-lite (stacked-vertical-bars d)] [p ""])
+               [gap :size "20px"]
+               [title :label "Net vs positive gross contribution" :level :level1]
+               (if-let [d (get-harvest-scatter-plot-data @harvest-table-ref)] [oz/vega-lite (scatter-harvest-spec d)] [p ""])
                [gap :size "20px"]
                [title :label "Outliers" :level :level1]
                [:> ReactTable
