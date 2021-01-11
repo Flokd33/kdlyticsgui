@@ -519,11 +519,27 @@
                        (- standard-box-width-nb 200) (- standard-box-height-nb 400))]
        [p {:style {:width "250px" :min-width "250px"}} "Note that portfolio is price move only, but benchmark includes carry hence only 100d displayed" ]])))
 
+(defn risk-betas-table-support [data]
+  (let [display (into [] (for [[g v] (group-by :group data)] (merge {:group g} (into {} (for [line v] [(:performance line) (:value line)])))))
+        portfolio @(rf/subscribe [:portfolio-review/portfolio])
+        idx (first (remove #{portfolio :group} (keys (first display))))
+        displaywithdiff (map #(assoc % :delta (- (% portfolio) (% idx))) display)
+        sorted-display (if (some #{"Rest"} (map :group displaywithdiff))
+                         (vec (let [p (partition-by #(= (:group %) "Rest")  (sort-by #(get % portfolio) displaywithdiff))] (concat (last p) (first p))))
+                         (vec (sort-by #(get % portfolio) displaywithdiff)))]
+  [:> ReactTable
+   {:data           sorted-display
+    :columns        [{:Header "Item" :accessor "group" :width 150}
+                     {:Header portfolio :accessor portfolio :width 100 :Cell (partial tables/nb-cell-format "%.2f" 1.)}
+                     {:Header idx :accessor idx :width 100 :Cell (partial tables/nb-cell-format "%.2f" 1.)}
+                     {:Header "Delta" :accessor "delta" :width 100 :Cell (partial tables/nb-cell-format "%.2f" 1.)}]
+    :showPagination false :sortable false :filterable false :pageSize (count displaywithdiff) :showPageSizeOptions false :className "-striped -highlight"}]))
+
 (defn risk-betas []
   (let [data @(rf/subscribe [:portfolio-review/marginal-beta-chart-data])
         groups (distinct (mapv :group data))
         new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)]
-    (portfolio-review-box-template [[oz/vega-lite (stacked-vertical-bars new-data "Beta contribution")]])))
+    (portfolio-review-box-template [[h-box :justify :between :children [[oz/vega-lite (stacked-vertical-bars new-data "Beta contribution")] [risk-betas-table-support new-data]]]])))
 
 (def group-name-to-key
   {"Region"          :jpm-region
@@ -575,9 +591,7 @@
     (portfolio-review-box-template
       [[h-box :gap "20px"
         :children [[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "weight") clean-data-sorted) "Weight vs index" ".0f" 1.5)]
-                   [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]
-                   ;[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "beta") clean-data-sorted) "Beta vs index" ".1f" 2.0)]
-                   ]]])))
+                   [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]]]])))
 
 (defn top-issuer-table []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])]
