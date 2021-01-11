@@ -344,7 +344,9 @@
 
 (def risk-pages
   (conj
-    (into [{:title "Beta evolution over time" :nav-request :risk :data-request [:get-portfolio-review-historical-beta-chart-data "portfolio" ["BR", "CN", "AR", "TR", "MX"]]}]
+    (into [{:title "Beta evolution over time" :nav-request :risk :data-request [:get-portfolio-review-historical-beta-chart-data "portfolio" ["BR", "CN", "AR", "TR", "MX"]]}
+           {:title "Top issuer risk"          :nav-request :risk :data-request nil}
+           ]
           (for [k risk-breakdowns p ["weights" "beta contribution" "deviation from index"]]
             {:title        (str "Risk by " (first k) ": " p)
              :nav-request  :risk
@@ -573,11 +575,27 @@
     (portfolio-review-box-template
       [[h-box :gap "20px"
         :children [[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "weight") clean-data-sorted) "Weight vs index" ".0f" 1.5)]
-                   [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]]]])))
+                   [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]
+                   ;[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "beta") clean-data-sorted) "Beta vs index" ".1f" 2.0)]
+                   ]]])))
+
+(defn top-issuer-table []
+  (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])]
+    [:> ReactTable
+     {:data           (conj (filter #(and (= (:portfolio %) portfolio) (pos? (:weight %)))
+                                    @(rf/subscribe [:positions]))
+                            (@(rf/subscribe [:total-positions]) (keyword portfolio)))
+      :columns        [(:issuer tables/risk-table-columns)
+                       (assoc (:name tables/risk-table-columns) :Header "Held bonds" :width 500)
+                       (assoc (:nav tables/risk-table-columns) :Header "NAV" :filterable false :width 100)
+                       (assoc (:contrib-mdur tables/risk-table-columns) :Header "Duration" :width 100)
+                       (assoc (:contrib-beta tables/risk-table-columns) :Header "Beta" :width 100)]
+      :showPagination true :sortable true :filterable false :pageSize 15 :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:TICKER] :defaultSorted [{:id :contrib-beta-1y-daily :desc true}]}]))
 
 (defn risk-page []
   (cond
     (clojure.string/includes? (get-in pages [@current-page :title]) "evolution")  [historical-beta]
+    (clojure.string/includes? (get-in pages [@current-page :title]) "issuer")     (portfolio-review-box-template [[top-issuer-table]])
     (clojure.string/includes? (get-in pages [@current-page :title]) "weights")    [risk-weights]
     (clojure.string/includes? (get-in pages [@current-page :title]) "beta")       [risk-betas]
     (clojure.string/includes? (get-in pages [@current-page :title]) "deviation")  [risk-deltas]
