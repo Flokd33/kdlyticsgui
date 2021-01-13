@@ -240,7 +240,7 @@
 
 (defn multiple-portfolio-risk-display []
   (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
-        width-one 100                                      ;(get-in tables/table-columns [display-key-one :width])
+        width-one 80                                      ;(get-in tables/table-columns [display-key-one :width])
         is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
@@ -281,7 +281,7 @@
         portfolios (rest group)
         display-key @(rf/subscribe [:portfolio-alignment/field])
         cell-one (get-in tables/risk-table-columns [display-key :Cell])
-        width-one 100
+        width-one 80
         is-tree (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
@@ -437,13 +437,13 @@
                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:summary-display/table]) "summary")]]]
     [:> ReactTable
      {:data           @(rf/subscribe [:summary-display/table])
-      :columns        [{:Header "Portfolio" :accessor "portfolio" :width 120}
+      :columns        [{:Header "Portfolio" :accessor "portfolio" :width 90}
                        {:Header "Balance" :columns (mapv tables/risk-table-columns [:value :cash-pct])}
                        {:Header "Value" :columns [(assoc (tables/risk-table-columns :contrib-yield) :Header "Yield")
                                                   (tables/risk-table-columns :contrib-bond-yield)
                                                   (assoc (tables/risk-table-columns :contrib-mdur) :Header "M Dur")
                                                   (tables/risk-table-columns :rating)
-                                                  (assoc (tables/risk-table-columns :rating-score) :width 60)
+                                                  (assoc (tables/risk-table-columns :rating-score) :width 50)
                                                   (assoc (tables/risk-table-columns :contrib-zspread) :Header "Z-spread")
                                                   (assoc (tables/risk-table-columns :contrib-gspread) :Header "G-spread")
                                                   (assoc (tables/risk-table-columns :contrib-beta) :Header "Beta")
@@ -467,9 +467,9 @@
                  :columns        [(tables/risk-table-columns :name)
                                   (tables/risk-table-columns :isin)
                                   (tables/risk-table-columns :issuer)
-                                  {:Header "Held %" :accessor "pct_held" :width 100 :Cell (partial tables/nb-cell-format "%.1f%" 100.) :style {:textAlign "right"}}
+                                  {:Header "Held %" :accessor "pct_held" :width 80 :Cell (partial tables/nb-cell-format "%.1f%" 100.) :style {:textAlign "right"}}
                                   (tables/risk-table-columns :nominal)
-                                  {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 120 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
+                                  {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 100 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
                  :showPagination true
                  :pageSize       30
                  :showPageSizeOptions false

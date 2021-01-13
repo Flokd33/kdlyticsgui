@@ -162,49 +162,49 @@
 (def risk-table-columns
   (let [nb1000 {:style {:textAlign "right"} :Cell nb-thousand-cell-format :filterable true :filterMethod compare-nb}]
     {:id                       {:Header "ID" :accessor "id" :show false}
-     :id-show                  {:Header "ID" :accessor "id" :width 75}
-     :region                   {:Header "Region" :accessor "jpm-region" :width 140}
-     :country                  {:Header "Country" :accessor "qt-risk-country-name" :width 140}
-     :issuer                   {:Header "Issuer" :accessor "TICKER" :width 140}
-     :sector                   {:Header "Sector" :accessor "qt-jpm-sector" :width 140}
-     :maturity-band            {:Header "Maturity" :accessor "qt-final-maturity-band" :width 140}
+     :id-show                  {:Header "ID" :accessor "id" :width 65}
+     :region                   {:Header "Region" :accessor "jpm-region" :width 120}
+     :country                  {:Header "Country" :accessor "qt-risk-country-name" :width 120}
+     :issuer                   {:Header "Issuer" :accessor "TICKER" :width 80}
+     :sector                   {:Header "Sector" :accessor "qt-jpm-sector" :width 120}
+     :maturity-band            {:Header "Maturity" :accessor "qt-final-maturity-band" :width 120}
      :rating                   {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false} ; :show false
      ;  :rating                      {:Header "Rating" :accessor "qt-iam-int-lt-median-rating"  :show false} :sortMethod rating-sort} ; :show false
      :rating-score             {:Header "Rating" :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}
-     :name                     {:Header "Name" :accessor "NAME" :width 140} ;  :filterMethod case-insensitive-filter
-     :isin                     {:Header "ISIN" :accessor "isin" :width 125} ;:style {:textAlign "center"}
-     :description              {:Header "thinkFolio ID" :accessor "description" :width 500}
-     :nav                      {:Header "Fund" :accessor "weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
-     :bm-weight                {:Header "Index" :accessor "bm-weight" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
+     :name                     {:Header "Name" :accessor "NAME" :width 120} ;  :filterMethod case-insensitive-filter
+     :isin                     {:Header "ISIN" :accessor "isin" :width 110} ;:style {:textAlign "center"}
+     :description              {:Header "thinkFolio ID" :accessor "description" :width 400}
+     :nav                      {:Header "Fund" :accessor "weight" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
+     :bm-weight                {:Header "Index" :accessor "bm-weight" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
 
-     :nominal                  (merge {:Header "Nominal" :accessor "original-quantity" :width 120 :aggregate sum-rows} nb1000)
-     :z-spread                 (merge {:Header "Z-spread" :accessor "qt-libor-spread" :width 80 :aggregate median} nb1000)
-     :g-spread                 (merge {:Header "G-spread" :accessor "qt-govt-spread" :width 80 :aggregate median} nb1000)
+     :nominal                  (merge {:Header "Nominal" :accessor "original-quantity" :width 100 :aggregate sum-rows} nb1000)
+     :z-spread                 (merge {:Header "Z-spread" :accessor "qt-libor-spread" :width 65 :aggregate median} nb1000)
+     :g-spread                 (merge {:Header "G-spread" :accessor "qt-govt-spread" :width 65 :aggregate median} nb1000)
      ;:nominal                  {:Header "Nominal" :accessor "original-quantity" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod compare-nb}
      ;:z-spread                 {:Header "Z-spread" :accessor "qt-libor-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable true :filterMethod compare-nb}
      ;:g-spread                 {:Header "G-spread" :accessor "qt-govt-spread" :width 80 :style {:textAlign "right"} :aggregate median :Cell nfcell :filterable true :filterMethod compare-nb}
 
-     :duration                 {:Header "M dur" :accessor "qt-modified-duration" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable true :filterMethod compare-nb}
-     :yield                    {:Header "Yield" :accessor "qt-yield" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable true :filterMethod compare-nb-d100}
-     :value                    (merge {:Header "Value" :accessor "base-value" :width 120 :aggregate sum-rows} nb1000)
+     :duration                 {:Header "M dur" :accessor "qt-modified-duration" :width 50 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable true :filterMethod compare-nb}
+     :yield                    {:Header "Yield" :accessor "qt-yield" :width 50 :style {:textAlign "right"} :aggregate median :Cell round2pc :filterable true :filterMethod compare-nb-d100}
+     :value                    (merge {:Header "Value" :accessor "base-value" :width 100 :aggregate sum-rows} nb1000)
      ;:value                    {:Header "Value" :accessor "base-value" :width 120 :style {:textAlign "right"} :aggregate sum-rows :Cell nfcell :filterable true :filterMethod compare-nb}
-     :contrib-gspread          {:Header "G-spread" :accessor "contrib-gspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
-     :contrib-zspread          {:Header "Fund" :accessor "contrib-zspread" :width 80 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
-     :contrib-yield            {:Header "Fund" :accessor "contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
-     :contrib-mdur             {:Header "Fund" :accessor "contrib-mdur" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-     :bm-contrib-yield         {:Header "Index" :accessor "bm-contrib-yield" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
-     :bm-contrib-eir-duration  {:Header "Index" :accessor "bm-contrib-eir-duration" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-     :cash-pct                 {:Header "Cash" :accessor "cash-pct" :width 60 :style {:textAlign "right"} :Cell round2pc :filterable false}
-     :contrib-bond-yield       {:Header "Bond yield" :accessor "contrib-bond-yield" :width 80 :style {:textAlign "right"} :Cell round2pc :filterable false}
-     :weight-delta             {:Header "Delta" :accessor "weight-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
-     :mdur-delta               {:Header "Delta" :accessor "mdur-delta" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-     :contrib-beta             {:Header "Fund" :accessor "contrib-beta-1y-daily" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
-     :cembi-beta-last-year     {:Header "1y beta" :accessor "cembi-beta-last-year" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
-     :cembi-beta-previous-year {:Header "LY beta" :accessor "cembi-beta-previous-year" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
-     :total-return-ytd         {:Header "YTD TR" :accessor "total-return-ytd" :width 60 :style {:textAlign "right"} :aggregate median :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
-     :jensen-ytd               {:Header "Jensen" :accessor "jensen-ytd" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb}
-     :quant-value-2d           {:Header "2D" :accessor "quant-value-2d" :width 60 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f" 1.) :getProps red-negatives :filterable true :filterMethod compare-nb}
-     :quant-value-4d           {:Header "4D" :accessor "quant-value-4d" :width 60 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f" 1.) :getProps red-negatives :filterable true :filterMethod compare-nb}
+     :contrib-gspread          {:Header "G-spread" :accessor "contrib-gspread" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
+     :contrib-zspread          {:Header "Fund" :accessor "contrib-zspread" :width 60 :style {:textAlign "right"} :aggregate sum-rows :Cell round1 :filterable false}
+     :contrib-yield            {:Header "Fund" :accessor "contrib-yield" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+     :contrib-mdur             {:Header "Fund" :accessor "contrib-mdur" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+     :bm-contrib-yield         {:Header "Index" :accessor "bm-contrib-yield" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2pc :filterable false}
+     :bm-contrib-eir-duration  {:Header "Index" :accessor "bm-contrib-eir-duration" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+     :cash-pct                 {:Header "Cash" :accessor "cash-pct" :width 50 :style {:textAlign "right"} :Cell round2pc :filterable false}
+     :contrib-bond-yield       {:Header "Bond yield" :accessor "contrib-bond-yield" :width 70 :style {:textAlign "right"} :Cell round2pc :filterable false}
+     :weight-delta             {:Header "Delta" :accessor "weight-delta" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
+     :mdur-delta               {:Header "Delta" :accessor "mdur-delta" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+     :contrib-beta             {:Header "Fund" :accessor "contrib-beta-1y-daily" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2 :filterable false}
+     :cembi-beta-last-year     {:Header "1y beta" :accessor "cembi-beta-last-year" :width 50 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
+     :cembi-beta-previous-year {:Header "LY beta" :accessor "cembi-beta-previous-year" :width 50 :style {:textAlign "right"} :aggregate median :Cell round2 :filterable false}
+     :total-return-ytd         {:Header "YTD TR" :accessor "total-return-ytd" :width 50 :style {:textAlign "right"} :aggregate median :Cell round2*100 :filterable true :filterMethod compare-nb-d100}
+     :jensen-ytd               {:Header "Jensen" :accessor "jensen-ytd" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round2*100 :filterable true :filterMethod compare-nb}
+     :quant-value-2d           {:Header "2D" :accessor "quant-value-2d" :width 50 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f" 1.) :getProps red-negatives :filterable true :filterMethod compare-nb}
+     :quant-value-4d           {:Header "4D" :accessor "quant-value-4d" :width 50 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f" 1.) :getProps red-negatives :filterable true :filterMethod compare-nb}
 
      }))
 

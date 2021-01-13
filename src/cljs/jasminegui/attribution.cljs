@@ -54,7 +54,7 @@
 
 (defn multiple-portfolio-attribution-display []
   (let [display-key-one @(rf/subscribe [:multiple-portfolio-attribution/field-one])
-        width-one 100                                      ;(get-in tables/table-columns [display-key-one :width])
+        width-one 80                                      ;(get-in tables/table-columns [display-key-one :width])
         is-tree (= @(rf/subscribe [:multiple-portfolio-attribution/display-style]) "Tree")
         attribution-choices (let [rfil @(rf/subscribe [:multiple-portfolio-attribution/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj attribution-choices :security))] (tables/attribution-table-columns r)))

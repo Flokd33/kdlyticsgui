@@ -58,26 +58,26 @@
                                     :on-click #(rf/dispatch [:navigation/active-qs (:code item)])]))]]]))
 
 (def quant-score-table-columns
-  {:ISIN                      {:Header "ISIN" :accessor "ISIN" :width 115}
-   :Country                   {:Header "Country" :accessor "Country" :width 65}
-   :Sector                    {:Header "Sector" :accessor "Sector" :width 90}
-   :Ticker                    {:Header "Ticker" :accessor "Ticker" :width 100}
-   :Use                       {:Header "Use" :accessor "Use" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
-   :Bond                      {:Header "Bond" :accessor "Bond" :width 150}
-   :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 40}
-   :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 70 :style {:textAlign "center"}}
-   :HYBRID-WIDE               {:Header "Hybrid" :accessor "HYBRID" :width 70 :style {:textAlign "center"}}
-   :COUPON                    {:Header "Coupon" :accessor "COUPON" :width 70 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}
-   :cembi                     {:Header "CEMBI" :accessor "cembi" :width 70 :style {:textAlign "center"}}
-   :cembi-ig                  {:Header "CEMBI IG" :accessor "cembi-ig" :width 70  :style {:textAlign "center"}}
-   :CRNCY                     {:Header "Currency" :accessor "CRNCY" :width 60}
-   :Bond-sticky               {:Header "Bond" :accessor "Bond" :width 160 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
-   :Used_Price                {:Header "Price" :accessor "Used_Price" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :Rating_String             {:Header "Rating source" :accessor "Rating_String" :width 120 :filterable true :filterMethod tables/compare-nb-d100}
-   :Used_Rating_Score         {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :Used_ZTW                  {:Header "ZTW" :accessor "Used_ZTW" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :Used_YTW                  {:Header "YTW" :accessor "Used_YTW" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/compare-nb}
-   :Used_Duration             {:Header "Duration" :accessor "Used_Duration" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/compare-nb}
+  {:ISIN                      {:Header "ISIN" :accessor "ISIN" :width 100}
+   :Country                   {:Header "Country" :accessor "Country" :width 55}
+   :Sector                    {:Header "Sector" :accessor "Sector" :width 80}
+   :Ticker                    {:Header "Ticker" :accessor "Ticker" :width 80}
+   :Use                       {:Header "Use" :accessor "Use" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
+   :Bond                      {:Header "Bond" :accessor "Bond" :width 130}
+   :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 35}
+   :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 60 :style {:textAlign "center"}}
+   :HYBRID-WIDE               {:Header "Hybrid" :accessor "HYBRID" :width 60 :style {:textAlign "center"}}
+   :COUPON                    {:Header "Coupon" :accessor "COUPON" :width 60 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}
+   :cembi                     {:Header "CEMBI" :accessor "cembi" :width 60 :style {:textAlign "center"}}
+   :cembi-ig                  {:Header "CEMBI IG" :accessor "cembi-ig" :width 62  :style {:textAlign "center"}}
+   :CRNCY                     {:Header "Currency" :accessor "CRNCY" :width 50}
+   :Bond-sticky               {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
+   :Used_Price                {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
+   :Rating_String             {:Header "Rating source" :accessor "Rating_String" :width 110 :filterable true :filterMethod tables/compare-nb-d100}
+   :Used_Rating_Score         {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :Used_ZTW                  {:Header "ZTW" :accessor "Used_ZTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
+   :Used_YTW                  {:Header "YTW" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/compare-nb}
+   :Used_Duration             {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/compare-nb}
 
    :predicted_spread_legacy_1 {:Header "Legacy" :accessor "predicted_spread_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
    :predicted_spread_new_1    {:Header "New" :accessor "predicted_spread_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
@@ -130,7 +130,7 @@
    :HRV_svr_2                           {:Header "Hist."    :accessor "HRV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
 
    :FORCE_INCLUSION                     {:Header "Force"    :accessor "FORCE_INCLUSION" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true }
-   :AMT_OUTSTANDING                     {:Header "Outstanding"    :accessor "AMT_OUTSTANDING" :width 100 :style {:textAlign "right"} :aggregate tables/median :Cell tables/nfcell2 :filterable true :filterMethod tables/compare-nb}
+   :AMT_OUTSTANDING                     {:Header "Outstanding"    :accessor "AMT_OUTSTANDING" :width 85 :style {:textAlign "right"} :aggregate tables/median :Cell tables/nfcell2 :filterable true :filterMethod tables/compare-nb}
    :Price-source                        {:Header "Price"    :accessor "Price" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
    :ZTW-source                          {:Header "ZTW"    :accessor "ZTW" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
    :YTW-source                          {:Header "YTW"    :accessor "YTW" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}

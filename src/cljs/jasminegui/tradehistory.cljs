@@ -205,22 +205,22 @@
       [box :align :center
        :child [:> ReactTable
                {:data                data
-                :columns             (concat [{:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
-                                              {:Header "Type" :accessor "TransactionTypeName" :width 100}
+                :columns             (concat [{:Header "Date" :accessor "TradeDate" :width 90 :Cell subs10}
+                                              {:Header "Type" :accessor "TransactionTypeName" :width 90}
                                               ;{:Header "Instrument" :accessor "IssueName" :width 400}
-                                              {:Header "Instrument" :accessor "NAME" :width 200}
-                                              {:Header "ISIN" :accessor "ISIN" :width 125}
-                                              {:Header "CCY" :accessor "LocalCcy" :width 60}
-                                              {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh :filterMethod tables/compare-nb}
-                                              {:Header "Price" :accessor "PriceLcl" :width 75 :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Counterparty" :accessor "counterparty_code" :width 100}
-                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 75}
-                                              {:Header "Region" :accessor "JPMRegion" :width 100}
-                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 125}]
+                                              {:Header "Instrument" :accessor "NAME" :width 180}
+                                              {:Header "ISIN" :accessor "ISIN" :width 105}
+                                              {:Header "CCY" :accessor "LocalCcy" :width 50}
+                                              {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/compare-nb}
+                                              {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Counterparty" :accessor "counterparty_code" :width 90}
+                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
+                                              {:Header "Region" :accessor "JPMRegion" :width 85}
+                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 105}]
                                              (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
-                                               (into [{:Header "Last price" :accessor "last-price" :width 75 :style {:textAlign "right"} :Cell tables/round2}]
+                                               (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
                                                      (for [[h a] [["Total return" "total-return"] ["TR vs CEMBI" "tr-vs-cembi"] ["TR vs CEMBIIG" "tr-vs-cembiig"] ["TR vs EMBI" "tr-vs-embi"] ["TR vs EMBIIG" "tr-vs-embiig"]]]
-                                                       {:Header h :accessor a :width 110 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}))))
+                                                       {:Header h :accessor a :width 90 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}))))
                 :showPagination      (> (count data) 50)
                 :defaultPageSize     (min 50 (count data))
                 :filterable          true
