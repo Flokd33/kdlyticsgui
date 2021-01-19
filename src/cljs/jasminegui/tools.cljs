@@ -3,6 +3,14 @@
 (defn int-to-gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
 (defn gdate-to-yyyymmdd [x] (subs (.toString x) 0 8))
 
+(defn chainfilter
+  "Chain filter (boolean AND). Defaults to equality if predicate is not a function.
+  example: (chainfilter {:portfolio #(= % \"OGEMCORD\") :weight pos?} @positions)
+  equivalent to (chainfilter {:portfolio \"OGEMCORD\" :weight pos?} @positions)"
+  [m coll]
+  (reduce-kv
+    (fn [erg k pred]
+      (filter #(if (fn? pred) (pred (get % k)) (= pred (get % k))) erg)) coll m))
 
 (defn vector-of-maps->csv
   ([vector-of-maps]

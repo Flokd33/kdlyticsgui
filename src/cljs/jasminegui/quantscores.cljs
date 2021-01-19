@@ -11,7 +11,7 @@
     [jasminegui.mount :as mount]
     [jasminegui.tables :as tables]
     [jasminegui.static :as static]
-    [jasminegui.tools :as tools]
+    [jasminegui.tools :as t]
     [reagent.core :as reagent]
     [reagent.core :as r]
     [oz.core :as oz]
@@ -57,6 +57,15 @@
                                     :label (:name item)
                                     :on-click #(rf/dispatch [:navigation/active-qs (:code item)])]))]]]))
 
+(defn esg-span [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [:div [:span {:title (clojure.string/join " " [(if (.includes x "G") "Green")
+                                                     (if (.includes x "S") "Social")
+                                                     (if (.includes x "T") "Sustainable")
+                                                     (if (.includes x "L") "Sutainability-linked")])} x]]
+      "-")))
+
 (def quant-score-table-columns
   {:ISIN                      {:Header "ISIN" :accessor "ISIN" :width 100}
    :Country                   {:Header "Country" :accessor "Country" :width 55}
@@ -67,6 +76,7 @@
    :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 35}
    :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 60 :style {:textAlign "center"}}
    :HYBRID-WIDE               {:Header "Hybrid" :accessor "HYBRID" :width 60 :style {:textAlign "center"}}
+   :ESG                       {:Header "ESG" :accessor "ESG" :width 60 :style {:textAlign "center"} :Cell esg-span}
    :COUPON                    {:Header "Coupon" :accessor "COUPON" :width 60 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}
    :cembi                     {:Header "CEMBI" :accessor "cembi" :width 60 :style {:textAlign "center"}}
    :cembi-ig                  {:Header "CEMBI IG" :accessor "cembi-ig" :width 62  :style {:textAlign "center"}}
@@ -239,7 +249,7 @@
   (rcm/context!
     evt
     [(aget rowInfo "original" "Bond")                                         ; <---- string is a section title
-     ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "ISIN")))]
+     ["Copy ISIN" (fn [] (t/copy-to-clipboard (aget rowInfo "original" "ISIN")))]
      ["Historical charts" (fn [] ((reset! isin-historical-charts (aget rowInfo "original" "ISIN"))
                                   (reset! bond-historical-charts (aget rowInfo "original" "Bond"))
                                   (rf/dispatch [:navigation/active-qs :historical-charts]) (rf/dispatch [:get-historical-quant-scores (aget rowInfo "original" "ISIN")])))]         ; <---- the name is a span
@@ -256,7 +266,7 @@
      [v-box :class "element"  :gap "20px" :width "1640px"
       :children [[h-box :align :center :children [[title :label mytitle :level :level1]
                                                   [gap :size "1"]
-                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "quant-model-output")]]]
+                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(t/csv-link data "quant-model-output")]]]
                  [h-box :align :center :gap "20px"
                   :children (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Upside/Downside" "Screener (SVR)"]]
                                        ^{:key c}            ;; key should be unique among siblings
@@ -320,7 +330,7 @@
                                            {:Header "Target returns (%)" :columns (mapv quant-score-table-columns [:upside1y :expected1y :downside1y])}
                                            {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}]
                                           "Screener (SVR)"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig :AMT_OUTSTANDING :COUPON])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :cembi :cembi-ig :AMT_OUTSTANDING :COUPON])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}]
                                           )
@@ -355,16 +365,24 @@
         other-country (str "Other " @calculator-country " " (get-implied-rating (str rating-score)))
         rating-up (get-implied-rating (str (inc rating-score)))
         rating-dw (get-implied-rating (str (dec rating-score)))
+        qmt @(rf/subscribe [:quant-model/model-output])
         data
         (concat
           (prepare-data table "comp")
           [{:field "legacy" :duration duration :spread legacy :txt "legacy"}
            {:field "new" :duration duration :spread new :txt "new"}
            {:field "svr" :duration duration :spread svr :txt "svr"}]
-          (if @chart-other-countries (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) rating-score) (not= (:Country %) @calculator-country)) @(rf/subscribe [:quant-model/model-output])) other))
-          (if @chart-rating-neighbours (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (inc rating-score))) @(rf/subscribe [:quant-model/model-output])) rating-up))
-          (if @chart-rating-neighbours (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (dec rating-score))) @(rf/subscribe [:quant-model/model-output])) rating-dw))
-          (if @chart-country-neighbours (prepare-data (filter #(and (= (:Country %) @calculator-country) (= (:Used_Rating_Score %) rating-score) (not= (:Sector %) @calculator-sector)) @(rf/subscribe [:quant-model/model-output])) other-country))
+          ;(filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) rating-score) (not= (:Country %) @calculator-country)) @(rf/subscribe [:quant-model/model-output]))
+          ;(t/chainfilter {:Sector @calculator-sector :Used_Rating_Score rating-score :Country #(not= % @calculator-country)})
+          (if @chart-other-countries    (prepare-data (t/chainfilter {:Sector @calculator-sector :Used_Rating_Score rating-score :Country #(not= % @calculator-country)} qmt) other))
+          (if @chart-rating-neighbours  (prepare-data (t/chainfilter {:Sector @calculator-sector :Used_Rating_Score (inc rating-score)} qmt) rating-up))
+          (if @chart-rating-neighbours  (prepare-data (t/chainfilter {:Sector @calculator-sector :Used_Rating_Score (dec rating-score)} qmt) rating-dw))
+          (if @chart-country-neighbours (prepare-data (t/chainfilter {:Country @calculator-country :Used_Rating_Score rating-score :Sector #(not= % @calculator-sector)} qmt) other-country))
+          ;(if @chart-other-countries (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) rating-score) (not= (:Country %) @calculator-country)) qmt) other))
+          ;(if @chart-rating-neighbours (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (inc rating-score))) qmt) rating-up))
+          ;(if @chart-rating-neighbours (prepare-data (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (dec rating-score))) qmt) rating-dw))
+          ;(if @chart-country-neighbours (prepare-data (filter #(and (= (:Country %) @calculator-country) (= (:Used_Rating_Score %) rating-score) (not= (:Sector %) @calculator-sector)) qmt) other-country))
+
           )
         color-domain-scale (merge {"comp" "#134848" "legacy" "red" "new" "orange" "svr" "blue"}
                                   (if @chart-other-countries {other "#009D80"})
@@ -731,7 +749,7 @@
                   [label :label "Assumes semi-annual coupons"]
                   [button :label "OK" :on-click #(do
                                                    (reset! calculator-duration
-                                                           (str (/ (Math/round (* 100 (tools/semi-bond-modified-duration
+                                                           (str (/ (Math/round (* 100 (t/semi-bond-modified-duration
                                                                                         (cljs.reader/read-string @maturity)
                                                                                         (/ (cljs.reader/read-string @coupon) 100)))) 100)))
                                                    (reset! show-duration-modal false))]]]]))))
