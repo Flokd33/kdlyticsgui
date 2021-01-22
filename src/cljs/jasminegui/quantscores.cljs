@@ -74,12 +74,16 @@
    :Use                       {:Header "Use" :accessor "Use" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
    :Bond                      {:Header "Bond" :accessor "Bond" :width 130}
    :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 35}
-   :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 60 :style {:textAlign "center"}}
-   :HYBRID-WIDE               {:Header "Hybrid" :accessor "HYBRID" :width 60 :style {:textAlign "center"}}
-   :ESG                       {:Header "ESG" :accessor "ESG" :width 60 :style {:textAlign "center"} :Cell esg-span}
-   :COUPON                    {:Header "Coupon" :accessor "COUPON" :width 60 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}
-   :cembi                     {:Header "CEMBI" :accessor "cembi" :width 60 :style {:textAlign "center"}}
+   :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 50 :style {:textAlign "center"}}
+   :HYBRID-WIDE               {:Header "Hybrid" :accessor "HYBRID" :width 50 :style {:textAlign "center"}}
+   :ESG                       {:Header "ESG" :accessor "ESG" :width 50 :style {:textAlign "center"} :Cell esg-span}
+   :COUPON                    {:Header "Coupon" :accessor "COUPON" :width 55 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}
+   :cembi                     {:Header "CEMBI" :accessor "cembi" :width 52 :style {:textAlign "center"}}
    :cembi-ig                  {:Header "CEMBI IG" :accessor "cembi-ig" :width 62  :style {:textAlign "center"}}
+   :embi                     {:Header "EMBI" :accessor "embi" :width 52 :style {:textAlign "center"}}
+   :embi-ig                  {:Header "EMBI IG" :accessor "embi-ig" :width 62  :style {:textAlign "center"}}
+   :us-agg                     {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "center"}}
+   :global-agg                  {:Header "Glb agg" :accessor "global-agg" :width 55  :style {:textAlign "center"}}
    :CRNCY                     {:Header "Currency" :accessor "CRNCY" :width 50}
    :Bond-sticky               {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
@@ -232,6 +236,7 @@
    :LongCountry                                 {:Header "Country"     :accessor "LongCountry" :width 125}
    :StringRating                                {:Header "Rating"     :accessor "StringRating" :width 125}
    :AMT_OUTSTANDING_2                           {:Header "($ bn)"    :accessor "AMT_OUTSTANDING" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
+   :AMT_OUTSTANDING_3                           {:Header "$ m"    :accessor "AMT_OUTSTANDING" :width 45 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.0f" 0.000001) :filterable true :filterMethod tables/compare-nb}
    :DurationGroup                               {:Header "Duration"  :accessor "DurationGroup" :width 125}
    })
 
@@ -330,7 +335,8 @@
                                            {:Header "Target returns (%)" :columns (mapv quant-score-table-columns [:upside1y :expected1y :downside1y])}
                                            {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}]
                                           "Screener (SVR)"
-                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :cembi :cembi-ig :AMT_OUTSTANDING :COUPON])}
+                                          [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}
+                                           {:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}
                                            {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
                                            {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}]
                                           )
