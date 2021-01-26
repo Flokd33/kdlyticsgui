@@ -137,6 +137,6 @@
                             {:id :monthly-3y :label "Monthly 3y" :frequency :monthly :period 3}])
 
 (def other-portfolios
-  [{:strategy "Blend" :portfolios ["FOGEMBLCR" "FU4EMBLCR" "FOLLCBLN" "FNYEMD" "FNYAKEMD" "ICOMPEMD" "ITOPEMD" "IWHITEMD" "INSWIEMD" "IGARDEMD" "OGEMMUL" "FAPFCEMD"]}
+  [{:strategy "Blend" :portfolios ["FOGEMBLCR" "FU4EMBLCR" "FOLLCBLN" "FNYEMD" "FNYAKEMD" "ICOMPEMD" "ITOPEMD" "IWHITEMD" "INSWIEMD" "IGARDEMD" "OGEMMUL" "FAPFCEMD" "IBPEMCRD"]}
    {:strategy "Hard currency" :portfolios ["OGEMHCD" "IUSSEMD"]}
    {:strategy "Target return" :portfolios ["OGGBOND" "OLLCGUF"]}])

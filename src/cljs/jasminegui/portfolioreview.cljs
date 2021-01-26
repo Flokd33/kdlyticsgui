@@ -6,7 +6,7 @@
     [goog.string :as gstring]
     [goog.string.format]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
+                         single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button md-icon-button
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -707,9 +707,9 @@
                  :gap "20px"
                  :class "leftnavbar"
                  :children (into (vec (remove nil? [(if @(rf/subscribe [:time-machine/enabled]) [alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " (subs (str @(rf/subscribe [:time-machine/date])) 0 8))])
-                                                    [h-box :children [[box :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Previous" :on-click previous-page!]]
-                                                                      [box :size "1" :align :center :child [label :label (str (inc @current-page) "/" maximum-page) :style {:width "70px" :color "white" :text-align "center"}]]
-                                                                      [box :child [button :style {:width "90px"} :class "btn btn-primary btn-block" :label "Next" :on-click next-page!]]]]
+                                                    [h-box :children [[md-icon-button :md-icon-name "zmdi-forward" :class "zmdi-hc-flip-horizontal" :size :larger :style {:color "white"} :on-click previous-page!]
+                                                                      [box :size "1" :align :center :child [label :label (str (inc @current-page) "/" maximum-page) :style {:width "135px" :color "white" :text-align "center"}]]
+                                                                      [md-icon-button :md-icon-name "zmdi-forward" :size :larger :style {:color "white"} :on-click next-page!]]]
                                                     [line :color "#CA3E47" :class "separatornavline"]
                                                     [single-dropdown :width "100%" :model portfolio :choices portfolio-map :on-change portfolio-change]
                                                     [line :color "#CA3E47" :class "separatornavline"]]))
