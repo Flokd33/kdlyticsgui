@@ -223,7 +223,7 @@
       :showPageSizeOptions false
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
-      :getTrProps          on-click-context                 ;single-bond-trade-history
+      :getTrProps          on-click-context
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
       :onFilteredChange    #(rf/dispatch [:single-portfolio-risk/table-filter %])}]))
 
