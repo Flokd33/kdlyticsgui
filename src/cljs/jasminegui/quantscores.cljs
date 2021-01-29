@@ -2,7 +2,7 @@
   (:require
     [re-frame.core :as rf]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink md-circle-icon-button selection-list modal-panel typeahead
+                         single-dropdown hyperlink md-circle-icon-button selection-list modal-panel typeahead throbber
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -1001,6 +1001,56 @@
 
 ;;; END HARVEST UNIVERSE STUFF ;;;
 
+(rf/reg-event-db :quant-model/new-bond-entry (fn [db [_ k v]] (assoc-in db [:quant-model/new-bond-entry k] v)))
+
+(rf/reg-event-fx
+  :quant-model-new-bond/check-isin
+  (fn [{:keys [db]} [_ isin]]
+    (let [ISIN (.toUpperCase isin)]
+      {:http-get-dispatch {:url (str static/server-address "quant-model-new-bond-check?ISIN=" ISIN) :dispatch-key [:quant-model/new-bond-entry-result]}
+       :db (-> db (assoc :quant-model/new-bond-tested false
+                         :quant-model/new-bond-already-exists false
+                         :quant-model/new-bond-entry {:ISINREGS ISIN :JPM_SECTOR nil :CNTRY_OF_RISK nil :NAME nil}))})))
+
+(rf/reg-event-db
+  :quant-model/new-bond-entry-result
+  (fn [db [_  data]]
+    (-> db
+        (assoc :quant-model/new-bond-static-data data :quant-model/new-bond-tested true :quant-model/new-bond-already-exists (:already-exists data))
+        (assoc-in [:quant-model/new-bond-entry :NAME] (if-let [x (get-in data [:static :SECURITY_NAME])] x ""))
+        (assoc-in [:quant-model/new-bond-entry :CNTRY_OF_RISK] (get-in data [:static :CNTRY_OF_RISK]))
+        (assoc-in [:quant-model/new-bond-entry :JPM_SECTOR] (if-let [x (get-in data [:static :JPM_SECTOR])] x "")))))
+
+
+(defn save-new-bond-impossible []
+  (or (nil? (:JPM_SECTOR @(rf/subscribe [:quant-model/new-bond-entry])))
+      (= (:JPM_SECTOR @(rf/subscribe [:quant-model/new-bond-entry])) "")
+      (nil? (:NAME @(rf/subscribe [:quant-model/new-bond-entry])))))
+
+(defn new-bond-entry []
+  (let [new-bond (rf/subscribe [:quant-model/new-bond-entry])
+        isinregs (r/cursor new-bond [:ISINREGS])
+        name     (r/cursor new-bond [:NAME])
+        sector   (r/cursor new-bond [:JPM_SECTOR])
+        country  (r/cursor new-bond [:CNTRY_OF_RISK])
+        new-bond-tested @(rf/subscribe [:quant-model/new-bond-tested])
+        hb (fn [v] [h-box  :gap "10px" :align :center :children v])]
+     [v-box :width "400px" :gap "10px" :class "element"
+      :children [[title :label "Add bond to universe" :level :level1]
+                 [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model isinregs :on-change #(rf/dispatch [:quant-model/new-bond-entry :ISINREGS %])]]]
+                 [hb [(if new-bond-tested
+                        [button :style {:width "360px"} :label "Check Bloomberg!" :on-click #(rf/dispatch [:quant-model-new-bond/check-isin @isinregs])]
+                        [throbber :size :small])]]
+                 [hb [[label :width "100px" :label "Name"][input-text :width "250px" :model name :on-change #(rf/dispatch [:quant-model/new-bond-entry :NAME %])]]]
+                 [hb [[label :width "100px" :label "JPM sector"][single-dropdown :width "250px" :model sector :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:quant-model/new-bond-entry :JPM_SECTOR %])]]]
+                 [hb [[label :width "100px" :label "Country"][single-dropdown :width "250px" :model country :choices (mapv #(clojure.set/rename-keys % {:CountryCode :id :LongName :label}) @(rf/subscribe [:country-codes])) :filter-box? true :on-change #(rf/dispatch [:quant-model/new-bond-entry :CNTRY_OF_RISK %])]]]
+                 [hb [(if @(rf/subscribe [:quant-model/new-bond-already-exists])
+                        [label :label "Can't save, bond already in database."]
+                        [button :style {:width "360px"} :label "Save to bond universe!" :disabled? (save-new-bond-impossible)
+                         :on-click #(rf/dispatch [:quant-model-new-bond/save-to-bond-universe @new-bond])])]]]]))
+
+(defn add-bonds [] [box :padding "80px 10px" :class "rightelement" :child [new-bond-entry]])
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -1013,6 +1063,7 @@
       :trade-finder       [trade-finder]
       :universe-des       [universe-overview]
       :universe-harvest   [universe-harvest]
+      :add-bonds          [add-bonds]
       :methodology        [methodology]
       [:div.output "nothing to display"])))
 

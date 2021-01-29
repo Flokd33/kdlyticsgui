@@ -26,6 +26,7 @@
                  :qt-date                                            ""
                  :attribution-date                                   ""
                  :country-codes                                      nil
+                 :jpm-sectors                                         nil
                  :large-exposures                                    []
 
                  ;navigation
@@ -154,6 +155,10 @@
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
                  :quant-model/isin-history                []
+                 :quant-model/new-bond-entry                    nil
+                 :quant-model/new-bond-tested           true
+                 :quant-model/new-bond-already-exists false
+
 
 
                  })
@@ -170,6 +175,7 @@
            :navigation/show-mounting-modal
            :rating-to-score
            :country-codes
+           :jpm-sectors
            :large-exposures
            ;:pivoted-positions
            :total-positions
@@ -259,8 +265,10 @@
 
 
            :quant-model/calculator-spreads
-           :quant-model/rating-curves               []
-           :quant-model/isin-history []
+           :quant-model/rating-curves
+           :quant-model/isin-history
+           :quant-model/new-bond-tested
+           :quant-model/new-bond-already-exists
 
            :time-machine/enabled
            :time-machine/date
@@ -409,6 +417,7 @@
    {:get-key :get-quant-model         :url-tail "quant-model-output-transit-array"  :dis-key :quant-model/model-output :mounting-modal true}
    {:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
+   {:get-key :get-jpm-sectors     :url-tail "jpm-sectors"     :dis-key :jpm-sectors}
    {:get-key :get-time-machine-status :url-tail "time-machine-status" :dis-key :time-machine-status}
    {:get-key :get-attribution-date    :url-tail "attribution?query-type=attribution-date" :dis-key :attribution-date}
    {:get-key :get-attribution-summary    :url-tail "attribution?query-type=summary" :dis-key :attribution/summary}
