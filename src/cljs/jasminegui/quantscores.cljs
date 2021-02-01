@@ -238,6 +238,13 @@
    :AMT_OUTSTANDING_2                           {:Header "($ bn)"    :accessor "AMT_OUTSTANDING" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
    :AMT_OUTSTANDING_3                           {:Header "$ m"    :accessor "AMT_OUTSTANDING" :width 45 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.0f" 0.000001) :filterable true :filterMethod tables/compare-nb}
    :DurationGroup                               {:Header "Duration"  :accessor "DurationGroup" :width 125}
+
+   :days-to-call                               {:Header "Days"  :accessor "days-to-call" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell (partial tables/nb-cell-format "%.0f" 1) :filterable true :filterMethod tables/compare-nb}
+   :price-vs-call                               {:Header "Price vs call"  :accessor "price-vs-call" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
+   :NXT_CALL_DT                               {:Header "Date"  :accessor "NXT_CALL_DT" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%.0f" 1) :filterable true}
+   :NXT_CALL_PX                               {:Header "Call price"  :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/compare-nb}
+
+
    })
 
 
@@ -269,7 +276,7 @@
 
 (def qs-table-view (atom nil))
 
-(defn table-style->qs-table-col [table-style]
+(defn table-style->qs-table-col [table-style checkboxes]
   (case table-style
     "Summary"
     [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR])}
@@ -323,12 +330,15 @@
      {:Header "Target returns (%)" :columns (mapv quant-score-table-columns [:upside1y :expected1y :downside1y])}
      {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}]
     "Screener (SVR)"
-    [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}
-     {:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}
-     {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
-     {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}]
+    (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
+            (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
+            (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
+            [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
+             {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
     )
   )
+
+(def table-checkboxes (r/atom {:indices true :calls false}))
 
 (defn qs-table [mytitle data]
      [v-box :class "element"  :gap "20px" :width "1640px"
@@ -336,12 +346,15 @@
                  [h-box :align :center :gap "20px"
                   :children (concat (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Upside/Downside" "Screener (SVR)"]]
                                                ^{:key c} [radio-button :label c :value c :model table-style :on-change #(reset! table-style %)]))   ;; key should be unique among siblings
-                                    [[gap :size "1"]
-                                     [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (table-style->qs-table-col @table-style)))))] ;
+                                    [[gap :size "20px"]
+                                     [checkbox :model (r/cursor table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! table-checkboxes assoc-in [:indices] %)]
+                                     [checkbox :model (r/cursor table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! table-checkboxes assoc-in [:calls] %)]
+                                     [gap :size "1"]
+                                     [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (table-style->qs-table-col @table-style @table-checkboxes)))))] ;
                                      [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output")]])]
                  [:> ReactTable
                   {:data                data
-                   :columns             (table-style->qs-table-col @table-style)
+                   :columns             (table-style->qs-table-col @table-style @table-checkboxes)
                    :showPagination      true
                    :defaultPageSize     15
                    :pageSizeOptions     [15 25 50 100]
