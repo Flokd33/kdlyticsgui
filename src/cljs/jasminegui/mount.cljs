@@ -155,9 +155,10 @@
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
                  :quant-model/isin-history                []
-                 :quant-model/new-bond-entry                    nil
-                 :quant-model/new-bond-tested           true
-                 :quant-model/new-bond-already-exists false
+                 :quant-model/new-bond-entry              nil
+                 :quant-model/new-bond-tested             true
+                 :quant-model/new-bond-saved-message      ""
+                 :quant-model/new-bond-already-exists     false
 
 
 
@@ -269,6 +270,7 @@
            :quant-model/isin-history
            :quant-model/new-bond-tested
            :quant-model/new-bond-already-exists
+           :quant-model/new-bond-saved-message
 
            :time-machine/enabled
            :time-machine/date

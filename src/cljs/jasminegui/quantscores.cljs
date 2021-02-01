@@ -335,16 +335,10 @@
       :children [[title :label mytitle :level :level1]
                  [h-box :align :center :gap "20px"
                   :children (concat (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Upside/Downside" "Screener (SVR)"]]
-                                               ^{:key c}    ;; key should be unique among siblings
-                                               [radio-button
-                                                :label c
-                                                :value c
-                                                :model table-style
-                                                :on-change #(reset! table-style %)]))
+                                               ^{:key c} [radio-button :label c :value c :model table-style :on-change #(reset! table-style %)]))   ;; key should be unique among siblings
                                     [[gap :size "1"]
                                      [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (table-style->qs-table-col @table-style)))))] ;
-                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output")]]
-                                    )]
+                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output")]])]
                  [:> ReactTable
                   {:data                data
                    :columns             (table-style->qs-table-col @table-style)
@@ -1001,6 +995,7 @@
 
 ;;; END HARVEST UNIVERSE STUFF ;;;
 
+(rf/reg-event-db :quant-model-new-bond/change-isin (fn [db [_ isin]] (assoc db :quant-model/new-bond-entry {:ISIN isin}))) ;cleans the whole thing
 (rf/reg-event-db :quant-model/new-bond-entry (fn [db [_ k v]] (assoc-in db [:quant-model/new-bond-entry k] v)))
 
 (rf/reg-event-fx
@@ -1010,44 +1005,60 @@
       {:http-get-dispatch {:url (str static/server-address "quant-model-new-bond-check?ISIN=" ISIN) :dispatch-key [:quant-model/new-bond-entry-result]}
        :db (-> db (assoc :quant-model/new-bond-tested false
                          :quant-model/new-bond-already-exists false
-                         :quant-model/new-bond-entry {:ISINREGS ISIN :JPM_SECTOR nil :CNTRY_OF_RISK nil :NAME nil}))})))
+                         :quant-model/new-bond-entry {:ISIN ISIN :JPM_SECTOR nil :CNTRY_OF_RISK nil :NAME nil}))})))
 
 (rf/reg-event-db
   :quant-model/new-bond-entry-result
   (fn [db [_  data]]
     (-> db
-        (assoc :quant-model/new-bond-static-data data :quant-model/new-bond-tested true :quant-model/new-bond-already-exists (:already-exists data))
-        (assoc-in [:quant-model/new-bond-entry :NAME] (if-let [x (get-in data [:static :SECURITY_NAME])] x ""))
-        (assoc-in [:quant-model/new-bond-entry :CNTRY_OF_RISK] (get-in data [:static :CNTRY_OF_RISK]))
-        (assoc-in [:quant-model/new-bond-entry :JPM_SECTOR] (if-let [x (get-in data [:static :JPM_SECTOR])] x "")))))
+        (assoc :quant-model/new-bond-tested true :quant-model/new-bond-already-exists (:already-exists data))
+        (update-in [:quant-model/new-bond-entry :ISIN] #(if (:already-exists data) (str % " " (:message data)) %))
+        (assoc-in [:quant-model/new-bond-entry :NAME] (if-let [x (:SECURITY_NAME data)] x ""))
+        (assoc-in [:quant-model/new-bond-entry :TICKER] (:TICKER data))
+        (assoc-in [:quant-model/new-bond-entry :CRNCY] (:CRNCY data))
+        (assoc-in [:quant-model/new-bond-entry :CNTRY_OF_RISK] (:CNTRY_OF_RISK data))
+        (assoc-in [:quant-model/new-bond-entry :JPM_SECTOR] (if-let [x (:JPM_SECTOR data)] x "")))))
 
+(rf/reg-event-fx
+  :quant-model-new-bond/save-to-bond-universe
+  (fn [{:keys [db]} [_ data]]
+    {:db db :http-post-dispatch {:url (str static/server-address "quant-model-save-new-bond") :edn-params data :dispatch-key [:quant-model-new-bond/save-bond-response]}}))
+
+(rf/reg-event-db
+  :quant-model-new-bond/save-bond-response
+  (fn [db [_  data]]
+    (if (:success data)
+      (assoc db :quant-model/new-bond-entry nil :quant-model/new-bond-saved-message (:message data))
+      (assoc db :quant-model/new-bond-saved-message (:message data)))))
 
 (defn save-new-bond-impossible []
   (or (nil? (:JPM_SECTOR @(rf/subscribe [:quant-model/new-bond-entry])))
       (= (:JPM_SECTOR @(rf/subscribe [:quant-model/new-bond-entry])) "")
       (nil? (:NAME @(rf/subscribe [:quant-model/new-bond-entry])))))
 
+
 (defn new-bond-entry []
   (let [new-bond (rf/subscribe [:quant-model/new-bond-entry])
-        isinregs (r/cursor new-bond [:ISINREGS])
+        ISIN (r/cursor new-bond [:ISIN])
         name     (r/cursor new-bond [:NAME])
         sector   (r/cursor new-bond [:JPM_SECTOR])
         country  (r/cursor new-bond [:CNTRY_OF_RISK])
         new-bond-tested @(rf/subscribe [:quant-model/new-bond-tested])
-        hb (fn [v] [h-box  :gap "10px" :align :center :children v])]
+        hb (fn [v] [h-box  :gap "10px" :align :center :children v])
+        bond-saved-message @(rf/subscribe [:quant-model/new-bond-saved-message])]
      [v-box :width "400px" :gap "10px" :class "element"
       :children [[title :label "Add bond to universe" :level :level1]
-                 [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model isinregs :on-change #(rf/dispatch [:quant-model/new-bond-entry :ISINREGS %])]]]
+                 [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model ISIN :change-on-blur? false :on-change #(rf/dispatch [:quant-model-new-bond/change-isin %])]]]
                  [hb [(if new-bond-tested
-                        [button :style {:width "360px"} :label "Check Bloomberg!" :on-click #(rf/dispatch [:quant-model-new-bond/check-isin @isinregs])]
+                        [button :style {:width "360px"} :label "Check Bloomberg!" :on-click #(rf/dispatch [:quant-model-new-bond/check-isin @ISIN])]
                         [throbber :size :small])]]
-                 [hb [[label :width "100px" :label "Name"][input-text :width "250px" :model name :on-change #(rf/dispatch [:quant-model/new-bond-entry :NAME %])]]]
+                 [hb [[label :width "100px" :label "Name"][input-text :width "250px" :model name :change-on-blur? false :on-change #(rf/dispatch [:quant-model/new-bond-entry :NAME %])]]]
                  [hb [[label :width "100px" :label "JPM sector"][single-dropdown :width "250px" :model sector :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:quant-model/new-bond-entry :JPM_SECTOR %])]]]
                  [hb [[label :width "100px" :label "Country"][single-dropdown :width "250px" :model country :choices (mapv #(clojure.set/rename-keys % {:CountryCode :id :LongName :label}) @(rf/subscribe [:country-codes])) :filter-box? true :on-change #(rf/dispatch [:quant-model/new-bond-entry :CNTRY_OF_RISK %])]]]
                  [hb [(if @(rf/subscribe [:quant-model/new-bond-already-exists])
                         [label :label "Can't save, bond already in database."]
-                        [button :style {:width "360px"} :label "Save to bond universe!" :disabled? (save-new-bond-impossible)
-                         :on-click #(rf/dispatch [:quant-model-new-bond/save-to-bond-universe @new-bond])])]]]]))
+                        [button :style {:width "360px"} :label "Save to bond universe!" :disabled? (save-new-bond-impossible) :on-click #(rf/dispatch [:quant-model-new-bond/save-to-bond-universe @new-bond])])]]
+                 [hb [[label :width "100px" :label bond-saved-message]]]]]))
 
 (defn add-bonds [] [box :padding "80px 10px" :class "rightelement" :child [new-bond-entry]])
 
