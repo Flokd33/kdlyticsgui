@@ -351,7 +351,7 @@
                                      [checkbox :model (r/cursor table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "1"]
                                      [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (table-style->qs-table-col @table-style @table-checkboxes)))))] ;
-                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output")]])]
+                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output" (conj (keys (first data)) :ISIN))]])]
                  [:> ReactTable
                   {:data                data
                    :columns             (table-style->qs-table-col @table-style @table-checkboxes)
