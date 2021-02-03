@@ -111,18 +111,19 @@
   (let [data @(rf/subscribe [:esg/data-detailed])
         structure @(rf/subscribe [:esg/refinitiv-structure])
         headers (conj (keys (first data)) "Name")
-        no-space-headers (map #(keyword (clojure.string/replace % " " "_")) headers)
+        no-space-headers (map #(-> % (clojure.string/replace " " "_") (clojure.string/replace "," "_") (keyword)) headers)
         zheadersmap (zipmap headers no-space-headers)
         selected-pillars (rf/subscribe [:esg/selected-pillars])
         names-map (into {} (for [line @(rf/subscribe [:esg/selected-companies])] [(:id line) (:name line)]))
         clean-data (mapv #(assoc % "Name" (names-map (% "Refinitiv ID"))) data)
-        clean-keys-data (mapv #(clojure.set/rename-keys % zheadersmap) clean-data)
+        clean-keys-data (sort-by #(get-in % "Name") (mapv #(clojure.set/rename-keys % zheadersmap) clean-data))
         header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
+    ;for the download we remove fields that have too many / special characters
     [v-box :width standard-box-width :gap "20px" :class "element"
-     :children [[h-box :align :center :children [[title :label "Detailed data" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link clean-keys-data "esg")]]]
+     :children [[h-box :align :center :children [[title :label "Detailed data" :level :level2] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(do  (tools/csv-link clean-keys-data  "esg" (conj (remove (fn [x] (some #{x} [:Board_Member_CV :Non-Board_Senior_Executive_CV :Name])) (keys (first clean-keys-data))) :Name) ","))]]]
                 [box :width "200px" :child [selection-list :width "200px" :model selected-pillars :choices (into [] (for [p (sort (distinct (map :pillar_title @(rf/subscribe [:esg/refinitiv-structure])))) ] {:id p :label p})) :on-change #(rf/dispatch [:esg/selected-pillars %])]]
                 [:> ReactTable
-                 {:data           (sort-by #(get-in % "Name") clean-keys-data)
+                 {:data           clean-keys-data
                   :columns        (into [{:Header "Name" :accessor :Name :width 200 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}]
                                         (for [[pillar group] (sort-by first (group-by :pillar_title structure)) [category sub-group] (sort-by first (group-by :category_title group)) :when (contains? @selected-pillars pillar)]
                                           {:Header      (str pillar ": " category " >>>>>>>>>>")

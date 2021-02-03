@@ -13,11 +13,11 @@
       (filter #(if (fn? pred) (pred (get % k)) (= pred (get % k))) erg)) coll m))
 
 (defn vector-of-maps->csv
-  ([vector-of-maps]
-   (vector-of-maps->csv vector-of-maps (keys (last vector-of-maps)))) ;use last not first as first is totals that are different)
-  ([vector-of-maps cols]
-   (reduce #(str %1 (clojure.string/join "," (mapv %2 cols)) "\n")
-           (str (clojure.string/join "," (map name cols)) "\n")
+  ([vector-of-maps] (vector-of-maps->csv vector-of-maps (keys (last vector-of-maps)))) ;use last not first as first is totals that are different)
+  ([vector-of-maps cols] (vector-of-maps->csv vector-of-maps cols ","))
+  ([vector-of-maps cols sep]
+   (reduce #(str %1 (clojure.string/join sep (mapv %2 cols)) "\n")
+           (str (clojure.string/join sep (map name cols)) "\n")
            vector-of-maps)))
 
 (defn download-object-as-csv [text export-name]
@@ -31,10 +31,10 @@
     (.removeChild (.-body js/document) link)))
 
 (defn csv-link
-  ([data filename]
-   (download-object-as-csv (clj->js (vector-of-maps->csv data)) (str filename ".csv")))
-  ([data filename cols]
-   (download-object-as-csv (clj->js (vector-of-maps->csv data cols)) (str filename ".csv"))))
+  ([data filename] (download-object-as-csv (clj->js (vector-of-maps->csv data)) (str filename ".csv")))
+  ([data filename cols] (csv-link data filename cols ","))
+  ([data filename cols sep]
+   (download-object-as-csv (clj->js (vector-of-maps->csv data cols sep)) (str filename ".csv"))))
 
 (defn react-table-to-csv [view filename cols]
   (csv-link (js->clj (. (.getResolvedState view) -sortedData)) filename cols))
