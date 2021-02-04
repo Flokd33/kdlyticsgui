@@ -21,7 +21,9 @@
     [oz.core :as oz]
     [jasminegui.charting :as charting]
     [jasminegui.riskviews :as riskviews]
-    [jasminegui.tradehistory :as th])
+    [jasminegui.tradehistory :as th]
+    [jasminegui.tools :as t]
+    )
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
@@ -113,7 +115,7 @@
                               :text  {:field "value" :format ".0f"}}}]},
      :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}}))
 
-(defn simple-horizontal-bars [data title fmt dc]
+(defn simple-horizontal-bars [data title fmt dc nbcols textdx scale]
   "The data is of the form [{:group TXT :value 0}]"
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         scl (* dc (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40))]
@@ -123,16 +125,17 @@
      :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "left"}}},
      :spec      {:layer
                  [{:mark     "bar",
-                   :width    (- (/ standard-box-width-nb 2) 250),
+                   :width    (- (/ standard-box-width-nb nbcols) 250),
                    :height   individual-height
-                   :encoding {:x     {:aggregate "sum", :field "value", :type "quantitative",
-                                      :axis      {:title title, :titleFontSize chart-text-size, :titleFontWeight "normal" :labelFontSize chart-text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
-                              :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
-                              :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil}}}
-                  {:mark     {:type "text", :fontSize chart-text-size},
-                   :width    (- (/ standard-box-width-nb 2) 250),
+                   :encoding (merge (if scale scale)
+                                    {:x     {:aggregate "sum", :field "value", :type "quantitative",
+                                             :axis      {:title title, :titleFontSize chart-text-size, :titleFontWeight "normal" :labelFontSize chart-text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
+                                     :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
+                                     :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil}})}
+                  {:mark     (merge {:type "text", :fontSize chart-text-size} (if textdx {:dx textdx})),
+                   :width    (- (/ standard-box-width-nb nbcols) 250),
                    :height   individual-height
-                   :encoding {:x     {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title nil}},
+                   :encoding {:x     {:aggregate "sum", :field "valuetxt", :type "quantitative", :axis {:title ""}},
                               :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
                               :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil},
                               :text  {:field "value" :format fmt}}}]}
@@ -340,8 +343,6 @@
   (into [] (for [k risk-breakdowns]
              {:title (str "Jensen by " (first k)) :nav-request :jensen :data-request [:get-portfolio-review-jensen-chart-data "portfolio" (second k)]})))
 
-(def end-page {:title "The End" :nav-request :end :data-request nil})
-
 (def risk-pages
   (conj
     (into [{:title "Beta evolution over time" :nav-request :risk :data-request [:get-portfolio-review-historical-beta-chart-data "portfolio" ["BR", "CN", "AR", "TR", "MX"]]}
@@ -352,8 +353,7 @@
              :nav-request  :risk
              :grouping     k
              :subgrouping  p
-             :data-request (if (= p "beta contribution") [:get-portfolio-review-marginal-beta-chart-data "portfolio" (second k)])}))
-    end-page))
+             :data-request (if (= p "beta contribution") [:get-portfolio-review-marginal-beta-chart-data "portfolio" (second k)])}))))
 
 (def activity-pages
   [{:title "Trades over the past 15 days"
@@ -376,7 +376,10 @@
                         [{:title "Three year daily backtest" :nav-request :backtest-history :data-request nil}]
                         activity-pages
                         quant-value-pages
-                        risk-pages))))
+                        risk-pages
+                        [{:title "Interest rate breakdown" :nav-request :ir-breakdown :data-request nil}]
+                        [{:title "The End" :nav-request :end :data-request nil}]
+                        ))))
 
 (def portfolio-review-navigation
   (mapv (fn [line] (assoc line :page-start (apply min (keys (filter #(= (:nav-request (second %)) (:code line)) pages)))))
@@ -388,7 +391,8 @@
          {:code :backtest-history :name "Backtest"          }
          {:code :activity         :name "Activity"          }
          {:code :quant-value      :name "Quant value"       }
-         {:code :risk             :name "Risk"              }]))
+         {:code :risk             :name "Risk"              }
+         {:code :ir-breakdown     :name "Interest rate risk"}]))
 
 (def maximum-page (count pages))
 (def current-page (r/atom 0))
@@ -423,8 +427,7 @@
   [box :class "subbody rightelement" :width standard-box-width :height standard-box-height
    :child [v-box :gap "40px" :class "element" :width "100%" :height "100%" :children (concat [[heading-box]] children)]])
 
-(defn end []
-  (portfolio-review-box-template nil))
+(defn end [] (portfolio-review-box-template nil))
 
 (defn summary-text []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
@@ -590,8 +593,8 @@
                             (sort-by :group (reverse (sort-by :performance clean-data))))]
     (portfolio-review-box-template
       [[h-box :gap "20px"
-        :children [[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "weight") clean-data-sorted) "Weight vs index" ".0f" 1.5)]
-                   [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0)]]]])))
+        :children [[oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "weight") clean-data-sorted) "Weight vs index" ".0f" 1.5 2 nil nil)]
+                   [oz/vega-lite (simple-horizontal-bars (filter #(= (:performance %) "mod duration") clean-data-sorted) "Duration vs index" ".1f" 2.0 2 nil nil)]]]])))
 
 (defn top-issuer-table []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])]
@@ -676,6 +679,23 @@
                               clean-data)]
       (portfolio-review-box-template [[oz/vega-lite (quant-value-waterfall-chart clean-data-sorted max-total)]]))))
 
+(defn ir-breakdown []
+  (let [positions (t/chainfilter {:portfolio @(rf/subscribe [:portfolio-review/portfolio]) :weight pos?} @(rf/subscribe [:positions]))
+        ust (t/chainfilter {:TICKER "T"} positions)
+        bbb-flat-and-better (t/chainfilter {:TICKER #(not= % "T") :rating-score #(< % 10)} positions)
+        bbb-minus-and-worse (t/chainfilter {:rating-score #(>= % 10)} positions)
+        durations ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"]
+        prep (fn [data] (into [] (for [m durations] {:performance "portfolio" :group m :value (reduce + (map :contrib-mdur (t/chainfilter {:qt-final-maturity-band m} data)))})))
+        dust (prep ust) dig (prep bbb-flat-and-better) dhy (prep bbb-minus-and-worse)
+        maxd (apply max (concat (map :value dust) (map :value dig) (map :value dhy)))
+        st (fn [data] (gstring/format "%.1f" (reduce + (map :contrib-mdur data))))
+        scale {:scale {:domain [0 (inc (int maxd))]}}]
+    (portfolio-review-box-template
+      [[h-box :gap "20px"
+        :children [[oz/vega-lite (simple-horizontal-bars dust (str "UST: " (st ust) "y") ".1f" 0.5 3 20 scale)]
+                   [oz/vega-lite (simple-horizontal-bars dig (str "BBB and better: " (st bbb-flat-and-better) "y") ".1f" 0.5 3 20 scale)]
+                   [oz/vega-lite (simple-horizontal-bars dhy (str "BBB- and weaker: " (st bbb-minus-and-worse) "y") ".1f" 0.5 3 20 scale)]]]])))
+
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -690,6 +710,7 @@
       :activity                      [activity-page]
       :quant-value                   [quant-value-page]
       :risk                          [risk-page]
+      :ir-breakdown                  [ir-breakdown]
       :end                           [end]
       [:div.output "nothing to display"])))
 
