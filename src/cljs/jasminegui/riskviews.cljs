@@ -97,7 +97,7 @@
   (let [grp (group-by (juxt :id :portfolio) table)]
     (into [] (for [instrument instruments]
                (merge (first (seek (map #(get-in grp [[instrument %]]) portfolios))) ;the template
-                      (into {} (for [p portfolios] [(keyword p) (if-let [x (first (get-in grp [[instrument p]]))] (field x) 0.)])))))))
+                      (into {} (for [p portfolios] [(keyword p) (if-let [x (first (get-in grp [[instrument p]]))] (reduce + (map field (get-in grp [[instrument p]]))) 0.)]))))))) ;(reduce + (map field (get-in grp [[instrument p]])))
 
 (rf/reg-sub
   :multiple-portfolio-risk/table

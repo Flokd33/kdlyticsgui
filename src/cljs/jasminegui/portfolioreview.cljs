@@ -127,11 +127,11 @@
                  [{:mark     "bar",
                    :width    (- (/ standard-box-width-nb nbcols) 250),
                    :height   individual-height
-                   :encoding (merge (if scale scale)
-                                    {:x     {:aggregate "sum", :field "value", :type "quantitative",
-                                             :axis      {:title title, :titleFontSize chart-text-size, :titleFontWeight "normal" :labelFontSize chart-text-size, :gridColor {:condition {:test "datum.value === 0", :value "black"}}}},
-                                     :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
-                                     :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil}})}
+                   :encoding {:x     (merge (if scale scale)
+                                            {:aggregate "sum", :field "value", :type "quantitative",
+                                             :axis      {:title title, :titleFontSize chart-text-size, :titleFontWeight "normal" :labelFontSize chart-text-size, :gridColor {:value "white" :condition {:test "datum.value === 0", :value "black"}}}}),
+                              :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
+                              :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil}}}
                   {:mark     (merge {:type "text", :fontSize chart-text-size} (if textdx {:dx textdx})),
                    :width    (- (/ standard-box-width-nb nbcols) 250),
                    :height   individual-height
@@ -688,13 +688,10 @@
         prep (fn [data] (into [] (for [m durations] {:performance "portfolio" :group m :value (reduce + (map :contrib-mdur (t/chainfilter {:qt-final-maturity-band m} data)))})))
         dust (prep ust) dig (prep bbb-flat-and-better) dhy (prep bbb-minus-and-worse)
         maxd (apply max (concat (map :value dust) (map :value dig) (map :value dhy)))
-        st (fn [data] (gstring/format "%.1f" (reduce + (map :contrib-mdur data))))
-        scale {:scale {:domain [0 (inc (int maxd))]}}]
+        st (fn [data] (str (gstring/format "%.1f" (reduce + (map :contrib-mdur data))) "y"))
+        chartfn (fn [data title] [oz/vega-lite (simple-horizontal-bars data title ".1f" 0.5 3 20 {:scale {:domain [0 (inc (int maxd))]}})])]
     (portfolio-review-box-template
-      [[h-box :gap "20px"
-        :children [[oz/vega-lite (simple-horizontal-bars dust (str "UST: " (st ust) "y") ".1f" 0.5 3 20 scale)]
-                   [oz/vega-lite (simple-horizontal-bars dig (str "BBB and better: " (st bbb-flat-and-better) "y") ".1f" 0.5 3 20 scale)]
-                   [oz/vega-lite (simple-horizontal-bars dhy (str "BBB- and weaker: " (st bbb-minus-and-worse) "y") ".1f" 0.5 3 20 scale)]]]])))
+      [[h-box :gap "20px" :children [(chartfn dust (str "UST: " (st ust))) (chartfn dig (str "BBB and better: " (st bbb-flat-and-better))) (chartfn dhy (str "BBB- and weaker: " (st bbb-minus-and-worse)))]]])))
 
 (defn active-home []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
