@@ -211,7 +211,7 @@
            :single-portfolio-attribution/display-style
            :single-portfolio-attribution/period
            :single-portfolio-attribution/table-filter
-           :single-portfolio-attribution/table
+           ;:single-portfolio-attribution/table
 
            :multiple-portfolio-attribution/display-style
            :multiple-portfolio-attribution/field-number
@@ -221,7 +221,7 @@
            :multiple-portfolio-attribution/hide-zero-holdings
            :multiple-portfolio-attribution/shortcut
            :multiple-portfolio-attribution/table-filter
-           :multiple-portfolio-attribution/table
+           ;:multiple-portfolio-attribution/table
            :multiple-portfolio-attribution/period
 
            :attribution/summary

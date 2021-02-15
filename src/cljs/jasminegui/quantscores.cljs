@@ -90,6 +90,7 @@
    :Rating_String             {:Header "Rating source" :accessor "Rating_String" :width 110 :filterable true :filterMethod tables/compare-nb-d100}
    :Used_Rating_Score         {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
    :Used_ZTW                  {:Header "ZTW" :accessor "Used_ZTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
+   :G-SPREAD                  {:Header "G" :accessor "G_SPREAD_MID_CALC" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
    :Used_YTW                  {:Header "YTW" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/compare-nb}
    :Used_Duration             {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/compare-nb}
 
@@ -328,22 +329,22 @@
        {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}]
       "Upside/Downside"
       [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig])}
-       {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration])}
+       {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration])}
        {:Header "Target returns (%)" :columns (mapv quant-score-table-columns [:upside1y :expected1y :downside1y])}
        {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}]
       "Screener (SVR)"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
-              [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
-               {:Header "Model outputs" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
+              [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
+               {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
       ))
   )
 
 (def table-checkboxes (r/atom {:indices true :calls false}))
 
 (defn qs-table [mytitle data]
-     [v-box :class "element"  :gap "20px" :width "1640px"
+     [v-box :class "element"  :gap "20px" :width "1690px"
       :children [[title :label mytitle :level :level1]
                  [h-box :align :center :gap "20px"
                   :children (concat (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Upside/Downside" "Screener (SVR)"]]
