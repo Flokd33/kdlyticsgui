@@ -279,6 +279,13 @@
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
+(rf/reg-event-db
+  :single-portfolio-attribution/table
+  (fn [db [_ data]] (assoc db :single-portfolio-attribution/table data :navigation/show-mounting-modal false)))
+
+(rf/reg-event-db
+  :multiple-portfolio-attribution/table
+  (fn [db [_ data]] (assoc db :multiple-portfolio-attribution/table data :navigation/show-mounting-modal false)))
 
 (defn array-of-lists->records [data]
   (let [model (into {} (for [[k v] data] [k (vec v)]))]
@@ -465,14 +472,14 @@
 (rf/reg-event-fx
   :change-single-attribution-portfolio
   (fn [{:keys [db]} [_ portfolio]]
-    {:db (assoc db :single-portfolio-attribution/portfolio portfolio)
+    {:db (assoc db :single-portfolio-attribution/portfolio portfolio :navigation/show-mounting-modal true)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:single-portfolio-attribution/period db))
                          :dispatch-key [:single-portfolio-attribution/table]}}))
 
 (rf/reg-event-fx
   :change-single-attribution-period
   (fn [{:keys [db]} [_ period]]
-    {:db (assoc db :single-portfolio-attribution/period period)
+    {:db (assoc db :single-portfolio-attribution/period period  :navigation/show-mounting-modal true)
      :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" (:single-portfolio-attribution/portfolio db) "&period=" period)
                          :dispatch-key [:single-portfolio-attribution/table]}}))
 
@@ -480,14 +487,15 @@
 (rf/reg-event-fx
   :get-multiple-attribution
   (fn [{:keys [db]} [_ target period]]
-    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
+    {:db (assoc db  :navigation/show-mounting-modal true)
+     :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
                          :dispatch-key [:multiple-portfolio-attribution/table]}}))
 
 (rf/reg-event-fx
   :change-multiple-attribution-target
   (fn [{:keys [db]} [_ ktarget]]
     (let [target (.replace ^string (get-in tables/attribution-table-columns [ktarget :accessor]) "-" " ")]
-      {:db                (assoc db :multiple-portfolio-attribution/field-one ktarget)
+      {:db                (assoc db :multiple-portfolio-attribution/field-one ktarget  :navigation/show-mounting-modal true)
        :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" (:multiple-portfolio-attribution/period db))
                            :dispatch-key [:multiple-portfolio-attribution/table]}})))
 
@@ -495,7 +503,7 @@
   :change-multiple-attribution-period
   (fn [{:keys [db]} [_ period]]
     (let [target (.replace ^string (get-in tables/attribution-table-columns [(:multiple-portfolio-attribution/field-one db) :accessor]) "-" " ")]
-      {:db                (assoc db :multiple-portfolio-attribution/period period)
+      {:db                (assoc db :multiple-portfolio-attribution/period period  :navigation/show-mounting-modal true)
        :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
                            :dispatch-key [:multiple-portfolio-attribution/table]}})))
 
