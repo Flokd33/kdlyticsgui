@@ -31,6 +31,8 @@
 
 (def dropdown-width "150px")
 
+(def single-portfolio-attribution-display-view (atom nil))
+
 (defn single-portfolio-attribution-display []
   (let [
         is-tree (= @(rf/subscribe [:single-portfolio-attribution/display-style]) "Tree")
@@ -52,6 +54,7 @@
       :filterable          (not is-tree)
       :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display)))) 25) ;(inc (count display))
       :className           "-striped -highlight"
+      :ref                 #(reset! single-portfolio-attribution-display-view %)
       :pivotBy             (if is-tree accessors [])
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-attribution/table-filter]))
       :onFilteredChange    #(rf/dispatch [:single-portfolio-attribution/table-filter %])}]))
@@ -145,7 +148,9 @@
                                                                                                    (shortcut-row :single-portfolio-attribution/shortcut)
                                                                                                    [[gap :size "50px"]
                                                                                                     [title :label "Download:" :level :level3]
-                                                                                                    [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(csv-link @(rf/subscribe [:single-portfolio-attribution/table]) @portfolio)]]))]]]]]
+                                                                                                    [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-attribution-display-view @portfolio (map name (keys (last @(rf/subscribe [:single-portfolio-attribution/table]))))) ;#(csv-link @(rf/subscribe [:single-portfolio-attribution/table]) @portfolio)
+
+                                                                                                     ]]))]]]]]
                  [single-portfolio-attribution-display]]]]))
 
 
