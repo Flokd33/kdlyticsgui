@@ -411,7 +411,8 @@
         vega-spec
         {:title nil
          :data  {:values data}
-         :layer (concat [{:mark     {:type "point" :filled true}
+         :layer (concat [{:selection {:grid {:type "interval" :bind "scales"}}
+                          :mark     {:type "point" :filled true}
                           :encoding {:x       {:field "duration" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}}
                                      :y       {:field "spread" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
                                      :color   {:field "field" :scale {:domain (keys color-domain-scale) :range (vals color-domain-scale)} :legend {:labelFontSize 14 :title nil}}
@@ -426,7 +427,7 @@
          :width  1000
          :height 500}]
     [v-box :class "element"  :gap "10px" :width "1620px"
-     :children [[title :label "Comparables chart" :level :level1]
+     :children [[h-box :align :center :justify :between :children [[title :label "Comparables chart" :level :level1] [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
                 [checkbox :model show-bond-labels :label "Bond labels" :on-change #(reset! show-bond-labels %)]
                 [h-box :gap "50px" :children [[checkbox :model chart-other-countries :label "Other countries (same sector and rating)" :on-change #(reset! chart-other-countries %)]
                                               [checkbox :model chart-rating-neighbours :label "Rating neighbours (same sector, rating up/down a notch)" :on-change #(reset! chart-rating-neighbours %)]
@@ -520,7 +521,8 @@
     {:title  nil
      :data   {:values (concat bond-data data rating-text-data)}
      :layer  [
-              {:mark     {:type "line" :clip true}
+              {:selection {:grid {:type "interval" :bind "scales"}}
+               :mark     {:type "line" :clip true}
                :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [min-domain max-domain]}} ;:scale {:domain [0. 30.]}
                           :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
                           :color {:field "Rating" :type "quantitative" :legend nil}}}
@@ -545,6 +547,7 @@
                :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
                           :y     {:field "Used_ZTW" :type "quantitative"}
                           :text {:field "Bond" :type "nominal"}}}
+
               ]
      :width  1000
      :height 625}))
@@ -557,7 +560,7 @@
         ]
     [box :padding "80px 10px" :class "rightelement" :child
      [v-box :class "element" :gap "50px" :width "1620px" :children
-      [[title :label "Spot charts" :level :level1]
+      [[h-box :align :center :justify :between :children [[title :label "Spot charts" :level :level1] [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
        [h-box :gap "50px" :children
         [[v-box :gap "0px" :width "125px" :children
           (into [] (concat
