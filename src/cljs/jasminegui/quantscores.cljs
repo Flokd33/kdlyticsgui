@@ -359,6 +359,7 @@
                   {:data data :columns (table-style->qs-table-col @table-style @table-checkboxes)
                    :showPagination true :defaultPageSize 15 :pageSizeOptions [15 25 50 100]
                    :filterable true :defaultFilterMethod tables/case-insensitive-filter
+                   :defaultFiltered @(rf/subscribe [:quant-model/table-filter]) :onFilteredChange #(rf/dispatch [:quant-model/table-filter %])
                    :ref #(reset! qs-table-view %)
                    :getTrProps on-click-context :className "-striped -highlight"}]]])
 

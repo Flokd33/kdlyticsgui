@@ -152,6 +152,7 @@
                  :esg/selected-pillars                    (set nil)
 
                  :quant-model/model-output                []
+                 :quant-model/table-filter                []
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
                  :quant-model/isin-history                []
@@ -271,6 +272,7 @@
            :quant-model/new-bond-tested
            :quant-model/new-bond-already-exists
            :quant-model/new-bond-saved-message
+           :quant-model/table-filter
 
            :time-machine/enabled
            :time-machine/date
