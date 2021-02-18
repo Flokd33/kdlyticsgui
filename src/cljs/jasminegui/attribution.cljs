@@ -22,12 +22,9 @@
 
 
 (defn period-choices []
-  (println (concat static/attribution-period-choices
-                   (into [] (for [m @(rf/subscribe [:attribution/available-months])] {:id m :label m}))
-                   [:id "FY2020" :label "FY2020"] [:id "FY2019" :label "FY2019"] [:id "FY2018" :label "FY2018"]))
   (concat static/attribution-period-choices
           (into [] (for [m @(rf/subscribe [:attribution/available-months])] {:id m :label m}))
-          [{:id "FY2020" :label "FY2020"}]))
+          [{:id "FY2020" :label "FY2020"} {:id "FY2019" :label "FY2019"} {:id "FY2018" :label "FY2018"}]))
 
 (def dropdown-width "150px")
 
