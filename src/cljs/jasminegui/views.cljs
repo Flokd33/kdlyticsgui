@@ -17,6 +17,7 @@
     [jasminegui.portfolioreview :as pr]
     [jasminegui.betas :as betas]
     [jasminegui.esg :as esg]
+    [jasminegui.scorecard :as scorecard]
     [jasminegui.quantscores :as quantscores]
     [jasminegui.riskviews :as riskviews]
     [goog.string :as gstring]
@@ -87,6 +88,7 @@
       :betas            [betas/view]
       :quant-scores     [quantscores/view]
       :esg              [esg/esg-view]
+      :scorecard        [scorecard/view]
       :administration   [administration/administration-view]
       [:div.output "nothing to display"])))
 

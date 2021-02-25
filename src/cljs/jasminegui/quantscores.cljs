@@ -630,6 +630,7 @@
                                     (>= (:difference_svr %) cheapness))) ;so we include the source bond - useful to see its score
                          (sort-by :difference_svr)
                          (reverse))]
+    (rf/dispatch [:quant-model/table-filter []])            ;reset table filter
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [
                 [v-box :class "element" :gap "10px" :width "1620px"

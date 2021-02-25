@@ -226,6 +226,20 @@
      :contribution    (merge {:Header "Fund" :accessor "Fund-Contribution"} performance-attributes)
      :bm-contribution (merge {:Header "Index" :accessor "Index-Contribution"} performance-attributes)
 
+     :total-effect-wtd    (merge {:Header "Effect" :accessor "Total-Effect-wtd"} performance-attributes)
+     :xs-weight-wtd       (merge {:Header "Excess" :accessor "Average-Excess-Weight-wtd"} performance-attributes)
+     :weight-wtd          (merge {:Header "Fund" :accessor "Average-Fund-Weight-wtd"} performance-attributes)
+     :bm-weight-wtd       (merge {:Header "Index" :accessor "Average-Index-Weight-wtd"} performance-attributes)
+     :contribution-wtd    (merge {:Header "Fund cont." :accessor "Fund-Contribution-wtd"} performance-attributes)
+     :bm-contribution-wtd (merge {:Header "Index cont." :accessor "Index-Contribution-wtd"} performance-attributes)
+
+     :total-effect-ytd    (merge {:Header "Effect" :accessor "Total-Effect-ytd"} performance-attributes)
+     :xs-weight-ytd       (merge {:Header "Excess %" :accessor "Average-Excess-Weight-ytd"} performance-attributes)
+     :weight-ytd          (merge {:Header "Fund %" :accessor "Average-Fund-Weight-ytd"} performance-attributes)
+     :bm-weight-ytd       (merge {:Header "Index %" :accessor "Average-Index-Weight-ytd"} performance-attributes)
+     :contribution-ytd    (merge {:Header "Fund cont." :accessor "Fund-Contribution-ytd"} performance-attributes)
+     :bm-contribution-ytd (merge {:Header "Index cont." :accessor "Index-Contribution-ytd"} performance-attributes)
+
      ;:total-effect                {:Header "Fund" :accessor "Total-Effect"  :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
      ;:xs-weight                   {:Header "Excess"   :accessor "Average-Excess-Weight"  :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
      ;:weight                      {:Header "Fund"   :accessor "Average-Fund-Weight" :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}

@@ -12,7 +12,8 @@
    ;{:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events var-events}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events) :mounting-modal true} ;var-events
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
-   {:code :quant-scores     :name "Quant scores"  :dispatch :quant-scores     :subs nil :load-events [:get-quant-model :get-country-codes :get-quant-rating-curves :get-jpm-sectors] :mounting-modal true}
+   {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events [:get-quant-model :get-country-codes :get-quant-rating-curves :get-jpm-sectors] :mounting-modal true}
+   {:code :scorecard        :name "Scorecard WIP"         :dispatch :scorecard        :subs nil :load-events [] :mounting-modal true}
    {:code :esg              :name "Refinitiv"         :dispatch :esg              :subs nil :load-events [:get-refinitiv-ids :get-refinitiv-structure]}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}]))
@@ -80,6 +81,14 @@
    {:id :Sector        :label "Sector"}
    {:id :DurationGroup :label "Duration"}
    ])
+
+(def scorecard-navigation
+  [{:code :filter            :name "Filter selection"}
+   {:code :risk             :name "Risk"}
+   {:code :value             :name "Value"}
+   {:code :ogemcord-perf             :name "OGEMCORD attribution"}
+   {:code :ogemigc-perf             :name "OGEMIGC attribution"}])
+
 
 (def portfolio-alignment-groups
   [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD" "IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}

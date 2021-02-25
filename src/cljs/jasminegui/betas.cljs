@@ -64,7 +64,7 @@
                                                                                                :columns (into [] (for [line [{:Header "USIG" :accessor "beta-vs-usig"}
                                                                                                                              {:Header "USHY" :accessor "beta-vs-ushy"}
                                                                                                                              {:Header "UST5-7Y" :accessor "beta-vs-ust"}
-                                                                                                                             {:Header "S&P500" :accessor "beta-vs-spxt"}]]
+                                                                                                                             {:Header "S&P500" :accessor "beta-vs-spx"}]]
                                                                                                                    (merge line default-beta-line)))}]))))
 
 

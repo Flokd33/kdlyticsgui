@@ -35,6 +35,13 @@
                  :navigation/active-var                              :overview
                  :navigation/active-qs                               :table
                  :navigation/active-attribution                      :summary
+                 :navigation/active-scorecard                        :filter
+                 :navigation/active                                  {:view :entry
+                                                                      :home :summary
+                                                                      :var :overview
+                                                                      :qs :table
+                                                                      :attribution :summary
+                                                                      :scorecard :filter}
                  :navigation/success-modal                           {:show false :on-close nil :response nil}
                  :navigation/show-mounting-modal                     false ;
 
@@ -161,7 +168,8 @@
                  :quant-model/new-bond-saved-message      ""
                  :quant-model/new-bond-already-exists     false
 
-
+                 :scorecard/ogemcord-risk  []
+                 :scorecard/attribution-table  []
 
                  })
 
@@ -174,6 +182,7 @@
            :navigation/active-var
            :navigation/active-qs
            :navigation/active-attribution
+           :navigation/active-scorecard
            :navigation/show-mounting-modal
            :rating-to-score
            :country-codes
@@ -274,12 +283,18 @@
            :quant-model/new-bond-saved-message
            :quant-model/table-filter
 
+           :scorecard/attribution-table
+
            :time-machine/enabled
            :time-machine/date
            :time-machine/model
 
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
+
+(rf/reg-event-db
+  :navigation/active
+  (fn [db [_ page sub-page]] (assoc-in db [:navigation/active page] sub-page)))
 
 (rf/reg-event-db
   :single-portfolio-attribution/table
@@ -509,6 +524,13 @@
        :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
                            :dispatch-key [:multiple-portfolio-attribution/table]}})))
 
+;scorecard
+
+(rf/reg-event-fx
+  :get-scorecard-attribution
+  (fn [{:keys [db]} [_ portfolio]]
+    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio-wtd-ytd&portfolio=" portfolio)
+                         :dispatch-key [:scorecard/attribution-table]}}))
 
 ;INDEX RETURNS
 (rf/reg-event-fx
