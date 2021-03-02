@@ -96,6 +96,7 @@
 (defn rating-sort [a b]
   (let [t @(rf/subscribe [:rating-to-score])] (<= (t (keyword a)) (t (keyword b)))))
 
+(defn round2*100-if-pos [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" (* 100. x)) "-") "-")))
 
 
 (defn roundpc [fmt this]

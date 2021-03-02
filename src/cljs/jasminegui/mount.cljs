@@ -168,6 +168,8 @@
                  :quant-model/new-bond-saved-message      ""
                  :quant-model/new-bond-already-exists     false
 
+                 :scorecard/portfolio                   "OGEMCORD"
+                 :scorecard/sector                      "Consumer"
                  :scorecard/ogemcord-risk  []
                  :scorecard/attribution-table  []
 
@@ -284,6 +286,8 @@
            :quant-model/table-filter
 
            :scorecard/attribution-table
+           :scorecard/portfolio
+           :scorecard/sector
 
            :time-machine/enabled
            :time-machine/date

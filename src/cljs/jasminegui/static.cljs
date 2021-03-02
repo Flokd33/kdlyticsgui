@@ -83,9 +83,7 @@
    ])
 
 (def scorecard-navigation
-  [{:code :filter            :name "Filter selection"}
-   {:code :risk             :name "Risk"}
-   {:code :value             :name "Value"}
+  [{:code :risk             :name "Risk"}
    {:code :ogemcord-perf             :name "OGEMCORD attribution"}
    {:code :ogemigc-perf             :name "OGEMIGC attribution"}])
 
