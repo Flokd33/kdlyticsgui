@@ -184,13 +184,10 @@
           (reverse (sort-by :weight @(rf/subscribe [:scorecard-risk/table portfolio sector]))))
         tdisplay @(rf/subscribe [:scorecard-risk/tree portfolio sector])]
     [v-box :gap "20px" :align :start
-     :children [
-                [h-box :class "element" :width "75%" :gap "75px" :align :center
+     :children [[h-box :class "element" :width "75%" :gap "75px" :align :center
                  :children [[title :level :level2 :label "Portfolio and sector selection"]
                             [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution "OGEMCORD"]) (rf/dispatch [:scorecard/portfolio %]))]
                             [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/sector %])]]]
-
-
                 [v-box :class "element" :width "75%" :gap "10px"
                  :children [[title :level :level2 :label (str portfolio " " sector " risk")]
                             [:> ReactTable
@@ -208,8 +205,7 @@
                                                {:Header "Bond analytics" :columns (map #(assoc % :filterable false)
                                                                                        (concat
                                                                                          (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])
-                                                                                         (mapv #(assoc % :getProps tables/red-negatives) (mapv quantscores/quant-score-table-columns [:difference_svr_2 :difference_svr_2_2d]))
-                                                                                         ))}
+                                                                                         (mapv #(assoc % :getProps tables/red-negatives) (mapv quantscores/quant-score-table-columns [:difference_svr_2 :difference_svr_2_2d]))))}
                                                {:Header "Position" :columns [(assoc (:nominal tables/risk-table-columns) :filterable false)]}]
                               :showPagination false :sortable true :pageSize (count vdisplay) :showPageSizeOptions false :className "-striped -highlight"}]]]
                 [v-box :class "element" :width "75%" :gap "10px"
@@ -231,8 +227,7 @@
                               :pivotBy        [:qt-jpm-sector :qt-risk-country-name] :expanded [{0 false}] :sorted [{:id :bm-weight :desc true}]}]]]
                 [v-box :class "element" :width "75%" :gap "10px"
                  :children [[title :level :level2 :label (str portfolio " " sector " bonds held")]
-                            [oz/vega-lite (spot-chart-vega-spec (set (map :isin vdisplay)))]
-                            ]]
+                            [oz/vega-lite (spot-chart-vega-spec (set (map :isin vdisplay)))]]]
                 [v-box :class "element" :width "75%" :gap "10px"
                  :children [[title :level :level2 :label (str portfolio " " sector " attribution, top/bottom 5 YTD and weekly")]
                             (let [data (compress-data @(rf/subscribe [:scorecard/attribution-table]) sector)]
@@ -242,8 +237,7 @@
                                                  {:Header "Weekly" :columns (mapv tables/attribution-table-columns [:total-effect-wtd :contribution-wtd :bm-contribution-wtd])}
                                                  {:Header "Year to date" :columns (mapv tables/attribution-table-columns [:total-effect-ytd :contribution-ytd :bm-contribution-ytd])}
                                                  {:Header "YTD weights" :columns (mapv tables/attribution-table-columns [:xs-weight-ytd :weight-ytd :bm-weight-ytd])}]
-                                :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}])
-                            ]]
+                                :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}])]]
 
                 [v-box :class "element" :width "100%" :gap "10px"
                  :children [[title :level :level2 :label (str sector " NAV across portfolios, grouped by issuer")]
@@ -253,10 +247,8 @@
                             [:> ReactTable
                              {:data           @(rf/subscribe [:scorecard-risk/multiple-tree])
                               :columns        (concat (mapv tables/risk-table-columns [:issuer :name]) cols)
-                              :showPagination false :sortable false :filterable false :pageSize 20 :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:TICKER]
-                              :sorted         [{:id :OGEMCORD :desc true}]
-                              }]) ;
-                            ]]
+                              :showPagination false :sortable true :filterable false :pageSize (count (distinct (map :TICKER @(rf/subscribe [:scorecard-risk/multiple-tree]))))
+                              :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:TICKER] :defaultSorted [{:id :OGEMCORD :desc true}]}])]]
 
 
                 ]]))
