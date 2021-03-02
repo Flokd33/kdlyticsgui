@@ -5,6 +5,7 @@
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [ :get-qt-date :get-total-positions :get-large-exposures :get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"] :get-positions]
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
+        quant-events [:get-quant-model :get-country-codes :get-quant-rating-curves :get-jpm-sectors]
         ]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil}
@@ -12,8 +13,8 @@
    ;{:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events var-events}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events) :mounting-modal true} ;var-events
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
-   {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events [:get-quant-model :get-country-codes :get-quant-rating-curves :get-jpm-sectors] :mounting-modal true}
-   {:code :scorecard        :name "Scorecard WIP"         :dispatch :scorecard        :subs nil :load-events [] :mounting-modal true}
+   {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events quant-events :mounting-modal true}
+   {:code :scorecard        :name "Scorecard WIP"     :dispatch :scorecard        :subs nil :load-events (concat [:get-scorecard-attribution "OGEMCORD"] quant-events home-events) :mounting-modal true}
    {:code :esg              :name "Refinitiv"         :dispatch :esg              :subs nil :load-events [:get-refinitiv-ids :get-refinitiv-structure]}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}]))

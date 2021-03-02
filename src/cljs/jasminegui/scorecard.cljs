@@ -262,25 +262,19 @@
                 ]]))
 
 
-(defn active-home []
-  (.scrollTo js/window 0 0)                             ;on view change we go back to top
-  [v-box :width standard-box-width
-   :gap "20px"
-   :padding "80px 20px"
-   :class "subbody "
-   :children
-              (case (:scorecard @(rf/subscribe [:navigation/active]))
-                                                                                             :risk [[risk-view]]
-                                                                                             ;:ogemcord-perf (do (rf/dispatch [:get-scorecard-attribution "OGEMCORD"]) [[attribution-control] [attribution-display "OGEMCORD"]])
-                                                                                             ;:ogemigc-perf (do (rf/dispatch [:get-scorecard-attribution "OGEMIGC"]) [[attribution-control] [attribution-display "OGEMIGC"]])
-                                                                                             [[:div.output "nothing to display"]])])
+;(defn active-home []
+;  (.scrollTo js/window 0 0)                             ;on view change we go back to top
+;  [v-box :width standard-box-width
+;   :gap "20px"
+;   :padding "80px 20px"
+;   :class "subbody "
+;   :children [[risk-view]]
+;
+;
+;   ])
 
 
 (defn view []
   (rf/dispatch [:get-scorecard-attribution "OGEMCORD"])
-  [h-box :gap "10px"
-   ;:style {:overflow "hidden"}
-   :padding "0px"
-   :children [                                              ;[nav-scorecard-bar]
-              [active-home]]])
+  [box :width standard-box-width :padding "80px 20px" :class "subbody" :child [risk-view]])
 
