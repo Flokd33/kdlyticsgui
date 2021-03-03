@@ -266,7 +266,6 @@
      ["Historical charts" (fn [] ((reset! isin-historical-charts (aget rowInfo "original" "ISIN"))
                                   (reset! bond-historical-charts (aget rowInfo "original" "Bond"))
                                   (rf/dispatch [:navigation/active-qs :historical-charts]) (rf/dispatch [:get-historical-quant-scores (aget rowInfo "original" "ISIN")])))]         ; <---- the name is a span
-     ;["Build ticket" (fn [] (prn "my-fn"))]
      ]))
 
 (defn on-click-context [state rowInfo instance]

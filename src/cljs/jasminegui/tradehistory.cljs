@@ -157,6 +157,7 @@
        [v-box :gap "10px"
         :children [[h-box :gap "20px" :align :center
                     :children [[title :label (str @(rf/subscribe [:single-bond-trade-history/bond]) " trades since 2019-01-01") :level :level2]
+                               [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:single-bond-trade-history/close-modal])]
                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
                    (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
                      [box :align :center :child [throbber :size :large]]
@@ -184,6 +185,7 @@
        [v-box :gap "20px"
         :children [[h-box :gap "20px" :align :center
                     :children [[title :label (str bond-name " trades since 2019-01-01") :level :level2]
+                               [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:single-bond-trade-history/close-modal])]
                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display (str bond-name "-trade-history") (concat [:date :trade :price] (map keyword @(rf/subscribe [:portfolios]))))]]]
                                (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
                                  [box :align :center :child [throbber :size :large]]

@@ -357,8 +357,8 @@
   :portfolios
   (fn [db [_ portfolios]]
       (assoc db :portfolios portfolios
-                :multiple-portfolio-risk/selected-portfolios (set portfolios)
-                :multiple-portfolio-attribution/selected-portfolios (set portfolios))))
+                :multiple-portfolio-risk/selected-portfolios (disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
+                :multiple-portfolio-attribution/selected-portfolios (disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"))))
 
 (doseq [k [:single-portfolio-risk/filter
            :multiple-portfolio-risk/filter

@@ -238,6 +238,27 @@
 
 (def multiple-portfolio-risk-display-view (atom nil))
 
+(defn multiple-bond-trade-history-event [state rowInfo instance]
+  (do (rf/dispatch [:get-single-bond-flat-history
+                    (aget rowInfo "row" "_original" "NAME")
+                    (aget rowInfo "row" "_original" "id")
+                    @(rf/subscribe [:portfolios])
+                    "01Jan2019"
+                    @(rf/subscribe [:qt-date])])
+      ))
+
+(defn fnevt-multiple [state rowInfo instance evt]
+  (rcm/context!
+    evt
+    [(aget rowInfo "original" "NAME")                                         ; <---- string is a section title
+     ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "isin")))]
+     ["Trade history" (fn [] (multiple-bond-trade-history-event state rowInfo instance))]         ; <---- the name is a span
+     ;["Build ticket" (fn [] (prn "my-fn"))]
+     ]))
+
+(defn on-click-context-multiple [state rowInfo instance]
+  (clj->js {:onClick (partial fnevt-multiple state rowInfo instance) :style {:cursor "pointer"}}))
+
 (defn multiple-portfolio-risk-display []
   (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
         width-one 80                                      ;(get-in tables/table-columns [display-key-one :width])
@@ -268,7 +289,7 @@
       :ref                 #(reset! multiple-portfolio-risk-display-view %)
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
-      :getTrProps          single-bond-trade-flat-history
+      :getTrProps          on-click-context-multiple        ;single-bond-trade-flat-history
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:multiple-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
       :onFilteredChange    #(rf/dispatch [:multiple-portfolio-risk/table-filter %])}]))
 
