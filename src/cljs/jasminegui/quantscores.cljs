@@ -556,8 +556,7 @@
 
 (defn spot-chart []
   (let [data @(rf/subscribe [:quant-model/model-output])
-        issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data)))))
-        ]
+        issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data)))))]
     [box :padding "80px 10px" :class "rightelement" :child
      [v-box :class "element" :gap "50px" :width "1620px" :children
       [[h-box :align :center :justify :between :children [[title :label "Spot charts" :level :level1] [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
@@ -565,39 +564,27 @@
         [[v-box :gap "0px" :width "125px" :children
           (into [] (concat
                       (into [[title :label "Model type" :level :level3]]
-                            (for [c ["Legacy" "New" "SVR"]]
-                              ^{:key c}                     ;; key should be unique among siblings
-                              [radio-button
-                               :label c
-                               :value c
-                               :model spot-chart-model-choice
-                               :on-change #(reset! spot-chart-model-choice %)]))
-                      [                                     [gap :size "10px"]
-                       [title :label "Rating curves" :level :level3]
-                       [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]]))
-          ]
+                            (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
+                      [[gap :size "10px"] [title :label "Rating curves" :level :level3]
+                       [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]
+                       [gap :size "10px"] [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-rating-choice #{}) :disabled? (zero? (count @spot-chart-rating-choice))]]))]
          [v-box :gap "0px" :width "150px" :children
           [[title :label "Issuers" :level :level3]
-           [selection-list :model spot-chart-issuer-choice :width "100%" :height "460px" :choices issuer-choices :on-change #(reset! spot-chart-issuer-choice %)]
-           [gap :size "10px"]
-           [typeahead
-            :width "100%"
-            :model typeahead-model
+           [selection-list :model spot-chart-issuer-choice :width "100%" :height "460px" :choices issuer-choices :on-change #(reset! spot-chart-issuer-choice %)] [gap :size "10px"]
+           [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-issuer-choice #{}) :disabled? (zero? (count @spot-chart-issuer-choice))] [gap :size "10px"]
+           [typeahead :width "100%" :model typeahead-model
             :data-source (fn [s] (into [] (take 4 (for [n issuer-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
             :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
             :suggestion-to-string (fn [_] "")              ;#(:name %)
-            :placeholder "Or search here"
+            :placeholder "Search here"
             :on-change #(swap! spot-chart-issuer-choice (if (contains? @spot-chart-issuer-choice (:id %)) disj conj) (:id %))
             :change-on-blur? true :immediate-model-update? false :rigid? false :disabled? false]]]
-
-         [oz/vega-lite (spot-chart-vega-spec @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice)]                                                 ; [p "chart comes here"]                             ;[oz/vega-lite nil]
-         ]]]]]))
+         [oz/vega-lite (spot-chart-vega-spec @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice)]]]]]]))
 
 (defn methodology []
   [box :padding "80px 10px" :class "rightelement" :child
    [v-box :class "element" :children
-    [[title :label "Methodology" :level :level1]
-     [gap :size "20px"]
+    [[title :label "Methodology" :level :level1] [gap :size "20px"]
      [title :label "General" :level :level3]
      [p "We are running a four factor model, regressing spreads against country, sector, rating and duration. Country and sector are categorical variables while rating and duration are numerical. The latter are normalised before the regression."]
      [title :label "Legacy model" :level :level3]
