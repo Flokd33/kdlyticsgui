@@ -46,9 +46,7 @@
     (let [portfolio (:scorecard/portfolio db)
           sector (:scorecard/sector db)
           positions (:positions db)
-          ;portfolio-total-line (assoc ((:total-positions db) (keyword portfolio)) :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
           viewable-positions (t/chainfilter {:portfolio portfolio :qt-jpm-sector sector :original-quantity pos?} positions)
-          ;risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r [:name :sector]] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))]
       (conj (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions)))))
@@ -127,30 +125,45 @@
      :height 625}))
 
 
+(rf/reg-event-fx
+  :scorecard/change-portfolio
+  (fn [{:keys [db]} [_ portfolio]]
+    {:db (assoc db :scorecard/portfolio portfolio)
+     :http-get-dispatch
+         {:url (str static/ta-server-address "scorecard-data?isins=" (map :isin (t/chainfilter {:portfolio portfolio :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db))))
+          :dispatch-key [:scorecard/trade-analyser-data]}}))
+
+(rf/reg-event-fx
+  :scorecard/change-sector
+  (fn [{:keys [db]} [_ sector]]
+    {:db (assoc db :scorecard/sector sector)
+     :http-get-dispatch
+         {:url (str static/ta-server-address "scorecard-data?isins=" (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector sector :original-quantity pos?} (:positions db))))
+          :dispatch-key [:scorecard/trade-analyser-data]}}))
+
+(defn change-sector [sector]
+  (rf/dispatch [:scorecard/sector sector])
+  (rf/dispatch [:get-scorecard-trade-analyser (map :isin @(rf/subscribe [:scorecard-risk/table]))]))
+
 (defn risk-view []
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
-        ;vdisplay (map #(assoc % :difference_svr (:difference_svr (first (t/chainfilter {:ISIN (:isin %)} @(rf/subscribe [:quant-model/model-output]))))
-        ;                        :difference_svr_2d (:difference_svr_2d (first (t/chainfilter {:ISIN (:isin %)} @(rf/subscribe [:quant-model/model-output])))))
-        ;              (reverse (sort-by :weight @(rf/subscribe [:scorecard-risk/table portfolio sector]))))
         vdisplay (map #(merge % (select-keys (first (t/chainfilter {:ISIN (:isin %)} @(rf/subscribe [:quant-model/model-output]))) [:difference_svr :difference_svr_2d]))
                       (reverse (sort-by :weight @(rf/subscribe [:scorecard-risk/table]))))
         tdisplay @(rf/subscribe [:scorecard-risk/tree])]
     [v-box :gap "20px" :align :start
      :children [[h-box :class "element" :width "75%" :gap "75px" :align :center
                  :children [[title :level :level2 :label "Portfolio and sector selection"]
-                            [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution "OGEMCORD"]) (rf/dispatch [:scorecard/portfolio %]))]
-                            [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/sector %])]]]
+                            [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution %]) (rf/dispatch [:scorecard/change-portfolio %]))]
+                            [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/change-sector %])]]]
                 [v-box :class "element" :width "75%" :gap "10px"
                  :children [[title :level :level2 :label (str portfolio " " sector " risk")]
                             [:> ReactTable
                              {:data           vdisplay
-                              :columns        [{:Header "Bond" :columns [(assoc (:name tables/risk-table-columns) :Header "NAV" :width 150 :filterable false)
-                                                                         (assoc (:rating tables/risk-table-columns) :Header "silent")
-                                                                         (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]}
-                                               {:Header "Contribution"
-                                                :columns (into [] (for [[k v] [[:nav "NAV"] [:contrib-mdur "Dur"] [:contrib-yield "Yield"] [:contrib-zspread "Z-spd"] [:contrib-beta "Beta"] [:quant-value-4d "QM4D"] [:quant-value-2d "QM2D"]]]
-                                                                    (assoc (k tables/risk-table-columns) :Header v :filterable false)))}
+                              :columns        [{:Header "" :columns [(assoc (:name tables/risk-table-columns) :Header "Bond" :width 150 :filterable false)]}
+                                               {:Header  "Contribution"
+                                                :columns (into [] (for [[k v] [[:nav "NAV"] [:contrib-mdur "Dur"] [:contrib-yield "Yield"] [:contrib-zspread "Z"] [:contrib-beta "Beta"] [:quant-value-4d "Q4D"] [:quant-value-2d "Q2D"]]]
+                                                                    (assoc (k tables/risk-table-columns) :Header v :filterable false :width 45)))}
                                                ;{:Header "Contribution" :columns [(assoc (:nav tables/risk-table-columns) :Header "NAV" :filterable false)
                                                ;                                  (assoc (:contrib-mdur tables/risk-table-columns) :Header "Dur" :filterable false)
                                                ;                                  (assoc (:contrib-yield tables/risk-table-columns) :Header "Yield" :filterable false)
@@ -160,9 +173,14 @@
                                                ;                                  (assoc (:quant-value-2d tables/risk-table-columns) :Header "QM2D" :filterable false)]}
                                                {:Header "Bond analytics" :columns (map #(assoc % :filterable false)
                                                                                        (concat
+                                                                                         [(assoc (:rating tables/risk-table-columns) :Header "silent")
+                                                                                          (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]
                                                                                          (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])
-                                                                                         (mapv #(assoc % :getProps tables/red-negatives) (mapv quantscores/quant-score-table-columns [:difference_svr_2 :difference_svr_2_2d]))))}
-                                               {:Header "Position" :columns [(assoc (:nominal tables/risk-table-columns) :filterable false)]}]
+                                                                                         [{:Header (gstring/unescapeEntities "4D &Delta;") :accessor "difference_svr" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}
+                                                                                          {:Header (gstring/unescapeEntities "2D &Delta;") :accessor "difference_svr_2d" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}]
+                                                                                         ))}
+                                               {:Header "Trade analyser target" :columns [{:Header "Strategy" :accessor "difference_svr"} {:Header "Description" :accessor "difference_svr"} {:Header "Level" :accessor "difference_svr"}]}
+                                               ]
                               :showPagination false :sortable true :pageSize (count vdisplay) :showPageSizeOptions false :className "-striped -highlight"}]]]
                 [v-box :class "element" :width "75%" :gap "10px"
                  :children [[title :level :level2 :label (str portfolio " " sector " risk country pivot")]
@@ -178,7 +196,7 @@
                                                {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
                                                {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
                                                {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
-                                               {:Header "Quant model" :columns (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d])}]
+                                               {:Header "Quant model" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d]))}]
                               :showPagination false :sortable true :pageSize 2 :showPageSizeOptions false :className "-striped -highlight"
                               :pivotBy        [:qt-jpm-sector :qt-risk-country-name] :expanded [{0 false}] :sorted [{:id :bm-weight :desc true}]}]]]
                 [v-box :class "element" :width "75%" :gap "10px"

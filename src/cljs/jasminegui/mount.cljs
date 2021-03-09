@@ -172,6 +172,7 @@
                  :scorecard/sector                      "Consumer"
                  :scorecard/ogemcord-risk  []
                  :scorecard/attribution-table  []
+                 :scorecard/trade-analyser-data nil
 
                  })
 
@@ -288,6 +289,7 @@
            :scorecard/attribution-table
            :scorecard/portfolio
            :scorecard/sector
+           :scorecard/trade-analyser-data
 
            :time-machine/enabled
            :time-machine/date

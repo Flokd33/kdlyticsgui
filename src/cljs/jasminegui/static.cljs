@@ -1,6 +1,7 @@
 (ns jasminegui.static)
 
 (def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
+(def ta-server-address "http://iamlfilive:3500/")
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [ :get-qt-date :get-total-positions :get-large-exposures :get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"] :get-positions]
