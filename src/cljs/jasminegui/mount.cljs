@@ -9,7 +9,7 @@
     [jasminegui.tools :as tools]
     [cljs-time.core :refer [today]]
     ;[re-pressed.core :as rp]
-    )
+    [jasminegui.tools :as t])
   (:require-macros [cljs.core.async.macros :refer [go]])
   )
 
@@ -316,17 +316,26 @@
           (range (count (model (first (keys model))))))))
 
 
-(rf/reg-event-db
-  :positions
-  (fn [db [_ positions]]
-    ;(println positions)
-    (let [res (array-of-lists->records positions)]                                             ;(mapv #(into {} (for [k (keys positions)] [k (nth (positions k) %)])) (range (count (positions (first (keys positions))))))
-      (assoc db                                             ;:positions positions
-        :positions res
-        :all-instrument-ids (distinct (map :id res))
-        ;:pivoted-positions (static/get-pivoted-data res)
-        :navigation/show-mounting-modal false))))
+;(rf/reg-event-db
+;  :positions
+;  (fn [db [_ positions]]
+;    ;(println positions)
+;    (let [res (array-of-lists->records positions)]                                             ;(mapv #(into {} (for [k (keys positions)] [k (nth (positions k) %)])) (range (count (positions (first (keys positions))))))
+;      (assoc db                                             ;:positions positions
+;        :positions res
+;        :all-instrument-ids (distinct (map :id res))
+;        ;:pivoted-positions (static/get-pivoted-data res)
+;        :navigation/show-mounting-modal false))))
 
+(rf/reg-event-fx
+  :positions
+  (fn [{:keys [db]} [_ positions]]
+    (let [res (array-of-lists->records positions)]
+      {:db                 (assoc db :positions res :all-instrument-ids (distinct (map :id res)) :navigation/show-mounting-modal false)
+       :http-post-dispatch {:url          (str static/ta-server-address "scorecard-request")
+                            :edn-params   {:portfolio (:scorecard/portfolio db)
+                                           :isin-seq  (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} res))}
+                            :dispatch-key [:scorecard/trade-analyser-data]}})))
 ;(rf/reg-event-db
 ;  :pivoted-positions
 ;  (fn [db [_ pivoted-positions]]

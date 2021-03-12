@@ -53,7 +53,7 @@
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           res (conj (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions))]
       (map #(merge % (select-keys (first (t/chainfilter {:ISIN (:isin %)} qm)) [:difference_svr :difference_svr_2d])
-                   (update (ta (keyword (:isin %))) :strategy static/ta-strategy-choices))
+                   (if ta (update (ta (keyword (:isin %))) :strategy static/ta-strategy-choices) {}))
            (reverse (sort-by :weight res))))))
 
 (rf/reg-sub
@@ -133,6 +133,7 @@
 (rf/reg-event-fx
   :scorecard/change-portfolio
   (fn [{:keys [db]} [_ portfolio]]
+    (println "scorecard-change" portfolio (:scorecard/sector db) (count (:positions db)))
     {:db (assoc db :scorecard/portfolio portfolio)
      :http-post-dispatch {:url (str static/ta-server-address "scorecard-request")
                          :edn-params {:portfolio portfolio
