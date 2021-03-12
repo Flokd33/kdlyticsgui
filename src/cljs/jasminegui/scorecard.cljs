@@ -46,10 +46,15 @@
     (let [portfolio (:scorecard/portfolio db)
           sector (:scorecard/sector db)
           positions (:positions db)
+          qm (:quant-model/model-output db)
+          ta (:scorecard/trade-analyser-data db)
           viewable-positions (t/chainfilter {:portfolio portfolio :qt-jpm-sector sector :original-quantity pos?} positions)
           grouping-columns (into [] (for [r [:name :sector]] (tables/risk-table-columns r)))
-          accessors-k (mapv keyword (mapv :accessor grouping-columns))]
-      (conj (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions)))))
+          accessors-k (mapv keyword (mapv :accessor grouping-columns))
+          res (conj (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions))]
+      (map #(merge % (select-keys (first (t/chainfilter {:ISIN (:isin %)} qm)) [:difference_svr :difference_svr_2d])
+                   (update (ta (keyword (:isin %))) :strategy static/ta-strategy-choices))
+           (reverse (sort-by :weight res))))))
 
 (rf/reg-sub
   :scorecard-risk/tree
@@ -129,16 +134,17 @@
   :scorecard/change-portfolio
   (fn [{:keys [db]} [_ portfolio]]
     {:db (assoc db :scorecard/portfolio portfolio)
-     :http-get-dispatch
-         {:url (str static/ta-server-address "scorecard-data?isins=" (map :isin (t/chainfilter {:portfolio portfolio :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db))))
-          :dispatch-key [:scorecard/trade-analyser-data]}}))
+     :http-post-dispatch {:url (str static/ta-server-address "scorecard-request")
+                         :edn-params {:portfolio portfolio
+                                      :isin-seq (map :isin (t/chainfilter {:portfolio portfolio :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db)))}
+      :dispatch-key [:scorecard/trade-analyser-data]}}))
 
 (rf/reg-event-fx
   :scorecard/change-sector
   (fn [{:keys [db]} [_ sector]]
     {:db (assoc db :scorecard/sector sector)
-     :http-get-dispatch
-         {:url (str static/ta-server-address "scorecard-data?isins=" (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector sector :original-quantity pos?} (:positions db))))
+     :http-post-dispatch
+         {:url          (str static/ta-server-address "scorecard-request") :edn-params {:portfolio (:scorecard/portfolio db) :isin-seq (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector sector :original-quantity pos?} (:positions db)))}
           :dispatch-key [:scorecard/trade-analyser-data]}}))
 
 (defn change-sector [sector]
@@ -148,15 +154,14 @@
 (defn risk-view []
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
-        vdisplay (map #(merge % (select-keys (first (t/chainfilter {:ISIN (:isin %)} @(rf/subscribe [:quant-model/model-output]))) [:difference_svr :difference_svr_2d]))
-                      (reverse (sort-by :weight @(rf/subscribe [:scorecard-risk/table]))))
+        vdisplay @(rf/subscribe [:scorecard-risk/table])
         tdisplay @(rf/subscribe [:scorecard-risk/tree])]
     [v-box :gap "20px" :align :start
-     :children [[h-box :class "element" :width "75%" :gap "75px" :align :center
+     :children [[h-box :class "element" :width "60%" :gap "75px" :align :center
                  :children [[title :level :level2 :label "Portfolio and sector selection"]
                             [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution %]) (rf/dispatch [:scorecard/change-portfolio %]))]
                             [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/change-sector %])]]]
-                [v-box :class "element" :width "75%" :gap "10px"
+                [v-box :class "element" :width "85%" :gap "10px"
                  :children [[title :level :level2 :label (str portfolio " " sector " risk")]
                             [:> ReactTable
                              {:data           vdisplay
@@ -164,13 +169,6 @@
                                                {:Header  "Contribution"
                                                 :columns (into [] (for [[k v] [[:nav "NAV"] [:contrib-mdur "Dur"] [:contrib-yield "Yield"] [:contrib-zspread "Z"] [:contrib-beta "Beta"] [:quant-value-4d "Q4D"] [:quant-value-2d "Q2D"]]]
                                                                     (assoc (k tables/risk-table-columns) :Header v :filterable false :width 45)))}
-                                               ;{:Header "Contribution" :columns [(assoc (:nav tables/risk-table-columns) :Header "NAV" :filterable false)
-                                               ;                                  (assoc (:contrib-mdur tables/risk-table-columns) :Header "Dur" :filterable false)
-                                               ;                                  (assoc (:contrib-yield tables/risk-table-columns) :Header "Yield" :filterable false)
-                                               ;                                  (assoc (:contrib-zspread tables/risk-table-columns) :Header "Z-spd" :filterable false)
-                                               ;                                  (assoc (:contrib-beta tables/risk-table-columns) :Header "Beta" :filterable false)
-                                               ;                                  (assoc (:quant-value-4d tables/risk-table-columns) :Header "QM4D" :filterable false)
-                                               ;                                  (assoc (:quant-value-2d tables/risk-table-columns) :Header "QM2D" :filterable false)]}
                                                {:Header "Bond analytics" :columns (map #(assoc % :filterable false)
                                                                                        (concat
                                                                                          [(assoc (:rating tables/risk-table-columns) :Header "silent")
@@ -179,7 +177,10 @@
                                                                                          [{:Header (gstring/unescapeEntities "4D &Delta;") :accessor "difference_svr" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}
                                                                                           {:Header (gstring/unescapeEntities "2D &Delta;") :accessor "difference_svr_2d" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}]
                                                                                          ))}
-                                               {:Header "Trade analyser target" :columns [{:Header "Strategy" :accessor "difference_svr"} {:Header "Description" :accessor "difference_svr"} {:Header "Level" :accessor "difference_svr"}]}
+                                               {:Header "Trade analyser target" :columns [{:Header "Strategy" :accessor "strategy" :width 70}
+                                                                                          {:Header "Description" :accessor "relval-target-description" :width 240}
+                                                                                          {:Header "Level" :accessor "relval-alert-level" :width 40 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.1f" 1)}
+                                                                                          {:Header "Triggered?" :accessor "relval-target-triggered-date" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.0f" 1)}]}
                                                ]
                               :showPagination false :sortable true :pageSize (count vdisplay) :showPageSizeOptions false :className "-striped -highlight"}]]]
                 [v-box :class "element" :width "75%" :gap "10px"
