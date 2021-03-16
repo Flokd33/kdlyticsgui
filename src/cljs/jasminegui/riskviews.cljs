@@ -164,6 +164,7 @@
 ;; GUI ;;
 ;;;;;;;;;
 
+(def max-width "1675px")
 (def dropdown-width "150px")
 (def mini-dropdown-width "75px")
 
@@ -221,7 +222,7 @@
       :sortable            true                             ;(not is-tree)
       :filterable          (not is-tree)
       :ref                 #(reset! single-portfolio-risk-display-view %)
-      :pageSize            25                               ;(if is-tree (inc (count (distinct (map (keyword (first accessors)) portfolio-positions)))) 25) ;(inc (count display))
+      :pageSize            (if is-tree 15 25)                               ;(if is-tree (inc (count (distinct (map (keyword (first accessors)) portfolio-positions)))) 25) ;(inc (count display))
       :showPageSizeOptions false
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
@@ -277,15 +278,15 @@
       :columns             [{:Header "Groups" :columns grouping-columns}
                             {:Header (str "Portfolio " (name display-key-one)) :columns cols}
                             {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
-      :showPagination      true                             ;(not is-tree)
+      :showPagination      true                            ;(not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
-      :pageSize            25                               ;(if is-tree (inc (count (distinct (map (keyword (first accessors)) display-one)))) 25)
+      :pageSize            (if is-tree 15 25)               ;(if is-tree (inc (count (distinct (map (keyword (first accessors)) display-one)))) 25)
       :showPageSizeOptions false
       :ref                 #(reset! multiple-portfolio-risk-display-view %)
       :className           "-striped -highlight"
       :pivotBy             (if is-tree accessors [])
-      :getTrProps          on-click-context-multiple        ;single-bond-trade-flat-history
+      :getTrProps          on-click-context-multiple       ;single-bond-trade-flat-history
       :defaultFiltered     (if is-tree [] @(rf/subscribe [:multiple-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
       :onFilteredChange    #(rf/dispatch [:multiple-portfolio-risk/table-filter %])}]))
 
@@ -315,7 +316,7 @@
       :showPagination      true                             ;(not is-tree)
       :sortable            (not is-tree)
       :filterable          (not is-tree)
-      :pageSize            25                               ;(if is-tree (inc (count (distinct (map (keyword (first accessors)) display)))) 25)
+      :pageSize            (if is-tree 15 25)                               ;(if is-tree (inc (count (distinct (map (keyword (first accessors)) display)))) 25)
       :showPageSizeOptions false
       :ref                 #(reset! portfolio-alignment-risk-display-view %)
       :className           "-striped -highlight"
@@ -340,7 +341,7 @@
         portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
         hide-zero-risk (rf/subscribe [:single-portfolio-risk/hide-zero-holdings])]
     [box :class "subbody rightelement" :child
-     [v-box :class "element" :align-self :center :justify :center :gap "20px"
+     [v-box :class "element" :align-self :center :justify :center :gap "20px" :width max-width
       :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
                  [h-box :gap "50px"
                   :children [[v-box :gap "15px"
@@ -375,7 +376,7 @@
         download-columns (concat ["NAME" "isin" "description"] portfolios (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
         ]
     [box :class "subbody rightelement" :child
-     [v-box :class "element" :align-self :center :justify :center :gap "20px"
+     [v-box :class "element" :align-self :center :justify :center :gap "20px" :width max-width
       :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
                  [h-box :gap "50px"
                   :children
@@ -408,7 +409,7 @@
         field (rf/subscribe [:portfolio-alignment/field])
         threshold (rf/subscribe [:portfolio-alignment/threshold])]
     [box :class "subbody rightelement" :child
-     [v-box :class "element" :align-self :center :justify :center :gap "20px"
+     [v-box :class "element" :align-self :center :justify :center :gap "20px" :width max-width
       :children [[title :label (str "Portfolio alignment " @(rf/subscribe [:qt-date])) :level :level1]
                  [h-box :gap "50px"
                   :children

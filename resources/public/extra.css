@@ -196,6 +196,7 @@ background-color: #414141;/*#D6E0EA */
 .sticky-rt-thead {
   position: sticky !important;
   top: 0;
-  z-index: 2;
-  background: red;
+  z-index: 10;
+  background-color: whitesmoke;
+
 }
