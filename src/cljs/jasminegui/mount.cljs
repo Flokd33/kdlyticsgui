@@ -393,10 +393,48 @@
   :single-portfolio-risk/shortcut
   (fn [db [_ snapshot]]
     (case snapshot
-      1 (assoc db :single-portfolio-risk/shortcut snapshot)
-      2 (assoc db :single-portfolio-risk/shortcut snapshot)
+      1 (assoc db :single-portfolio-risk/shortcut snapshot
+                  :single-portfolio-risk/display-style "Table"
+                  :single-portfolio-risk/hide-zero-holdings true
+                  :single-portfolio-risk/filter {1 :region 2 :country 3 :issuer})
+      2 (assoc db :single-portfolio-risk/shortcut snapshot
+                  :single-portfolio-risk/display-style "Tree"
+                  :single-portfolio-risk/hide-zero-holdings true
+                  :single-portfolio-risk/filter {1 :country 2 :issuer 3 "None"})
       3 (assoc db :single-portfolio-risk/shortcut snapshot)
       4 (assoc db :single-portfolio-risk/shortcut snapshot))))
+
+(rf/reg-event-db
+  :multiple-portfolio-risk/shortcut
+  (fn [db [_ snapshot]]
+    (case snapshot
+      1 (assoc db :multiple-portfolio-risk/shortcut snapshot
+                  :multiple-portfolio-risk/display-style "Table"
+                  :multiple-portfolio-risk/field-one :nav
+                  :multiple-portfolio-risk/hide-zero-holdings true
+                  :multiple-portfolio-risk/filter {1 :region 2 :country 3 :issuer})
+      2 (assoc db :multiple-portfolio-risk/shortcut snapshot
+                  :multiple-portfolio-risk/display-style "Tree"
+                  :multiple-portfolio-risk/field-one :nav
+                  :multiple-portfolio-risk/hide-zero-holdings true
+                  :multiple-portfolio-risk/filter {1 :country 2 :issuer 3 "None"})
+      3 (assoc db :multiple-portfolio-risk/shortcut snapshot)
+      4 (assoc db :multiple-portfolio-risk/shortcut snapshot))))
+
+(rf/reg-event-db
+  :portfolio-alignment/shortcut
+  (fn [db [_ snapshot]]
+    (case snapshot
+      1 (assoc db :portfolio-alignment/shortcut snapshot
+                  :portfolio-alignment/display-style "Table"
+                  :portfolio-alignment/field-one :nav
+                  :portfolio-alignment/filter {1 :region 2 :country 3 :issuer})
+      2 (assoc db :portfolio-alignment/shortcut snapshot
+                  :portfolio-alignment/display-style "Tree"
+                  :portfolio-alignment/field-one :nav
+                  :portfolio-alignment/filter {1 :country 2 :issuer 3 "None"})
+      3 (assoc db :portfolio-alignment/shortcut snapshot)
+      4 (assoc db :portfolio-alignment/shortcut snapshot))))
 
 (rf/reg-event-db
   :cycle-shortcut
