@@ -64,13 +64,10 @@
                                                                                                :columns (into [] (for [line [{:Header "USIG" :accessor "beta-vs-usig"}
                                                                                                                              {:Header "USHY" :accessor "beta-vs-ushy"}
                                                                                                                              {:Header "UST5-7Y" :accessor "beta-vs-ust"}
-                                                                                                                             {:Header "S&P500" :accessor "beta-vs-spx"}]]
+                                                                                                                             {:Header "S&P500" :accessor "beta-vs-spx"}
+                                                                                                                             {:Header "CEMBI UP" :accessor "beta-vs-cembi-up"}
+                                                                                                                             {:Header "CEMBI DW" :accessor "beta-vs-cembi-dw"}
+                                                                                                                             ]]
                                                                                                                    (merge line default-beta-line)))}]))))
 
-
-                   :showPagination      true
-                   :defaultPageSize     15
-                   :pageSizeOptions     [15 25 50 100]
-                   :filterable          true
-                   :defaultFilterMethod tables/case-insensitive-filter
-                   :className           "-striped -highlight"}]]]]))
+                   :showPagination true :defaultPageSize 15 :pageSizeOptions [15 25 50 100] :filterable true :defaultFilterMethod tables/case-insensitive-filter :className "-striped -highlight"}]]]]))
