@@ -40,8 +40,8 @@
         display  @(rf/subscribe [:single-portfolio-attribution/clean-table])]
     [:> ReactTable
      {:data                display
-      :defaultFilterMethod tables/case-insensitive-filter
-      :columns [{:Header "Groups" :columns grouping-columns}
+      :defaultFilterMethod tables/text-filter-OR
+      :columns             [{:Header "Groups" :columns grouping-columns}
                 {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
                 {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
                 {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
@@ -76,7 +76,7 @@
     ;(println (nth display-one 800))
     [:> ReactTable
      {:data                display-one
-      :defaultFilterMethod tables/case-insensitive-filter
+      :defaultFilterMethod tables/text-filter-OR
       :columns             [{:Header "Groups" :columns grouping-columns}
                             {:Header (str "Portfolio " (name display-key-one)) :columns cols}
                             {:Header "Description" :columns (mapv tables/attribution-table-columns [:code :rating])}]
@@ -253,12 +253,12 @@
                                  [(keyword (clojure.string/replace y " " "-")) (let [w (reduce + (map :Average-Index-Weight (filter #(= (ykey %) y) table)))] (if (pos? w) (/ (reduce + (map :Index-Contribution (filter #(= (ykey %) y) table))) w)))]))))]
     [:> ReactTable
      {:data                pivot
-      :defaultFilterMethod tables/case-insensitive-filter
-      :columns             (concat [{:Header xlabel ::accessor "xlabel" :width 200 :filterMethod tables/case-insensitive-filter}
-                                    {:Header "Total" :accessor "total" :width 100 :Cell (partial tables/nb-cell-format "%.2f%" 100.) :getProps tables/red-negatives :filterMethod tables/compare-nb-d100}
+      :defaultFilterMethod tables/text-filter-OR
+      :columns             (concat [{:Header xlabel ::accessor "xlabel" :width 200 :filterMethod tables/text-filter-OR}
+                                    {:Header "Total" :accessor "total" :width 100 :Cell (partial tables/nb-cell-format "%.2f%" 100.) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100}
                                     ;{:Header "Total" :accessor "total" :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100 :filterMethod tables/compare-nb-d100}
                                     ]
-                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :Cell (partial tables/nb-cell-format "%.2f%" 100.) :getProps tables/red-negatives :filterMethod tables/compare-nb-d100}))
+                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :Cell (partial tables/nb-cell-format "%.2f%" 100.) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100}))
                                    ;(into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100 :filterMethod tables/compare-nb-d100}))
                                    )
       :showPagination      false

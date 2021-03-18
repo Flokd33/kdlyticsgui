@@ -14,6 +14,7 @@
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
     [jasminegui.tables :as tables]
+    [reagent.core :as r]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.tools :as t]
@@ -152,6 +153,10 @@
   (rf/dispatch [:scorecard/sector sector])
   (rf/dispatch [:get-scorecard-trade-analyser (map :isin @(rf/subscribe [:scorecard-risk/table]))]))
 
+;(defn get-expanded [this] (println (aget this "state" "expanded")) (aget this "state" "expanded"))
+;(defn set-expanded [this e]  #(r/set-state this (r/as-element {"expanded"  e})) )
+(defn set-expanded2 [this e] (set! (.-state this) #js {:expanded e}))
+
 (defn risk-view []
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
@@ -200,7 +205,10 @@
                                                {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
                                                {:Header "Quant model" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d]))}]
                               :showPagination false :sortable true :pageSize 2 :showPageSizeOptions false :className "-striped -highlight"
-                              :pivotBy        [:qt-jpm-sector :qt-risk-country-name] :expanded [{0 false}] :sorted [{:id :bm-weight :desc true}]}]]]
+                              :pivotBy        [:qt-jpm-sector :qt-risk-country-name] :defaultExpanded [{0 true}]
+                              ;:expanded get-expanded
+                              ;:onExpandedChange set-expanded
+                              :sorted [{:id :bm-weight :desc true}]}]]]
                 [v-box :class "element" :width "75%" :gap "10px"
                  :children [[title :level :level2 :label (str portfolio " " sector " bonds held")]
                             [oz/vega-lite (spot-chart-vega-spec (set (map :isin vdisplay)))]]]

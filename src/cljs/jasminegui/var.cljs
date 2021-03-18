@@ -68,7 +68,7 @@
     :showPagination      true
     :sortable            false
     :filterable          true
-    :defaultFilterMethod tables/case-insensitive-filter
+    :defaultFilterMethod tables/text-filter-OR
     :pageSize            25
     :className           "-striped"}])
 
@@ -164,7 +164,7 @@
       :showPagination      true
       :sortable            false
       :filterable          true
-      :defaultFilterMethod tables/case-insensitive-filter
+      :defaultFilterMethod tables/text-filter-OR
       :pageSize            25
       :className           "-striped"}]))
 

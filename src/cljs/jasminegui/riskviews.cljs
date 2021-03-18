@@ -206,7 +206,7 @@
         display @(rf/subscribe [:single-portfolio-risk/table])]
     [:> ReactTable
      {:data                display
-      :defaultFilterMethod tables/case-insensitive-filter
+      :defaultFilterMethod tables/text-filter-OR
       :columns             [{:Header "Groups" :columns grouping-columns}
                             {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
                             {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
@@ -274,7 +274,7 @@
                          :Cell (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-pos :contrib-mdur tables/round2-if-pos v))}))]
     [:> ReactTable
      {:data                display-one
-      :defaultFilterMethod tables/case-insensitive-filter
+      :defaultFilterMethod tables/text-filter-OR
       :columns             [{:Header "Groups" :columns grouping-columns}
                             {:Header (str "Portfolio " (name display-key-one)) :columns cols}
                             {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
@@ -306,7 +306,7 @@
         display @(rf/subscribe [:portfolio-alignment/table])]
     [:> ReactTable
      {:data                display
-      :defaultFilterMethod tables/case-insensitive-filter
+      :defaultFilterMethod tables/text-filter-OR
       :columns
                            [{:Header "Groups" :columns grouping-columns}
                             {:Header "Actual NAV" :columns [{:Header base-portfolio :accessor base-portfolio :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}]}

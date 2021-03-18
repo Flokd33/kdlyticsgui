@@ -213,7 +213,7 @@
                                               {:Header "Instrument" :accessor "NAME" :width 180}
                                               {:Header "ISIN" :accessor "ISIN" :width 105}
                                               {:Header "CCY" :accessor "LocalCcy" :width 50}
-                                              {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/compare-nb}
+                                              {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
                                               {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
                                               {:Header "Counterparty" :accessor "counterparty_code" :width 90}
                                               {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
@@ -226,7 +226,7 @@
                 :showPagination      (> (count data) 50)
                 :defaultPageSize     (min 50 (count data))
                 :filterable          true
-                :defaultFilterMethod tables/case-insensitive-filter
+                :defaultFilterMethod tables/text-filter-OR
                 :className           "-striped -highlight"}]])))
 
 (defn trade-history []

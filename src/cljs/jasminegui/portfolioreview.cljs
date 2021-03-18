@@ -499,12 +499,12 @@
         :child
         [:> ReactTable
          {:data                (take 20 (if (= (subs (get-in pages [@current-page :title]) 4 7) "top") (reverse display) display))
-          :defaultFilterMethod tables/case-insensitive-filter
+          :defaultFilterMethod tables/text-filter-OR
           :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
                                 {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
                                 {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
                                 {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
-          :showPagination false :sortable false :filterable false :pageSize 20 :className "-striped -highlight"}]]])))
+          :showPagination      false :sortable false :filterable false :pageSize 20 :className "-striped -highlight"}]]])))
 
 (defn backtest-history-page []
   (rf/dispatch [:get-portfolio-var @(rf/subscribe [:portfolio-review/portfolio])])
@@ -648,7 +648,7 @@
                 :showPagination      (> (count display) 15)
                 :defaultPageSize     (min 15 (count display))
                 :filterable          true
-                :defaultFilterMethod tables/case-insensitive-filter
+                :defaultFilterMethod tables/text-filter-OR
                 :className           "-striped -highlight"}]])))
 
 (defn activity-page [] (portfolio-review-box-template [[aggregate-trade-table]]))

@@ -34,9 +34,9 @@
 
 (rf/reg-event-fx
   :get-calculator-spread
-  (fn [{:keys [db]} [_ country sector rating duration]]
+  (fn [{:keys [db]} [_ fx country sector rating duration]]
     ;warning country and sector have ampersands & - this is a killer
-    {:http-get-dispatch {:url          (str static/server-address "quant-model-calculator?country=" (.replace ^string country "&" "@") "&sector=" (.replace ^string sector "&" "@") "&rating=" rating "&duration=" duration)
+    {:http-get-dispatch {:url          (str static/server-address "quant-model-calculator?fx=" fx "&country=" (.replace ^string country "&" "@") "&sector=" (.replace ^string sector "&" "@") "&rating=" rating "&duration=" duration)
                          :dispatch-key [:quant-model/calculator-spreads]}}))
 
 (rf/reg-event-fx
@@ -67,184 +67,183 @@
       "-")))
 
 (def quant-score-table-columns
-  {:ISIN                      {:Header "ISIN" :accessor "ISIN" :width 100}
-   :Country                   {:Header "Country" :accessor "Country" :width 55}
-   :Sector                    {:Header "Sector" :accessor "Sector" :width 80}
-   :Ticker                    {:Header "Ticker" :accessor "Ticker" :width 80}
-   :Use                       {:Header "Use" :accessor "Use" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
-   :Bond                      {:Header "Bond" :accessor "Bond" :width 130}
-   :SENIOR                    {:Header "Snr" :accessor "SENIOR" :width 35}
-   :SENIOR-WIDE               {:Header "Senior" :accessor "SENIOR" :width 50 :style {:textAlign "center"}}
-   :HYBRID-WIDE               {:Header "Hybrid" :accessor "HYBRID" :width 50 :style {:textAlign "center"}}
-   :ESG                       {:Header "ESG" :accessor "ESG" :width 50 :style {:textAlign "center"} :Cell esg-span}
-   :COUPON                    {:Header "Coupon" :accessor "COUPON" :width 55 :style {:textAlign "right"} :filterable true :filterMethod tables/compare-nb}
-   :cembi                     {:Header "CEMBI" :accessor "cembi" :width 52 :style {:textAlign "center"}}
-   :cembi-ig                  {:Header "CEMBI IG" :accessor "cembi-ig" :width 62  :style {:textAlign "center"}}
-   :embi                     {:Header "EMBI" :accessor "embi" :width 52 :style {:textAlign "center"}}
-   :embi-ig                  {:Header "EMBI IG" :accessor "embi-ig" :width 62  :style {:textAlign "center"}}
-   :us-agg                     {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "center"}}
-   :global-agg                  {:Header "Glb agg" :accessor "global-agg" :width 55  :style {:textAlign "center"}}
-   :CRNCY                     {:Header "Currency" :accessor "CRNCY" :width 50}
-   :Bond-sticky               {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
-   :Used_Price                {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :Rating_String             {:Header "Rating source" :accessor "Rating_String" :width 110 :filterable true :filterMethod tables/compare-nb-d100}
-   :Used_Rating_Score         {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :Used_ZTW                  {:Header "ZTW" :accessor "Used_ZTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :G-SPREAD                  {:Header "G" :accessor "G_SPREAD_MID_CALC" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :Used_YTW                  {:Header "YTW" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/compare-nb}
-   :Used_Duration             {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/compare-nb}
+  {:ISIN                                {:Header "ISIN" :accessor "ISIN" :width 100}
+   :Country                             {:Header "Country" :accessor "Country" :width 55}
+   :Sector                              {:Header "Sector" :accessor "Sector" :width 80}
+   :Ticker                              {:Header "Ticker" :accessor "Ticker" :width 80}
+   :Use                                 {:Header "Use" :accessor "Use" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
+   :Bond                                {:Header "Bond" :accessor "Bond" :width 130}
+   :SENIOR                              {:Header "Snr" :accessor "SENIOR" :width 35}
+   :SENIOR-WIDE                         {:Header "Senior" :accessor "SENIOR" :width 50 :style {:textAlign "center"}}
+   :HYBRID-WIDE                         {:Header "Hybrid" :accessor "HYBRID" :width 50 :style {:textAlign "center"}}
+   :ESG                                 {:Header "ESG" :accessor "ESG" :width 50 :style {:textAlign "center"} :Cell esg-span}
+   :COUPON                              {:Header "Coupon" :accessor "COUPON" :width 55 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :cembi                               {:Header "CEMBI" :accessor "cembi" :width 52 :style {:textAlign "center"}}
+   :cembi-ig                            {:Header "CEMBI IG" :accessor "cembi-ig" :width 62 :style {:textAlign "center"}}
+   :embi                                {:Header "EMBI" :accessor "embi" :width 52 :style {:textAlign "center"}}
+   :embi-ig                             {:Header "EMBI IG" :accessor "embi-ig" :width 62 :style {:textAlign "center"}}
+   :us-agg                              {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "center"}}
+   :global-agg                          {:Header "Glb agg" :accessor "global-agg" :width 55 :style {:textAlign "center"}}
+   :CRNCY                               {:Header "Currency" :accessor "CRNCY" :width 50}
+   :Bond-sticky                         {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
+   :Used_Price                          {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Rating_String                       {:Header "Rating source" :accessor "Rating_String" :width 110 :filterable true :filterMethod tables/nb-filter-OR-AND-x100}
+   :Used_Rating_Score                   {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Used_ZTW                            {:Header "ZTW" :accessor "Used_ZTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :G-SPREAD                            {:Header "G" :accessor "G_SPREAD_MID_CALC" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Used_YTW                            {:Header "YTW" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Used_Duration                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :predicted_spread_legacy_1 {:Header "Legacy" :accessor "predicted_spread_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_new_1    {:Header "New" :accessor "predicted_spread_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_svr_1    {:Header "SVR" :accessor "predicted_spread_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :difference_legacy_1       {:Header "Legacy" :accessor "difference_legacy" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :difference_new_1          {:Header "New" :accessor "difference_new" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :difference_svr_1          {:Header "SVR" :accessor "difference_svr" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_upgrade_legacy_1   {:Header "Legacy" :accessor "predicted_spread_upgrade_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_upgrade_new_1      {:Header "New"    :accessor "predicted_spread_upgrade_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_upgrade_svr_1      {:Header "SVR"    :accessor "predicted_spread_upgrade_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_downgrade_legacy_1 {:Header "Legacy" :accessor "predicted_spread_downgrade_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_downgrade_new_1    {:Header "New"    :accessor "predicted_spread_downgrade_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_downgrade_svr_1    {:Header "SVR"    :accessor "predicted_spread_downgrade_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :URS_legacy_1                        {:Header "Legacy" :accessor "URS_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :URS_new_1                           {:Header "New"    :accessor "URS_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :URS_svr_1                           {:Header "SVR"    :accessor "URS_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :HRS_legacy_1                        {:Header "Legacy" :accessor "HRS_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell  tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :HRS_new_1                           {:Header "New"    :accessor "HRS_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell  tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :HRS_svr_1                           {:Header "SVR"    :accessor "HRS_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell  tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :URV_legacy_1                        {:Header "Legacy" :accessor "URV_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URV_new_1                           {:Header "New"    :accessor "URV_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URV_svr_1                           {:Header "SVR"    :accessor "URV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :HRV_legacy_1                        {:Header "Legacy" :accessor "HRV_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :HRV_new_1                           {:Header "New"    :accessor "HRV_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :HRV_svr_1                           {:Header "SVR"    :accessor "HRV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :predicted_spread_legacy_1           {:Header "Legacy" :accessor "predicted_spread_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_new_1              {:Header "New" :accessor "predicted_spread_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_svr_1              {:Header "SVR" :accessor "predicted_spread_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :difference_legacy_1                 {:Header "Legacy" :accessor "difference_legacy" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :difference_new_1                    {:Header "New" :accessor "difference_new" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :difference_svr_1                    {:Header "SVR" :accessor "difference_svr" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_upgrade_legacy_1   {:Header "Legacy" :accessor "predicted_spread_upgrade_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_upgrade_new_1      {:Header "New" :accessor "predicted_spread_upgrade_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_upgrade_svr_1      {:Header "SVR" :accessor "predicted_spread_upgrade_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_downgrade_legacy_1 {:Header "Legacy" :accessor "predicted_spread_downgrade_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_downgrade_new_1    {:Header "New" :accessor "predicted_spread_downgrade_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_downgrade_svr_1    {:Header "SVR" :accessor "predicted_spread_downgrade_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_legacy_1                        {:Header "Legacy" :accessor "URS_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_new_1                           {:Header "New" :accessor "URS_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_svr_1                           {:Header "SVR" :accessor "URS_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRS_legacy_1                        {:Header "Legacy" :accessor "HRS_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRS_new_1                           {:Header "New" :accessor "HRS_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRS_svr_1                           {:Header "SVR" :accessor "HRS_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URV_legacy_1                        {:Header "Legacy" :accessor "URV_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URV_new_1                           {:Header "New" :accessor "URV_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URV_svr_1                           {:Header "SVR" :accessor "URV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRV_legacy_1                        {:Header "Legacy" :accessor "HRV_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRV_new_1                           {:Header "New" :accessor "HRV_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRV_svr_1                           {:Header "SVR" :accessor "HRV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :predicted_spread_legacy_2 {:Header "Predicted" :accessor "predicted_spread_legacy" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_new_2    {:Header "Predicted" :accessor "predicted_spread_new" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_svr_2    {:Header "Predicted" :accessor "predicted_spread_svr" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :difference_legacy_2       {:Header "Delta" :accessor "difference_legacy" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :difference_new_2          {:Header "Delta" :accessor "difference_new" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :difference_svr_2          {:Header "Delta" :accessor "difference_svr" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_upgrade_legacy_2   {:Header "Legacy" :accessor "predicted_spread_upgrade_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_upgrade_new_2      {:Header "New"    :accessor "predicted_spread_upgrade_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_upgrade_svr_2      {:Header "SVR"    :accessor "predicted_spread_upgrade_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_downgrade_legacy_2 {:Header "Legacy" :accessor "predicted_spread_downgrade_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_downgrade_new_2    {:Header "New"    :accessor "predicted_spread_downgrade_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :predicted_spread_downgrade_svr_2    {:Header "SVR"    :accessor "predicted_spread_downgrade_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :URS_legacy_2                        {:Header "Legacy" :accessor "URS_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :URS_new_2                           {:Header "New"    :accessor "URS_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :URS_svr_2                           {:Header "SVR"    :accessor "URS_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :HRS_legacy_2                        {:Header "Legacy" :accessor "HRS_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell  tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :HRS_new_2                           {:Header "New"    :accessor "HRS_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell  tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :HRS_svr_2                           {:Header "SVR"    :accessor "HRS_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell  tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :URV_legacy_2                        {:Header "Univ." :accessor "URV_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URV_new_2                           {:Header "Univ."    :accessor "URV_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URV_svr_2                           {:Header "Univ."    :accessor "URV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :HRV_legacy_2                        {:Header "Hist." :accessor "HRV_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :HRV_new_2                           {:Header "Hist."    :accessor "HRV_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :HRV_svr_2                           {:Header "Hist."    :accessor "HRV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :predicted_spread_legacy_2           {:Header "Predicted" :accessor "predicted_spread_legacy" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_new_2              {:Header "Predicted" :accessor "predicted_spread_new" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_svr_2              {:Header "Predicted" :accessor "predicted_spread_svr" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :difference_legacy_2                 {:Header "Delta" :accessor "difference_legacy" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :difference_new_2                    {:Header "Delta" :accessor "difference_new" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :difference_svr_2                    {:Header "Delta" :accessor "difference_svr" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_upgrade_legacy_2   {:Header "Legacy" :accessor "predicted_spread_upgrade_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_upgrade_new_2      {:Header "New" :accessor "predicted_spread_upgrade_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_upgrade_svr_2      {:Header "SVR" :accessor "predicted_spread_upgrade_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_downgrade_legacy_2 {:Header "Legacy" :accessor "predicted_spread_downgrade_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_downgrade_new_2    {:Header "New" :accessor "predicted_spread_downgrade_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_downgrade_svr_2    {:Header "SVR" :accessor "predicted_spread_downgrade_svr" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_legacy_2                        {:Header "Legacy" :accessor "URS_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_new_2                           {:Header "New" :accessor "URS_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_svr_2                           {:Header "SVR" :accessor "URS_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRS_legacy_2                        {:Header "Legacy" :accessor "HRS_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRS_new_2                           {:Header "New" :accessor "HRS_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRS_svr_2                           {:Header "SVR" :accessor "HRS_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URV_legacy_2                        {:Header "Univ." :accessor "URV_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URV_new_2                           {:Header "Univ." :accessor "URV_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URV_svr_2                           {:Header "Univ." :accessor "URV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRV_legacy_2                        {:Header "Hist." :accessor "HRV_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRV_new_2                           {:Header "Hist." :accessor "HRV_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :HRV_svr_2                           {:Header "Hist." :accessor "HRV_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :FORCE_INCLUSION                     {:Header "Force"    :accessor "FORCE_INCLUSION" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true }
-   :AMT_OUTSTANDING                     {:Header "Outstanding"    :accessor "AMT_OUTSTANDING" :width 85 :style {:textAlign "right"} :aggregate tables/median :Cell tables/nfcell2 :filterable true :filterMethod tables/compare-nb}
-   :Price-source                        {:Header "Price"    :accessor "Price" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :ZTW-source                          {:Header "ZTW"    :accessor "ZTW" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :YTW-source                          {:Header "YTW"    :accessor "YTW" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :Duration-source                     {:Header "Duration"    :accessor "Duration" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :Rating-source                       {:Header "Rating"    :accessor "Rating_Score" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :Override                            {:Header "Override"    :accessor "Override" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
-   :OverrideRating                      {:Header "O. Rating"    :accessor "OverrideRating" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true }
-   :OverrideValuation                   {:Header "O. Price"    :accessor "OverrideValuation" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
-   :Workout_date                        {:Header "Workout_date"    :accessor "Workout_date" :width 100 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :Workout_price                       {:Header "Workout_price"    :accessor "Workout_price" :width 100 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :Used_Large_Rating_Score                       {:Header "Rating"    :accessor "Used_Large_Rating_Score" :width 100 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :avg_rat_grp_diff_legacy_1                        {:Header "Legacy" :accessor "avg_rat_grp_diff_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :avg_rat_grp_diff_new_1                           {:Header "New"    :accessor "avg_rat_grp_diff_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :avg_rat_grp_diff_svr_1                           {:Header "SVR"    :accessor "avg_rat_grp_diff_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :std_rat_grp_diff_legacy_1                        {:Header "Legacy" :accessor "std_rat_grp_diff_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :std_rat_grp_diff_new_1                           {:Header "New"    :accessor "std_rat_grp_diff_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :std_rat_grp_diff_svr_1                           {:Header "SVR"    :accessor "std_rat_grp_diff_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_legacy_1                        {:Header "Legacy" :accessor "implied_rating_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_new_1                           {:Header "New"    :accessor "implied_rating_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_svr_1                           {:Header "SVR"    :accessor "implied_rating_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :FORCE_INCLUSION                     {:Header "Force" :accessor "FORCE_INCLUSION" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true}
+   :AMT_OUTSTANDING                     {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 85 :style {:textAlign "right"} :aggregate tables/median :Cell tables/nfcell2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Price-source                        {:Header "Price" :accessor "Price" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :ZTW-source                          {:Header "ZTW" :accessor "ZTW" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :YTW-source                          {:Header "YTW" :accessor "YTW" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Duration-source                     {:Header "Duration" :accessor "Duration" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Rating-source                       {:Header "Rating" :accessor "Rating_Score" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Override                            {:Header "Override" :accessor "Override" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
+   :OverrideRating                      {:Header "O. Rating" :accessor "OverrideRating" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
+   :OverrideValuation                   {:Header "O. Price" :accessor "OverrideValuation" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
+   :Workout_date                        {:Header "Workout_date" :accessor "Workout_date" :width 100 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Workout_price                       {:Header "Workout_price" :accessor "Workout_price" :width 100 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Used_Large_Rating_Score             {:Header "Rating" :accessor "Used_Large_Rating_Score" :width 100 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :avg_rat_grp_diff_legacy_1           {:Header "Legacy" :accessor "avg_rat_grp_diff_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :avg_rat_grp_diff_new_1              {:Header "New" :accessor "avg_rat_grp_diff_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :avg_rat_grp_diff_svr_1              {:Header "SVR" :accessor "avg_rat_grp_diff_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :std_rat_grp_diff_legacy_1           {:Header "Legacy" :accessor "std_rat_grp_diff_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :std_rat_grp_diff_new_1              {:Header "New" :accessor "std_rat_grp_diff_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :std_rat_grp_diff_svr_1              {:Header "SVR" :accessor "std_rat_grp_diff_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :implied_rating_legacy_1             {:Header "Legacy" :accessor "implied_rating_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :implied_rating_new_1                {:Header "New" :accessor "implied_rating_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :implied_rating_svr_1                {:Header "SVR" :accessor "implied_rating_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :URS_rank_legacy_1                        {:Header "Legacy" :accessor "URS_rank_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_1                           {:Header "New"    :accessor "URS_rank_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_1                           {:Header "SVR"    :accessor "URS_rank_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_1D_1                        {:Header "Legacy" :accessor "URS_rank_legacy_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_1D_1                           {:Header "New"    :accessor "URS_rank_new_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_1D_1                           {:Header "SVR"    :accessor "URS_rank_svr_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_1W_1                        {:Header "Legacy" :accessor "URS_rank_legacy_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_1W_1                           {:Header "New"    :accessor "URS_rank_new_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_1W_1                           {:Header "SVR"    :accessor "URS_rank_svr_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_1M_1                        {:Header "Legacy" :accessor "URS_rank_legacy_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_1M_1                           {:Header "New"    :accessor "URS_rank_new_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_1M_1                           {:Header "SVR"    :accessor "URS_rank_svr_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_D1D_1                        {:Header "Legacy" :accessor "URS_rank_legacy_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_D1D_1                           {:Header "New"    :accessor "URS_rank_new_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_D1D_1                           {:Header "SVR"    :accessor "URS_rank_svr_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_D1W_1                        {:Header "Legacy" :accessor "URS_rank_legacy_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_D1W_1                           {:Header "New"    :accessor "URS_rank_new_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_D1W_1                           {:Header "SVR"    :accessor "URS_rank_svr_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_D1M_1                        {:Header "Legacy" :accessor "URS_rank_legacy_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_D1M_1                           {:Header "New"    :accessor "URS_rank_new_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_D1M_1                           {:Header "SVR"    :accessor "URS_rank_svr_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :URS_rank_legacy_1                   {:Header "Legacy" :accessor "URS_rank_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_1                      {:Header "New" :accessor "URS_rank_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_1                      {:Header "SVR" :accessor "URS_rank_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_1D_1                {:Header "Legacy" :accessor "URS_rank_legacy_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_1D_1                   {:Header "New" :accessor "URS_rank_new_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_1D_1                   {:Header "SVR" :accessor "URS_rank_svr_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_1W_1                {:Header "Legacy" :accessor "URS_rank_legacy_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_1W_1                   {:Header "New" :accessor "URS_rank_new_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_1W_1                   {:Header "SVR" :accessor "URS_rank_svr_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_1M_1                {:Header "Legacy" :accessor "URS_rank_legacy_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_1M_1                   {:Header "New" :accessor "URS_rank_new_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_1M_1                   {:Header "SVR" :accessor "URS_rank_svr_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_D1D_1               {:Header "Legacy" :accessor "URS_rank_legacy_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_D1D_1                  {:Header "New" :accessor "URS_rank_new_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_D1D_1                  {:Header "SVR" :accessor "URS_rank_svr_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_D1W_1               {:Header "Legacy" :accessor "URS_rank_legacy_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_D1W_1                  {:Header "New" :accessor "URS_rank_new_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_D1W_1                  {:Header "SVR" :accessor "URS_rank_svr_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_D1M_1               {:Header "Legacy" :accessor "URS_rank_legacy_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_D1M_1                  {:Header "New" :accessor "URS_rank_new_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_D1M_1                  {:Header "SVR" :accessor "URS_rank_svr_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :URS_rank_legacy_2                        {:Header "Today" :accessor "URS_rank_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_2                           {:Header "Today"    :accessor "URS_rank_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_2                           {:Header "Today"    :accessor "URS_rank_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_1D_2                        {:Header "1D" :accessor "URS_rank_legacy_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_1D_2                           {:Header "1D"    :accessor "URS_rank_new_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_1D_2                           {:Header "1D"    :accessor "URS_rank_svr_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_1W_2                        {:Header "1W" :accessor "URS_rank_legacy_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_1W_2                           {:Header "1W"    :accessor "URS_rank_new_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_1W_2                           {:Header "1W"    :accessor "URS_rank_svr_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_1M_2                        {:Header "1M" :accessor "URS_rank_legacy_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_1M_2                           {:Header "1M"    :accessor "URS_rank_new_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_1M_2                           {:Header "1M"    :accessor "URS_rank_svr_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_D1D_2                        {:Header "1D" :accessor "URS_rank_legacy_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_D1D_2                           {:Header "1D"    :accessor "URS_rank_new_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_D1D_2                           {:Header "1D"    :accessor "URS_rank_svr_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_D1W_2                        {:Header "1W" :accessor "URS_rank_legacy_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_D1W_2                           {:Header "1W"    :accessor "URS_rank_new_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_D1W_2                           {:Header "1W"    :accessor "URS_rank_svr_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_legacy_D1M_2                        {:Header "1M" :accessor "URS_rank_legacy_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_new_D1M_2                           {:Header "1M"    :accessor "URS_rank_new_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :URS_rank_svr_D1M_2                           {:Header "1M"    :accessor "URS_rank_svr_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_legacy_2                      {:Header "Implied R" :accessor "implied_rating_legacy" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_new_2                         {:Header "Implied R"    :accessor "implied_rating_new" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
-   :implied_rating_svr_2                         {:Header "Implied R"    :accessor "implied_rating_svr" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/compare-nb}
+   :URS_rank_legacy_2                   {:Header "Today" :accessor "URS_rank_legacy" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_2                      {:Header "Today" :accessor "URS_rank_new" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_2                      {:Header "Today" :accessor "URS_rank_svr" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_1D_2                {:Header "1D" :accessor "URS_rank_legacy_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_1D_2                   {:Header "1D" :accessor "URS_rank_new_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_1D_2                   {:Header "1D" :accessor "URS_rank_svr_1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_1W_2                {:Header "1W" :accessor "URS_rank_legacy_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_1W_2                   {:Header "1W" :accessor "URS_rank_new_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_1W_2                   {:Header "1W" :accessor "URS_rank_svr_1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_1M_2                {:Header "1M" :accessor "URS_rank_legacy_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_1M_2                   {:Header "1M" :accessor "URS_rank_new_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_1M_2                   {:Header "1M" :accessor "URS_rank_svr_1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_D1D_2               {:Header "1D" :accessor "URS_rank_legacy_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_D1D_2                  {:Header "1D" :accessor "URS_rank_new_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_D1D_2                  {:Header "1D" :accessor "URS_rank_svr_D1D" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_D1W_2               {:Header "1W" :accessor "URS_rank_legacy_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_D1W_2                  {:Header "1W" :accessor "URS_rank_new_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_D1W_2                  {:Header "1W" :accessor "URS_rank_svr_D1W" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_legacy_D1M_2               {:Header "1M" :accessor "URS_rank_legacy_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_new_D1M_2                  {:Header "1M" :accessor "URS_rank_new_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :URS_rank_svr_D1M_2                  {:Header "1M" :accessor "URS_rank_svr_D1M" :width 55 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :implied_rating_legacy_2             {:Header "Implied R" :accessor "implied_rating_legacy" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :implied_rating_new_2                {:Header "Implied R" :accessor "implied_rating_new" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :implied_rating_svr_2                {:Header "Implied R" :accessor "implied_rating_svr" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :gross-cheapness                               {:Header "Gross cheapness" :accessor "gross-cheapness" :style {:textAlign "right"} :aggregate tables/median :Cell tables/nb-thousand-cell-format :filterable true :filterMethod tables/compare-nb}
+   :gross-cheapness                     {:Header "Gross cheapness" :accessor "gross-cheapness" :style {:textAlign "right"} :aggregate tables/median :Cell tables/nb-thousand-cell-format :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :upside1y                                    {:Header "Upside" :accessor "upside1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :expected1y                                  {:Header "Median" :accessor "expected1y" :width 75  :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :downside1y                                  {:Header "Downside" :accessor "downside1y" :width 75  :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :z1ymin                                      {:Header "Tight" :accessor "z1ymin" :width 65  :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :z1ymax                                      {:Header "Wide" :accessor "z1ymax" :width 65  :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :z1ymedian                                   {:Header "Median" :accessor "z1ymedian" :width 65  :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
-   :z1yvalid                                    {:Header "Days" :accessor "z1yvalid" :width 65 :style {:textAlign "right"} :aggregate tables/median  :filterable true :filterMethod tables/compare-nb}
+   :upside1y                            {:Header "Upside" :accessor "upside1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :expected1y                          {:Header "Median" :accessor "expected1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :downside1y                          {:Header "Downside" :accessor "downside1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :z1ymin                              {:Header "Tight" :accessor "z1ymin" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :z1ymax                              {:Header "Wide" :accessor "z1ymax" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :z1ymedian                           {:Header "Median" :accessor "z1ymedian" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :z1yvalid                            {:Header "Days" :accessor "z1yvalid" :width 65 :style {:textAlign "right"} :aggregate tables/median :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :difference_svr_2_2d                         {:Header "Delta 2D" :accessor "difference_svr_2d" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/compare-nb}
+   :difference_svr_2_2d                 {:Header "Delta 2D" :accessor "difference_svr_2d" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :gross_4d_value                              {:Header "4D value"    :accessor "gross_4d_value" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
-   :gross_2d_value                              {:Header "2D value"    :accessor "gross_2d_value" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
-   :gross_4d_value_pos                          {:Header "4D value"    :accessor "gross_4d_value_pos" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
-   :gross_2d_value_pos                          {:Header "2D value"    :accessor "gross_2d_value_pos" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
-   :gross_4d_value_neg                          {:Header "4D value"    :accessor "gross_4d_value_neg" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
-   :gross_2d_value_neg                          {:Header "2D value"    :accessor "gross_2d_value_neg" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
-   :gross_4d_value_pos_pct                      {:Header "4D value"    :accessor "gross_4d_value_pos_pct" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
-   :gross_2d_value_pos_pct                      {:Header "2D value"    :accessor "gross_2d_value_pos_pct" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
-   :LongCountry                                 {:Header "Country"     :accessor "LongCountry" :width 125}
-   :StringRating                                {:Header "Rating"     :accessor "StringRating" :width 125}
-   :AMT_OUTSTANDING_2                           {:Header "($ bn)"    :accessor "AMT_OUTSTANDING" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/compare-nb}
-   :AMT_OUTSTANDING_3                           {:Header "$ m"    :accessor "AMT_OUTSTANDING" :width 45 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.0f" 0.000001) :filterable true :filterMethod tables/compare-nb}
-   :DurationGroup                               {:Header "Duration"  :accessor "DurationGroup" :width 125}
+   :gross_4d_value                      {:Header "4D value" :accessor "gross_4d_value" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :gross_2d_value                      {:Header "2D value" :accessor "gross_2d_value" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :gross_4d_value_pos                  {:Header "4D value" :accessor "gross_4d_value_pos" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :gross_2d_value_pos                  {:Header "2D value" :accessor "gross_2d_value_pos" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :gross_4d_value_neg                  {:Header "4D value" :accessor "gross_4d_value_neg" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :gross_2d_value_neg                  {:Header "2D value" :accessor "gross_2d_value_neg" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :gross_4d_value_pos_pct              {:Header "4D value" :accessor "gross_4d_value_pos_pct" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
+   :gross_2d_value_pos_pct              {:Header "2D value" :accessor "gross_2d_value_pos_pct" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.1f%" 100.)}
+   :LongCountry                         {:Header "Country" :accessor "LongCountry" :width 125}
+   :StringRating                        {:Header "Rating" :accessor "StringRating" :width 125}
+   :AMT_OUTSTANDING_2                   {:Header "($ bn)" :accessor "AMT_OUTSTANDING" :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.2f" 0.000000001) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :AMT_OUTSTANDING_3                   {:Header "$ m" :accessor "AMT_OUTSTANDING" :width 45 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell (partial tables/nb-cell-format "%.0f" 0.000001) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :DurationGroup                       {:Header "Duration" :accessor "DurationGroup" :width 125}
 
-   :days-to-call                               {:Header "Days"  :accessor "days-to-call" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell (partial tables/nb-cell-format "%.0f" 1) :filterable true :filterMethod tables/compare-nb}
-   :price-vs-call                               {:Header "Price vs call"  :accessor "price-vs-call" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/compare-nb}
-   :NXT_CALL_DT                               {:Header "Date"  :accessor "NXT_CALL_DT" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%.0f" 1) :filterable true}
-   :NXT_CALL_PX                               {:Header "Call price"  :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/compare-nb}
-
+   :days-to-call                        {:Header "Days" :accessor "days-to-call" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell (partial tables/nb-cell-format "%.0f" 1) :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :price-vs-call                       {:Header "Price vs call" :accessor "price-vs-call" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :NXT_CALL_DT                         {:Header "Date" :accessor "NXT_CALL_DT" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%.0f" 1) :filterable true}
+   :NXT_CALL_PX                         {:Header "Call price" :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    })
 
@@ -355,17 +354,18 @@
                                      [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (table-style->qs-table-col @table-style @table-checkboxes)))))] ;
                                      [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output" (conj (keys (first data)) :ISIN))]])]
                  [:> ReactTable
-                  {:data data :columns (table-style->qs-table-col @table-style @table-checkboxes)
-                   :showPagination true :defaultPageSize 15 :pageSizeOptions [15 25 50 100]
-                   :filterable true :defaultFilterMethod tables/case-insensitive-filter
+                  {:data            data :columns (table-style->qs-table-col @table-style @table-checkboxes)
+                   :showPagination  true :defaultPageSize 15 :pageSizeOptions [15 25 50 100]
+                   :filterable      true :defaultFilterMethod tables/text-filter-OR
                    :defaultFiltered @(rf/subscribe [:quant-model/table-filter]) :onFilteredChange #(rf/dispatch [:quant-model/table-filter %]) ;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
-                   :ref #(reset! qs-table-view %)
-                   :getTrProps on-click-context :className "-striped -highlight"}]]])
+                   :ref             #(reset! qs-table-view %)
+                   :getTrProps      on-click-context :className "-striped -highlight"}]]])
 
 (def calculator-sector (r/atom "Oil & Gas"))
 (def calculator-country (r/atom "BR"))
 (def calculator-duration (r/atom "9.0"))
 (def calculator-rating (r/atom "13"))
+(def calculator-fx (r/atom "USD"))
 (def show-bond-labels (r/atom true))
 (def chart-other-countries (r/atom false))
 (def chart-rating-neighbours (r/atom false))
@@ -474,9 +474,11 @@
                  :children [[title :label "New issue calculator" :level :level1]
                             [gap :size "20px"]
                             [h-box :gap "50px" :align :center
-                             :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"]]]
+                             :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"][label :width "80px" :label "Currency"]]]
                                                                                      [h-box :gap "10px" :children [[single-dropdown :width "200px" :model calculator-country :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil])) :filter-box? true]
-                                                                                                                   [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]]]
+                                                                                                                   [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]
+                                                                                                                   [single-dropdown :width "80px" :model calculator-fx :choices [{:id "USD" :label "USD"} {:id "EUR" :label "EUR"}] :on-change #(reset! calculator-fx %)  :filter-box? true]
+                                                                                                                   ]]
                                                                                      [gap :size "20px"]
                                                                                      [h-box :gap "10px" :children [[label :width "130px" :label "Duration"] [gap :size "50px"] [label :width "100px" :label "Rating score"] [label :width "100px" :label "Rating"]]]
                                                                                      [h-box :gap "10px" :align :center :children [[input-text :width "100px" :model calculator-duration :on-change #(do (reset! calculator-duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
@@ -485,7 +487,7 @@
                                                                                                                                   [input-text :width "100px" :model calculator-rating :on-change #(do (reset! calculator-rating %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
                                                                                                                    [label :width "100px" :label (get-implied-rating @calculator-rating)]]]]]
 
-                                        [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread @calculator-country @calculator-sector @calculator-rating @calculator-duration])]
+                                        [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread @calculator-fx @calculator-country @calculator-sector @calculator-rating @calculator-duration])]
                                         [calculator-result-table]]]]]
                 [comparable-chart
                  (cljs.reader/read-string @calculator-duration)
@@ -740,7 +742,7 @@
                                         [radio-button :model universe-hyigall :label "HY only" :value :hy :on-change #(reset! universe-hyigall %)]]]
                             [:> ReactTable
                              {:data           res
-                              :columns        (concat [{:Header "Country" :accessor "Country" :width col-width :Cell country-display-fn :filterable true :filterMethod tables/case-insensitive-filter}]
+                              :columns        (concat [{:Header "Country" :accessor "Country" :width col-width :Cell country-display-fn :filterable true :filterMethod tables/text-filter-OR}]
                                                       (mapv (fn [s] {:Header s :accessor s :width col-width :Cell universe-str  :filterable false}) dsec)
                                                       [{:Header "Total" :accessor "Total" :width col-width :Cell universe-str :filterable false}])
                               :showPagination true :showPageSizeOptions true :pageSizeOptions [6 10 20] :defaultPageSize 6}]]]]]))
