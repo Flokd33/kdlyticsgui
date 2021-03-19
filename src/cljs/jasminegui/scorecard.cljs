@@ -205,7 +205,7 @@
                                                {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
                                                {:Header "Quant model" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d]))}]
                               :showPagination false :sortable true :pageSize 2 :showPageSizeOptions false :className "-striped -highlight"
-                              :pivotBy        [:qt-jpm-sector :qt-risk-country-name] :defaultExpanded [{0 true}]
+                              :pivotBy        [:qt-jpm-sector :qt-risk-country-name] :defaultExpanded {0 true}
                               ;:expanded get-expanded
                               ;:onExpandedChange set-expanded
                               :sorted [{:id :bm-weight :desc true}]}]]]
@@ -213,7 +213,7 @@
                  :children [[title :level :level2 :label (str portfolio " " sector " bonds held")]
                             [oz/vega-lite (spot-chart-vega-spec (set (map :isin vdisplay)))]]]
                 [v-box :class "element" :width "75%" :gap "10px"
-                 :children [[title :level :level2 :label (str portfolio " " sector " attribution, top/bottom 5 YTD and weekly")]
+                 :children [[title :level :level2 :label (str portfolio " " sector " attribution, top/bottom 5 YTD and weekly as of " @(rf/subscribe [:attribution-date]))]
                             (let [data (compress-data @(rf/subscribe [:scorecard/attribution-table]) sector)]
                               [:> ReactTable
                                {:data           data
