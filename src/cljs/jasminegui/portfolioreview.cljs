@@ -495,16 +495,21 @@
                                       (and (= (:Sector %) "Cash") (some? (:Security %)) (not= "T" (subs (:Security %) 0 1))))
                                  @(rf/subscribe [:single-portfolio-attribution/clean-table])))]
     (portfolio-review-box-template
-      [[box :width "850px"
-        :child
-        [:> ReactTable
-         {:data                (take 20 (if (= (subs (get-in pages [@current-page :title]) 4 7) "top") (reverse display) display))
-          :defaultFilterMethod tables/text-filter-OR
-          :columns             [{:Header "Bond  " :columns (mapv tables/attribution-table-columns [:security :country :sector])}
-                                {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
-                                {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
-                                {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
-          :showPagination      false :sortable false :filterable false :pageSize 20 :className "-striped -highlight"}]]])))
+      [[h-box :width "1600px" :gap "20px"
+        :children [[:> ReactTable
+                    {:data                (take 20 (if (= (subs (get-in pages [@current-page :title]) 4 7) "top") (reverse display) display))
+                     :columns             [{:Header "Bond" :columns (mapv tables/attribution-table-columns [:security :country :sector])}
+                                           {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
+                                           {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
+                                           {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
+                     :showPagination      false :sortable false :filterable false :pageSize 20 :className "-striped -highlight"}]
+                   [:> ReactTable
+                    {:data                display
+                     :columns             [{:Header "Issuer" :columns (mapv tables/attribution-table-columns [:issuer])}
+                                           {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
+                                           {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
+                                           {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}]
+                     :showPagination      false :sortable false :defaultSorted [{:id :Total-Effect :desc (= (subs (get-in pages [@current-page :title]) 4 7) "top")}] :filterable false :pageSize 20 :className "-striped -highlight" :pivotBy [:Issuer]}]]]])))
 
 (defn backtest-history-page []
   (rf/dispatch [:get-portfolio-var @(rf/subscribe [:portfolio-review/portfolio])])
@@ -528,8 +533,9 @@
         idx (first (remove #{portfolio :group} (keys (first display))))
         displaywithdiff (map #(assoc % :delta (- (% portfolio) (% idx))) display)
         sorted-display (if (some #{"Rest"} (map :group displaywithdiff))
-                         (vec (let [p (partition-by #(= (:group %) "Rest")  (sort-by #(get % portfolio) displaywithdiff))] (concat (last p) (first p))))
+                         (vec (let [p (group-by #(= (:group %) "Rest")  (sort-by #(get % portfolio) displaywithdiff))] (concat (p true) (p false)))) ;(vec (let [p (partition-by #(= (:group %) "Rest")  (sort-by #(get % portfolio) displaywithdiff))] (concat (last p) (first p))))
                          (vec (sort-by #(get % portfolio) displaywithdiff)))]
+    ;(println (vec (let [p (group-by #(= (:group %) "Rest")  (sort-by #(get % portfolio) displaywithdiff))] (concat (p true) (p false)))))
   [:> ReactTable
    {:data           sorted-display
     :columns        [{:Header "Item" :accessor "group" :width 150}
