@@ -167,12 +167,15 @@
                  :quant-model/new-bond-tested             true
                  :quant-model/new-bond-saved-message      ""
                  :quant-model/new-bond-already-exists     false
+                 :quant-model/saved-charts                {}
 
                  :scorecard/portfolio                   "OGEMCORD"
                  :scorecard/sector                      "Consumer"
                  :scorecard/ogemcord-risk  []
                  :scorecard/attribution-table  []
                  :scorecard/trade-analyser-data nil
+
+                 :dummy nil
 
                  })
 
@@ -285,6 +288,7 @@
            :quant-model/new-bond-already-exists
            :quant-model/new-bond-saved-message
            :quant-model/table-filter
+           :quant-model/saved-charts
 
            :scorecard/attribution-table
            :scorecard/portfolio
@@ -295,6 +299,7 @@
            :time-machine/date
            :time-machine/model
 
+           :dummy
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 

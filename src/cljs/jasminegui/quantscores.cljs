@@ -20,6 +20,8 @@
     [reagent-contextmenu.menu :as rcm])
   )
 
+;;
+(def show-chart-modal (r/atom nil))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Following used for historical charts
 (def typeahead-bond-nickname (r/atom nil))
@@ -44,6 +46,20 @@
   (fn [{:keys [db]} [_ isin]]
     {:http-get-dispatch {:url          (str static/server-address "quant-model-isin-history?isin=" isin)
                          :dispatch-key [:quant-model/isin-history]}}))
+
+(rf/reg-event-fx
+  :get-quant-model-saved-charts
+  (fn [{:keys [db]} [_]]
+    (println "hello")
+    {:http-get-dispatch {:url          (str static/server-address "quant-model-saved-charts")
+                         :dispatch-key [:quant-model/saved-charts]}}))
+
+(rf/reg-event-fx
+  :quant-model-save-new-chart
+  (fn [{:keys [db]} [_ id model-type rating-curves issuers]]
+    {:http-post-dispatch {:url (str static/server-address "quant-model-save-new-chart")
+                          :edn-params {:id id :model-type model-type :rating-curves (remove nil? (seq rating-curves)) :issuers (remove nil? (seq issuers))}
+                          :dispatch-key [:dummy]}}))
 
 (defn nav-qs-bar []
   (let [active-var @(rf/subscribe [:navigation/active-qs])]
@@ -556,6 +572,9 @@
 
 (def typeahead-model (atom nil))
 
+(defn show-save-chart-modal [] nil)
+(defn open-saved-chart-modal [] nil)
+
 (defn spot-chart []
   (let [data @(rf/subscribe [:quant-model/model-output])
         issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data)))))]
@@ -569,7 +588,10 @@
                             (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
                       [[gap :size "10px"] [title :label "Rating curves" :level :level3]
                        [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]
-                       [gap :size "10px"] [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-rating-choice #{}) :disabled? (zero? (count @spot-chart-rating-choice))]]))]
+                       [gap :size "10px"] [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-rating-choice #{}) :disabled? (zero? (count @spot-chart-rating-choice))]
+                       [gap :size "20px"] [title :label "Bookmarks" :level :level3] [button :label "Save new" :class "btn btn-primary btn-block" :on-click #(reset! show-chart-modal :save)][gap :size "10px"] [button :label "Open" :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:get-quant-model-saved-charts]) (reset! show-chart-modal :open))]
+
+                       ]))]
          [v-box :gap "0px" :width "150px" :children
           [[title :label "Issuers" :level :level3]
            [selection-list :model spot-chart-issuer-choice :width "100%" :height "460px" :choices issuer-choices :on-change #(reset! spot-chart-issuer-choice %)] [gap :size "10px"]
@@ -1083,6 +1105,36 @@
       :methodology        [methodology]
       [:div.output "nothing to display"])))
 
+(defn display-saved-chart [line]
+  (println line)
+  (reset! spot-chart-model-choice (:model-type line))
+  (reset! spot-chart-rating-choice (set (:rating-curves line)))
+  (reset! spot-chart-issuer-choice (set (:issuers line))))
+
+(defn modal-spot-charts []
+  (let [nickname (r/atom "")
+        chart-to-open (r/atom #{})]
+    (fn []
+      (let [saved-charts (js->clj (js/JSON.parse @(rf/subscribe [:quant-model/saved-charts])) :keywordize-keys true)]
+        (case @show-chart-modal
+          :save
+          [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)
+           :child [v-box  :width "400px" :gap "10px" :padding "20px"
+                   :children [[title :label "Save chart configuration" :level :level1]
+                              [input-text :placeholder "Nickname" :model nickname :on-change #(reset! nickname %)]
+                              [label :label "Use same nickname to override existing configuration."]
+                              [h-box :gap "10px" :children [[button :label "Save" :on-click #(do (rf/dispatch [:quant-model-save-new-chart @nickname @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice]) (reset! show-chart-modal nil))]
+                                                            [button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
+          :open
+          [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)
+           :child [v-box  :width "400px" :height "600px" :gap "10px" :padding "20px"
+                   :children [[title :label "Open chart configuration" :level :level1]
+                              [selection-list :max-height "500px" :model chart-to-open :multi-select? false
+                               :choices (into [] (for [x (sort (map :id saved-charts))] {:id x :label x}))
+                               :on-change #(do (display-saved-chart (first (t/chainfilter {:id (first %)} saved-charts))) (reset! show-chart-modal nil))]
+                              [h-box :gap "10px" :children [[button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
+          nil
+          )))))
 
 (defn view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts]]])
