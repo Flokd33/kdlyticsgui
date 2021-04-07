@@ -184,7 +184,7 @@
 (defn go-to-attribution-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:navigation/active-attribution :single-portfolio]) (rf/dispatch [:change-single-attribution-portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
 
 (defn summary-display []
-  (let [fmt {:width 90 :Cell (partial tables/nb-cell-format "%.2f%" 1.) :getProps tables/red-negatives} ;tables/round2colpct
+  (let [fmt {:width 90 :Cell #(tables/nb-cell-format "%.2f%" 1. %) :getProps tables/red-negatives} ;tables/round2colpct
         timeframes [["Year to date" "ytd"] ["Month to date" "mtd"] ["Week to date" "wtd"] ["Daily" "day"]]
         targets [["Fund" "-Fund-Contribution"] ["Benchmark" "-Index-Contribution"] ["Relative" "-Total-Effect"]]]
   [box :class "subbody rightelement" :child
@@ -243,11 +243,8 @@
      {:data                pivot
       :defaultFilterMethod tables/text-filter-OR
       :columns             (concat [{:Header xlabel ::accessor "xlabel" :width 200 :filterMethod tables/text-filter-OR}
-                                    {:Header "Total" :accessor "total" :width 100 :Cell (partial tables/nb-cell-format "%.2f%" 100.) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100}
-                                    ;{:Header "Total" :accessor "total" :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100 :filterMethod tables/compare-nb-d100}
-                                    ]
-                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :Cell (partial tables/nb-cell-format "%.2f%" 100.) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100}))
-                                   ;(into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :style {:textAlign "right"} :Cell tables/round2colpct*100 :filterMethod tables/compare-nb-d100}))
+                                    {:Header "Total" :accessor "total" :width 100 :Cell #(tables/nb-cell-format "%.2f%" 100. %) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100}]
+                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :Cell #(tables/nb-cell-format "%.2f%" 100. %) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100}))
                                    )
       :showPagination      false
       :sortable            true

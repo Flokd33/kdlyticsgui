@@ -307,7 +307,7 @@
      ]))
 
 (defn on-click-context-multiple [state rowInfo instance]
-  (clj->js {:onClick (partial fnevt-multiple state rowInfo instance) :style {:cursor "pointer"}}))
+  (clj->js {:onClick #(fnevt-multiple state rowInfo instance %) :style {:cursor "pointer"}}))
 
 (defn multiple-portfolio-risk-display []
   (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
@@ -502,7 +502,7 @@
                  :columns        [(tables/risk-table-columns :name)
                                   (tables/risk-table-columns :isin)
                                   (tables/risk-table-columns :issuer)
-                                  {:Header "Held %" :accessor "pct_held" :width 80 :Cell (partial tables/nb-cell-format "%.1f%" 100.) :style {:textAlign "right"}}
+                                  {:Header "Held %" :accessor "pct_held" :width 80 :Cell #(tables/nb-cell-format "%.1f%" 100. %) :style {:textAlign "right"}}
                                   (tables/risk-table-columns :nominal)
                                   {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 100 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
                  :showPagination true :pageSize 30 :showPageSizeOptions false :className "-striped -highlight"}]]]])

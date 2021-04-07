@@ -258,7 +258,7 @@
 
    :days-to-call                        {:Header "Days" :accessor "days-to-call" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell (partial tables/nb-cell-format "%.0f" 1) :filterable true :filterMethod tables/nb-filter-OR-AND}
    :price-vs-call                       {:Header "Price vs call" :accessor "price-vs-call" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :NXT_CALL_DT                         {:Header "Date" :accessor "NXT_CALL_DT" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%.0f" 1) :filterable true}
+   :NXT_CALL_DT                         {:Header "Date" :accessor "NXT_CALL_DT" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1 %) :filterable true}
    :NXT_CALL_PX                         {:Header "Call price" :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    })
@@ -284,7 +284,7 @@
      ]))
 
 (defn on-click-context [state rowInfo instance]
-  (clj->js {:onClick (partial fnevt state rowInfo instance) :style {:cursor "pointer"}}))
+  (clj->js {:onClick #(fnevt state rowInfo instance %) :style {:cursor "pointer"}}))
 
 
 (def table-style (reagent/atom "Screener (SVR)"))

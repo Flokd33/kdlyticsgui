@@ -118,7 +118,7 @@
 (defn nb-filter-OR-AND [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box
   comma separation is OR. Within comma separation, & is AND."
-  (let [compread (partial comparator-read (aget row (aget filterfn "id")) 1.)]
+  (let [compread #(comparator-read (aget row (aget filterfn "id")) 1. %)]
     (some true?
           (map (fn [line] (every? true? (map compread (.split ^js/String line "&"))))
                (.split ^js/String (.toLowerCase ^js/String (aget filterfn "value")) ",")))))
@@ -126,7 +126,7 @@
 (defn nb-filter-OR-AND-x100 [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box
   comma separation is OR. Within comma separation, & is AND."
-  (let [compread (partial comparator-read (aget row (aget filterfn "id")) 0.01)]
+  (let [compread #(comparator-read (aget row (aget filterfn "id")) 0.01 %)]
     (some true?
           (map (fn [line] (every? true? (map compread (.split ^js/String line "&"))))
                (.split ^js/String (.toLowerCase ^js/String (aget filterfn "value")) ",")))))
@@ -155,13 +155,14 @@
 
 
 (defn txt-format [fmt m this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt (* m x)) "-")))
-(def round3         (partial txt-format "%.3f" 1.))
-(def round2         (partial txt-format "%.2f" 1.))
-(def round1         (partial txt-format "%.1f" 1.))
-(def yield-format   (partial txt-format "%.2f%" 1.))
-(def zspread-format (partial txt-format "%.0fbps" 1.))
-(def round2*100     (partial txt-format "%.2f" 100.))
-(def round1*100     (partial txt-format "%.1f" 100.))
+;Using anonymous function instead of partial below as slightly faster (non variadic)
+(def round3         #(txt-format "%.3f" 1. %))
+(def round2         #(txt-format "%.2f" 1. %))
+(def round1         #(txt-format "%.1f" 1. %))
+(def yield-format   #(txt-format "%.2f%" 1. %))
+(def zspread-format #(txt-format "%.0fbps" 1. %))
+(def round2*100     #(txt-format "%.2f" 100. %))
+(def round1*100     #(txt-format "%.1f" 100. %))
 (defn round2-if-nb [this] (r/as-element (if-let [x (aget this "value")] (if (number? x) (gstring/format "%.2f" x) x) "-")))
 (defn dash-for-nil-and-big-nb [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (> x 1000.)) (nf x) x) "-")))
 
@@ -177,9 +178,9 @@
       [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
       "-")))
 
-(def round0pc (partial roundpc "%.0f%"))
-(def round1pc (partial roundpc "%.1f%"))
-(def round2pc (partial roundpc "%.2f%"))
+(def round0pc #(roundpc "%.0f%" %))
+(def round1pc #(roundpc "%.1f%" %))
+(def round2pc #(roundpc "%.2f%" %))
 
 ;(defn round1pcytd  [this]
 ;  (r/as-element
@@ -258,16 +259,16 @@
      :cembi-beta-previous-year {:Header (gstring/unescapeEntities "LY &beta;") :accessor "cembi-beta-previous-year" :width 45 :style {:textAlign "right"} :aggregate median :Cell round1 :filterable false}
      :total-return-ytd         {:Header "YTD TR" :accessor "total-return-ytd" :width 50 :style {:textAlign "right"} :aggregate median :Cell round1*100 :filterable true :filterMethod nb-filter-OR-AND-x100}
      :jensen-ytd               {:Header "Jensen" :accessor "jensen-ytd" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round1*100 :filterable true :filterMethod nb-filter-OR-AND}
-     :quant-value-2d           {:Header "2D" :accessor "quant-value-2d" :width 50 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f" 1.) :getProps red-negatives :filterable true :filterMethod nb-filter-OR-AND}
-     :quant-value-4d           {:Header "4D" :accessor "quant-value-4d" :width 50 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f" 1.) :getProps red-negatives :filterable true :filterMethod nb-filter-OR-AND}
+     :quant-value-2d           {:Header "2D" :accessor "quant-value-2d" :width 50 :aggregate sum-rows :Cell #(nb-cell-format "%.2f" 1. %) :getProps red-negatives :filterable true :filterMethod nb-filter-OR-AND}
+     :quant-value-4d           {:Header "4D" :accessor "quant-value-4d" :width 50 :aggregate sum-rows :Cell #(nb-cell-format "%.2f" 1. %) :getProps red-negatives :filterable true :filterMethod nb-filter-OR-AND}
 
      }))
 
 (defn invrtg-to-string [this] (aget this "row" "Rating"))
 
 (def attribution-table-columns
-  (let [performance-attributes {:width 70 :aggregate sum-rows :Cell (partial nb-cell-format "%.2f%" 1.) :getProps red-negatives :filterable false}
-        performance-attributes-bps {:width 70 :aggregate sum-rows :Cell (partial nb-cell-format "%.0f bps" 100.) :getProps red-negatives :filterable false}]
+  (let [performance-attributes {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.2f%" 1. %) :getProps red-negatives :filterable false}
+        performance-attributes-bps {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.0f bps" 100. %) :getProps red-negatives :filterable false}]
     {:region          {:Header "Region" :accessor "Region" :width 140}
      :country         {:Header "Country" :accessor "Country" :width 140}
      :issuer          {:Header "Issuer" :accessor "Issuer" :width 140}

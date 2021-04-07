@@ -222,7 +222,7 @@
                                              (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
                                                (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
                                                      (for [[h a] [["Total return" "total-return"] ["TR vs CEMBI" "tr-vs-cembi"] ["TR vs CEMBIIG" "tr-vs-cembiig"] ["TR vs EMBI" "tr-vs-embi"] ["TR vs EMBIIG" "tr-vs-embiig"]]]
-                                                       {:Header h :accessor a :width 90 :getProps tables/red-negatives :Cell (partial tables/nb-cell-format "%.2f%" 100.)}))))
+                                                       {:Header h :accessor a :width 90 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))))
                 :showPagination      (> (count data) 50)
                 :defaultPageSize     (min 50 (count data))
                 :filterable          true
