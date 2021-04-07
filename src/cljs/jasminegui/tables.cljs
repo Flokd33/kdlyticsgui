@@ -4,7 +4,9 @@
     [re-frame.core :as rf]
     [reagent.core :as r]
     [goog.string :as gstring]
-    [goog.string.format])
+    [goog.string.format]
+    [jasminegui.tools :as t]
+    ["react-table-v6" :as rt :default ReactTable])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
 
@@ -74,6 +76,13 @@
 ;      (or (= yes-no "Y") (= yes-no "y")) (not rowval)
 ;      :else false)))
 
+(defn lower-case-s-in-value?
+  "Checks if s (already assumed lower case) is in value. If s starts by -, excludes it"
+  [^js/String s ^js/String value]
+  (if (= (.charAt s 0) "-")
+    (not (.includes ^js/String (.toLowerCase ^js/String value) (.substring s 1)))
+    (.includes ^js/String (.toLowerCase ^js/String value) s)))
+
 (defn text-filter-OR [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box}
   OR through comma separation"
@@ -82,6 +91,22 @@
                                 (not (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) (.substring s 1)))
                                 (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) s)))
                      filter-values))))
+
+(defn cljs-text-filter-OR-fn
+  "Used for pivot tables - creates the filter function which will filter the source data directly. Slow as re-renders everytime."
+  [filterfn]
+  (let [filter-chain (into {} (for [line filterfn] [(keyword (aget line "id")) (aget line "value")]))]
+    (into {} (for [[k filter-values] filter-chain]
+               [k
+                (fn [value]
+                  (some true?
+                        (map #(lower-case-s-in-value? % value)
+                             (.split (.toLowerCase ^js/String filter-values) ","))))]))))
+
+(defn cljs-text-filter-OR
+  "Combining the latter two functions to filter the source data"
+  [filterfn table]
+  (t/chainfilter (cljs-text-filter-OR-fn filterfn) table))
 
 (defn comparator-read [rowval mult input]
   (case (subs input 0 1)
@@ -187,6 +212,7 @@
 
 (defn rating-score-to-string [this] (aget this "row" "qt-iam-int-lt-median-rating"))
 
+(defn total-txt [row] (r/as-element [:span "Total"]))
 
 (def risk-table-columns
   (let [nb1000 {:style {:textAlign "right"} :Cell nb-thousand-cell-format :filterable true :filterMethod nb-filter-OR-AND}]
@@ -286,3 +312,14 @@
      :security        {:Header "Security" :accessor "Security" :width 140}
      }))
 
+(defn tree-table-risk-table [data columns is-tree accessors ref table-filter expander get-tr-props-fn]
+  [:> ReactTable
+   {:data @(rf/subscribe [data]) :columns columns
+    :showPagination true :pageSize (if is-tree 15 25) :showPageSizeOptions false
+    :sortable true
+    :defaultFilterMethod (if is-tree (fn [filterfn row] true) text-filter-OR)
+    :ref #(reset! ref %)
+    :expanded @(rf/subscribe [expander]) :onExpandedChange #(rf/dispatch [expander %])
+    :pivotBy (if is-tree (concat [:totaldummy] accessors) [])
+    :className "-striped -highlight" :getTrProps (if is-tree (fn [state rowInfo instance] #js {}) get-tr-props-fn)
+    :filterable true :defaultFiltered @(rf/subscribe [table-filter]) :onFilteredChange #(rf/dispatch [table-filter %])}])

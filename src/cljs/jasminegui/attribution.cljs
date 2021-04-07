@@ -15,7 +15,8 @@
     [jasminegui.tools :as tools]
     [jasminegui.tables :as tables]
 
-    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]])
+    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
+    [reagent-contextmenu.menu :as rcm])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
@@ -31,30 +32,23 @@
 (def single-portfolio-attribution-display-view (atom nil))
 
 (defn single-portfolio-attribution-display []
-  (let [
-        is-tree (= @(rf/subscribe [:single-portfolio-attribution/display-style]) "Tree")
+  (let [is-tree (= @(rf/subscribe [:single-portfolio-attribution/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:single-portfolio-attribution/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :security))] (tables/attribution-table-columns r)))
-        additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/attribution-choice-map))
-        accessors (mapv :accessor grouping-columns)
-        display  @(rf/subscribe [:single-portfolio-attribution/clean-table])]
-    [:> ReactTable
-     {:data                display
-      :defaultFilterMethod tables/text-filter-OR
-      :columns             [{:Header "Groups" :columns grouping-columns}
-                {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
-                {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
-                {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
-                {:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}]
-      :showPagination      (not is-tree)
-      :sortable            true                             ;(not is-tree)
-      :filterable          (not is-tree)
-      :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display)))) 25) ;(inc (count display))
-      :className           "-striped -highlight"
-      :ref                 #(reset! single-portfolio-attribution-display-view %)
-      :pivotBy             (if is-tree accessors [])
-      :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-attribution/table-filter]))
-      :onFilteredChange    #(rf/dispatch [:single-portfolio-attribution/table-filter %])}]))
+        additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/attribution-choice-map))]
+    [tables/tree-table-risk-table
+     :single-portfolio-attribution/clean-table
+     [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+      {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
+      {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
+      {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
+      {:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}]
+     is-tree
+     (mapv :accessor grouping-columns)
+     single-portfolio-attribution-display-view
+     :single-portfolio-attribution/table-filter
+     :single-portfolio-attribution/expander
+     (fn [state rowInfo instance] #js {})]))
 
 
 (defn multiple-portfolio-attribution-display []
@@ -63,8 +57,6 @@
         is-tree (= @(rf/subscribe [:multiple-portfolio-attribution/display-style]) "Tree")
         attribution-choices (let [rfil @(rf/subscribe [:multiple-portfolio-attribution/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj attribution-choices :security))] (tables/attribution-table-columns r)))
-        accessors (mapv :accessor grouping-columns)
-        display-one @(rf/subscribe [:multiple-portfolio-attribution/clean-table])
         cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-attribution/selected-portfolios]))]
                         {:Header p
                          :accessor p
@@ -73,21 +65,17 @@
                          :aggregate tables/sum-rows
                          :Cell (get-in tables/attribution-table-columns [display-key-one :Cell])
                          :filterable false}))]
-    ;(println (nth display-one 800))
-    [:> ReactTable
-     {:data                display-one
-      :defaultFilterMethod tables/text-filter-OR
-      :columns             [{:Header "Groups" :columns grouping-columns}
-                            {:Header (str "Portfolio " (name display-key-one)) :columns cols}
-                            {:Header "Description" :columns (mapv tables/attribution-table-columns [:code :rating])}]
-      :showPagination      (not is-tree)
-      :sortable            (not is-tree)
-      :filterable          (not is-tree)
-      :pageSize            (if is-tree (inc (count (distinct (map (keyword (first accessors)) display-one)))) 25)
-      :className           "-striped -highlight"
-      :pivotBy             (if is-tree accessors [])
-      :defaultFiltered     (if is-tree [] @(rf/subscribe [:multiple-portfolio-attribution/table-filter])) ; [{:id "analyst" :value "Tammy"}]
-      :onFilteredChange    #(rf/dispatch [:multiple-portfolio-attribution/table-filter %])}]))
+    [tables/tree-table-risk-table
+     :multiple-portfolio-attribution/clean-table
+     [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+      {:Header (str "Portfolio " (name display-key-one)) :columns cols}
+      {:Header "Description" :columns (mapv tables/attribution-table-columns [:code :rating])}]
+     is-tree
+     (mapv :accessor grouping-columns)
+     single-portfolio-attribution-display-view              ;THIS IS WRONG :)
+     :multiple-portfolio-attribution/table-filter
+     :multiple-portfolio-attribution/expander
+     (fn [state rowInfo instance] #js {})]))
 
 
 (defn shortcut-row [key]

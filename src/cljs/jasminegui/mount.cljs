@@ -57,6 +57,7 @@
                  :single-portfolio-risk/filter                       {1 :region 2 :country 3 :issuer}
                  :single-portfolio-risk/hide-zero-holdings           true
                  :single-portfolio-risk/table-filter                 []
+                 :single-portfolio-risk/expander                     {0 {}}
                  :single-portfolio-risk/shortcut                     1
 
                  ;multiple-portfolio view
@@ -69,6 +70,7 @@
                  :multiple-portfolio-risk/hide-zero-holdings         true
                  :multiple-portfolio-risk/shortcut                   1
                  :multiple-portfolio-risk/table-filter               []
+                 :multiple-portfolio-risk/expander                   {0 {}}
 
                  ;portfolio-alignment-view
                  :portfolio-alignment/display-style                  "Tree"
@@ -78,6 +80,7 @@
                  :portfolio-alignment/threshold                      :zero
                  :portfolio-alignment/shortcut                       1
                  :portfolio-alignment/table-filter                   []
+                 :portfolio-alignment/expander                     {0 {}}
 
                  ;var view
                  :var/portfolio                                      "OGEMCORD"
@@ -100,6 +103,7 @@
                  :single-portfolio-attribution/table-filter          []
                  :single-portfolio-attribution/shortcut              1
                  :single-portfolio-attribution/table                 []
+                 :single-portfolio-attribution/expander              {0 {}}
 
                  ;multiple-portfolio attribution
                  :multiple-portfolio-attribution/display-style       "Tree"
@@ -112,6 +116,7 @@
                  :multiple-portfolio-attribution/shortcut            1
                  :multiple-portfolio-attribution/table-filter        []
                  :multiple-portfolio-attribution/table               []
+                 :multiple-portfolio-attribution/expander              {0 {}}
 
                  :attribution/summary                                []
                  :attribution/available-months                       []
@@ -159,7 +164,7 @@
                  :esg/selected-pillars                    (set nil)
 
                  :quant-model/model-output                []
-                 :quant-model/table-filter                []
+                 ;:quant-model/table-filter                []
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
                  :quant-model/isin-history                []
@@ -206,6 +211,7 @@
            :single-portfolio-risk/display-style
            :single-portfolio-risk/hide-zero-holdings
            :single-portfolio-risk/table-filter
+           :single-portfolio-risk/expander
            
            :multiple-portfolio-risk/display-style
            :multiple-portfolio-risk/field-number
@@ -215,18 +221,21 @@
            :multiple-portfolio-risk/hide-zero-holdings
            :multiple-portfolio-risk/shortcut
            :multiple-portfolio-risk/table-filter
-           
+           :multiple-portfolio-risk/expander
+
            :portfolio-alignment/display-style
            :portfolio-alignment/field
            :portfolio-alignment/group
            :portfolio-alignment/threshold
            :portfolio-alignment/shortcut
            :portfolio-alignment/table-filter
+           :portfolio-alignment/expander
 
            :single-portfolio-attribution/portfolio
            :single-portfolio-attribution/display-style
            :single-portfolio-attribution/period
            :single-portfolio-attribution/table-filter
+           :single-portfolio-attribution/expander
            ;:single-portfolio-attribution/table
 
            :multiple-portfolio-attribution/display-style
@@ -237,8 +246,10 @@
            :multiple-portfolio-attribution/hide-zero-holdings
            :multiple-portfolio-attribution/shortcut
            :multiple-portfolio-attribution/table-filter
-           ;:multiple-portfolio-attribution/table
+           :multiple-portfolio-attribution/expander
            :multiple-portfolio-attribution/period
+           ;:multiple-portfolio-attribution/table
+
 
            :attribution/summary
            :attribution/available-months
@@ -287,7 +298,7 @@
            :quant-model/new-bond-tested
            :quant-model/new-bond-already-exists
            :quant-model/new-bond-saved-message
-           :quant-model/table-filter
+           ;:quant-model/table-filter
            :quant-model/saved-charts
 
            :scorecard/attribution-table

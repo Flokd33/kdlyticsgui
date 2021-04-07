@@ -357,6 +357,10 @@
 
 (def table-checkboxes (r/atom {:indices true :calls false}))
 
+(def qs-table-filter (atom []))
+;USING A NORMAL ATOM INSTEAD OF REAGENT ACCELERATES THINGS - NOT SURE WHY OR IF IT'S RIGHT THING
+;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
+
 (defn qs-table [mytitle data]
      [v-box :class "element"  :gap "20px" :width "1690px"
       :children [[title :label mytitle :level :level1]
@@ -373,7 +377,7 @@
                   {:data            data :columns (table-style->qs-table-col @table-style @table-checkboxes)
                    :showPagination  true :defaultPageSize 15 :pageSizeOptions [15 25 50 100]
                    :filterable      true :defaultFilterMethod tables/text-filter-OR
-                   :defaultFiltered @(rf/subscribe [:quant-model/table-filter]) :onFilteredChange #(rf/dispatch [:quant-model/table-filter %]) ;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
+                   :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                    :ref             #(reset! qs-table-view %)
                    :getTrProps      on-click-context :className "-striped -highlight"}]]])
 
@@ -640,7 +644,8 @@
                                     (>= (:difference_svr %) cheapness))) ;so we include the source bond - useful to see its score
                          (sort-by :difference_svr)
                          (reverse))]
-    (rf/dispatch [:quant-model/table-filter []])            ;reset table filter
+    ;(rf/dispatch [:quant-model/table-filter []])            ;reset table filter
+    (reset! qs-table-filter [])
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [
                 [v-box :class "element" :gap "10px" :width "1620px"
