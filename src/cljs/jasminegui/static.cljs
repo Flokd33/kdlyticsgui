@@ -6,7 +6,7 @@
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [ :get-qt-date :get-total-positions :get-large-exposures :get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"] :get-positions]
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
-        quant-events [:get-quant-model :get-country-codes :get-quant-rating-curves :get-jpm-sectors]]
+        quant-events [:get-quant-model :get-country-codes :get-quant-rating-curves :get-quant-rating-curves-sov-only :get-jpm-sectors]]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil}
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events attr-events}

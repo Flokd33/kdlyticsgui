@@ -56,9 +56,9 @@
 
 (rf/reg-event-fx
   :quant-model-save-new-chart
-  (fn [{:keys [db]} [_ id model-type rating-curves issuers]]
+  (fn [{:keys [db]} [_ id model-type rating-curves issuers spot-chart-2d-curves-sov-only]]
     {:http-post-dispatch {:url (str static/server-address "quant-model-save-new-chart")
-                          :edn-params {:id id :model-type model-type :rating-curves (remove nil? (seq rating-curves)) :issuers (remove nil? (seq issuers))}
+                          :edn-params {:id id :model-type model-type :rating-curves (remove nil? (seq rating-curves)) :issuers (remove nil? (seq issuers)) :rating-curves-sov-only spot-chart-2d-curves-sov-only}
                           :dispatch-key [:dummy]}}))
 
 (defn nav-qs-bar []
@@ -523,9 +523,10 @@
 (def spot-chart-model-choice (r/atom "SVR"))
 (def spot-chart-rating-choice (r/atom #{3 6 9 12 15 18}))               ;3 6 9 12 15 18
 (def spot-chart-issuer-choice (r/atom (set nil)))           ;["BRAZIL"]
+(def spot-chart-2d-curves-sov-only (r/atom false))
 
 (defn spot-chart-vega-spec [model ratings issuers]
-  (let [raw-data @(rf/subscribe [:quant-model/rating-curves])
+  (let [raw-data (if @spot-chart-2d-curves-sov-only @(rf/subscribe [:quant-model/rating-curves-sov-only]) @(rf/subscribe [:quant-model/rating-curves]))
         data (filter #(contains? ratings (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
         target (case model "Legacy" "predicted_spread_legacy" "New" "predicted_spread_new" "SVR" "predicted_spread_svr")
         ktarget (keyword target)
@@ -591,6 +592,7 @@
                       (into [[title :label "Model type" :level :level3]]
                             (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
                       [[gap :size "10px"] [title :label "Rating curves" :level :level3]
+                        [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)][gap :size "10px"]
                        [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]
                        [gap :size "10px"] [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-rating-choice #{}) :disabled? (zero? (count @spot-chart-rating-choice))]
                        [gap :size "20px"] [title :label "Bookmarks" :level :level3] [button :label "Save new" :class "btn btn-primary btn-block" :on-click #(reset! show-chart-modal :save)][gap :size "10px"] [button :label "Open" :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:get-quant-model-saved-charts]) (reset! show-chart-modal :open))]
@@ -1114,7 +1116,9 @@
   (println line)
   (reset! spot-chart-model-choice (:model-type line))
   (reset! spot-chart-rating-choice (set (:rating-curves line)))
-  (reset! spot-chart-issuer-choice (set (:issuers line))))
+  (reset! spot-chart-issuer-choice (set (:issuers line)))
+  (reset! spot-chart-2d-curves-sov-only (if-let [x (:rating-curves-sov-only line)] x false))
+  )
 
 (defn modal-spot-charts []
   (let [nickname (r/atom "")
@@ -1128,7 +1132,7 @@
                    :children [[title :label "Save chart configuration" :level :level1]
                               [input-text :placeholder "Nickname" :model nickname :on-change #(reset! nickname %)]
                               [label :label "Use same nickname to override existing configuration."]
-                              [h-box :gap "10px" :children [[button :label "Save" :on-click #(do (rf/dispatch [:quant-model-save-new-chart @nickname @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice]) (reset! show-chart-modal nil))]
+                              [h-box :gap "10px" :children [[button :label "Save" :on-click #(do (rf/dispatch [:quant-model-save-new-chart @nickname @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice @spot-chart-2d-curves-sov-only]) (reset! show-chart-modal nil))]
                                                             [button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
           :open
           [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)

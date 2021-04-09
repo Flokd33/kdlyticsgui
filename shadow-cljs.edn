@@ -6,7 +6,8 @@
                 :output-dir      "resources/public/js/compiled"
                 :asset-path      "/js/compiled"
                 :modules         {:app {:init-fn jasminegui.core/init
-                                        :preloads [devtools.preload]}}
+                                        ;:preloads [devtools.preload]
+                                        }}
                 :devtools        {:http-root    "resources/public"
                                   :http-port    8280
                                   }}}}
