@@ -40,15 +40,7 @@
 
 (defn add-total-line-to-pivot [pivoted-table kportfolios]
   (let [total-line (merge
-                     {:jpm-region           "Total"
-                      :qt-jpm-sector        "Total"
-                      :qt-risk-country-name "Total"
-                      :TICKER               "Total"
-                      :NAME                 "Total"
-                      :description          "Total"
-                      :isin                 "Total"
-                      :qt-iam-int-lt-median-rating-score "Total"
-                      :qt-final-maturity-band "Total"}
+                     (into {} (for [k [:jpm-region :qt-jpm-sector :qt-risk-country-name :TICKER :NAME :description :isin :qt-iam-int-lt-median-rating-score :qt-final-maturity-band]] [k "Total"]))
                      (into {} (for [p kportfolios] [p (reduce + (map p pivoted-table))])))]
     (conj pivoted-table total-line)))
 
@@ -61,10 +53,9 @@
 (rf/reg-sub
   :single-portfolio-risk/table
   (fn [db]
-    (let [positions (:positions db)
-          portfolio (:single-portfolio-risk/portfolio db)
+    (let [portfolio (:single-portfolio-risk/portfolio db)
           portfolio-total-line (assoc ((:total-positions db) (keyword portfolio)) :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
-          portfolio-positions (filter #(= (:portfolio %) portfolio) positions)
+          portfolio-positions (filter #(= (:portfolio %) portfolio) (:positions db))
           viewable-positions (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0) portfolio-positions) portfolio-positions)
           risk-choices (let [rfil (:single-portfolio-risk/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
@@ -72,8 +63,7 @@
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions)]
       (if (= (:single-portfolio-risk/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-        (conj sorted-data portfolio-total-line))
-      )))
+        (conj sorted-data portfolio-total-line)))))
 
 (rf/reg-sub
   :single-portfolio-attribution/clean-table
@@ -107,26 +97,20 @@
 (rf/reg-sub
   :multiple-portfolio-risk/table
   (fn [db]
-    (let [                                                  ;pivoted-positions (:pivoted-positions db)
-          kselected-portfolios (mapv keyword (:multiple-portfolio-risk/selected-portfolios db))
+    (let [kselected-portfolios (mapv keyword (:multiple-portfolio-risk/selected-portfolios db))
           hide-zero-risk (:multiple-portfolio-risk/hide-zero-holdings db)
           display-key-one (:multiple-portfolio-risk/field-one db)
-          ;is-tree (= (:multiple-portfolio-risk/display-style db) "Tree")
           risk-choices (let [rfil (:multiple-portfolio-risk/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           pos (t/chainfilter {:portfolio #(some #{%} (:multiple-portfolio-risk/selected-portfolios db))} (:positions db))
           pivoted-data (get-pivoted-data pos (:multiple-portfolio-risk/selected-portfolios db) (distinct (map :id pos)) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
-          ;pivoted-data (get-pivoted-data (:positions db) (:portfolios db) (:all-instrument-ids db) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
-          ;pivoted-data-hide-zero (if (and (not is-tree) hide-zero-risk) (filter thfil pivoted-data) pivoted-data)
           pivoted-data-hide-zero (if hide-zero-risk (filter thfil pivoted-data) pivoted-data)
-          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero)
-          ]
+          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero)]
       (if (= (:multiple-portfolio-risk/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:multiple-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-        (add-total-line-to-pivot  sorted-data kselected-portfolios)) ;
-      )))
+        (add-total-line-to-pivot  sorted-data kselected-portfolios)))))
 
 (rf/reg-sub
   :multiple-portfolio-attribution/clean-table
@@ -138,21 +122,10 @@
           grouping-columns (into [] (for [r (remove nil? (conj attribution-choices :security))] (tables/attribution-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           pivoted-data (map #(merge % ((keyword (get-in tables/attribution-table-columns [display-key-one :accessor])) %)) pivoted-positions)
-          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data)
-          ]
+          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data)]
       (if (= (:multiple-portfolio-attribution/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:multiple-portfolio-attribution/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-        (add-total-line-to-attribution-pivot sorted-data kselected-portfolios))
-
-      ;(add-total-line-to-attribution-pivot sorted-data kselected-portfolios)
-
-      )))
-
-;Aggregated: row => {
-;                    return (
-;                             <span>
-;                             {row.value} (avg)
-;                             </span>
+        (add-total-line-to-attribution-pivot sorted-data kselected-portfolios)))))
 
 (rf/reg-sub
   :portfolio-alignment/table
@@ -246,37 +219,8 @@
      single-portfolio-risk-display-view
      :single-portfolio-risk/table-filter
      :single-portfolio-risk/expander
-     on-click-context
-     ]))
-    ;[:> ReactTable
-    ; {:data                @(rf/subscribe [:single-portfolio-risk/table])
-    ;  :columns             [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) grouping-columns)}
-    ;                        {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
-    ;                        {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
-    ;                        {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
-    ;                        {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
-    ;                        {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
-    ;                        {:Header "Quant model" :columns (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d])}
-    ;                        {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
-    ;                        ;{:Header "Index contribution" :columns (mapv tables/table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
-    ;                        {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}
-    ;                        {:Header "Description" :columns (mapv tables/risk-table-columns (into [] (concat [:rating :isin] additional-des-cols [:description])))}
-    ;
-    ;                        ]
-    ;  :showPagination      true                             ;(not is-tree)
-    ;  :sortable            true                             ;(not is-tree)
-    ;  :filterable          true
-    ;  :defaultFilterMethod (if is-tree (fn [filterfn row] true) tables/text-filter-OR)
-    ;  :ref                 #(reset! single-portfolio-risk-display-view %)
-    ;  :pageSize            (if is-tree 15 25)                               ;(if is-tree (inc (count (distinct (map (keyword (first accessors)) portfolio-positions)))) 25) ;(inc (count display))
-    ;  :showPageSizeOptions false
-    ;  :className           "-striped -highlight"
-    ;  :pivotBy             (if is-tree (concat [:totaldummy] accessors) [])
-    ;  :getTrProps          on-click-context
-    ;  :expanded            @(rf/subscribe [:single-portfolio-risk/expander])
-    ;  :onExpandedChange    #(rf/dispatch [:single-portfolio-risk/expander %])
-    ;  :defaultFiltered     (if is-tree [] @(rf/subscribe [:single-portfolio-risk/table-filter])) ; [{:id "analyst" :value "Tammy"}]
-    ;  :onFilteredChange    #(rf/dispatch [:single-portfolio-risk/table-filter %])}]))
+     on-click-context]))
+
 
 (defn single-bond-trade-flat-history [state rowInfo instance]
   (clj->js {:onClick #(rf/dispatch [:get-single-bond-flat-history
@@ -341,9 +285,7 @@
         width-one 80
         is-tree (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
-        ;accessors (mapv :accessor grouping-columns)
-        ]
+        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))]
     [tables/tree-table-risk-table
      :portfolio-alignment/table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}

@@ -44,12 +44,9 @@
 (rf/reg-sub
   :scorecard-risk/table
   (fn [db]
-    (let [portfolio (:scorecard/portfolio db)
-          sector (:scorecard/sector db)
-          positions (:positions db)
-          qm (:quant-model/model-output db)
+    (let [qm (:quant-model/model-output db)
           ta (:scorecard/trade-analyser-data db)
-          viewable-positions (t/chainfilter {:portfolio portfolio :qt-jpm-sector sector :original-quantity pos?} positions)
+          viewable-positions (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db))
           grouping-columns (into [] (for [r [:name :sector]] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           res (conj (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions))]
@@ -60,12 +57,7 @@
 (rf/reg-sub
   :scorecard-risk/tree
   (fn [db]
-    (let [portfolio (:scorecard/portfolio db)
-          sector (:scorecard/sector db)
-          positions (:positions db)
-          ;portfolio-total-line (assoc ((:total-positions db) (keyword portfolio)) :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
-          ;is-tree true
-          viewable-positions (t/chainfilter {:portfolio portfolio :qt-jpm-sector sector} positions)
+    (let [viewable-positions (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db)} (:positions db))
           risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))]
@@ -158,8 +150,7 @@
 (defn risk-view []
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
-        vdisplay @(rf/subscribe [:scorecard-risk/table])
-        tdisplay @(rf/subscribe [:scorecard-risk/tree])]
+        vdisplay @(rf/subscribe [:scorecard-risk/table])]
     [v-box :gap "20px" :align :start
      :children [[h-box :class "element" :width "60%" :gap "75px" :align :center
                  :children [[title :level :level2 :label "Portfolio and sector selection"]
@@ -179,18 +170,16 @@
                                                                                           (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]
                                                                                          (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])
                                                                                          [{:Header (gstring/unescapeEntities "4D &Delta;") :accessor "difference_svr" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}
-                                                                                          {:Header (gstring/unescapeEntities "2D &Delta;") :accessor "difference_svr_2d" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}]
-                                                                                         ))}
+                                                                                          {:Header (gstring/unescapeEntities "2D &Delta;") :accessor "difference_svr_2d" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}]))}
                                                {:Header "Trade analyser target" :columns [{:Header "Strategy" :accessor "strategy" :width 70}
                                                                                           {:Header "Description" :accessor "relval-target-description" :width 240}
                                                                                           {:Header "Level" :accessor "relval-alert-level" :width 40 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.1f" 1)}
-                                                                                          {:Header "Triggered?" :accessor "relval-target-triggered-date" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.0f" 1)}]}
-                                               ]
+                                                                                          {:Header "Triggered?" :accessor "relval-target-triggered-date" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.0f" 1)}]}]
                               :showPagination false :sortable true :pageSize (count vdisplay) :showPageSizeOptions false :className "-striped -highlight"}]]]
                 [v-box :class "element" :width "75%" :gap "10px"
                  :children [[title :level :level2 :label (str portfolio " " sector " risk country pivot")]
                             [:> ReactTable
-                             {:data           tdisplay
+                             {:data           @(rf/subscribe [:scorecard-risk/tree])
                               :columns        [{:Header "Bond" :columns [(assoc (:sector tables/risk-table-columns) :filterable false)
                                                                          (assoc (:country tables/risk-table-columns) :filterable false)
                                                                          (assoc (:name tables/risk-table-columns) :Header "NAV" :width 150 :filterable false)

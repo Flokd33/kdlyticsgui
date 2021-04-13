@@ -46,6 +46,7 @@
    {:code :spot-charts        :name "Spot charts"}
    {:code :historical-charts  :name "Historical charts"}
    {:code :top-bottom         :name "Most expensive / cheap"}
+   {:code :median             :name "Median spreads"}
    {:code :trade-finder       :name "Trade finder"}
    {:code :universe-des       :name "Universe overview"}
    {:code :universe-harvest   :name "Universe harvest"}

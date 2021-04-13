@@ -32,16 +32,14 @@
                    :single-bond-trade-history/show-modal true
                    :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "single-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
-                         :dispatch-key [:single-bond-trade-history/data]
-                         }}))
+                         :dispatch-key [:single-bond-trade-history/data]}}))
 
 (rf/reg-event-fx
   :get-bond-price-history
   (fn [{:keys [db]} [_ name start-date end-date]]
     {:db (assoc db :bond-price-history/name name)
      :http-get-dispatch {:url          (str static/server-address "bond-price-history?name=" name "&start-date=" start-date "&end-date=" end-date)
-                         :dispatch-key [:bond-price-history/price]
-                         }}))
+                         :dispatch-key [:bond-price-history/price]}}))
 
 (rf/reg-event-fx
   :get-single-bond-flat-history
@@ -50,8 +48,7 @@
                    :single-bond-trade-history/show-flat-modal true
                    :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "flat-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
-                         :dispatch-key [:single-bond-trade-history/flat-data]
-                         }}))
+                         :dispatch-key [:single-bond-trade-history/flat-data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-trade-history
@@ -59,8 +56,7 @@
     {:db (assoc db :portfolio-trade-history/data nil
                    :single-bond-trade-history/show-throbber true)
      :http-get-dispatch {:url          (str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
-                         :dispatch-key [:portfolio-trade-history/data]
-                         }}))
+                         :dispatch-key [:portfolio-trade-history/data]}}))
 
 (rf/reg-event-db
   :single-bond-trade-history/data

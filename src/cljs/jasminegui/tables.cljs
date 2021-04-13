@@ -297,13 +297,6 @@
      :contribution-ytd    (merge {:Header "Fund cont." :accessor "Fund-Contribution-ytd"} performance-attributes-bps)
      :bm-contribution-ytd (merge {:Header "Index cont." :accessor "Index-Contribution-ytd"} performance-attributes-bps)
 
-     ;:total-effect                {:Header "Fund" :accessor "Total-Effect"  :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
-     ;:xs-weight                   {:Header "Excess"   :accessor "Average-Excess-Weight"  :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
-     ;:weight                      {:Header "Fund"   :accessor "Average-Fund-Weight" :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
-     ;:bm-weight                   {:Header "Index"   :accessor "Average-Index-Weight" :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
-     ;:contribution                {:Header "Fund"   :accessor "Fund-Contribution" :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
-     ;:bm-contribution             {:Header "Index"   :accessor "Index-Contribution" :width 70 :style {:textAlign "right"} :aggregate sum-rows :Cell round2colpct :filterable false}
-
      :rating          {:Header "Rating" :accessor "Rating" :width 140 :show false}
      :rating-group    {:Header "Rating Group" :accessor "RatingGroup" :width 140}
      :code            {:Header "Code" :accessor "Code" :width 140}

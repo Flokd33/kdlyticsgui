@@ -17,9 +17,7 @@
 (def default-db {
                  ;data
                  :positions                                          []
-                 ;:positions-new                                      {} ;map will be portfolio -> sub positions
                  :rating-to-score                                    nil
-                 ;:pivoted-positions                                  []
                  :portfolios                                         []
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
@@ -65,7 +63,7 @@
                  :multiple-portfolio-risk/field-number               "One"
                  :multiple-portfolio-risk/field-one                  :nav
                  :multiple-portfolio-risk/field-two                  "None"
-                 :multiple-portfolio-risk/selected-portfolios        (set nil) ;["OGEMCORD"]
+                 :multiple-portfolio-risk/selected-portfolios        (set nil)
                  :multiple-portfolio-risk/filter                     {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-risk/hide-zero-holdings         true
                  :multiple-portfolio-risk/shortcut                   1
@@ -164,7 +162,6 @@
                  :esg/selected-pillars                    (set nil)
 
                  :quant-model/model-output                []
-                 ;:quant-model/table-filter                []
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
                  :quant-model/rating-curves-sov-only      []
@@ -249,7 +246,6 @@
            :multiple-portfolio-attribution/table-filter
            :multiple-portfolio-attribution/expander
            :multiple-portfolio-attribution/period
-           ;:multiple-portfolio-attribution/table
 
 
            :attribution/summary
@@ -263,9 +259,7 @@
            :attribution-index-returns/x-top-15
 
            :single-bond-trade-history/show-flat-modal
-           ;:single-bond-trade-history/flat-data ; dispatched elsewhere
            :single-bond-trade-history/show-modal
-           ;:single-bond-trade-history/data ; dispatched elsewhere
            :single-bond-trade-history/bond
            :single-bond-trade-history/show-throbber
            :portfolio-trade-history/portfolio
@@ -394,9 +388,7 @@
            :portfolio-alignment/filter
            :single-portfolio-attribution/filter
            :multiple-portfolio-attribution/filter]]
-  (rf/reg-event-db
-    k
-    (fn [db [_ id f]] (assoc-in db [k id] f))))
+  (rf/reg-event-db k (fn [db [_ id f]] (assoc-in db [k id] f))))
 
 (rf/reg-event-db
   :qt-date
@@ -478,7 +470,6 @@
 (defn http-get-dispatch [request]
   "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
   (go (let [response (<! (http/get (:url request)))]
-        ;(println (:body response))
         (rf/dispatch (conj (:dispatch-key request) (:body response)))
         (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
 

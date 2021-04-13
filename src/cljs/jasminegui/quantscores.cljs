@@ -657,6 +657,8 @@
                             [p (str "We will look for bonds rated within 1 notch of the above, with duration within 1 year of the above, and scoring cheaper through the SVR model.")]]]
                 [qs-table (str (dec (count comparables)) " bonds scoring better") comparables]]]))
 
+;TOP BOTTOM AND MEDIAN
+
 (defn duration-grouping-fn
   [m]
   (let [duration (:Used_Duration m)]
@@ -714,6 +716,55 @@
                                                {:Header "C" :accessor "LRG6" :width 200 :Cell top-bottom-str}]
                               :showPagination false :pageSize 6 :sortable false :filterable false}]]]]]))
 
+(def median-ignore-subs? (r/atom false))
+(def median-ignore-sovs? (r/atom true))
+
+(defn median-str [this]
+  (let [coll (js->clj (aget this "value"))]
+    (if (or (nil? (first coll)) (<= (js/parseInt (first coll)) 1))
+      "-"
+      (r/as-element
+        [v-box :children [[h-box :justify :between :children [[label :width "50px" :label "Bonds:"] [label :width "50px" :style {:text-align "right"} :label (first coll)]]]
+                          [h-box :justify :between :children [[label :width "50px" :label "1st quartile:"] [label :width "50px" :style {:text-align "right"} :label (gstring/format "%.0fbps" (js/parseFloat (second coll)))]]]
+                          [h-box :justify :between :children [[label :width "50px" :label "Median:"] [label :width "50px" :style {:text-align "right"} :label (gstring/format "%.0fbps" (js/parseFloat (nth coll 2)))]]]
+                          [h-box :justify :between :children [[label :width "50px" :label "3rd quartile:"] [label :width "50px" :style {:text-align "right"} :label (gstring/format "%.0fbps" (js/parseFloat (last coll)))]]]
+                          ]]))))
+
+(defn median-table []
+  (let [data @(rf/subscribe [:quant-model/model-output])
+        fdata (filter #(and
+                         (some? (:Used_ZTW %))
+                         (if @median-ignore-sovs? (not= (:Sector %) "Sovereign") true)
+                         (if @median-ignore-subs? (not= (:SENIOR %) "N") true))
+                      data)
+        res (into []
+                  (for [[duration-bucket durgrp] (group-by duration-grouping-fn fdata)]
+                    (apply merge
+                           {:duration-bucket duration-bucket}
+                           (for [[large-rating-group lrgroup] (group-by :Used_Large_Rating_Score durgrp)]
+                             (let [v (sort (map :Used_ZTW lrgroup)) n (count v) p (partition (int (/ n 4)) v)]
+                               {(keyword (str "LRG" large-rating-group)) [n (last (first p)) (last (second p)) (last (nth p 2))]})))))
+        sres (->> res
+                  (remove #(= (:duration-bucket %) "uncategorized"))
+                  (sort-by #(.indexOf ["0-3Y" "3-5Y" "5-7Y" "7-10Y" "10Y+"] (:duration-bucket %))))]
+    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+     :children [[v-box :class "element" :gap "20px" :width "1620px"
+                 :children [[title :level :level1 :label "Z-spread range by category"]
+                            [h-box :gap "20px" :align :center
+                             :children [[checkbox :model median-ignore-sovs? :label "Ignore sovereign bonds?" :on-change #(reset! median-ignore-sovs? %)]
+                                        [checkbox :model median-ignore-subs? :label "Ignore subordinated bonds?" :on-change #(reset! median-ignore-subs? %)]]]
+                            [:> ReactTable
+                             {:data           sres
+                              :columns        [{:Header "Duration bucket" :accessor "duration-bucket" :width 150 :style {:textAlign "center" :display "flex" :flexDirection "column" :justifyContent "center"}}
+                                               {:Header "AA" :accessor "LRG1" :width 150 :Cell median-str}
+                                               {:Header "A" :accessor "LRG2" :width 150 :Cell median-str}
+                                               {:Header "BBB" :accessor "LRG3" :width 150 :Cell median-str}
+                                               {:Header "BB" :accessor "LRG4" :width 150 :Cell median-str}
+                                               {:Header "B" :accessor "LRG5" :width 150 :Cell median-str}
+                                               {:Header "C" :accessor "LRG6" :width 150 :Cell median-str}]
+                              :showPagination false :pageSize 6 :sortable false :filterable false}]]]]]))
+
+;UNIVERSE
 
 (defn universe-str [this]
   (let [coll (js->clj (aget this "value"))]
@@ -1105,6 +1156,7 @@
       :spot-charts        [spot-chart]
       :historical-charts  [qs-historical-charts]
       :top-bottom         [top-bottom]
+      :median             [median-table]
       :trade-finder       [trade-finder]
       :universe-des       [universe-overview]
       :universe-harvest   [universe-harvest]
