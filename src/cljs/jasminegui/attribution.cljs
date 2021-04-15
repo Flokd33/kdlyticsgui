@@ -90,11 +90,7 @@
 (defn filtering-row [key]
   (let [risk-filter (rf/subscribe [key])]
     (into [] (for [i (range 1 4)]
-               [single-dropdown
-                :width dropdown-width
-                :model (r/cursor risk-filter [i])
-                :choices static/attribution-choice-map
-                :on-change #(rf/dispatch [key i %])]))))
+               [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/attribution-choice-map :on-change #(rf/dispatch [key i %])]))))
 
 (defn csv-link [data filename]
   (tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv")))
@@ -110,22 +106,13 @@
                  [h-box :gap "50px"
                   :children [
                              [v-box :gap "15px"
-                              :children [
-                                         [h-box
-                                          :gap "10px"
-                                          :children [
-                                                     [title :label "Display type:" :level :level3]
-                                                     [gap :size "1"]
+                              :children [[h-box :gap "10px"
+                                          :children [[title :label "Display type:" :level :level3] [gap :size "1"]
                                                      [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:single-portfolio-attribution/display-style %])]]]
-                                         [h-box
-                                          :gap "10px"
-                                          :children [
-                                                     [title :label "Period:" :level :level3]
-                                                     [gap :size "1"]
-                                                     [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-single-attribution-period %])]]]
-                                         ]]
-                             [v-box :gap "10px" :children [
-                                                           [h-box :gap "10px" :children
+                                         [h-box :gap "10px"
+                                          :children [[title :label "Period:" :level :level3] [gap :size "1"]
+                                                     [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-single-attribution-period %])]]]]]
+                             [v-box :gap "10px" :children [[h-box :gap "10px" :children
                                                             (into [] (concat [[title :label "Filtering:" :level :level3]
                                                                               [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:change-single-attribution-portfolio %])]]
                                                                              (filtering-row :single-portfolio-attribution/filter)))]
@@ -134,7 +121,6 @@
                                                                                                    [[gap :size "50px"]
                                                                                                     [title :label "Download:" :level :level3]
                                                                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-attribution-display-view @portfolio (map name (keys (last @(rf/subscribe [:single-portfolio-attribution/table]))))) ;#(csv-link @(rf/subscribe [:single-portfolio-attribution/table]) @portfolio)
-
                                                                                                      ]]))]]]]]
                  [single-portfolio-attribution-display]]]]))
 
@@ -156,10 +142,8 @@
       :children [[title :label (str "Attribution drill-down " @(rf/subscribe [:attribution-date])) :level :level1]
                  [h-box :gap "50px"
                   :children
-                  [
-                   [v-box :gap "20px"
-                    :children [
-                               [h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
+                  [[v-box :gap "20px"
+                    :children [[h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
                                [h-box :gap "10px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
                                [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(rf/dispatch [:change-multiple-attribution-target %])]]]]]
                    [v-box :gap "10px"
@@ -184,8 +168,9 @@
 (defn go-to-attribution-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:navigation/active-attribution :single-portfolio]) (rf/dispatch [:change-single-attribution-portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
 
 (defn summary-display []
+  ;note wtd in files is actually weekly!!
   (let [fmt {:width 90 :Cell #(tables/nb-cell-format "%.2f%" 1. %) :getProps tables/red-negatives} ;tables/round2colpct
-        timeframes [["Year to date" "ytd"] ["Month to date" "mtd"] ["Week to date" "wtd"] ["Daily" "day"]]
+        timeframes [["Year to date" "ytd"] ["Month to date" "mtd"] ["Weekly" "wtd"] ["Daily" "day"]]
         targets [["Fund" "-Fund-Contribution"] ["Benchmark" "-Index-Contribution"] ["Relative" "-Total-Effect"]]]
   [box :class "subbody rightelement" :child
    [v-box :class "element" :gap "20px"
@@ -195,14 +180,8 @@
                  :columns        (into [{:Header "Portfolio" :accessor "portfolio" :width 120}]
                                        (for [[k1 v1] timeframes]
                                          {:Header k1
-                                          :columns (into [] (for [[k2 v2] targets]
-                                                              (merge {:Header k2
-                                                                      :accessor (str v1 v2)}
-                                                                     fmt)))}))
-                 :showPagination false
-                 :pageSize       (count @(rf/subscribe [:attribution/summary]))
-                 :getTrProps     go-to-attribution-risk
-                 :className      "-striped -highlight"}]]]]))
+                                          :columns (into [] (for [[k2 v2] targets] (merge {:Header k2 :accessor (str v1 v2)} fmt)))}))
+                 :showPagination false :pageSize (count @(rf/subscribe [:attribution/summary])) :getTrProps go-to-attribution-risk :className "-striped -highlight"}]]]]))
 
 (defn index-returns-display []
   (let [original-table (filter (comp pos? :Average-Index-Weight) @(rf/subscribe [:attribution-index-returns/table]))
@@ -244,13 +223,8 @@
       :defaultFilterMethod tables/text-filter-OR
       :columns             (concat [{:Header xlabel ::accessor "xlabel" :width 200 :filterMethod tables/text-filter-OR}
                                     {:Header "Total" :accessor "total" :width 100 :Cell #(tables/nb-cell-format "%.2f%" 100. %) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100}]
-                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :Cell #(tables/nb-cell-format "%.2f%" 100. %) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100}))
-                                   )
-      :showPagination      false
-      :sortable            true
-      :pageSize            (count pivot)
-      :className           "-striped -highlight"
-      :filterable          true}]))
+                                   (into [] (for [c ycolumns] {:Header c :accessor (clojure.string/replace c " " "-") :width 100 :Cell #(tables/nb-cell-format "%.2f%" 100. %) :getProps tables/red-negatives :filterMethod tables/nb-filter-OR-AND-x100})))
+      :showPagination false :sortable true :pageSize (count pivot) :className "-striped -highlight" :filterable true}]))
 
 
 (defn index-returns-controller []

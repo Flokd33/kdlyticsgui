@@ -50,7 +50,6 @@
 (rf/reg-event-fx
   :get-quant-model-saved-charts
   (fn [{:keys [db]} [_]]
-    (println "hello")
     {:http-get-dispatch {:url          (str static/server-address "quant-model-saved-charts")
                          :dispatch-key [:quant-model/saved-charts]}}))
 
@@ -81,6 +80,21 @@
                                                      (if (.includes x "T") "Sustainable")
                                                      (if (.includes x "L") "Sutainability-linked")])} x]]
       "-")))
+
+(rf/reg-event-db
+  :model-portfolios/weights
+  (fn [db [_ m isin weight]] (assoc-in db [:model-portfolios/weights m isin] weight)))
+
+
+(defn model-weight-input-cell
+  [this]
+  (if (= @(rf/subscribe [:model-portfolios/display]) "Build")
+    (r/as-element
+      [input-text
+       :width "50px"
+       :model (r/cursor (rf/subscribe [:model-portfolios/weights]) ["ModelOne" (aget this "row" "ISIN")])
+       :on-change #(rf/dispatch [:model-portfolios/weights "ModelOne" (aget this "row" "ISIN") %])])
+    (tables/round1 this)))
 
 (def quant-score-table-columns
   {:ISIN                                {:Header "ISIN" :accessor "ISIN" :width 100}
@@ -261,6 +275,7 @@
    :NXT_CALL_DT                         {:Header "Date" :accessor "NXT_CALL_DT" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1 %) :filterable true}
    :NXT_CALL_PX                         {:Header "Call price" :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
+   :model-weight                        {:Header "Weight" :accessor "model-weight" :width 65 :Cell model-weight-input-cell :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    })
 
 
@@ -348,6 +363,12 @@
        {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}]
       "Screener (SVR)"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
+              (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
+              (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
+              [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
+               {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
+      "Model portfolios"
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :model-weight :Ticker :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
@@ -518,7 +539,7 @@
                 [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
 (defn qs-table-container []
-  [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" (sort-by (juxt :Country :Ticker :Used_Duration) @(rf/subscribe [:quant-model/model-output]))]])
+  [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
 
 (def spot-chart-model-choice (r/atom "SVR"))
 (def spot-chart-rating-choice (r/atom #{3 6 9 12 15 18}))               ;3 6 9 12 15 18
@@ -1147,6 +1168,58 @@
 
 (defn add-bonds [] [box :padding "80px 10px" :class "rightelement" :child [new-bond-entry]])
 
+
+;;;;;;;;;;;;
+(rf/reg-sub
+  :simple-quant-model
+  (fn [db]
+    (let [qm (:quant-model/model-output db) ks (into [] (for [k (keys (first qm)) :when (not (or (clojure.string/includes? (name k) "legacy") (clojure.string/includes? (name k) "new")))] k))]
+      (mapv #(assoc (select-keys % ks) :totaldummy "") qm)
+      )))
+
+(def agg-order (r/atom "Region / Country" "Sector / Country"))
+
+(defn model-portfolios []
+  [box :padding "80px 10px" :class "rightelement" :child
+   (let [data (mapv #(assoc % :model-weight (if-let [mw (get-in @(rf/subscribe [:model-portfolios/weights]) ["ModelOne" (% :ISIN)])] (js/parseFloat mw) 0.0)) @(rf/subscribe [:simple-quant-model]))]
+     [v-box :class "element" :gap "20px" :width "1690px"
+      :children [[title :label "Model portfolios" :level :level1]
+                 [h-box :align :center :gap "20px" :children [[button :label "Open" :on-click #()] [button :label "Save" :on-click #()]]]
+                 [h-box :align :center :gap "20px"
+                  :children (concat
+
+
+
+                              (into [] (for [c ["Build" "Explore" "Tree"]]
+                                               ^{:key c} [radio-button :label c :value c :model (rf/subscribe [:model-portfolios/display]) :on-change #(rf/dispatch [:model-portfolios/display %])])) ;; key should be unique among siblings
+                                    [
+                                     [gap :size "20px"]
+                                     [checkbox :model (r/cursor table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! table-checkboxes assoc-in [:indices] %)]
+                                     [checkbox :model (r/cursor table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! table-checkboxes assoc-in [:calls] %)]
+                                     [gap :size "1"]
+                                     [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qs-table-view "quant-model-output" (mapv :accessor (apply concat (map :columns (table-style->qs-table-col @table-style @table-checkboxes)))))] ;
+                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output" (conj (keys (first data)) :ISIN))]])]
+                 ;(println (take 5 (map :model-weight data)))
+                 [:> ReactTable
+                  {:data            data
+                   :columns         (concat
+                                      (if
+                                        (= @(rf/subscribe [:model-portfolios/display]) "Tree")
+                                        [{:Header "" :columns [{:Header "" :accessor "totaldummy" :width 30 :filterable false}]}]
+                                        [])
+                                      (table-style->qs-table-col "Model portfolios" @table-checkboxes))
+                   :showPagination  true :defaultPageSize 10
+                   :filterable      true :defaultFilterMethod tables/text-filter-OR
+                   :pivotBy         (if (= @(rf/subscribe [:model-portfolios/display]) "Tree") ["totaldummy" "Country" "Ticker"] [])
+                   ;:onFilteredChange #(println %)
+                   :defaultFiltered (if (= @(rf/subscribe [:model-portfolios/display]) "Build") [] [{:id "model-weight" :value ">0"}])
+                   ;:defaultFiltered @qs-table-filter  ; SEE NOTE ABOVE
+                   ;:ref             #(reset! qs-table-view %)
+                   ;:getTrProps      on-click-context
+                   :className       "-striped -highlight"}]]])])
+
+;;;;;;
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-qs])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -1162,10 +1235,11 @@
       :universe-harvest   [universe-harvest]
       :add-bonds          [add-bonds]
       :methodology        [methodology]
+      :model-portfolios   [model-portfolios]
       [:div.output "nothing to display"])))
 
 (defn display-saved-chart [line]
-  (println line)
+  ;(println line)
   (reset! spot-chart-model-choice (:model-type line))
   (reset! spot-chart-rating-choice (set (:rating-curves line)))
   (reset! spot-chart-issuer-choice (set (:issuers line)))

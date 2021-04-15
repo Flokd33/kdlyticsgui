@@ -50,8 +50,10 @@
    {:code :trade-finder       :name "Trade finder"}
    {:code :universe-des       :name "Universe overview"}
    {:code :universe-harvest   :name "Universe harvest"}
-   {:code :add-bonds   :name "Add bonds"}
-   {:code :methodology        :name "Methodology"}])
+   {:code :add-bonds          :name "Add bonds"}
+   {:code :methodology        :name "Methodology"}
+   {:code :model-portfolios   :name "Model portfolios (WIP)"}
+   ])
 
 (def esg-navigation
   [{:code :find-issuers            :name "Find issuer"}
@@ -123,7 +125,7 @@
 (def attribution-period-choices
   [{:id "ytd"     :label "YTD"}
    {:id "mtd"     :label "MTD"}
-   {:id "wtd"     :label "WTD"}
+   {:id "wtd"     :label "Weekly"}
    {:id "day"     :label "Day"}])
 
 (def field-choices-alignment

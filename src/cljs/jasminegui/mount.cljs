@@ -172,13 +172,18 @@
                  :quant-model/new-bond-already-exists     false
                  :quant-model/saved-charts                {}
 
+                 :model-portfolios/names                  ["ModelOne"]
+                 :model-portfolios/weights                {"ModelOne" nil}
+                 :model-portfolios/display                "Build"
+                 :model-portfolio/aggregation             "Region / Country"
+
                  :scorecard/portfolio                   "OGEMCORD"
                  :scorecard/sector                      "Consumer"
                  :scorecard/ogemcord-risk  []
                  :scorecard/attribution-table  []
                  :scorecard/trade-analyser-data nil
 
-                 :dummy nil
+                 :dummy nil                                 ;can be useful
 
                  })
 
@@ -306,6 +311,9 @@
            :time-machine/date
            :time-machine/model
 
+           :model-portfolios/display
+           :model-portfolio/aggregation
+
            :dummy
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -367,6 +375,7 @@
     (assoc db
       ;:quant-model/model-output model
       :quant-model/model-output (array-of-lists->records model)
+      :model-portfolios/weights (into {} (for [m (:model-portfolios/names db)] [m (zipmap (model :ISIN) (repeat "0.0"))]))
               :navigation/show-mounting-modal false)))
 
 ;(rf/reg-event-db

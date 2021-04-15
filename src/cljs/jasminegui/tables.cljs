@@ -297,6 +297,13 @@
      :contribution-ytd    (merge {:Header "Fund cont." :accessor "Fund-Contribution-ytd"} performance-attributes-bps)
      :bm-contribution-ytd (merge {:Header "Index cont." :accessor "Index-Contribution-ytd"} performance-attributes-bps)
 
+     :total-effect-pwtd    (merge {:Header "Effect" :accessor "Total-Effect-pwtd"} performance-attributes-bps)
+     :xs-weight-pwtd       (merge {:Header "Excess" :accessor "Average-Excess-Weight-pwtd"} performance-attributes)
+     :weight-pwtd          (merge {:Header "Fund" :accessor "Average-Fund-Weight-pwtd"} performance-attributes)
+     :bm-weight-pwtd       (merge {:Header "Index" :accessor "Average-Index-Weight-pwtd"} performance-attributes)
+     :contribution-pwtd    (merge {:Header "Fund cont." :accessor "Fund-Contribution-pwtd"} performance-attributes-bps)
+     :bm-contribution-pwtd (merge {:Header "Index cont." :accessor "Index-Contribution-pwtd"} performance-attributes-bps)
+
      :rating          {:Header "Rating" :accessor "Rating" :width 140 :show false}
      :rating-group    {:Header "Rating Group" :accessor "RatingGroup" :width 140}
      :code            {:Header "Code" :accessor "Code" :width 140}

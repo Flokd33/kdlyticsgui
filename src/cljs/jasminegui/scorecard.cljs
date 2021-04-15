@@ -30,10 +30,11 @@
 
 (defn compress-data [table sector]
   (let [res (filter #(= (:Sector %) sector) table)
-        issuers-ytd (map :Issuer (sort-by :Total-Effect-ytd res)) issuers-wtd (map :Issuer (sort-by :Total-Effect-wtd res))
-        low-10-ytd (take 5 issuers-ytd) top-10-ytd (take-last 5 issuers-ytd)
-        low-5-ytd (take 5 issuers-wtd)   top-5-ytd (take-last 5 issuers-wtd)
-        all-issuers (distinct (concat low-10-ytd top-10-ytd low-5-ytd top-5-ytd))
+        issuers-ytd (map :Issuer (sort-by :Total-Effect-ytd res)) issuers-wtd (map :Issuer (sort-by :Total-Effect-wtd res)) issuers-pwtd (map :Issuer (sort-by :Total-Effect-pwtd res))
+        low-5-ytd (take 5 issuers-ytd) top-5-ytd (take-last 5 issuers-ytd)
+        low-5-wtd (take 5 issuers-wtd)   top-5-wtd (take-last 5 issuers-wtd)
+        low-5-pwtd (take 5 issuers-pwtd)   top-5-pwtd (take-last 5 issuers-pwtd)
+        all-issuers (distinct (concat low-5-ytd top-5-ytd low-5-wtd top-5-wtd low-5-pwtd top-5-pwtd))
         grp (group-by #(not (some #{(:Issuer %)} all-issuers)) res)
         rest-line (merge {:Issuer "Rest" :Country "Rest" :Sector sector}
                          (into {} (for [k (keys (first res)) :when (not (some #{k} [:Issuer :Country :Sector]))] [k (reduce + (map k (grp true)))])))
@@ -205,6 +206,7 @@
                                {:data           data
                                 :columns        [{:Header "Groups" :columns (mapv tables/attribution-table-columns [:issuer :country])}
                                                  {:Header "Weekly" :columns (mapv tables/attribution-table-columns [:total-effect-wtd :contribution-wtd :bm-contribution-wtd])}
+                                                 {:Header "Previous week" :columns (mapv tables/attribution-table-columns [:total-effect-pwtd :contribution-pwtd :bm-contribution-pwtd])}
                                                  {:Header "Year to date" :columns (mapv tables/attribution-table-columns [:total-effect-ytd :contribution-ytd :bm-contribution-ytd])}
                                                  {:Header "YTD weights" :columns (mapv tables/attribution-table-columns [:xs-weight-ytd :weight-ytd :bm-weight-ytd])}]
                                 :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}])]]
