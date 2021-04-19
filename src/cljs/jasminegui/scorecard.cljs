@@ -19,7 +19,8 @@
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.tools :as t]
     [jasminegui.riskviews :as riskviews]
-    [jasminegui.quantscores :as quantscores]
+    [jasminegui.qs.quantscores :as quantscores]
+    [jasminegui.qs.qstables :as qstables]
     [oz.core :as oz])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
@@ -91,7 +92,7 @@
                             bonds))
         min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
         max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)
-        rating-text-data (into [] (for [line (filter #(= (:Duration %) (Math/round (* 0.25 (+ min-domain max-domain)))) data)] {:Duration (:Duration line) :spread (ktarget line) :txt (quantscores/get-implied-rating (str (:Rating line)))}))]
+        rating-text-data (into [] (for [line (filter #(= (:Duration %) (Math/round (* 0.25 (+ min-domain max-domain)))) data)] {:Duration (:Duration line) :spread (ktarget line) :txt (qstables/get-implied-rating (str (:Rating line)))}))]
     {:title  nil
      :data   {:values (concat bond-data data rating-text-data)}
      :layer  [{:selection {:grid {:type "interval" :bind "scales"}}

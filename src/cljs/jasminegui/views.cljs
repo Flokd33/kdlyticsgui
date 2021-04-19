@@ -18,7 +18,7 @@
     [jasminegui.betas :as betas]
     [jasminegui.esg :as esg]
     [jasminegui.scorecard :as scorecard]
-    [jasminegui.quantscores :as quantscores]
+    [jasminegui.qs.quantscores :as quantscores]
     [jasminegui.riskviews :as riskviews]
     [goog.string :as gstring]
     [jasminegui.tradehistory :as th]))
