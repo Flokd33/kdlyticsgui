@@ -171,3 +171,30 @@
              :encoding {:x {:field "Used_ZTW", :type "quantitative", :aggregate "median" :axis {:title "Z-spread" :titleFontSize 11 :labelFontSize 11}},
                         :y {:field "duration-bucket", :type "ordinal" :sort ["0-3Y", "3-5Y", "5-7Y", "7-10Y", "10Y+"] :axis {:title nil}}}}]}}
   )
+
+(defn fair-value-calculator-chart [data color-domain-scale show-bond-labels show-rating-curve rating-data]
+  {:title  nil
+   :data   {:values (concat data (if show-rating-curve rating-data))}
+   :layer  (concat [{:selection {:grid {:type "interval" :bind "scales"}}
+                     :mark      {:type "point" :filled true}
+                     :encoding  {:x       {:field "duration" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}}
+                                 :y       {:field "spread" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                                 :color   {:field "field" :scale {:domain (keys color-domain-scale) :range (vals color-domain-scale)} :legend {:labelFontSize 14 :title nil}}
+                                 :tooltip [{:field "txt" :type "nominal" :title "Bond"}
+                                           {:field "duration" :type "quantitative", :title "Duration"}
+                                           {:field "spread" :type "quantitative", :title "Spread"}]}}]
+                   (if show-bond-labels
+                     [{:mark     {:type "text" :dx 6 :align "left"}
+                       :encoding {:x    {:field "duration" :type "quantitative"}
+                                  :y    {:field "spread" :type "quantitative"}
+                                  :text {:field "txt" :type "nominal"}}}])
+                   (if show-rating-curve
+                     [{:mark     {:type "line" :clip true}
+                       :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}} ;:scale {:domain [0. 30.]}
+                                  :y     {:field "predicted_spread_svr" :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                                  :color {:field "Rating" :type "quantitative" :legend nil}}}])
+                   )
+   :width  1000
+   :height 500}
+
+  )

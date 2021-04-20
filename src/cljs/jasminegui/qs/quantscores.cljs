@@ -137,26 +137,16 @@
                    :ref             #(reset! qstables/qs-table-view %)
                    :getTrProps      on-click-context :className "-striped -highlight"}]]])
 
-(def calculator-sector (r/atom "Oil & Gas"))
-(def calculator-country (r/atom "BR"))
-(def calculator-duration (r/atom "9.0"))
-(def calculator-rating (r/atom "13"))
-(def calculator-fx (r/atom "USD"))
-(def show-bond-labels (r/atom true))
-(def chart-other-countries (r/atom false))
-(def chart-rating-neighbours (r/atom false))
-(def chart-country-neighbours (r/atom false))
 (def show-duration-modal (r/atom false))
-
-
+(def calculator-target (r/atom {:Sector "Oil & Gas" :Country "BR" :Used_Duration "9.0" :Used_Rating_Score "13" :CRNCY "USD"})) ;find out why there are some ::CRNCY instead of :CRNCY in the model
+(def calculator-chart-options (r/atom {:labels true :other-countries false :rating-neighbours false :country-neighbours false :rating-curves true :rating-curves-sov-only false}))
 (def performance-colors ["#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
-
 
 (defn comparable-chart [duration legacy new svr table]
   (let [prepare-data (fn [tbl txt] (for [line tbl] {:field txt :duration (line :Used_Duration) :spread (line :Used_ZTW) :txt (line :Bond)}))
-        rating-score (cljs.reader/read-string @calculator-rating)
+        rating-score (cljs.reader/read-string (:Used_Rating_Score @calculator-target))
         other (str "Other " (qstables/get-implied-rating (str rating-score)))
-        other-country (str "Other " @calculator-country " " (qstables/get-implied-rating (str rating-score)))
+        other-country (str "Other " (:Country @calculator-target) " " (qstables/get-implied-rating (str rating-score)))
         rating-up (qstables/get-implied-rating (str (inc rating-score)))
         rating-dw (qstables/get-implied-rating (str (dec rating-score)))
         qmt @(rf/subscribe [:quant-model/model-output])
@@ -166,54 +156,41 @@
           [{:field "legacy" :duration duration :spread legacy :txt "legacy"}
            {:field "new" :duration duration :spread new :txt "new"}
            {:field "svr" :duration duration :spread svr :txt "svr"}]
-          (if @chart-other-countries    (prepare-data (t/chainfilter {:Sector @calculator-sector :Used_Rating_Score rating-score :Country #(not= % @calculator-country)} qmt) other))
-          (if @chart-rating-neighbours  (prepare-data (t/chainfilter {:Sector @calculator-sector :Used_Rating_Score (inc rating-score)} qmt) rating-up))
-          (if @chart-rating-neighbours  (prepare-data (t/chainfilter {:Sector @calculator-sector :Used_Rating_Score (dec rating-score)} qmt) rating-dw))
-          (if @chart-country-neighbours (prepare-data (t/chainfilter {:Country @calculator-country :Used_Rating_Score rating-score :Sector #(not= % @calculator-sector)} qmt) other-country)))
+          (if (:other-countries @calculator-chart-options) (prepare-data (t/chainfilter {:Sector (:Sector @calculator-target) :Used_Rating_Score rating-score :Country #(not= % (:Country @calculator-target))} qmt) other))
+          (if (:rating-neighbours @calculator-chart-options)  (prepare-data (t/chainfilter {:Sector (:Sector @calculator-target) :Used_Rating_Score (inc rating-score)} qmt) rating-up))
+          (if (:rating-neighbours @calculator-chart-options)  (prepare-data (t/chainfilter {:Sector (:Sector @calculator-target) :Used_Rating_Score (dec rating-score)} qmt) rating-dw))
+          (if (:country-neighbours @calculator-chart-options) (prepare-data (t/chainfilter {:Country (:Country @calculator-target) :Used_Rating_Score rating-score :Sector #(not= % (:Sector @calculator-target))} qmt) other-country)))
         color-domain-scale (merge {"comp" "#134848" "legacy" "red" "new" "orange" "svr" "blue"}
-                                  (if @chart-other-countries {other "#009D80"})
-                                  (if @chart-rating-neighbours {rating-up "#FDAA94" rating-dw "#74908D"})
-                                  (if @chart-country-neighbours {other-country "#591739"}))
-        vega-spec
-        {:title nil
-         :data  {:values data}
-         :layer (concat [{:selection {:grid {:type "interval" :bind "scales"}}
-                          :mark     {:type "point" :filled true}
-                          :encoding {:x       {:field "duration" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}}
-                                     :y       {:field "spread" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
-                                     :color   {:field "field" :scale {:domain (keys color-domain-scale) :range (vals color-domain-scale)} :legend {:labelFontSize 14 :title nil}}
-                                     :tooltip [{:field "txt" :type "nominal" :title "Bond"}
-                                               {:field "duration" :type "quantitative", :title "Duration"}
-                                               {:field "spread" :type "quantitative", :title "Spread"}]}}]
-                        (if @show-bond-labels
-                          [{:mark     {:type "text" :dx 6 :align "left"}
-                            :encoding {:x    {:field "duration" :type "quantitative"}
-                                       :y    {:field "spread" :type "quantitative"}
-                                       :text {:field "txt" :type "nominal"}}}]))
-         :width  1000
-         :height 500}]
+                                  (if (:other-countries @calculator-chart-options) {other "#009D80"})
+                                  (if (:rating-neighbours @calculator-chart-options) {rating-up "#FDAA94" rating-dw "#74908D"})
+                                  (if (:country-neighbours @calculator-chart-options) {other-country "#591739"}))
+        curve-data (filter #(some #{(:Rating %)} (conj (if (:rating-neighbours @calculator-chart-options) [(inc rating-score) (dec rating-score)] []) rating-score))
+                           (if (:rating-curves-sov-only @calculator-chart-options) @(rf/subscribe [:quant-model/rating-curves-sov-only]) @(rf/subscribe [:quant-model/rating-curves])))]
     [v-box :class "element"  :gap "10px" :width "1620px"
      :children [[h-box :align :center :justify :between :children [[title :label "Comparables chart" :level :level1] [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
-                [checkbox :model show-bond-labels :label "Bond labels" :on-change #(reset! show-bond-labels %)]
-                [h-box :gap "50px" :children [[checkbox :model chart-other-countries :label "Other countries (same sector and rating)" :on-change #(reset! chart-other-countries %)]
-                                              [checkbox :model chart-rating-neighbours :label "Rating neighbours (same sector, rating up/down a notch)" :on-change #(reset! chart-rating-neighbours %)]
-                                              [checkbox :model chart-country-neighbours :label "Country neighbours (same country and rating)" :on-change #(reset! chart-country-neighbours %)]]]
-                [oz/vega-lite vega-spec]]]))
+                [h-box :gap "50px" :children [[checkbox :model (r/cursor calculator-chart-options [:labels]) :label "Bond labels" :on-change #(swap! calculator-chart-options assoc :labels %)]
+                                              [checkbox :model (r/cursor calculator-chart-options [:rating-curves]) :label "2D model curve" :on-change #(swap! calculator-chart-options assoc :rating-curves %)]
+                                              [checkbox :model (r/cursor calculator-chart-options [:rating-curves-sov-only]) :label "2D curve sov only?" :on-change #(swap! calculator-chart-options assoc :rating-curves-sov-only %)]]]
+
+                [h-box :gap "50px" :children [[checkbox :model (r/cursor calculator-chart-options [:other-countries]) :label "Other countries (same sector and rating)" :on-change #(swap! calculator-chart-options assoc :other-countries %)]
+                                              [checkbox :model (r/cursor calculator-chart-options [:rating-neighbours]) :label "Rating neighbours (same sector, rating up/down a notch)" :on-change #(swap! calculator-chart-options assoc :rating-neighbours %)]
+                                              [checkbox :model (r/cursor calculator-chart-options [:country-neighbours]) :label "Country neighbours (same country and rating)" :on-change #(swap! calculator-chart-options assoc :country-neighbours %)]]]
+                [oz/vega-lite (qscharts/fair-value-calculator-chart data color-domain-scale (:labels @calculator-chart-options) (:rating-curves @calculator-chart-options) curve-data)]]]))
 
 (defn calculator-result-table []
   (let [data @(rf/subscribe [:quant-model/model-output])
         calc-data @(rf/subscribe [:quant-model/calculator-spreads])
-        display (into [] (for [[k txt c] [[:d4 "Four factor" (count (filter #(and (= (:Country %) @calculator-country) (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating))) data))]
-                                          [:d3country (str @calculator-country " " @calculator-duration "y " (qstables/get-implied-rating @calculator-rating)) (count (filter #(and (= (:Country %) @calculator-country) (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating))) data))]
-                                          [:d3sector (str @calculator-sector " " @calculator-duration "y " (qstables/get-implied-rating @calculator-rating)) (count (filter #(and (= (:Sector %) @calculator-sector) (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating))) data))]
-                                          [:d2 (str @calculator-duration "y " (qstables/get-implied-rating @calculator-rating)) (count (filter #(and (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating))) data))]]]
+        display (into [] (for [[k txt c] [[:d4 "Four factor" (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Used_Duration) data))]
+                                          [:d3country (str (:Country @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Used_Duration) data))]
+                                          [:d3sector (str (:Sector @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Country :Used_Duration) data))]
+                                          [:d2 (str (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Country :Used_Duration) data))]]]
                            {:model txt :svr (get-in calc-data [:svr k]) :legacy (get-in calc-data [:legacy k]) :new (get-in calc-data [:new k]) :comps c}))]
     [:> ReactTable
      {:data           display
       :columns        [{:Header "Model" :accessor "model" :width 200}
                        {:Header "Legacy" :accessor "legacy" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
                        {:Header "New" :accessor "new" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
-                       {:Header "SVR" :accessor "svr" :width 60 :style {:textAlign "right" :background-color "lightgrey"} :Cell tables/zspread-format}
+                       {:Header "SVR" :accessor "svr" :width 60 :style {:textAlign "right" :backgroundColor "lightgrey"} :Cell tables/zspread-format}
                        {:Header "Comparables" :accessor "comps" :width 100 :style {:textAlign "right"}}]
       :showPagination false :pageSize 4 :filterable false}]))
 
@@ -222,41 +199,30 @@
         data @(rf/subscribe [:quant-model/model-output])
         sectors (mapv (fn [x] {:id x :label x}) (sort (distinct (map :Sector data))))
         countries (mapv (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) country-codes)))}) (sort (distinct (map :Country data))))
-        comparables (sort-by
-                      :Used_Duration
-                      (filter #(and (= (:Country %) @calculator-country)
-                                    (= (:Sector %) @calculator-sector)
-                                    (= (:Used_Rating_Score %) (cljs.reader/read-string @calculator-rating)))
-                              data))
-        infer-rating-fn (fn [country] (reset! calculator-rating (str (:Used_Rating_Score (first (filter #(and (= (:Country %) country) (= (:Sector %) "Sovereign")) data))))))
-        update-sector-fn (fn [sector] (do (reset! calculator-sector sector)
-                                          (when (= sector "Sovereign") (reset! calculator-rating (infer-rating-fn @calculator-country)))))
-        update-country-fn (fn [country] (do (reset! calculator-country country)
-                                            (when (= @calculator-sector "Sovereign") (reset! calculator-rating (infer-rating-fn @calculator-country)))))
-        ]
+        comparables (sort-by :Used_Duration (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Used_Duration) data))
+        infer-rating-fn (fn [country] (swap! calculator-target assoc :Used_Rating_Score (str (:Used_Rating_Score (first (t/chainfilter {:Country country :Sector "Sovereign"} data))))))
+        update-sector-fn (fn [sector] (do (swap! calculator-target assoc :Sector sector) (when (= sector "Sovereign") (swap! calculator-chart-options assoc :rating-curves-sov-only true) (infer-rating-fn (:Country @calculator-target)))))
+        update-country-fn (fn [country] (do (swap! calculator-target assoc :Country country) (when (= (:Sector @calculator-target) "Sovereign") (infer-rating-fn (:Country @calculator-target)))))]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
-     :children [
-                [v-box :class "element" :gap "0px" :width "1620px"
-                 :children [[title :label "New issue calculator" :level :level1]
-                            [gap :size "20px"]
+     :children [[v-box :class "element" :gap "0px" :width "1620px"
+                 :children [[title :label "New issue calculator" :level :level1] [gap :size "20px"]
                             [h-box :gap "50px" :align :center
                              :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"][label :width "80px" :label "Currency"]]]
-                                                                                     [h-box :gap "10px" :children [[single-dropdown :width "200px" :model calculator-country :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil])) :filter-box? true]
-                                                                                                                   [single-dropdown :width "200px" :model calculator-sector :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]
-                                                                                                                   [single-dropdown :width "80px" :model calculator-fx :choices [{:id "USD" :label "USD"} {:id "EUR" :label "EUR"}] :on-change #(reset! calculator-fx %)  :filter-box? true]
-                                                                                                                   ]]
+                                                                                     [h-box :gap "10px" :children [[single-dropdown :width "200px" :model (r/cursor calculator-target [:Country]) :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil])) :filter-box? true]
+                                                                                                                   [single-dropdown :width "200px" :model (r/cursor calculator-target [:Sector]) :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]
+                                                                                                                   [single-dropdown :width "80px" :model (r/cursor calculator-target [:CRNCY]) :choices [{:id "USD" :label "USD"} {:id "EUR" :label "EUR"}] :on-change #(do (swap! calculator-target assoc :CRNCY %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]]]
                                                                                      [gap :size "20px"]
                                                                                      [h-box :gap "10px" :children [[label :width "130px" :label "Duration"] [gap :size "50px"] [label :width "100px" :label "Rating score"] [label :width "100px" :label "Rating"]]]
-                                                                                     [h-box :gap "10px" :align :center :children [[input-text :width "100px" :model calculator-duration :on-change #(do (reset! calculator-duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                                                                     [h-box :gap "10px" :align :center :children [[input-text :width "100px" :model (r/cursor calculator-target [:Used_Duration]) :on-change #(do (swap! calculator-target assoc :Used_Duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
                                                                                                                                   [box :width "20px" :child [md-circle-icon-button :md-icon-name "zmdi-help" :size :smaller :on-click #(reset! show-duration-modal true)]]
                                                                                                                                   [gap :size "50px"]
-                                                                                                                                  [input-text :width "100px" :model calculator-rating :on-change #(do (reset! calculator-rating %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                                                                                                   [label :width "100px" :label (qstables/get-implied-rating @calculator-rating)]]]]]
+                                                                                                                                  [input-text :width "100px" :model (r/cursor calculator-target [:Used_Rating_Score]) :on-change #(do (swap! calculator-target assoc :Used_Rating_Score %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                                                                                                   [label :width "100px" :label (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))]]]]]
 
-                                        [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread @calculator-fx @calculator-country @calculator-sector @calculator-rating @calculator-duration])]
+                                        [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread (:CRNCY @calculator-target) (:Country @calculator-target) (:Sector @calculator-target) (:Used_Rating_Score @calculator-target) (:Used_Duration @calculator-target)])]
                                         [calculator-result-table]]]]]
                 [comparable-chart
-                 (cljs.reader/read-string @calculator-duration)
+                 (cljs.reader/read-string (:Used_Duration @calculator-target))
                  (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:legacy :d4])
                  (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:new :d4])
                  (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:svr :d4])
@@ -266,12 +232,11 @@
 (defn qs-table-container []
   [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
 
+
 (def spot-chart-model-choice (r/atom "SVR"))
 (def spot-chart-rating-choice (r/atom #{3 6 9 12 15 18}))               ;3 6 9 12 15 18
 (def spot-chart-issuer-choice (r/atom (set nil)))           ;["BRAZIL"]
 (def spot-chart-2d-curves-sov-only (r/atom false))
-
-
 
 (def typeahead-model (atom nil))
 
@@ -370,7 +335,7 @@
                   [input-text :width "200px" :model coupon :placeholder "Coupon in %" :on-change #(reset! coupon %)]
                   [label :label "Assumes semi-annual coupons"]
                   [button :label "OK" :on-click #(do
-                                                   (reset! calculator-duration
+                                                   (swap! calculator-target assoc :Used_Duration
                                                            (str (/ (Math/round (* 100 (t/semi-bond-modified-duration
                                                                                         (cljs.reader/read-string @maturity)
                                                                                         (/ (cljs.reader/read-string @coupon) 100)))) 100)))
