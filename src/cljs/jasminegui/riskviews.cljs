@@ -165,7 +165,7 @@
 ;;;;;;;;;
 
 (def max-width "1675px")
-(def dropdown-width "150px")
+(def dropdown-width "125px")
 (def mini-dropdown-width "75px")
 
 (defn single-bond-trade-history-event [state rowInfo instance]
@@ -318,26 +318,43 @@
         hide-zero-risk (rf/subscribe [:single-portfolio-risk/hide-zero-holdings])]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px" :width max-width
-      :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
-                 [h-box :gap "50px"
-                  :children [[v-box :gap "15px"
-                              :children [[h-box :gap "10px"
-                                          :children [[title :label "Display type:" :level :level3]
-                                                     [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:single-portfolio-risk/display-style %])  (rf/dispatch [:single-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
-                                         [checkbox :model hide-zero-risk :label "Hide zero positions? (index won't sum to 100!)"  :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]]] ;:disabled? (= @display-style "Tree")
-                             [v-box :gap "10px" :children [[h-box :gap "10px" :children
-                                                            (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
-                                                                             (filtering-row :single-portfolio-risk/filter)))]
-                                                           [h-box :gap "20px" :children (into [] (concat
-                                                                                                   (shortcut-row :single-portfolio-risk/shortcut)
-                                                                                                   [[gap :size "50px"]
-                                                                                                    [title :label "Download:" :level :level3]
-                                                                                                     [md-circle-icon-button :md-icon-name "zmdi-download"
-                                                                                                      :on-click #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio (concat ["NAME" "isin" "description"] (map name (keys (last @(rf/subscribe [:single-portfolio-risk/table]))))))
-                                                                                                      ;ls/csv-link @(rf/subscribe [:single-portfolio-risk/table]) @portfolio)
-                                                                                                      ]]))]]]]]
+      :children [[h-box :align :center :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
+                                                  [gap :size "1"]
+                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio (concat ["NAME" "isin" "description"] (map name (keys (last @(rf/subscribe [:single-portfolio-risk/table]))))))]]]
+                 [h-box :gap "10px" :align :center
+                  :children (concat
+                              [[title :label "Display:" :level :level3]
+                               [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:single-portfolio-risk/display-style %]) (rf/dispatch [:single-portfolio-risk/hide-zero-holdings (= % "Table")]))]
+                               [gap :size "30px"]
+                               [checkbox :model hide-zero-risk :label "Hide zero positions? (index won't sum to 100!)" :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]
+                               [gap :size "30px"]]
+                              (into [] (concat [[title :label "Filtering:" :level :level3]
+                                                [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
+                                               (filtering-row :single-portfolio-risk/filter)
+                                               [[gap :size "30px"]]
+                                               ))
+                              (shortcut-row :single-portfolio-risk/shortcut))
+
+                  ]
                  [single-portfolio-risk-display]]]]))
+;
+;[[v-box :gap "15px"
+;  :children [[h-box :gap "10px"
+;              :children [[title :label "Display:" :level :level3]
+;                         [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:single-portfolio-risk/display-style %])  (rf/dispatch [:single-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
+;             [checkbox :model hide-zero-risk :label "Hide zero positions? (index won't sum to 100!)"  :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]]] ;:disabled? (= @display-style "Tree")
+; [v-box :gap "10px" :children [[h-box :gap "10px" :children
+;                                (into [] (concat [[title :label "Filtering:" :level :level3]
+;                                                  [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
+;                                                 (filtering-row :single-portfolio-risk/filter)))]
+;                               [h-box :gap "20px" :children (into [] (concat
+;                                                                       (shortcut-row :single-portfolio-risk/shortcut)
+;                                                                       [[gap :size "50px"]
+;                                                                        [title :label "Download:" :level :level3]
+;                                                                        [md-circle-icon-button :md-icon-name "zmdi-download"
+;                                                                         :on-click #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio (concat ["NAME" "isin" "description"] (map name (keys (last @(rf/subscribe [:single-portfolio-risk/table]))))))
+;                                                                         ;ls/csv-link @(rf/subscribe [:single-portfolio-risk/table]) @portfolio)
+;                                                                         ]]))]]]]
 
 (defn multiple-portfolio-risk-controller []
   (let [portfolio-map (into [] (for [p  @(rf/subscribe [:portfolios])] {:id p :label p}))
@@ -353,7 +370,7 @@
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px" :width max-width
-      :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
+      :children [[h-box  :align :center :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1] [gap :size "1"][md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "pivot" download-columns)]]]
                  [h-box :gap "50px"
                   :children
                              [
@@ -372,10 +389,9 @@
                                           [button :style {:width "100%"} :label "Talanx"   :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :talanx)) static/portfolio-alignment-groups))))])]]]
                               [selection-list :width dropdown-width :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]
                               [v-box :gap "20px"
-                               :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter)))]
-                                          [h-box :gap "10px" :children (shortcut-row :multiple-portfolio-risk/shortcut)]
-                                          [h-box :gap "10px" :children [[title :label "Download:" :level :level3]
-                                                                        [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "pivot" download-columns)]]]]]]]
+                               :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]
+
+                                          ]]]]
                  [multiple-portfolio-risk-display]]]]))
 
 (defn portfolio-alignment-risk-controller []

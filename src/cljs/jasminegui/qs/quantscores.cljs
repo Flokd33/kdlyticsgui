@@ -464,7 +464,7 @@
       :universe-harvest   [harvest/universe-harvest]
       :add-bonds          [add-bonds]
       :methodology        [methodology]
-      :model-portfolios   [modelportfolios/model-portfolios]
+      :model-portfolios   [modelportfolios/model-portfolio-view]
       [:div.output "nothing to display"])))
 
 (defn display-saved-chart [line]
@@ -501,4 +501,4 @@
           )))))
 
 (defn view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio]]])

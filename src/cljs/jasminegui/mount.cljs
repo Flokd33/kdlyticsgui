@@ -172,10 +172,11 @@
                  :quant-model/new-bond-already-exists     false
                  :quant-model/saved-charts                {}
 
+                 :model-portfolios/trades                 {}
                  :model-portfolios/names                  ["ModelOne"]
                  :model-portfolios/weights                {"ModelOne" nil}
                  :model-portfolios/display                "Build"
-                 :model-portfolio/aggregation             "Region / Country"
+                 :model-portfolios/aggregation            "Region"
 
                  :scorecard/portfolio                   "OGEMCORD"
                  :scorecard/sector                      "Consumer"
@@ -311,8 +312,9 @@
            :time-machine/date
            :time-machine/model
 
+           :model-portfolios/trades
            :model-portfolios/display
-           :model-portfolio/aggregation
+           :model-portfolios/aggregation
 
            :dummy
 
@@ -520,6 +522,7 @@
    {:get-key :get-attribution-date    :url-tail "attribution?query-type=attribution-date" :dis-key :attribution-date}
    {:get-key :get-attribution-summary    :url-tail "attribution?query-type=summary" :dis-key :attribution/summary}
    {:get-key :get-attribution-available-months    :url-tail "attribution?query-type=available-months" :dis-key :attribution/available-months}
+   {:get-key :get-model-portfolios    :url-tail "model-portfolios" :dis-key :model-portfolios/trades}
    ])
 
 

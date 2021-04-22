@@ -316,7 +316,7 @@
 (defn tree-table-risk-table [data columns is-tree accessors ref table-filter expander get-tr-props-fn]
   [:> ReactTable
    {:data @(rf/subscribe [data]) :columns columns
-    :showPagination true :pageSize (if is-tree 15 25) :showPageSizeOptions false
+    :showPagination (not is-tree) :pageSize (if is-tree 1 18) :showPageSizeOptions false
     :sortable true
     :defaultFilterMethod (if is-tree (fn [filterfn row] true) text-filter-OR)
     :ref #(reset! ref %)

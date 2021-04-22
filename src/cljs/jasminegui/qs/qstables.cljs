@@ -54,12 +54,12 @@
    :HYBRID-WIDE                         {:Header "Hybrid" :accessor "HYBRID" :width 50 :style {:textAlign "center"}}
    :ESG                                 {:Header "ESG" :accessor "ESG" :width 50 :style {:textAlign "center"} :Cell esg-span}
    :COUPON                              {:Header "Coupon" :accessor "COUPON" :width 55 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :cembi                               {:Header "CEMBI" :accessor "cembi" :width 52 :style {:textAlign "center"}}
-   :cembi-ig                            {:Header "CEMBI IG" :accessor "cembi-ig" :width 62 :style {:textAlign "center"}}
-   :embi                                {:Header "EMBI" :accessor "embi" :width 52 :style {:textAlign "center"}}
-   :embi-ig                             {:Header "EMBI IG" :accessor "embi-ig" :width 62 :style {:textAlign "center"}}
-   :us-agg                              {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "center"}}
-   :global-agg                          {:Header "Glb agg" :accessor "global-agg" :width 55 :style {:textAlign "center"}}
+   :cembi                               {:Header "CEMBI" :accessor "cembi" :width 52 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :cembi-ig                            {:Header "CEMBI IG" :accessor "cembi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :embi                                {:Header "EMBI" :accessor "embi" :width 52 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :embi-ig                             {:Header "EMBI IG" :accessor "embi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :us-agg                              {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :global-agg                          {:Header "Glb agg" :accessor "global-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
    :CRNCY                               {:Header "Currency" :accessor "CRNCY" :width 50}
    :Bond-sticky                         {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                          {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -222,11 +222,11 @@
    :NXT_CALL_PX                         {:Header "Call price" :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    ;:model-weight                        {:Header "Weight" :accessor "model-weight" :width 65 :Cell model-weight-input-cell :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :CEMBI-model                         {:Header "CEMBI" :accessor "CEMBI-model" :width 65 :Cell #(tables/nb-cell-format % ".1f%" 1) :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :Allianz-model                         {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell #(tables/nb-cell-format % ".1f%" 1) :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell #(tables/nb-cell-format % ".1f%" 1) :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell #(tables/nb-cell-format % ".1f%" 1) :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :TR-model                         {:Header "TR" :accessor "TR-model" :width 65 :Cell #(tables/nb-cell-format % ".1f%" 1) :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :CEMBI-model                         {:Header "CEMBI" :accessor "CEMBI-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :Allianz-model                         {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :TR-model                         {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
 
    })
 
@@ -298,7 +298,7 @@
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
       "Model portfolios"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Ticker :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
-              [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :Allianz-model :IG-model :BNP-model :TR-model])}]
+              [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :IG-model :TR-model])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}

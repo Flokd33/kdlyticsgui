@@ -686,7 +686,8 @@
       (portfolio-review-box-template [[oz/vega-lite (quant-value-waterfall-chart clean-data-sorted max-total)]]))))
 
 (defn ir-breakdown []
-  (let [positions (t/chainfilter {:portfolio @(rf/subscribe [:portfolio-review/portfolio]) :weight pos?} @(rf/subscribe [:positions]))
+  (let [positions (t/chainfilter {:portfolio @(rf/subscribe [:portfolio-review/portfolio]) :original-quantity #(not (zero? %))} @(rf/subscribe [:positions]))
+        ;positions (t/chainfilter {:portfolio @(rf/subscribe [:portfolio-review/portfolio]) :weight pos?} @(rf/subscribe [:positions]))
         ust (t/chainfilter {:TICKER "T"} positions)
         bbb-flat-and-better (t/chainfilter {:TICKER #(not= % "T") :rating-score #(< % 10)} positions)
         bbb-minus-and-worse (t/chainfilter {:rating-score #(>= % 10)} positions)
