@@ -23,6 +23,17 @@
 (defn get-implied-rating [txt]
   (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) @(rf/subscribe [:rating-to-score]))))] (name x) "error"))
 
+(defn rating-score-to-txt [this]
+  (r/as-element
+    [:span
+     (if-let [x (aget this "value")]
+       (if (number? x)
+         (nth ["AAA" "AA+" "AA" "AA-" "A+" "A" "A-" "BBB+" "BBB" "BBB-" "BB+" "BB" "BB-" "B+" "B" "B-" "CCC+" "CCC" "CCC-"] (dec x))
+         "NR")
+       "NR")]))
+
+
+
 (defn esg-span [this]
   (r/as-element
     (if-let [x (aget this "value")]
@@ -222,7 +233,7 @@
    :NXT_CALL_PX                         {:Header "Call price" :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    ;:model-weight                        {:Header "Weight" :accessor "model-weight" :width 65 :Cell model-weight-input-cell :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :CEMBI-model                         {:Header "CEMBI" :accessor "CEMBI-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :CEMBI-model                         {:Header "Main" :accessor "CEMBI-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :Allianz-model                         {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
