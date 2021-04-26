@@ -45,7 +45,7 @@
 
 (defn model-weight-input-cell
   [this]
-  (if (= @(rf/subscribe [:model-portfolios/display]) "Build")
+  (if (= @(rf/subscribe [:model-portfolios/hide-zeros]) "Build")
     (r/as-element
       [input-text
        :width "50px"

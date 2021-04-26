@@ -5,8 +5,8 @@
                                org.clojure/google-closure-library]]
                  [thheller/shadow-cljs "2.11.15"]
                  [reagent "1.0.0"]                         ;was 0.10.0
-                 [re-frame "1.1.2"]                        ;was 0.12.0
-                 [re-com "2.12.0"]                           ;was 2.8.0
+                 [re-frame "1.2.0"]                        ;was 0.12.0
+                 [re-com "2.13.2"]                           ;was 2.8.0
                  [cljs-http "0.1.46"]
                  [re-pressed "0.3.1"]
                  [org.clojars.frozenlock/reagent-contextmenu "0.4.3"]

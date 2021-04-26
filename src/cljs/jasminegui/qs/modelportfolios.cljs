@@ -19,6 +19,7 @@
     [goog.string.format]
     [reagent-contextmenu.menu :as rcm]
     [jasminegui.qs.qstables :as qstables]
+    [jasminegui.qs.harvest :as harvest]
     [cljs-time.core :refer [today]]
     )
   )
@@ -33,16 +34,26 @@
                                :TR-model      "TR"})
 
 ;;;;;;;;;;;;
+
 (rf/reg-sub
-  :simple-quant-model
+  :clean-quant-model
   (fn [db]
     (let [qm (:quant-model/model-output db)
           ks (into [] (for [k (keys (first qm)) :when (not (or (clojure.string/includes? (name k) "legacy") (clojure.string/includes? (name k) "new")))] k))
           smallqm (mapv #(merge (select-keys % ks) (zipmap (keys model-portfolio-universe) (repeat 0.0)) {:totaldummy ""}) qm)
-          trd (:model-portfolios/trades db)
+          cntry->region (into {} (for [line (:country-codes db)] [(:CountryCode line) (:JPMRegion line)]))
+          res (mapv #(assoc % :jpm-region (cntry->region (:Country %))) smallqm)]
+      [db res])))
+
+(rf/reg-sub
+  :simple-quant-model
+  (fn [] (rf/subscribe [:clean-quant-model]))
+  (fn [[db data]]
+    (let [trd (:model-portfolios/trades db)
           all-isins (distinct (map :ISIN (apply concat (vals trd))))
           positions (into {} (for [isin all-isins] {isin (into {} (for [p (keys model-portfolio-universe)] [p (if-let [line (last (filter #(= isin (:ISIN %)) (p trd)))] (:position line) 0.0)]))}))]
-      (mapv #(if (contains? positions (:ISIN %)) (merge % (positions (:ISIN %))) %) smallqm))))
+      (mapv #(if (contains? positions (:ISIN %)) (merge % (positions (:ISIN %))) %) data))))
+
 
 (rf/reg-sub
   :simple-quant-model-positions-only
@@ -120,87 +131,25 @@
 (defn rssort [a b] (<= (.indexOf rating-order a) (.indexOf rating-order b)))
 
 (defn model-portfolios []
- (let [viewable-data (case @(rf/subscribe [:model-portfolios/display])
-                       "Build"   @(rf/subscribe [:simple-quant-model])
-                       "Explore" @(rf/subscribe [:simple-quant-model-positions-only])
-                       "Tree"    @(rf/subscribe [:simple-quant-model-positions-and-cembi-index-only])
-                       @(rf/subscribe [:simple-quant-model]))
-       is-tree (= @(rf/subscribe [:model-portfolios/display]) "Tree")]
+ (let [viewable-data (if @(rf/subscribe [:model-portfolios/hide-zeros]) @(rf/subscribe [:simple-quant-model-positions-only]) @(rf/subscribe [:simple-quant-model]))]
    [v-box :class "element" :gap "20px" :width "1690px"
-    :children [[title :label "Model portfolios" :level :level1]
+    :children [[title :label "Construction" :level :level1]
                [h-box :align :center :gap "20px"
-                :children (concat
-                            [[button :label "Force refresh" :on-click #(rf/dispatch [:get-model-portfolios])] [gap :size "20px"]]
-                            (into [] (for [c ["Build" "Explore" "Tree"]]
-                                       ^{:key c} [radio-button :label c :value c :model (rf/subscribe [:model-portfolios/display]) :on-change #(rf/dispatch [:model-portfolios/display %])])) ;; key should be unique among siblings
-                            [
-                             [gap :size "20px"]
-                             [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
-                             [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
-                             [gap :size "1"]
-                              ;
-                             [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link viewable-data "quant-model-output")]])]
-               (if is-tree
-                 [h-box
-                  :gap "20px"
-                  :justify :between
-                  :children [
-                             [v-box :children [[:> ReactTable
-                                                          {:data            viewable-data
-                                                           ;:Country
-                                                           ;:Sector                              {:Header "Sector" :accessor "Sector" :width 80}
-                                                           ;:Ticker                              {:Header "Ticker" :accessor "Ticker" :width 80}
-
-                                                           :columns         [{:Header "Pivot" :columns [{:Header "" :accessor "totaldummy" :width 30 :filterable false}
-                                                                                                        {:Header "Country" :accessor "Country" :width 75 :Aggregated tables/total-txt}
-                                                                                                        {:Header "Ticker" :accessor "Ticker" :width 80}]}
-                                                                             {:Header "Position" :columns (mapv qstables/quant-score-table-columns (concat (keys model-portfolio-universe) [:cembi :cembi-ig]))}]
-                                                           :showPagination  false :pageSize 1
-                                                           :filterable      true :defaultFilterMethod tables/text-filter-OR
-                                                           :defaultSorted   [{:id :cembi :desc true}]
-                                                           :pivotBy         (if is-tree ["totaldummy" "Country" "Ticker"] [])
-                                                           :defaultExpanded {0 {}}
-                                                           :collapseOnSortingChange false
-                                                           :className       "-striped -highlight"}]]]
-                             [v-box :children [[:> ReactTable
-                                                          {:data            viewable-data
-                                                           :columns         [{:Header "Pivot" :columns [{:Header "" :accessor "totaldummy" :width 30 :filterable false}
-                                                                                                        {:Header "Sector" :accessor "Sector" :width 145 :Aggregated tables/total-txt}
-                                                                                                        {:Header "Ticker" :accessor "Ticker" :width 80}]}
-                                                                             {:Header "Position" :columns (mapv qstables/quant-score-table-columns (concat (keys model-portfolio-universe) [:cembi :cembi-ig]))}]
-                                                           :showPagination  false :pageSize 1
-                                                           :filterable      true :defaultFilterMethod tables/text-filter-OR
-                                                           :pivotBy         (if is-tree ["totaldummy" "Sector" "Ticker"] [])
-                                                           :defaultExpanded {0 {}}
-                                                           :collapseOnSortingChange false
-                                                           :defaultSorted   [{:id :cembi :desc true}]
-                                                           :className       "-striped -highlight"}]]]
-                             [v-box :children [[:> ReactTable
-                                                {:data                    (mapv #(assoc % :rs (if (number? (:Used_Rating_Score %)) (nth rating-order (dec (:Used_Rating_Score %))) "NR")) viewable-data)
-                                                 :columns                 [{:Header "Pivot" :columns [{:Header "" :accessor "totaldummy" :width 30 :filterable false}
-                                                                                                      {:Header "Rating" :accessor "rs" :width 125 :Aggregated tables/total-txt :sortMethod rssort}
-                                                                                                      {:Header "Ticker" :accessor "Ticker" :width 80}]}
-                                                                           {:Header "Position" :columns (mapv qstables/quant-score-table-columns (concat (keys model-portfolio-universe) [:cembi :cembi-ig]))}
-                                                                           (assoc (:Used_Rating_Score qstables/quant-score-table-columns) :Header "" :width 20  :filterable false :Cell #(r/as-element [:span ""]))]
-                                                 :showPagination          false :pageSize 1
-                                                 :defaultSorted           [{:id :Used_Rating_Score :desc false}]
-                                                 :filterable              true :defaultFilterMethod tables/text-filter-OR
-                                                 :pivotBy                 (if is-tree ["totaldummy" "rs" "Ticker"] [])
-                                                 :defaultExpanded         {0 {}}
-                                                 :collapseOnSortingChange false
-                                                 :className               "-striped -highlight"}]]]
-                             ]]
-
-
-
-
-                  [:> ReactTable
-                   {:data           viewable-data
-                    :columns        (qstables/table-style->qs-table-col "Model portfolios" @qstables/table-checkboxes)
-                    :showPagination true :defaultPageSize 15 :filterable true :defaultFilterMethod tables/text-filter-OR :defaultExpanded {0 {}}
-                    ;:ref             #(reset! qs-table-view %)
-                    :getTrProps     on-click-context
-                    :className      "-striped -highlight"}])]]))
+                :children [[button :label "Force refresh" :on-click #(rf/dispatch [:get-model-portfolios])]
+                           [gap :size "20px"]
+                           [checkbox :model (rf/subscribe [:model-portfolios/hide-zeros]) :label "Hide zero positions?" :on-change #(rf/dispatch [:model-portfolios/hide-zeros %])]
+                           [gap :size "20px"]
+                           [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
+                           [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
+                           [gap :size "1"]
+                           [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link viewable-data "model-portfolio")]]]
+               [:> ReactTable
+                {:data           viewable-data
+                 :columns        (qstables/table-style->qs-table-col "Model portfolios" @qstables/table-checkboxes)
+                 :showPagination true :defaultPageSize 15 :filterable true :defaultFilterMethod tables/text-filter-OR :defaultExpanded {0 {}}
+                 ;:ref             #(reset! qs-table-view %)
+                 :getTrProps     on-click-context
+                 :className      "-striped -highlight"}]]]))
 
 (defn modal-change-model-portfolio []
   (let [position (r/atom "0.0") reason (r/atom "") date (r/atom (today))]
@@ -232,7 +181,64 @@
           nil
           )))))
 
+(def expanded (r/atom {0 {}}))
 
+(defn pivot-table [viewable-data pivot-col-def tail-col pivot-by default-sorted]
+  [v-box :children [[:> ReactTable
+                     {:data viewable-data
+                      :columns (remove nil? [{:Header "Pivot" :columns [{:Header "" :accessor "totaldummy" :width 30 :filterable false}
+                                                                        pivot-col-def
+                                                                        {:Header "Ticker" :accessor "Ticker" :width 80}]}
+                                             {:Header "Position" :columns (mapv qstables/quant-score-table-columns (concat (keys model-portfolio-universe) [:cembi :cembi-ig]))}
+                                             tail-col])
+                      :showPagination false :pageSize 1 :filterable true :defaultFilterMethod tables/text-filter-OR
+                      :defaultSorted default-sorted :pivotBy pivot-by :collapseOnSortingChange false :className "-striped -highlight"
+                      :defaultExpanded {0 {}} :expanded @expanded :onExpandedChange #(reset! expanded %) ;defaultExpanded buggy hence need for this
+                      }]]])
+
+(defn explorer []
+  (let [pivot (r/atom "Region")]
+    (fn []
+      (let [viewable-data @(rf/subscribe [:simple-quant-model-positions-and-cembi-index-only])]
+        [v-box :class "element" :gap "20px" :width "1690px"
+         :children [[title :label "Exposure breakdown" :level :level1]
+                    [h-box :align :center :gap "20px"
+                     :children (concat
+                                 (into [] (for [c ["Region" "Country" "Sector" "Rating" "Duration"]] ^{:key c} [radio-button :label c :value c :model pivot :on-change #(do (reset! pivot %) (reset! expanded {0 {}}))]))
+                                 [[gap :size "20px"]
+                                  [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download pivot" :on-click #(t/csv-link viewable-data "modelportfolios")]])]
+                    (case @pivot
+                      "Region"  [pivot-table
+                                 viewable-data
+                                 {:Header "Region" :accessor "jpm-region" :width 145 :Aggregated tables/total-txt}
+                                 nil
+                                 ["totaldummy" "jpm-region" "Ticker"]
+                                 [{:id :cembi :desc true}]]
+                      "Country" [pivot-table
+                                 viewable-data
+                                 {:Header "Country" :accessor "Country" :width 75 :Aggregated tables/total-txt}
+                                 nil
+                                 ["totaldummy" "Country" "Ticker"]
+                                 [{:id :cembi :desc true}]]
+                      "Sector" [pivot-table
+                                viewable-data
+                                {:Header "Sector" :accessor "Sector" :width 145 :Aggregated tables/total-txt}
+                                nil
+                                ["totaldummy" "Sector" "Ticker"]
+                                [{:id :cembi :desc true}]]
+                      "Rating" [pivot-table
+                                (mapv #(assoc % :rs (if (number? (:Used_Rating_Score %)) (nth rating-order (dec (:Used_Rating_Score %))) "NR")) viewable-data)
+                                {:Header "Rating" :accessor "rs" :width 125 :Aggregated tables/total-txt :sortMethod rssort}
+                                (assoc (:Used_Rating_Score qstables/quant-score-table-columns) :Header "" :width 20  :filterable false :Cell #(r/as-element [:span ""]))
+                                ["totaldummy" "rs" "Ticker"]
+                                [{:id :Used_Rating_Score :desc false}]]
+                      "Duration" [pivot-table
+                                  (mapv #(assoc % :duration-bucket (harvest/duration-grouping-fn %) :db2 (.indexOf (harvest/duration-grouping-fn %) ["0-3Y" "3-5Y" "5-7Y" "7-10Y" "10Y+" "uncategorized"])) viewable-data)
+                                  {:Header "Duration" :accessor "duration-bucket" :width 125 :Aggregated tables/total-txt}
+                                  nil                       ;{:Header "" :accessor "duration-bucket" :width 20 :filterable false :Cell #(r/as-element [:span ""])}
+                                ["totaldummy" "duration-bucket" "Ticker"]
+                                [{:id :db2 :desc false}]]
+                      )]]))))
 
 (defn trade-history []
   (let [portfolio (r/atom (ffirst model-portfolio-universe))]
@@ -280,6 +286,4 @@
 
 (defn model-portfolio-view []
   [v-box :padding "80px 10px" :class "rightelement" :gap "50px"
-   :children [[model-portfolios] [analytics] [trade-history]]]
-
-  )
+   :children [[model-portfolios] [analytics] [explorer] [trade-history]]])

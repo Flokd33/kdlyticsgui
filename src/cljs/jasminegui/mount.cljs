@@ -175,7 +175,7 @@
                  :model-portfolios/trades                 {}
                  :model-portfolios/names                  ["ModelOne"]
                  :model-portfolios/weights                {"ModelOne" nil}
-                 :model-portfolios/display                "Build"
+                 :model-portfolios/hide-zeros                false
                  :model-portfolios/aggregation            "Region"
 
                  :scorecard/portfolio                   "OGEMCORD"
@@ -313,7 +313,7 @@
            :time-machine/model
 
            :model-portfolios/trades
-           :model-portfolios/display
+           :model-portfolios/hide-zeros
            :model-portfolios/aggregation
 
            :dummy
