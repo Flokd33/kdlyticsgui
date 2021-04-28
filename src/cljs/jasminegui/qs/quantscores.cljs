@@ -79,9 +79,9 @@
 
 
 
-(rf/reg-event-db
-  :model-portfolios/weights
-  (fn [db [_ m isin weight]] (assoc-in db [:model-portfolios/weights m isin] weight)))
+;(rf/reg-event-db
+;  :model-portfolios/weights
+;  (fn [db [_ m isin weight]] (assoc-in db [:model-portfolios/weights m isin] weight)))
 
 
 
@@ -274,6 +274,44 @@
             :change-on-blur? true :immediate-model-update? false :rigid? false :disabled? false]]]
          [oz/vega-lite (qscharts/spot-chart-vega-spec @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice @spot-chart-2d-curves-sov-only)]]]]]]))
 
+(def advanced-spot-chart-view (atom nil))
+(def advanced-spot-chart-isins (r/atom []))
+(defn advanced-spot-chart []
+  (let [data @(rf/subscribe [:quant-model/model-output])]
+    [box :padding "80px 10px" :class "rightelement" :child
+     [v-box :class "element" :gap "20px" :width "1620px" :children
+      [[h-box :align :center :justify :between :children [[title :label "Advanced spot charts" :level :level1]  [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
+       [h-box :align :center :justify :between :children [
+                                                          [v-box :gap "0px" :width "125px" :children
+                                                           (into [] (concat
+                                                                      [
+                                                                       [title :level :level4 :label "Filter table then click draw to see first 25 bonds." ]
+                                                                       [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (take 25 (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))]]
+                                                                      (into [[title :label "Model type" :level :level3]]
+                                                                            (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
+                                                                      [[gap :size "10px"] [title :label "Rating curves" :level :level3]
+                                                                       [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)][gap :size "10px"]
+                                                                       [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]
+                                                                       [gap :size "10px"] [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-rating-choice #{}) :disabled? (zero? (count @spot-chart-rating-choice))]
+                                                                       ;[gap :size "20px"] [title :label "Bookmarks" :level :level3] [button :label "Save new" :class "btn btn-primary btn-block" :on-click #(reset! show-chart-modal :save)][gap :size "10px"] [button :label "Open" :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:get-quant-model-saved-charts]) (reset! show-chart-modal :open))]
+
+                                                                       ]))]
+
+                                                           [oz/vega-lite (qscharts/advanced-spot-chart-vega-spec @advanced-spot-chart-isins @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-2d-curves-sov-only)]]]
+       [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns."]
+       [h-box :gap "50px" :children
+        [
+         [:> ReactTable
+          {:data            data :columns (qstables/table-style->qs-table-col "Advanced spot charts" nil)
+           :showPagination  true :pageSize 10
+           :filterable      true :defaultFilterMethod tables/text-filter-OR
+           :ref             #(reset! advanced-spot-chart-view %)
+           :getTrProps      on-click-context :className "-striped -highlight"}]
+
+
+
+         ]]]]]))
+
 (defn methodology []
   [box :padding "80px 10px" :class "rightelement" :child
    [v-box :class "element" :children
@@ -456,6 +494,7 @@
       :table              [qs-table-container]
       :calculator         [calculator-controller]
       :spot-charts        [spot-chart]
+      :advanced-spot-charts        [advanced-spot-chart]
       :historical-charts  [qs-historical-charts]
       :top-bottom         [harvest/top-bottom]
       :median             [harvest/median-table]

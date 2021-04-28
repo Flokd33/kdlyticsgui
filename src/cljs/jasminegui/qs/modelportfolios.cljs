@@ -42,7 +42,12 @@
           ks (into [] (for [k (keys (first qm)) :when (not (or (clojure.string/includes? (name k) "legacy") (clojure.string/includes? (name k) "new")))] k))
           smallqm (mapv #(merge (select-keys % ks) (zipmap (keys model-portfolio-universe) (repeat 0.0)) {:totaldummy ""}) qm)
           cntry->region (into {} (for [line (:country-codes db)] [(:CountryCode line) (:JPMRegion line)]))
-          res (mapv #(assoc % :jpm-region (cntry->region (:Country %))) smallqm)]
+          res (mapv #(assoc % :jpm-region (cntry->region (:Country %))
+                              :cembi-dur (* (:Used_Duration %) (:cembi %))
+                              :cembi-ig-dur (* (:Used_Duration %) (:cembi-ig %))
+                              :cembi-dur-x-sp (* (:Used_Duration %) (:cembi %) (:Used_ZTW %))
+                              :cembi-ig-dur-x-sp (* (:Used_Duration %) (:cembi-ig %) (:Used_ZTW %))
+                              ) smallqm)]
       [db res])))
 
 (rf/reg-sub
@@ -51,8 +56,18 @@
   (fn [[db data]]
     (let [trd (:model-portfolios/trades db)
           all-isins (distinct (map :ISIN (apply concat (vals trd))))
-          positions (into {} (for [isin all-isins] {isin (into {} (for [p (keys model-portfolio-universe)] [p (if-let [line (last (filter #(= isin (:ISIN %)) (p trd)))] (:position line) 0.0)]))}))]
-      (mapv #(if (contains? positions (:ISIN %)) (merge % (positions (:ISIN %))) %) data))))
+          positions (into {} (for [isin all-isins] {isin (into {} (for [p (keys model-portfolio-universe)] [p (if-let [line (last (filter #(= isin (:ISIN %)) (p trd)))] (:position line) 0.0)]))}))
+          objectives (into {} (for [isin all-isins] {isin (into {} (for [p (keys model-portfolio-universe)] [(keyword (str (name p) "-objective")) (if-let [line (last (filter #(= isin (:ISIN %)) (p trd)))] (if-let [o (:objective line)] o "Active risk") "Active risk")]))}))
+          ]
+      (mapv #(if (contains? positions (:ISIN %))
+               (assoc (merge % (positions (:ISIN %)) (objectives (:ISIN %)))
+                 :CEMBI-model-dur       (* (:Used_Duration %) (get-in positions [(:ISIN %) :CEMBI-model]))
+                 :CEMBI-model-dur-x-sp  (* (:Used_Duration %) (get-in positions [(:ISIN %) :CEMBI-model]) (:Used_ZTW %))
+                 :IG-model-dur          (* (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]))
+                 :IG-model-dur-x-sp     (* (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]) (:Used_ZTW %))
+                 :TR-model-dur          (* (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]))
+                 :TR-model-dur-x-sp     (* (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]) (:Used_ZTW %)))
+               %) data))))
 
 
 (rf/reg-sub
@@ -81,8 +96,9 @@
                {:portfolio         v
                 :nav               (reduce + (map k data))
                 :Used_YTW          (/ (reduce + (map #(* (k %) (:Used_YTW %)) data)) 100.)
-                :Used_Duration     (/ (reduce + (map #(* (k %) (:Used_Duration %)) data)) 100.)
+                :Used_Duration     (/ (reduce + (map (keyword (str (name k) "-dur")) data)) 100.) ;(/ (reduce + (map #(* (k %) (:Used_Duration %)) data)) 100.)
                 :Used_ZTW          (/ (reduce + (map #(* (k %) (:Used_ZTW %)) data)) 100.)
+                :dur_x_sp          (/ (reduce + (map (keyword (str (name k) "-dur-x-sp")) data)) 100.)
                 :G_SPREAD_MID_CALC (/ (reduce + (map #(* (k %) (:G_SPREAD_MID_CALC %)) data)) 100.)
                 :Used_Rating_Score (+ (/ (reduce + (map #(* (k %) (:Used_Rating_Score %)) data)) 100.) (* 0.01 6 (- 100 (reduce + (map k data))))) ;cash is rated A = 6
                 :hy                (reduce + (map k (t/chainfilter {:Used_Rating_Score #(> % 10)} data)))
@@ -152,34 +168,36 @@
                  :className      "-striped -highlight"}]]]))
 
 (defn modal-change-model-portfolio []
-  (let [position (r/atom "0.0") reason (r/atom "") date (r/atom (today))]
+  (let [position (r/atom (str (if-let [line (last (filter #(= (aget (:row @active-trade) "ISIN") (:ISIN %)) ((:portfolio @active-trade) @(rf/subscribe [:model-portfolios/trades]))))] (:position line) 0.0)))
+        reason (r/atom "") date (r/atom (today)) objective (r/atom "Active risk")]
     (fn []
-      (let [a 3]
-        (case @show-change-model-portfolio-modal
-          :change
-          [modal-panel :backdrop-on-click #(reset! show-change-model-portfolio-modal nil)
-           :child [v-box :width "400px" :gap "10px" :padding "20px"
-                   :children [[title :label (str "Amend " ((:portfolio @active-trade) model-portfolio-universe)) :level :level1]
-                              [h-box :gap "10px" :align :center :children [[label :width "125px" :label (aget (:row @active-trade) "Bond")] [label :width "100px" :label (str "ISIN " (aget (:row @active-trade) "ISIN"))]]]
-                              [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Position"] [input-text :placeholder "target" :model position :on-change #(reset! position %)]]]
-                              [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Reason"] [input-text :placeholder "> 10 characters" :model reason :on-change #(reset! reason %)]]]
-                              [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Date"] [datepicker-dropdown :model date :format "dd/MM/yyyy" :show-today? true :on-change #(do (println %) (reset! date %))]]]
-                              [h-box :gap "10px" :children [[button
-                                                             :label "Save"
-                                                             :disabled? (not (and (>= (count @reason) 10) (number? (js/parseFloat @position))))
-                                                             :on-click #(do (reset! show-change-model-portfolio-modal nil)
-                                                                            (rf/dispatch [:model-portfolios/save-new-trade
-                                                                                         {:bond      (aget (:row @active-trade) "Bond")
-                                                                                          :ISIN      (aget (:row @active-trade) "ISIN")
-                                                                                          :portfolio (:portfolio @active-trade)
-                                                                                          :position  (js/parseFloat @position)
-                                                                                          :reason    @reason
-                                                                                          :date      @date}]))]
-                                                            [button :label "Cancel" :on-click #(reset! show-change-model-portfolio-modal nil)]]]]]]
+      (case @show-change-model-portfolio-modal
+        :change
+        [modal-panel :backdrop-on-click #(reset! show-change-model-portfolio-modal nil)
+         :child [v-box :width "400px" :gap "10px" :padding "20px"
+                 :children [[title :label (str "Amend " ((:portfolio @active-trade) model-portfolio-universe)) :level :level1]
+                            [h-box :gap "10px" :align :center :children [[label :width "125px" :label (aget (:row @active-trade) "Bond")] [label :width "100px" :label (str "ISIN " (aget (:row @active-trade) "ISIN"))]]]
+                            [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Position"] [input-text :width "100px" :placeholder "target" :model position :on-change #(reset! position %)]]]
+                            [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Objective"] [single-dropdown :width "100px" :choices (into [] (for [k ["Active risk" "Diversifier" "For sale"]] {:id k :label k})) :model objective :on-change #(reset! objective %)]]]
+                            [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Reason"] [input-text :placeholder "> 10 characters" :model reason :on-change #(reset! reason %)]]]
+                            [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Date"] [datepicker-dropdown :model date :format "dd/MM/yyyy" :show-today? true :on-change #(do (println %) (reset! date %))]]]
+                            [h-box :gap "10px" :children [[button
+                                                           :label "Save"
+                                                           :disabled? (not (and (>= (count @reason) 10) (number? (js/parseFloat @position))))
+                                                           :on-click #(do (reset! show-change-model-portfolio-modal nil)
+                                                                          (rf/dispatch [:model-portfolios/save-new-trade
+                                                                                        {:bond      (aget (:row @active-trade) "Bond")
+                                                                                         :ISIN      (aget (:row @active-trade) "ISIN")
+                                                                                         :portfolio (:portfolio @active-trade)
+                                                                                         :position  (js/parseFloat @position)
+                                                                                         :objective @objective
+                                                                                         :reason    @reason
+                                                                                         :date      @date}]))]
+                                                          [button :label "Cancel" :on-click #(reset! show-change-model-portfolio-modal nil)]]]]]]
 
 
-          nil
-          )))))
+        nil
+        ))))
 
 (def expanded (r/atom {0 {}}))
 
@@ -204,7 +222,7 @@
          :children [[title :label "Exposure breakdown" :level :level1]
                     [h-box :align :center :gap "20px"
                      :children (concat
-                                 (into [] (for [c ["Region" "Country" "Sector" "Rating" "Duration"]] ^{:key c} [radio-button :label c :value c :model pivot :on-change #(do (reset! pivot %) (reset! expanded {0 {}}))]))
+                                 (into [] (for [c ["Region" "Country" "Sector" "Rating" "Duration" "Objective-CEMBI-model"]] ^{:key c} [radio-button :label c :value c :model pivot :on-change #(do (reset! pivot %) (reset! expanded {0 {}}))]))
                                  [[gap :size "20px"]
                                   [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download pivot" :on-click #(t/csv-link viewable-data "modelportfolios")]])]
                     (case @pivot
@@ -238,6 +256,12 @@
                                   nil                       ;{:Header "" :accessor "duration-bucket" :width 20 :filterable false :Cell #(r/as-element [:span ""])}
                                 ["totaldummy" "duration-bucket" "Ticker"]
                                 [{:id :db2 :desc false}]]
+                      "Objective-CEMBI-model" [pivot-table
+                                  (mapv #(assoc % :objective (:CEMBI-model-objective %)) viewable-data)
+                                  {:Header "Objective" :accessor "objective" :width 125 :Aggregated tables/total-txt}
+                                  nil                       ;{:Header "" :accessor "duration-bucket" :width 20 :filterable false :Cell #(r/as-element [:span ""])}
+                                  ["totaldummy" "objective" "Ticker"]
+                                  [{:id :objective :desc false}]]
                       )]]))))
 
 (defn trade-history []
@@ -256,6 +280,7 @@
                                        {:Header "Bond" :accessor "bond" :width 200}
                                        {:Header "ISIN" :accessor "ISIN" :width 100}
                                        {:Header "Position" :accessor "position" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                       {:Header "Objective" :accessor "objective" :width 150}
                                        {:Header "Reason" :accessor "reason" :width 800}]
                       :showPagination true :defaultPageSize 10 :filterable true :defaultFilterMethod tables/text-filter-OR :className "-striped -highlight"}]]]))))
 
@@ -271,16 +296,17 @@
                                    {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1}
                                    {:Header "ZTW" :accessor "Used_ZTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format}
                                    {:Header "G" :accessor "G_SPREAD_MID_CALC" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format}
-                                   {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1}
-                                   {:Header "HY" :accessor "hy" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                   {:Header "Not $" :accessor "nusd" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                   {:Header "Sub" :accessor "sub" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                   {:Header "Hybrid" :accessor "hybrid" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                   {:Header "CEMBI" :accessor "cembi" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                   {:Header "CEMBIIG" :accessor "cembi-ig" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                   {:Header "Sov" :accessor "sov" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                   {:Header "ESG" :accessor "esg" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                   {:Header "Issuers" :accessor "issuers" :width 65 :style {:textAlign "right"}}
+                                   {:Header "DurXSp" :accessor "dur_x_sp" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell #(tables/nb-cell-format "%.0f" 1 %)}
+                                    {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1}
+                                            {:Header "HY" :accessor "hy" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                    {:Header "Not $" :accessor "nusd" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                            {:Header "Sub" :accessor "sub" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                    {:Header "Hybrid" :accessor "hybrid" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                            {:Header "CEMBI" :accessor "cembi" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                    {:Header "CEMBIIG" :accessor "cembi-ig" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                            {:Header "Sov" :accessor "sov" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                    {:Header "ESG" :accessor "esg" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                            {:Header "Issuers" :accessor "issuers" :width 65 :style {:textAlign "right"}}
                                    ]
                   :showPagination false :defaultPageSize (+ (count model-portfolio-universe) 2) :filterable false :className "-striped -highlight"}]]]))
 

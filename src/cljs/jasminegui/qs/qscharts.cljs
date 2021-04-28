@@ -72,6 +72,55 @@
      :width  1000
      :height 625}))
 
+(defn advanced-spot-chart-vega-spec [isins model ratings sov-only-2d]
+  (let [raw-data (if sov-only-2d @(rf/subscribe [:quant-model/rating-curves-sov-only]) @(rf/subscribe [:quant-model/rating-curves]))
+        data (filter #(contains? ratings (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
+        target (case model "Legacy" "predicted_spread_legacy" "New" "predicted_spread_new" "SVR" "predicted_spread_svr")
+        ktarget (keyword target)
+        bonds (filter #(contains? (set isins) (:ISIN %)) @(rf/subscribe [:quant-model/model-output]))
+        bond-data (map #(select-keys % [:Bond :rule-max :rule-min :cheap :Used_Duration :Used_ZTW ktarget :Duration :Rating])
+                       (map #(assoc %
+                               :rule-max (max (ktarget %) (:Used_ZTW %))
+                               :rule-min (min (ktarget %) (:Used_ZTW %))
+                               :cheap (if (< (ktarget %) (:Used_ZTW %)) "cheap" "expensive"))
+                            bonds))
+        min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
+        max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)
+        rating-text-data (into [] (for [line (filter #(= (:Duration %) (Math/round (* 0.25 (+ min-domain max-domain)))) data)] {:Duration (:Duration line) :spread (ktarget line) :txt (qstables/get-implied-rating (str (:Rating line)))}))
+        ]
+    {:title  nil
+     :data   {:values (concat bond-data data rating-text-data)}
+     :layer  [
+              {:selection {:grid {:type "interval" :bind "scales"}}
+               :mark     {:type "line" :clip true}
+               :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [min-domain max-domain]}} ;:scale {:domain [0. 30.]}
+                          :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                          :color {:field "Rating" :type "quantitative" :legend nil}}}
+              {:mark     {:type "text" :dy -10}
+               :encoding {:x     {:field "Duration" :type "quantitative"}
+                          :y     {:field "spread" :type "quantitative"}
+                          :text {:field "txt" :type "nominal"}}}
+              {:mark     {:type "rule"}
+               :encoding {:x       {:field "Used_Duration" :type "quantitative"}
+                          :y       {:field "rule-min" :type "quantitative"}
+                          :y2      {:field "rule-max" :type "quantitative"}
+                          :color   {:field "cheap" :type "nominal" :scale {:domain ["cheap" "expensive"] :range ["#134848" "#FDAA94"]} :legend {:title nil :labelFontSize 14}}}}
+              {:mark     {:type "point" :filled true}
+               :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+                          :y     {:field "Used_ZTW" :type "quantitative"}
+                          :color {:value "black"}
+                          :tooltip [{:field "Bond" :type "nominal" :title "Bond"}
+                                    {:field "Used_Duration" :type "quantitative", :title "Duration"}
+                                    {:field "Used_ZTW" :type "quantitative", :title "Spread"}
+                                    {:field target :type "quantitative", :title "Model"}]}}
+              {:mark     {:type "text" :dx 6 :align "left"}
+               :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+                          :y     {:field "Used_ZTW" :type "quantitative"}
+                          :text {:field "Bond" :type "nominal"}}}
+
+              ]
+     :width  1000
+     :height 625}))
 
 (defn quant-isin-history-chart [cheapness? spread? universe? historical? rating?]
   (let [data @(rf/subscribe [:quant-model/isin-history])]

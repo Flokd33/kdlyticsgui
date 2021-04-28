@@ -173,8 +173,6 @@
                  :quant-model/saved-charts                {}
 
                  :model-portfolios/trades                 {}
-                 :model-portfolios/names                  ["ModelOne"]
-                 :model-portfolios/weights                {"ModelOne" nil}
                  :model-portfolios/hide-zeros                false
                  :model-portfolios/aggregation            "Region"
 
@@ -375,9 +373,7 @@
   :quant-model/model-output
   (fn [db [_ model]]
     (assoc db
-      ;:quant-model/model-output model
       :quant-model/model-output (array-of-lists->records model)
-      :model-portfolios/weights (into {} (for [m (:model-portfolios/names db)] [m (zipmap (model :ISIN) (repeat "0.0"))]))
               :navigation/show-mounting-modal false)))
 
 ;(rf/reg-event-db

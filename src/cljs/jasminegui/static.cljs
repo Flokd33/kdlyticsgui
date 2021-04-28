@@ -44,6 +44,7 @@
   [{:code :table              :name "Table"}
    {:code :calculator         :name "Calculator"}
    {:code :spot-charts        :name "Spot charts"}
+   {:code :advanced-spot-charts        :name "Advanced spot charts"}
    {:code :historical-charts  :name "Historical charts"}
    {:code :top-bottom         :name "Most expensive / cheap"}
    {:code :median             :name "Median spreads"}

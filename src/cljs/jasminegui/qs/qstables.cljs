@@ -43,15 +43,15 @@
                                                      (if (.includes x "L") "Sutainability-linked")])} x]]
       "-")))
 
-(defn model-weight-input-cell
-  [this]
-  (if (= @(rf/subscribe [:model-portfolios/hide-zeros]) "Build")
-    (r/as-element
-      [input-text
-       :width "50px"
-       :model (r/cursor (rf/subscribe [:model-portfolios/weights]) ["ModelOne" (aget this "row" "ISIN")])
-       :on-change #(rf/dispatch [:model-portfolios/weights "ModelOne" (aget this "row" "ISIN") %])])
-    (tables/round1 this)))
+;(defn model-weight-input-cell
+;  [this]
+;  (if (= @(rf/subscribe [:model-portfolios/hide-zeros]) "Build")
+;    (r/as-element
+;      [input-text
+;       :width "50px"
+;       :model (r/cursor (rf/subscribe [:model-portfolios/weights]) ["ModelOne" (aget this "row" "ISIN")])
+;       :on-change #(rf/dispatch [:model-portfolios/weights "ModelOne" (aget this "row" "ISIN") %])])
+;    (tables/round1 this)))
 
 (def quant-score-table-columns
   {:ISIN                                {:Header "ISIN" :accessor "ISIN" :width 100}
@@ -71,7 +71,7 @@
    :embi-ig                             {:Header "EMBI IG" :accessor "embi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
    :us-agg                              {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
    :global-agg                          {:Header "Glb agg" :accessor "global-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :CRNCY                               {:Header "Currency" :accessor "CRNCY" :width 50}
+   :CRNCY                               {:Header "Currency" :accessor "CRNCY" :width 65}
    :Bond-sticky                         {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                          {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :Rating_String                       {:Header "Rating source" :accessor "Rating_String" :width 110 :filterable true :filterMethod tables/nb-filter-OR-AND-x100}
@@ -314,6 +314,11 @@
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
+      "Advanced spot charts"
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :Ticker :CRNCY :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
+              [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}]
+              [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])}
+               {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :difference_svr_2_2d])}])
       ))
   )
 
