@@ -285,8 +285,8 @@
                                                           [v-box :gap "0px" :width "125px" :children
                                                            (into [] (concat
                                                                       [
-                                                                       [title :level :level4 :label "Filter table then click draw to see first 25 bonds." ]
-                                                                       [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (take 25 (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))]]
+                                                                       [title :level :level4 :label "Filter table then click draw to see first 50 bonds." ]
+                                                                       [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (take 50 (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))]]
                                                                       (into [[title :label "Model type" :level :level3]]
                                                                             (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
                                                                       [[gap :size "10px"] [title :label "Rating curves" :level :level3]
