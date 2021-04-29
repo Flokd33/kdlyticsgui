@@ -171,6 +171,7 @@
                  :quant-model/new-bond-saved-message      ""
                  :quant-model/new-bond-already-exists     false
                  :quant-model/saved-charts                {}
+                 :quant-model/saved-advanced-charts       {}
 
                  :model-portfolios/trades                 {}
                  :model-portfolios/hide-zeros                false
@@ -300,6 +301,7 @@
            :quant-model/new-bond-saved-message
            ;:quant-model/table-filter
            :quant-model/saved-charts
+           :quant-model/saved-advanced-charts
 
            :scorecard/attribution-table
            :scorecard/portfolio

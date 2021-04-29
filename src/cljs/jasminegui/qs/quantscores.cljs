@@ -59,12 +59,24 @@
                          :dispatch-key [:quant-model/saved-charts]}}))
 
 (rf/reg-event-fx
+  :get-quant-model-saved-advanced-charts
+  (println "here")
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str static/server-address "quant-model-saved-advanced-charts")
+                         :dispatch-key [:quant-model/saved-advanced-charts]}}))
+(rf/reg-event-fx
   :quant-model-save-new-chart
   (fn [{:keys [db]} [_ id model-type rating-curves issuers spot-chart-2d-curves-sov-only]]
     {:http-post-dispatch {:url (str static/server-address "quant-model-save-new-chart")
                           :edn-params {:id id :model-type model-type :rating-curves (remove nil? (seq rating-curves)) :issuers (remove nil? (seq issuers)) :rating-curves-sov-only spot-chart-2d-curves-sov-only}
                           :dispatch-key [:dummy]}}))
 
+(rf/reg-event-fx
+  :quant-model-save-new-advanced-chart
+  (fn [{:keys [db]} [_ id model-type rating-curves spot-chart-2d-curves-sov-only advanced-filter]]
+    {:http-post-dispatch {:url (str static/server-address "quant-model-save-new-advanced-chart")
+                          :edn-params {:id id :model-type model-type :rating-curves (remove nil? (seq rating-curves)) :rating-curves-sov-only spot-chart-2d-curves-sov-only :advanced-filter advanced-filter}
+                          :dispatch-key [:dummy]}}))
 (defn nav-qs-bar []
   (let [active-var @(rf/subscribe [:navigation/active-qs])]
     [h-box
@@ -276,40 +288,41 @@
 
 (def advanced-spot-chart-view (atom nil))
 (def advanced-spot-chart-isins (r/atom []))
+(def advanced-chart-filter (atom []))
+(def reagent-chart-filter (atom []))
+(def open-update (r/atom false))
 (defn advanced-spot-chart []
   (let [data @(rf/subscribe [:quant-model/model-output])]
     [box :padding "80px 10px" :class "rightelement" :child
      [v-box :class "element" :gap "20px" :width "1620px" :children
       [[h-box :align :center :justify :between :children [[title :label "Advanced spot charts" :level :level1]  [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
-       [h-box :align :center :justify :between :children [
+       [h-box :align :start :justify :between :children [
                                                           [v-box :gap "0px" :width "125px" :children
                                                            (into [] (concat
-                                                                      [
-                                                                       [title :level :level4 :label "Filter table then click draw to see first 50 bonds." ]
-                                                                       [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (take 50 (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))]]
                                                                       (into [[title :label "Model type" :level :level3]]
                                                                             (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
                                                                       [[gap :size "10px"] [title :label "Rating curves" :level :level3]
                                                                        [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)][gap :size "10px"]
                                                                        [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]
                                                                        [gap :size "10px"] [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-rating-choice #{}) :disabled? (zero? (count @spot-chart-rating-choice))]
-                                                                       ;[gap :size "20px"] [title :label "Bookmarks" :level :level3] [button :label "Save new" :class "btn btn-primary btn-block" :on-click #(reset! show-chart-modal :save)][gap :size "10px"] [button :label "Open" :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:get-quant-model-saved-charts]) (reset! show-chart-modal :open))]
-
+                                                                       [gap :size "20px"] [title :label "Bookmarks" :level :level3] [button :label "Save new" :class "btn btn-primary btn-block" :on-click #(reset! show-chart-modal :save-advanced)][gap :size "10px"] [button :label "Open" :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:get-quant-model-saved-advanced-charts]) (reset! show-chart-modal :open-advanced))]
                                                                        ]))]
+                                                          [v-box :gap "10px" :width "125px" :children [[title :level :level4 :label "Filter table then click draw to see first 50 bonds." ]
+                                                                                                      [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (take 50 (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))]]]
 
                                                            [oz/vega-lite (qscharts/advanced-spot-chart-vega-spec @advanced-spot-chart-isins @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-2d-curves-sov-only)]]]
        [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns."]
        [h-box :gap "50px" :children
         [
          [:> ReactTable
-          {:data            data :columns (qstables/table-style->qs-table-col "Advanced spot charts" nil)
-           :showPagination  true :pageSize 10
-           :filterable      true :defaultFilterMethod tables/text-filter-OR
-           :ref             #(reset! advanced-spot-chart-view %)
-           :getTrProps      on-click-context :className "-striped -highlight"}]
-
-
-
+          {:data           data :columns (qstables/table-style->qs-table-col "Advanced spot charts" nil)
+           :showPagination true :pageSize 50 :showPageSizeOptions false
+           :filterable     true :defaultFilterMethod tables/text-filter-OR :onFilteredChange #(reset! advanced-chart-filter %) :defaultFiltered @reagent-chart-filter
+           :ref            #(do (reset! advanced-spot-chart-view %) ;we're going to go through here TWICE first time likely with empty stuff. THIS IS TRICKY
+                                (when @open-update
+                                  (reset! advanced-spot-chart-isins (take 50 (js->clj (if % (.map (. (.getResolvedState %) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))
+                                  (if % (reset! open-update false))))
+           :getTrProps     on-click-context :className "-striped -highlight"}]
          ]]]]]))
 
 (defn methodology []
@@ -507,18 +520,26 @@
       [:div.output "nothing to display"])))
 
 (defn display-saved-chart [line]
-  ;(println line)
   (reset! spot-chart-model-choice (:model-type line))
   (reset! spot-chart-rating-choice (set (:rating-curves line)))
   (reset! spot-chart-issuer-choice (set (:issuers line)))
+  (reset! spot-chart-2d-curves-sov-only (if-let [x (:rating-curves-sov-only line)] x false)))
+
+(defn display-advanced-saved-chart [line]
+  (reset! spot-chart-model-choice (:model-type line))
+  (reset! spot-chart-rating-choice (set (:rating-curves line)))
+  (reset! advanced-chart-filter (clj->js (:advanced-filter line)))
+  (reset! reagent-chart-filter (clj->js (:advanced-filter line)))
   (reset! spot-chart-2d-curves-sov-only (if-let [x (:rating-curves-sov-only line)] x false))
+  (reset! open-update true)
   )
 
 (defn modal-spot-charts []
   (let [nickname (r/atom "")
         chart-to-open (r/atom #{})]
     (fn []
-      (let [saved-charts (js->clj (js/JSON.parse @(rf/subscribe [:quant-model/saved-charts])) :keywordize-keys true)]
+      (let [saved-charts (js->clj (js/JSON.parse @(rf/subscribe [:quant-model/saved-charts])) :keywordize-keys true)
+            advanced-saved-charts (js->clj (js/JSON.parse @(rf/subscribe [:quant-model/saved-advanced-charts])) :keywordize-keys true)]
         (case @show-chart-modal
           :save
           [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)
@@ -536,8 +557,25 @@
                                :choices (into [] (for [x (sort (map :id saved-charts))] {:id x :label x}))
                                :on-change #(do (display-saved-chart (first (t/chainfilter {:id (first %)} saved-charts))) (reset! show-chart-modal nil))]
                               [h-box :gap "10px" :children [[button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
+          :save-advanced
+          [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)
+           :child [v-box  :width "400px" :gap "10px" :padding "20px"
+                   :children [[title :label "Save advanced chart configuration" :level :level1]
+                              [input-text :placeholder "Nickname" :model nickname :on-change #(reset! nickname %)]
+                              [label :label "Use same nickname to override existing configuration."]
+                              [h-box :gap "10px" :children [[button :label "Save" :on-click #(do (rf/dispatch [:quant-model-save-new-advanced-chart @nickname @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-2d-curves-sov-only (js->clj @advanced-chart-filter)]) (reset! show-chart-modal nil))]
+                                                            [button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
+          :open-advanced
+          [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)
+           :child [v-box  :width "400px" :height "600px" :gap "10px" :padding "20px"
+                   :children [[title :label "Open advanced chart configuration" :level :level1]
+                              [selection-list :max-height "500px" :model chart-to-open :multi-select? false
+                               :choices (into [] (for [x (sort (map :id advanced-saved-charts))] {:id x :label x}))
+                               :on-change #(do (display-advanced-saved-chart (first (t/chainfilter {:id (first %)} advanced-saved-charts))) (reset! show-chart-modal nil))]
+                              [h-box :gap "10px" :children [[button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
           nil
           )))))
+
 
 (defn view []
   [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio]]])
