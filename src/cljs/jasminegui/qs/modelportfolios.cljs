@@ -43,10 +43,10 @@
           smallqm (mapv #(merge (select-keys % ks) (zipmap (keys model-portfolio-universe) (repeat 0.0)) {:totaldummy ""}) qm)
           cntry->region (into {} (for [line (:country-codes db)] [(:CountryCode line) (:JPMRegion line)]))
           res (mapv #(assoc % :jpm-region (cntry->region (:Country %))
-                              :cembi-dur (* (:Used_Duration %) (:cembi %))
-                              :cembi-ig-dur (* (:Used_Duration %) (:cembi-ig %))
-                              :cembi-dur-x-sp (* (:Used_Duration %) (:cembi %) (:Used_ZTW %))
-                              :cembi-ig-dur-x-sp (* (:Used_Duration %) (:cembi-ig %) (:Used_ZTW %))
+                              :cembi-dur (* 0.01 (:Used_Duration %) (:cembi %))
+                              :cembi-ig-dur (* 0.01 (:Used_Duration %) (:cembi-ig %))
+                              :cembi-dur-x-sp (* 0.0001 (:Used_Duration %) (:cembi %) (:Used_ZTW %))
+                              :cembi-ig-dur-x-sp (* 0.0001 (:Used_Duration %) (:cembi-ig %) (:Used_ZTW %))
                               ) smallqm)]
       [db res])))
 
@@ -60,14 +60,22 @@
           objectives (into {} (for [isin all-isins] {isin (into {} (for [p (keys model-portfolio-universe)] [(keyword (str (name p) "-objective")) (if-let [line (last (filter #(= isin (:ISIN %)) (p trd)))] (if-let [o (:objective line)] o "Active risk") "Active risk")]))}))
           ]
       (mapv #(if (contains? positions (:ISIN %))
-               (assoc (merge % (positions (:ISIN %)) (objectives (:ISIN %)))
-                 :CEMBI-model-dur       (* (:Used_Duration %) (get-in positions [(:ISIN %) :CEMBI-model]))
-                 :CEMBI-model-dur-x-sp  (* (:Used_Duration %) (get-in positions [(:ISIN %) :CEMBI-model]) (:Used_ZTW %))
-                 :IG-model-dur          (* (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]))
-                 :IG-model-dur-x-sp     (* (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]) (:Used_ZTW %))
-                 :TR-model-dur          (* (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]))
-                 :TR-model-dur-x-sp     (* (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]) (:Used_ZTW %)))
-               %) data))))
+               (assoc
+                 (merge % (positions (:ISIN %)) (objectives (:ISIN %)))
+                 :CEMBI-model-dur       (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :CEMBI-model]))
+                 :CEMBI-model-dur-x-sp  (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :CEMBI-model]) (:Used_ZTW %))
+                 :IG-model-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]))
+                 :IG-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]) (:Used_ZTW %))
+                 :TR-model-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]))
+                 :TR-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]) (:Used_ZTW %)))
+               (assoc %
+                 :CEMBI-model-dur       0
+                 :CEMBI-model-dur-x-sp  0
+                 :IG-model-dur          0
+                 :IG-model-dur-x-sp     0
+                 :TR-model-dur          0
+                 :TR-model-dur-x-sp     0))
+            data))))
 
 
 (rf/reg-sub
@@ -201,63 +209,74 @@
 
 (def expanded (r/atom {0 {}}))
 
-(defn pivot-table [viewable-data pivot-col-def tail-col pivot-by default-sorted]
+(defn pivot-table [viewable-data metric pivot-col-def tail-col pivot-by default-sorted]
   [v-box :children [[:> ReactTable
-                     {:data viewable-data
-                      :columns (remove nil? [{:Header "Pivot" :columns [{:Header "" :accessor "totaldummy" :width 30 :filterable false}
-                                                                        pivot-col-def
-                                                                        {:Header "Ticker" :accessor "Ticker" :width 80}]}
-                                             {:Header "Position" :columns (mapv qstables/quant-score-table-columns (concat (keys model-portfolio-universe) [:cembi :cembi-ig]))}
-                                             tail-col])
-                      :showPagination false :pageSize 1 :filterable true :defaultFilterMethod tables/text-filter-OR
-                      :defaultSorted default-sorted :pivotBy pivot-by :collapseOnSortingChange false :className "-striped -highlight"
+                     {:data            viewable-data
+                      :columns         (remove nil? [{:Header "Pivot" :columns [{:Header "" :accessor "totaldummy" :width 30 :filterable false}
+                                                                                pivot-col-def
+                                                                                {:Header "Ticker" :accessor "Ticker" :width 80}]}
+                                                     {:Header "Position" :columns
+                                                              (case metric
+                                                                "NAV" (mapv qstables/quant-score-table-columns (concat (keys model-portfolio-universe) [:cembi :cembi-ig]))
+                                                                "Duration" (mapv qstables/quant-score-table-columns (concat (mapv #(keyword (str (name %) "-dur")) (keys model-portfolio-universe)) [:cembi-dur :cembi-ig-dur]))
+                                                                "Duration x Spread" (mapv qstables/quant-score-table-columns (concat (mapv #(keyword (str (name %) "-dur-x-sp")) (keys model-portfolio-universe)) [:cembi-dur-x-sp :cembi-ig-dur-x-sp]))
+                                                                )}
+                                                     tail-col])
+                      :showPagination  false :pageSize 1 :filterable true :defaultFilterMethod tables/text-filter-OR
+                      :defaultSorted   default-sorted :pivotBy pivot-by :collapseOnSortingChange false :className "-striped -highlight"
                       :defaultExpanded {0 {}} :expanded @expanded :onExpandedChange #(reset! expanded %) ;defaultExpanded buggy hence need for this
                       }]]])
 
 (defn explorer []
-  (let [pivot (r/atom "Region")]
+  (let [pivot (r/atom "Region")
+        metric (r/atom "NAV")]
     (fn []
       (let [viewable-data @(rf/subscribe [:simple-quant-model-positions-and-cembi-index-only])]
         [v-box :class "element" :gap "20px" :width "1690px"
-         :children [[title :label "Exposure breakdown" :level :level1]
+         :children [[h-box :align :center :justify :between :children [[title :label "Exposure breakdown" :level :level1][md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download pivot" :on-click #(t/csv-link viewable-data "modelportfolios")]]]
                     [h-box :align :center :gap "20px"
-                     :children (concat
-                                 (into [] (for [c ["Region" "Country" "Sector" "Rating" "Duration" "Objective-CEMBI-model"]] ^{:key c} [radio-button :label c :value c :model pivot :on-change #(do (reset! pivot %) (reset! expanded {0 {}}))]))
-                                 [[gap :size "20px"]
-                                  [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download pivot" :on-click #(t/csv-link viewable-data "modelportfolios")]])]
+                     :children (into [] (for [c ["NAV" "Duration" "Duration x Spread"]] ^{:key c} [radio-button :label c :value c :model metric :on-change #(do (reset! metric %) (reset! expanded {0 {}}))]))]
+                    [h-box :align :center :gap "20px"
+                     :children (into [] (for [c ["Region" "Country" "Sector" "Rating" "Duration" "Objective-CEMBI-model"]] ^{:key c} [radio-button :label c :value c :model pivot :on-change #(do (reset! pivot %) (reset! expanded {0 {}}))]))]
                     (case @pivot
                       "Region"  [pivot-table
                                  viewable-data
+                                 @metric
                                  {:Header "Region" :accessor "jpm-region" :width 145 :Aggregated tables/total-txt}
                                  nil
                                  ["totaldummy" "jpm-region" "Ticker"]
                                  [{:id :cembi :desc true}]]
                       "Country" [pivot-table
                                  viewable-data
+                                 @metric
                                  {:Header "Country" :accessor "Country" :width 75 :Aggregated tables/total-txt}
                                  nil
                                  ["totaldummy" "Country" "Ticker"]
                                  [{:id :cembi :desc true}]]
                       "Sector" [pivot-table
                                 viewable-data
+                                @metric
                                 {:Header "Sector" :accessor "Sector" :width 145 :Aggregated tables/total-txt}
                                 nil
                                 ["totaldummy" "Sector" "Ticker"]
                                 [{:id :cembi :desc true}]]
                       "Rating" [pivot-table
                                 (mapv #(assoc % :rs (if (number? (:Used_Rating_Score %)) (nth rating-order (dec (:Used_Rating_Score %))) "NR")) viewable-data)
+                                @metric
                                 {:Header "Rating" :accessor "rs" :width 125 :Aggregated tables/total-txt :sortMethod rssort}
                                 (assoc (:Used_Rating_Score qstables/quant-score-table-columns) :Header "" :width 20  :filterable false :Cell #(r/as-element [:span ""]))
                                 ["totaldummy" "rs" "Ticker"]
                                 [{:id :Used_Rating_Score :desc false}]]
                       "Duration" [pivot-table
                                   (mapv #(assoc % :duration-bucket (harvest/duration-grouping-fn %) :db2 (.indexOf (harvest/duration-grouping-fn %) ["0-3Y" "3-5Y" "5-7Y" "7-10Y" "10Y+" "uncategorized"])) viewable-data)
+                                  @metric
                                   {:Header "Duration" :accessor "duration-bucket" :width 125 :Aggregated tables/total-txt}
                                   nil                       ;{:Header "" :accessor "duration-bucket" :width 20 :filterable false :Cell #(r/as-element [:span ""])}
                                 ["totaldummy" "duration-bucket" "Ticker"]
                                 [{:id :db2 :desc false}]]
                       "Objective-CEMBI-model" [pivot-table
-                                  (mapv #(assoc % :objective (:CEMBI-model-objective %)) viewable-data)
+                                               (mapv #(assoc % :objective (:CEMBI-model-objective %)) viewable-data)
+                                               @metric
                                   {:Header "Objective" :accessor "objective" :width 125 :Aggregated tables/total-txt}
                                   nil                       ;{:Header "" :accessor "duration-bucket" :width 20 :filterable false :Cell #(r/as-element [:span ""])}
                                   ["totaldummy" "objective" "Ticker"]

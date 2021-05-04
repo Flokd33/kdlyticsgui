@@ -23,15 +23,14 @@
 (defn get-implied-rating [txt]
   (if-let [x (first (first (filter #(= (subs (second %) 0 2) (if (= 1 (count txt)) (str "0" txt) txt)) @(rf/subscribe [:rating-to-score]))))] (name x) "error"))
 
-(defn rating-score-to-txt [this]
-  (r/as-element
-    [:span
-     (if-let [x (aget this "value")]
-       (if (number? x)
-         (nth ["AAA" "AA+" "AA" "AA-" "A+" "A" "A-" "BBB+" "BBB" "BBB-" "BB+" "BB" "BB-" "B+" "B" "B-" "CCC+" "CCC" "CCC-"] (dec x))
-         "NR")
-       "NR")]))
-
+;(defn rating-score-to-txt [this]
+;  (r/as-element
+;    [:span
+;     (if-let [x (aget this "value")]
+;       (if (number? x)
+;         (nth ["AAA" "AA+" "AA" "AA-" "A+" "A" "A-" "BBB+" "BBB" "BBB-" "BB+" "BB" "BB-" "B+" "B" "B-" "CCC+" "CCC" "CCC-"] (dec x))
+;         "NR")
+;       "NR")]))
 
 
 (defn esg-span [this]
@@ -238,6 +237,18 @@
    :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :TR-model                         {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+
+   :CEMBI-model-dur       {:Header "Main" :accessor "CEMBI-model-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :CEMBI-model-dur-x-sp  {:Header "Main" :accessor "CEMBI-model-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :IG-model-dur       {:Header "IG" :accessor "IG-model-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :IG-model-dur-x-sp  {:Header "IG" :accessor "IG-model-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :TR-model-dur       {:Header "TR" :accessor "TR-model-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :TR-model-dur-x-sp  {:Header "TR" :accessor "TR-model-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-dur       {:Header "CEMBI" :accessor "cembi-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-dur-x-sp  {:Header "CEMBI" :accessor "cembi-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-ig-dur       {:Header "CEMBI IG" :accessor "cembi-ig-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-ig-dur-x-sp  {:Header "CEMBI IG" :accessor "cembi-ig-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+
 
    })
 

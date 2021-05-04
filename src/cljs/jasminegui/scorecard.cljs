@@ -21,10 +21,42 @@
     [jasminegui.riskviews :as riskviews]
     [jasminegui.qs.quantscores :as quantscores]
     [jasminegui.qs.qstables :as qstables]
+    [cljs-time.core :refer [today]]
     [oz.core :as oz])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
+
+(def qdb-sectors
+  {
+   "CONSUMERS"
+   "FINANCIALS"
+   "INDUSTRIALS"
+   "INFRASTRUCTURE"
+   "METALSMINING"
+   "OILGAS"
+   "PULPPAPER"
+   "REALESTATE"
+   "TELECOMS"
+   "UTILITIES"})
+
+(def qdb-server "https://ldprdfiorcdc1:6100/v1/emcd/")
+
+(rf/reg-event-fx
+  :get-qdb-securities
+  (fn [{:keys [db]} [_ sector]]
+    {:http-get-dispatch {:url          (str qdb-server "securities?sectors=" sector)
+                         :dispatch-key [:scorecard/qdb-securities]}}))
+
+(rf/reg-event-fx
+  :get-qdb-scores
+  (fn [{:keys [db]} [_ isins]]
+    {:db db
+     :http-post-dispatch {:url (str qdb-server "scores")
+                          :edn-params {:code_type "ISIN"
+                                       :codes isins
+                                       :date_params {:as_at_date (today)}}
+                          :dispatch-key [:scorecard/qdb-scores]}}))
 
 (def standard-box-width-nb 1800)
 (def standard-box-width (str standard-box-width-nb "px"))
@@ -153,6 +185,7 @@
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
         vdisplay @(rf/subscribe [:scorecard-risk/table])]
+    (println @(rf/subscribe [:scorecard/qdb-securities]))
     [v-box :gap "20px" :align :start
      :children [[h-box :class "element" :width "60%" :gap "75px" :align :center
                  :children [[title :level :level2 :label "Portfolio and sector selection"]
@@ -224,5 +257,6 @@
 
 (defn view []
   (rf/dispatch [:get-scorecard-attribution @(rf/subscribe [:scorecard/portfolio])])
+  ;(rf/dispatch [:get-qdb-securities "METALSMINING"])
   [box :width standard-box-width :padding "80px 20px" :class "subbody" :child [risk-view]])
 

@@ -60,7 +60,6 @@
 
 (rf/reg-event-fx
   :get-quant-model-saved-advanced-charts
-  (println "here")
   (fn [{:keys [db]} [_]]
     {:http-get-dispatch {:url          (str static/server-address "quant-model-saved-advanced-charts")
                          :dispatch-key [:quant-model/saved-advanced-charts]}}))

@@ -6,9 +6,11 @@
     [goog.string :as gstring]
     [goog.string.format]
     [jasminegui.tools :as t]
+    [goog.object :as gobj]
     ["react-table-v6" :as rt :default ReactTable])
   (:import (goog.i18n NumberFormat)
-           (goog.i18n.NumberFormat Format))
+           (goog.i18n.NumberFormat Format)
+           )
 
     )
 
@@ -37,20 +39,28 @@
 ;      [:div  (nf (int x))]
 ;      "-")))
 
+;(defn nfcell2 [this]
+;  (r/as-element
+;    (if-let [x (aget this "value")]
+;      [:div  (.format nff x)]
+;      "-")))
+
 (defn nfcell2 [this]
-  (r/as-element
-    (if-let [x (aget this "value")]
-      [:div  (.format nff x)]
-      "-")))
+  (if-let [x (aget this "value")] (.format nff x) "-"))
 
 ;COLUMN FORMATTING
 
 (defn red-negatives [state rowInfo column]
   "right align, with red text if negative"
-  (if (and (some? rowInfo) (neg? (aget rowInfo "row" (aget column "id"))))
-    (clj->js {:style {:color "red" :textAlign "right"}})
-    (clj->js {:style {:textAlign "right"}})))
+  (if (and (some? rowInfo) (neg? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id")))) ;(aget rowInfo "row" (aget column "id"))
+    #js {:style #js {:color "red" :textAlign "right"}}
+    #js {:style #js {:textAlign "right"}}))
 
+;(defn red-negatives [state rowInfo column]
+;  "right align, with red text if negative"
+;  (if (and (some? rowInfo) (neg? (aget rowInfo "row" (aget column "id"))))
+;    (clj->js {:style {:color "red" :textAlign "right"}})
+;    (clj->js {:style {:textAlign "right"}})))
 
 ;CELL RENDERING
 
@@ -154,7 +164,8 @@
 
 
 
-(defn txt-format [fmt m this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt (* m x)) "-")))
+;(defn txt-format [fmt m this]    (r/as-element (if-let [x (aget this "value")] (gstring/format fmt (* m x)) "-")))
+(defn txt-format [fmt m this]    (if-let [x (aget this "value")] (gstring/format fmt (* m x)) "-"))
 ;Using anonymous function instead of partial below as slightly faster (non variadic)
 (def round3         #(txt-format "%.3f" 1. %))
 (def round2         #(txt-format "%.2f" 1. %))
@@ -163,20 +174,29 @@
 (def zspread-format #(txt-format "%.0fbps" 1. %))
 (def round2*100     #(txt-format "%.2f" 100. %))
 (def round1*100     #(txt-format "%.1f" 100. %))
-(defn round2-if-nb [this] (r/as-element (if-let [x (aget this "value")] (if (number? x) (gstring/format "%.2f" x) x) "-")))
-(defn dash-for-nil-and-big-nb [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (> x 1000.)) (nf x) x) "-")))
+(defn round2-if-nb [this] (if-let [x (aget this "value")] (if (number? x) (gstring/format "%.2f" x) x) "-")) ;(r/as-element (if-let [x (aget this "value")] (if (number? x) (gstring/format "%.2f" x) x) "-"))
+(defn dash-for-nil-and-big-nb [this] (if-let [x (aget this "value")] (if (and (number? x) (> x 1000.)) (nf x) x) "-")) ;(defn dash-for-nil-and-big-nb [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (> x 1000.)) (nf x) x) "-")))
 
 (defn rating-sort [a b]
   (let [t @(rf/subscribe [:rating-to-score])] (<= (t (keyword a)) (t (keyword b)))))
 
-(defn round2*100-if-pos [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" (* 100. x)) "-") "-")))
-(defn round2-if-pos [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" x) "-") "-")))
+(defn round2*100-if-pos [this] (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" (* 100. x)) "-") "-"))
+(defn round2-if-pos [this] (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" x) "-") "-"))
+;(defn round2*100-if-pos [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" (* 100. x)) "-") "-")))
+;(defn round2-if-pos [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" x) "-") "-")))
 
 (defn roundpc [fmt this]
   (r/as-element
     (if-let [x (aget this "value")]
       [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
       "-")))
+
+;(defn roundpc [fmt this]
+;  (r/as-element
+;    (if-let [x (aget this "value")]
+;      [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
+;      "-")))
+
 
 (def round0pc #(roundpc "%.0f%" %))
 (def round1pc #(roundpc "%.1f%" %))
@@ -213,7 +233,8 @@
 
 (defn rating-score-to-string [this] (aget this "row" "qt-iam-int-lt-median-rating"))
 
-(defn total-txt [row] (r/as-element [:span "Total"]))
+(defn total-txt [row] "Total")
+;(defn total-txt [row] (r/as-element [:span "Total"]))
 
 (def risk-table-columns
   (let [nb1000 {:style {:textAlign "right"} :Cell nb-thousand-cell-format :filterable true :filterMethod nb-filter-OR-AND}]

@@ -182,6 +182,8 @@
                  :scorecard/ogemcord-risk  []
                  :scorecard/attribution-table  []
                  :scorecard/trade-analyser-data nil
+                 :scorecard/qdb-securities              []
+                 :scorecard/qdb-scores                  []
 
                  :dummy nil                                 ;can be useful
 
@@ -307,6 +309,8 @@
            :scorecard/portfolio
            :scorecard/sector
            :scorecard/trade-analyser-data
+           :scorecard/qdb-securities
+           :scorecard/qdb-scores
 
            :time-machine/enabled
            :time-machine/date
@@ -388,9 +392,10 @@
 (rf/reg-event-db
   :portfolios
   (fn [db [_ portfolios]]
-      (assoc db :portfolios portfolios
-                :multiple-portfolio-risk/selected-portfolios (disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
-                :multiple-portfolio-attribution/selected-portfolios (disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"))))
+    (assoc db :portfolios portfolios
+              :multiple-portfolio-risk/selected-portfolios (set (take 10 portfolios)) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
+              :multiple-portfolio-attribution/selected-portfolios (set (take 10 portfolios)) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
+              )))
 
 (doseq [k [:single-portfolio-risk/filter
            :multiple-portfolio-risk/filter

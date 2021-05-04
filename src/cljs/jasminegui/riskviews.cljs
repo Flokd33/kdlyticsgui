@@ -61,9 +61,12 @@
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions)]
-      (if (= (:single-portfolio-risk/display-style db) "Tree")
-        (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-        (conj sorted-data portfolio-total-line)))))
+      (clj->js
+        (if (= (:single-portfolio-risk/display-style db) "Tree")
+          (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
+          (conj sorted-data portfolio-total-line)))
+
+      )))
 
 (rf/reg-sub
   :single-portfolio-attribution/clean-table
@@ -110,7 +113,7 @@
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero)]
       (if (= (:multiple-portfolio-risk/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:multiple-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-        (add-total-line-to-pivot  sorted-data kselected-portfolios)))))
+        (add-total-line-to-pivot sorted-data kselected-portfolios)))))
 
 (rf/reg-sub
   :multiple-portfolio-attribution/clean-table
