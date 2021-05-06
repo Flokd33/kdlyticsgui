@@ -65,6 +65,9 @@
             "For sale" #js {:style #js {:backgroundColor "orangered" :textAlign "right"}}
             default) default)) default)))
 
+(defn bnc
+  [header accessor width]
+  {:Header header :accessor accessor :width width :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND})
 
 (def quant-score-table-columns
   {:ISIN                                {:Header "ISIN" :accessor "ISIN" :width 100}
@@ -328,7 +331,7 @@
        {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_svr_2 :URS_rank_svr_1D_2 :URS_rank_svr_1W_2 :URS_rank_svr_1M_2])}
        {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}]
       "Upside/Downside"
-      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig])}
+      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig :embi :embi-ig])}
        {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration])}
        {:Header "Target returns (%)" :columns (mapv quant-score-table-columns [:upside1y :expected1y :downside1y])}
        {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}]
