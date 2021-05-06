@@ -38,9 +38,10 @@
       100 "10Y+"
       "uncategorized")))
 
-(def top-bottom-ignore-subs? (r/atom false))
-(def top-bottom-ignore-sovs? (r/atom true))
+;(def top-bottom-ignore-subs? (r/atom false))
+;(def top-bottom-ignore-sovs? (r/atom true))
 (def top-bottom-how-many (r/atom 3))
+(def top-bottom-ignore (r/atom {:subs false :sovs true :corps false}))
 
 (defn top-bottom-str [this]
   (let [coll (js->clj (aget this "value"))]
@@ -52,11 +53,19 @@
 
 (defn top-bottom []
   (let [data @(rf/subscribe [:quant-model/model-output])
-        fdata (filter #(and
-                         (some? (:difference_svr %))
-                         (if @top-bottom-ignore-sovs? (not= (:Sector %) "Sovereign") true)
-                         (if @top-bottom-ignore-subs? (not= (:SENIOR %) "N") true))
-                      data)
+        fdata (t/chainfilter {:difference_svr some?
+                              :Sector   #(cond
+                                           (and (:sovs @top-bottom-ignore) (:corps @top-bottom-ignore)) false
+                                           (:corps @top-bottom-ignore) (= % "Sovereign")
+                                           (:sovs @top-bottom-ignore) (not= % "Sovereign")
+                                           :else true)
+                              :SENIOR   #(if (:subs @top-bottom-ignore) (not= % "N") true)} data)
+
+        ;(filter #(and
+        ;                 (some? (:difference_svr %))
+        ;                 (if @top-bottom-ignore-sovs? (not= (:Sector %) "Sovereign") true)
+        ;                 (if @top-bottom-ignore-subs? (not= (:SENIOR %) "N") true))
+        ;              data)
         res (into []
                   (for [[duration-bucket durgrp] (group-by duration-grouping-fn fdata)]
                     (apply merge
@@ -70,9 +79,16 @@
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Most expensive / cheap bonds by category"]
                             [h-box :gap "20px" :align :center
-                             :children [[checkbox :model top-bottom-ignore-sovs? :label "Ignore sovereign bonds?" :on-change #(reset! top-bottom-ignore-sovs? %)]
-                                        [checkbox :model top-bottom-ignore-subs? :label "Ignore subordinated bonds?" :on-change #(reset! top-bottom-ignore-subs? %)]
-                                        [label :label "How many:"] [single-dropdown :width "75px" :model top-bottom-how-many :choices [{:id 3 :label 3} {:id 5 :label 5} {:id 10 :label 10}] :on-change #(reset! top-bottom-how-many %)]]]
+                             :children [[checkbox :model (r/cursor top-bottom-ignore [:sovs]) :label "Ignore sovereign bonds?" :on-change #(swap! top-bottom-ignore assoc :sovs %)]
+                                        [checkbox :model (r/cursor top-bottom-ignore [:corps]) :label "Ignore corporate bonds?" :on-change #(swap! top-bottom-ignore assoc :corps %)]
+                                        [checkbox :model (r/cursor top-bottom-ignore [:subs]) :label "Ignore subordinated bonds?" :on-change #(swap! top-bottom-ignore assoc :subs %)]
+                                        [label :label "How many:"] [single-dropdown :width "75px" :model top-bottom-how-many :choices [{:id 3 :label 3} {:id 5 :label 5} {:id 10 :label 10}] :on-change #(reset! top-bottom-how-many %)]
+                                        ]]
+
+                            ;[h-box :gap "20px" :align :center
+                            ; :children [[checkbox :model top-bottom-ignore-sovs? :label "Ignore sovereign bonds?" :on-change #(reset! top-bottom-ignore-sovs? %)]
+                            ;            [checkbox :model top-bottom-ignore-subs? :label "Ignore subordinated bonds?" :on-change #(reset! top-bottom-ignore-subs? %)]
+                            ;            [label :label "How many:"] [single-dropdown :width "75px" :model top-bottom-how-many :choices [{:id 3 :label 3} {:id 5 :label 5} {:id 10 :label 10}] :on-change #(reset! top-bottom-how-many %)]]]
                             [:> ReactTable
                              {:data           sres
                               :columns        [{:Header "Duration bucket" :accessor "duration-bucket" :width 200 :style {:textAlign "center" :display "flex" :flexDirection "column" :justifyContent "center"}}
