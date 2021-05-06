@@ -33,6 +33,18 @@
                :var99 (get-in risk        [d (keyword (str "var-" y "-99pct"))])
                :maxd  (get-in risk        [d (keyword (str "maxd-" y))])})))))
 
+
+(rf/reg-sub
+  :var/up-down-beta-table
+  (fn [db]
+    (let [regression (get-in db [:var/data :regression])]
+      (into []
+            (for [y ["1y" "3y"]]
+              {:id      (str "Daily" " " y)
+               :beta    (get-in regression  [:daily (keyword (str "beta-" y))])
+               :beta-up (get-in regression  [:daily (keyword (str "beta-" y "-up"))])
+               :beta-dw (get-in regression  [:daily (keyword (str "beta-" y "-dw"))])})))))
+
 (rf/reg-sub
   :var/portfolio-proxies
   (fn [db]
@@ -65,28 +77,28 @@
                           {:Header "Days with data"   :accessor "days"    :width 150}
                           {:Header "Proxy"            :accessor "proxy"   :width 150}
                           {:Header "Adjust duration?" :accessor "adjdur"  :width 150}]
-    :showPagination      true
-    :sortable            false
-    :filterable          true
-    :defaultFilterMethod tables/text-filter-OR
-    :pageSize            25
-    :className           "-striped"}])
+    :showPagination true :sortable false :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"}])
 
 (defn var-table []
     [:> ReactTable
      {:data                @(rf/subscribe [:var/table])
       :columns             [{:Header "Period"       :accessor "id"     :width 90}
                             {:Header "Volatility"   :accessor "std"    :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
-                            {:Header "Index Beta"   :accessor "beta"   :width 90 :style {:textAlign "right"} :Cell tables/round1}
+                            {:Header (gstring/unescapeEntities "Index &beta;")   :accessor "beta"   :width 90 :style {:textAlign "right"} :Cell tables/round1}
                             {:Header "Index R2"     :accessor "rsq"    :width 90 :style {:textAlign "right"} :Cell tables/round0pc}
                             {:Header "95% VaR"      :accessor "var95"  :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
                             {:Header "99% VaR"      :accessor "var99"  :width 90 :style {:textAlign "right"} :Cell tables/round1pc}
                             {:Header "Max loss (*)" :accessor "maxd"   :width 90 :style {:textAlign "right"} :Cell tables/round1pc}]
-      :showPagination      false
-      :sortable            false
-      :filterable          false
-      :pageSize            6
-      :className           "-striped"}])
+      :showPagination false :sortable false :filterable false :pageSize 6 :className "-striped"}])
+
+(defn daily-up-down-beta-table []
+  [:> ReactTable
+   {:data                @(rf/subscribe [:var/up-down-beta-table])
+    :columns             [{:Header "Period"                                       :accessor "id"        :width 90}
+                          {:Header (gstring/unescapeEntities "Index &beta;")      :accessor "beta"      :width 90 :style {:textAlign "right"} :Cell tables/round2}
+                          {:Header (gstring/unescapeEntities "Up days &beta;")    :accessor "beta-up"   :width 90 :style {:textAlign "right"} :Cell tables/round2}
+                          {:Header (gstring/unescapeEntities "Down days &beta;")  :accessor "beta-dw"   :width 90 :style {:textAlign "right"} :Cell tables/round2}]
+    :showPagination false :sortable false :filterable false :pageSize 2 :className "-striped"}])
 
 (def standard-box-width "800px")
 (def dropdown-width "150px")
@@ -94,7 +106,7 @@
 (defn var-table-view []
   [v-box
    :class "element" :width "100%" :gap "20px"
-   :children [[title :label "Backtested VaR" :level :level1] [var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]]])
+   :children [[title :label "Backtested VaR" :level :level1] [var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."] [daily-up-down-beta-table]]])
 
 (defn backtest-chart []
   (let [dates @(rf/subscribe [:var/dates])
@@ -161,12 +173,7 @@
       :columns             [{:Header "Bond"             :accessor "bond"    :width 150}
                             {:Header "Proxy"            :accessor "proxy"   :width 150}
                             {:Header "Adjust duration?" :accessor "adjdur"  :width 150}]
-      :showPagination      true
-      :sortable            false
-      :filterable          true
-      :defaultFilterMethod tables/text-filter-OR
-      :pageSize            25
-      :className           "-striped"}]))
+      :showPagination true :sortable false :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"}]))
 
 (defn proxy-table-view []
   [box :class "subbody rightelement"
@@ -195,8 +202,7 @@
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-var
       :overview                       [v-box :width standard-box-width
-                                       :gap "20px"
-                                       :padding "80px 20px"
+                                       :gap "20px" :padding "80px 20px"
                                        :class "rightelement"  :children [[h-box :align :start :children [[var-controller]]]
                                                                          [h-box :align :start :children [[var-table-view] ]]
                                                                          [h-box :align :start :children [[backtest-chart]]]

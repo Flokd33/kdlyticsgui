@@ -52,6 +52,20 @@
 ;       :on-change #(rf/dispatch [:model-portfolios/weights "ModelOne" (aget this "row" "ISIN") %])])
 ;    (tables/round1 this)))
 
+(defn model-portfolio-weights-props
+  [state rowInfo column]
+  (let [default #js {:style #js {:textAlign "right"}}]
+    (if (some? rowInfo)
+      (let [objective (aget rowInfo "row" (str (aget column "id") "-objective"))
+            value (aget rowInfo "row" (aget column "id"))]
+        (if (and (number? value) (not (zero? value)))
+          (case objective
+            "Active risk" #js {:style #js {:backgroundColor "lightgreen" :textAlign "right"}}
+            "Diversifier" #js {:style #js {:backgroundColor "lightsalmon" :textAlign "right"}}
+            "For sale" #js {:style #js {:backgroundColor "orangered" :textAlign "right"}}
+            default) default)) default)))
+
+
 (def quant-score-table-columns
   {:ISIN                                {:Header "ISIN" :accessor "ISIN" :width 100}
    :Country                             {:Header "Country" :accessor "Country" :width 55}
@@ -232,11 +246,17 @@
    :NXT_CALL_PX                         {:Header "Call price" :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    ;:model-weight                        {:Header "Weight" :accessor "model-weight" :width 65 :Cell model-weight-input-cell :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :CEMBI-model                         {:Header "Main" :accessor "CEMBI-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :Allianz-model                         {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :TR-model                         {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :CEMBI-model                         {:Header "Main" :accessor "CEMBI-model" :width 65 :Cell tables/round2-if-pos :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :Allianz-model                         {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell tables/round2-if-pos  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-pos  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-pos :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :TR-model                         {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-pos  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+
+   :CEMBI-model-objective                         {:Header "Main" :accessor "CEMBI-model-objective" :width 65 :show false}
+   :Allianz-model-objective                         {:Header "Allianz" :accessor "Allianz-model-objective" :width 65 :show false}
+   :IG-model-objective                         {:Header "IG" :accessor "IG-model-objective" :width 65 :show false}
+   :BNP-model-objective                         {:Header "BNP" :accessor "BNP-model-objective" :width 65 :show false}
+   :TR-model-objective                         {:Header "TR" :accessor "TR-model-objective" :width 65 :show false}
 
    :CEMBI-model-dur       {:Header "Main" :accessor "CEMBI-model-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :CEMBI-model-dur-x-sp  {:Header "Main" :accessor "CEMBI-model-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
@@ -320,7 +340,7 @@
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
       "Model portfolios"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Ticker :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
-              [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :IG-model :TR-model])}]
+              [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :IG-model :TR-model :CEMBI-model-objective :IG-model-objective :TR-model-objective])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
