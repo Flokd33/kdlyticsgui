@@ -100,7 +100,8 @@
    {:id :talanx  :label "Talanx"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3"]}])
 
 (def risk-field-choices
-  [{:id "None"            :label "None"}
+  [
+   ;{:id "None"            :label "None"}
    {:id :nav              :label "NAV"}
    {:id :weight-delta     :label "NAV delta"}
    {:id :contrib-mdur     :label "M dur contribution"}
@@ -115,7 +116,8 @@
    {:id :quant-value-2d   :label "Quant value 2D"}])
 
 (def attribution-field-choices
-  [{:id "None"            :label "None"}
+  [
+   ;{:id "None"            :label "None"}
    {:id :total-effect     :label "Effect"}
    {:id :xs-weight        :label "Excess weight"}
    {:id :contribution     :label "Contribution"}

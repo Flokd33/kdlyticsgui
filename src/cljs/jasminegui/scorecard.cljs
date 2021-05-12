@@ -46,20 +46,35 @@
   :get-qdb-securities
   (fn [{:keys [db]} [_ sector]]
     {:http-get-dispatch {:url          (str qdb-server "securities?sectors=" sector)
-                         :dispatch-key [:scorecard/qdb-securities]}}))
+                         :dispatch-key [:get-qdb-scores]}}))
 
 (rf/reg-event-fx
   :get-qdb-scores
-  (fn [{:keys [db]} [_ isins]]
-    {:db db
-     :http-post-dispatch {:url (str qdb-server "scores")
-                          :edn-params {:code_type "ISIN"
-                                       :codes isins
-                                       :date_params {:as_at_date (today)}}
-                          :dispatch-key [:scorecard/qdb-scores]}}))
+  (fn [{:keys [db]} [_ qdb-securities]]
+    (let [isins (map :security_id (:result qdb-securities))]
+      {:db                 (assoc db :scorecard/qdb-securities isins)
+       :http-json-post-dispatch
+                           {:url          (str qdb-server "scores")
+                            :json-params  {:security_ids isins ;["XS1061043367"]
+                                           :metrics      [] ; ["EMCD_TECH_S_D"]
+                                           :date_params  {  :as_at_date (cljs-time.format/unparse (cljs-time.format/formatter "yyyy-MM-dd") (today))
+                                                          ;:start_date "2021-02-01" :end_date "2021-02-07"
+                                                          :max_stale_days 15}}
+                            :dispatch-key [:scorecard/qdb-scores]}})))
 
 (def standard-box-width-nb 1800)
 (def standard-box-width (str standard-box-width-nb "px"))
+
+(def scorecard-scores-template
+  [:bond-id [:name :cembi-model :ig-model :tr-model]
+   :pricing [:gspread :price :yield]
+   :valuationscore [:urs :hrs :qual :val]
+   :qualscore [:gov :mna :capex :refi]
+   :techscore {}
+
+   ]
+  )
+
 
 (defn compress-data [table sector]
   (let [res (filter #(= (:Sector %) sector) table)
@@ -186,6 +201,7 @@
         sector @(rf/subscribe [:scorecard/sector])
         vdisplay @(rf/subscribe [:scorecard-risk/table])]
     (println @(rf/subscribe [:scorecard/qdb-securities]))
+    (println @(rf/subscribe [:scorecard/qdb-scores]))
     [v-box :gap "20px" :align :start
      :children [[h-box :class "element" :width "60%" :gap "75px" :align :center
                  :children [[title :level :level2 :label "Portfolio and sector selection"]
@@ -257,6 +273,6 @@
 
 (defn view []
   (rf/dispatch [:get-scorecard-attribution @(rf/subscribe [:scorecard/portfolio])])
-  ;(rf/dispatch [:get-qdb-securities "METALSMINING"])
+  (rf/dispatch [:get-qdb-securities "METALSMINING"])
   [box :width standard-box-width :padding "80px 20px" :class "subbody" :child [risk-view]])
 

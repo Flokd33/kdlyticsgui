@@ -491,11 +491,19 @@
 
 (defn http-post-dispatch [request]
   "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
-  (go (let [response (<! (http/post (:url request) {:edn-params (:edn-params request)}))]
+  (go (let [response (<! (http/post (:url request) (if (:edn-params request) {:edn-params (:edn-params request)} {:json-params (:json-params request)})))]
         (rf/dispatch (conj (:dispatch-key request) (:body response)))
         (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
 
 (rf/reg-fx :http-post-dispatch http-post-dispatch)
+
+;(defn http-json-post-dispatch [request]
+;  "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
+;  (go (let [response (<! (http/post (:url request) {:json-params (:json-params request)}))]
+;        (rf/dispatch (conj (:dispatch-key request) (:body response)))
+;        (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
+
+(rf/reg-fx :http-json-post-dispatch http-post-dispatch)
 
 
 (def simple-http-get-events

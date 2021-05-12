@@ -226,6 +226,9 @@
    :z1ymax                              {:Header "Wide" :accessor "z1ymax" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1ymedian                           {:Header "Median" :accessor "z1ymedian" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1yvalid                            {:Header "Days" :accessor "z1yvalid" :width 65 :style {:textAlign "right"} :aggregate tables/median :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :ytd-z-delta                         {:Header (gstring/unescapeEntities "&Delta; ZTW") :accessor "ytd-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :ytd-return                          {:Header "TR %" :accessor "ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
+
 
    :difference_svr_2_2d                 {:Header "Delta 2D" :accessor "difference_svr_2d" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
 
@@ -334,13 +337,15 @@
       [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig :embi :embi-ig])}
        {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration])}
        {:Header "Target returns (%)" :columns (mapv quant-score-table-columns [:upside1y :expected1y :downside1y])}
-       {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}]
+       {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}
+       {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}]
       "Screener (SVR)"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
-               {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
+               {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}
+               {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}])
       "Model portfolios"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Ticker :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
               [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :IG-model :TR-model :CEMBI-model-objective :IG-model-objective :TR-model-objective])}]
@@ -356,4 +361,4 @@
       ))
   )
 
-(def table-checkboxes (r/atom {:indices true :calls false}))
+(def table-checkboxes (r/atom {:indices false :calls false}))
