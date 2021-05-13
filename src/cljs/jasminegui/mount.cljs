@@ -154,12 +154,13 @@
                  :bond-price-history/name                          []
 
                  :esg/refinitiv-ids                       nil
-                 :esg/active-home                         :find-issuers
+                 :esg/active-home                         :msci
                  :esg/selected-companies                  []
                  :esg/data                                []
                  :esg/data-detailed                                []
                  :esg/refinitiv-structure                 []
                  :esg/selected-pillars                    (set nil)
+                 :esg/msci-scores                         []
 
                  :quant-model/model-output                []
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
@@ -292,6 +293,7 @@
            :esg/refinitiv-ids
            :esg/active-home
            :esg/selected-pillars
+           :esg/msci-scores
 
 
            :quant-model/calculator-spreads
@@ -534,6 +536,7 @@
    {:get-key :get-attribution-summary    :url-tail "attribution?query-type=summary" :dis-key :attribution/summary}
    {:get-key :get-attribution-available-months    :url-tail "attribution?query-type=available-months" :dis-key :attribution/available-months}
    {:get-key :get-model-portfolios    :url-tail "model-portfolios" :dis-key :model-portfolios/trades}
+   {:get-key :get-msci-scores    :url-tail "msci-scores" :dis-key :esg/msci-scores}
    ])
 
 

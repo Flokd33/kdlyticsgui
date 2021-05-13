@@ -149,18 +149,57 @@
                                     :label (:name item)
                                     :on-click #(rf/dispatch [:esg/active-home (:code item)])]))]]]))
 
+
+(defn msci-table []
+  (let [data @(rf/subscribe [:esg/msci-scores])
+        header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
+    [v-box :gap "20px" :class "element" :width standard-box-width
+     :children [
+                [h-box :align :center :children [[title :label "MSCI scores for quant universe" :level :level1]
+                                                 [gap :size "1"]
+                                                 [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "msci")]]]
+                [:> ReactTable
+                 {:data           data
+                  :columns        [
+                                   {:Header "Description" :headerStyle header-style
+                                    :columns [{:Header "Ticker" :accessor "Ticker" :width 80} {:Header "Country" :accessor "Country" :width 55} {:Header "Sector" :accessor "Sector" :width 80}]}
+                                   {:Header "Symbology" :headerStyle header-style
+                                    :columns [{:Header "Bond ISIN" :accessor "ISIN" :width 100} {:Header "Equity" :accessor "Equity" :width 80} {:Header "Equity ISIN" :accessor "ID_ISIN" :width 100} {:Header "Name" :accessor "NAME" :width 180}]}
+                                   {:Header "MSCI scoring" :headerStyle header-style
+                                    :columns [{:Header "Rating" :accessor "msci-IVA_COMPANY_RATING" :width 50 :style {:textAlign "center"}}
+                                              {:Header "E" :accessor "msci-ENVIRONMENTAL_PILLAR_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 35 :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "S" :accessor "msci-SOCIAL_PILLAR_SCORE" :Cell tables/round1  :style {:textAlign "right"} :width 35 :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "G" :accessor "msci-GOVERNANCE_PILLAR_SCORE" :Cell tables/round1  :style {:textAlign "right"} :width 35 :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "Final" :accessor "msci-SOCIAL_PILLAR_SCORE" :Cell tables/round1  :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "CO2 int. 1+2" :accessor "msci-CARBON_EMISSIONS_SCOPE_12_INTEN" :Cell tables/round1  :style {:textAlign "right"} :width 80 :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "CO2 ems. 1+2" :accessor "msci-CARBON_EMISSIONS_SCOPE_12" :Cell tables/nfcell2  :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "Comment" :accessor "msci-ESG_HEADLINE" :width 500}
+                                              ]}
+                                   ]
+                  :pageSize       20
+                  :showPagination true
+                  :defaultSorted [{:id :Ticker :desc false}]
+                  :filterable true
+                  :defaultFilterMethod tables/text-filter-OR
+                  :className      "-striped -highlight"}]
+
+                ]]
+
+    )
+
+  )
+
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
-    [box :padding "80px 20px" :class "rightelement" :child (case active-esg
-                                                             :find-issuers [find-issuers]
-                                                             :table-top-view                     [table-top-view]
-                                                             :table-detailed-view                     [table-detailed-view]
-                                                             [:div.output "nothing to display"])]))
+    [box :padding "80px 20px" :class "rightelement"
+     :child (case active-esg
+              :msci [msci-table]
+              :refinitiv [v-box :gap "20px" :class "body" :children [[find-issuers] [table-top-view] [table-detailed-view]]]
+              [:div.output "nothing to display"])]))
 
 
 
 (defn esg-view []
-  ;[h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home]]]
-  [v-box :gap "20px" :padding "80px 20px" :class "body" :children [[find-issuers] [table-top-view] [table-detailed-view]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home]]])
 
