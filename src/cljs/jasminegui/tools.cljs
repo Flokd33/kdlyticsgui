@@ -12,13 +12,23 @@
     (fn [erg k pred]
       (filter #(if (fn? pred) (pred (get % k)) (= pred (get % k))) erg)) coll m))
 
-(defn vector-of-maps->csv
-  ([vector-of-maps] (vector-of-maps->csv vector-of-maps (keys (last vector-of-maps)))) ;use last not first as first is totals that are different)
-  ([vector-of-maps cols] (vector-of-maps->csv vector-of-maps cols ","))
+;(defn vector-of-maps->csv
+;  ([vector-of-maps] (vector-of-maps->csv vector-of-maps (keys (last vector-of-maps)))) ;use last not first as first is totals that are different)
+;  ([vector-of-maps cols] (vector-of-maps->csv vector-of-maps cols ","))
+;  ([vector-of-maps cols sep]
+;   (reduce #(str %1 (clojure.string/join sep (mapv %2 cols)) "\n")
+;           (str (clojure.string/join sep (map name cols)) "\n")
+;           vector-of-maps)))
+
+(defn vector-of-maps->csv-atomic
+  "Much less memory hungry, and faster too"
+  ([vector-of-maps] (vector-of-maps->csv-atomic vector-of-maps (keys (last vector-of-maps)))) ;use last not first as first is totals that are different)
+  ([vector-of-maps cols] (vector-of-maps->csv-atomic vector-of-maps cols ","))
   ([vector-of-maps cols sep]
-   (reduce #(str %1 (clojure.string/join sep (mapv %2 cols)) "\n")
-           (str (clojure.string/join sep (map name cols)) "\n")
-           vector-of-maps)))
+   (let [res (atom (str (clojure.string/join sep (map name cols)) "\n"))]
+     (doseq [line vector-of-maps]
+       (swap! res str (clojure.string/join sep (mapv #(get line %) cols)) "\n"))
+     @res)))
 
 (defn download-object-as-csv [text export-name]
   "This creates a temporary download link"
@@ -31,10 +41,10 @@
     (.removeChild (.-body js/document) link)))
 
 (defn csv-link
-  ([data filename] (download-object-as-csv (clj->js (vector-of-maps->csv data)) (str filename ".csv")))
+  ([data filename] (download-object-as-csv (clj->js (vector-of-maps->csv-atomic data)) (str filename ".csv")))
   ([data filename cols] (csv-link data filename cols ","))
   ([data filename cols sep]
-   (download-object-as-csv (clj->js (vector-of-maps->csv data cols sep)) (str filename ".csv"))))
+   (download-object-as-csv (clj->js (vector-of-maps->csv-atomic data cols sep)) (str filename ".csv"))))
 
 (defn react-table-to-csv [view filename cols]
   (csv-link (js->clj (. (.getResolvedState view) -sortedData)) filename cols))

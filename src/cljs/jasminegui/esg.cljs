@@ -189,6 +189,9 @@
 
   )
 
+(defn ccc-exposure []
+  nil)
+
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -196,6 +199,7 @@
      :child (case active-esg
               :msci [msci-table]
               :refinitiv [v-box :gap "20px" :class "body" :children [[find-issuers] [table-top-view] [table-detailed-view]]]
+              :ccc-exposure [ccc-exposure]
               [:div.output "nothing to display"])]))
 
 

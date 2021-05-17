@@ -16,7 +16,8 @@
     [jasminegui.tables :as tables]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    [reagent-contextmenu.menu :as rcm])
+    [reagent-contextmenu.menu :as rcm]
+    [jasminegui.tools :as t])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
@@ -92,8 +93,8 @@
     (into [] (for [i (range 1 4)]
                [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/attribution-choice-map :on-change #(rf/dispatch [key i %])]))))
 
-(defn csv-link [data filename]
-  (tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv")))
+;(defn csv-link [data filename]
+;  (tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv")))
 
 (defn single-portfolio-attribution-controller []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
@@ -159,7 +160,7 @@
                     :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-attribution/filter)))]
                                [h-box :gap "10px" :children (shortcut-row :multiple-portfolio-attribution/shortcut)]
                                [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
-                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(csv-link @(rf/subscribe [:multiple-portfolio-attribution/table]) "pivot")]]]]]]]
+                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(t/csv-link @(rf/subscribe [:multiple-portfolio-attribution/table]) "pivot")]]]]]]]
                  [multiple-portfolio-attribution-display]]]]))
 
 
