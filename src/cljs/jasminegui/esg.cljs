@@ -17,7 +17,9 @@
     [jasminegui.charting :as charting]
     [oz.core :as oz]
     [reagent.core :as r]
-    [jasminegui.tools :as tools]))
+    [jasminegui.tools :as tools]
+    [jasminegui.riskviews :as riskviews]
+    [jasminegui.tools :as t]))
 
 (def standard-box-width "1600px")
 (def dropdown-width "150px")
@@ -52,7 +54,7 @@
     (assoc db :esg/refinitiv-structure data
               :esg/selected-pillars (set (sort (distinct (map :pillar_title data)))))))
 
-(defn find-issuers []
+(defn refinitiv-find-issuers []
   (let [choices  @(rf/subscribe [:esg/refinitiv-ids])
         suggestion-result (fn [n] {:name n})
         suggestions-for-search (fn [s] (into [] (take 8 (for [n choices :when (re-find (re-pattern (str "(?i)" s)) (:name n))] n))))
@@ -85,7 +87,7 @@
                 [h-box :gap "10px" :children [[button :label "Fetch data"  :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:esg/fetch-data "top"]) (rf/dispatch [:esg/fetch-data "detailed"]))]
                                               [button :label "Clear table" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/clear-table])]]]]]))
 
-(defn table-top-view []
+(defn refinitiv-table-top-view []
   (let [data @(rf/subscribe [:esg/data])
         headers (conj (keys (first data)) "Name")
         no-space-headers (map #(keyword (clojure.string/replace % " " "_")) headers)
@@ -99,15 +101,15 @@
                  {:data           (sort-by #(get-in % "Name") clean-keys-data)
                   :columns        (into [{:Header "Name" :accessor :Name :width 200 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}]
                                         (for [h no-space-headers :when (not= h :Name)] (merge {:Header (clojure.string/replace (name h) "_" " ") :headerStyle {:overflow    nil
-                                                                                                                                             :white-space "pre-line"
-                                                                                                                                             :word-wrap   "break-word"}
+                                                                                                                                             :whiteSpace "pre-line"
+                                                                                                                                             :wordWrap   "break-word"}
                                                                              :accessor h  :Cell tables/round2-if-nb} (if (not= h :Name) {:width 100 :style {:textAlign "right"}} {:width 200}))))
                   :pageSize       10
                   :showPagination false
                   :className      "-striped -highlight"}]]]))
 ; :className "sticky-rt-column" :headerClassName "sticky-rt-column"
 
-(defn table-detailed-view []
+(defn refinitiv-table-detailed-view []
   (let [data @(rf/subscribe [:esg/data-detailed])
         structure @(rf/subscribe [:esg/refinitiv-structure])
         headers (conj (keys (first data)) "Name")
@@ -189,8 +191,34 @@
 
   )
 
-(defn ccc-exposure []
-  nil)
+
+(rf/reg-sub
+  :esg-risk/multiple-tree
+  (fn [db]
+    (let [kselected-portfolios (remove #(some #{%} (map keyword ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"])) (map keyword (:portfolios db)))
+          display-key-one :nav
+          grouping-columns (into [] (for [r [:name :issuer :sector :msci-rating]] (tables/risk-table-columns r)))
+          accessors-k (mapv keyword (mapv :accessor grouping-columns))
+          pivoted-data (riskviews/get-pivoted-data (:positions db) (:portfolios db) (:all-instrument-ids db) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
+          thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
+          pivoted-data-hide-zero (filter thfil pivoted-data)]
+      (println (count pivoted-data) (count pivoted-data-hide-zero))
+      (riskviews/add-total-line-to-pivot (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero) (map keyword (:portfolios db))))))
+
+(defn holdings []
+  (let [a 3]
+    [v-box :gap "20px" :class "element" :width standard-box-width
+     :children [[title :level :level2 :label "MSCI NAV across portfolios"]
+                (let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
+                                      {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-pos}))]
+                  [:> ReactTable
+                   {:data                @(rf/subscribe [:esg-risk/multiple-tree])
+                    :columns             (concat (mapv tables/risk-table-columns [:msci-rating :issuer]) cols)
+                    :showPagination      false :sortable true :filterable false :pageSize (inc (count (distinct (map :msci-rating @(rf/subscribe [:esg-risk/multiple-tree])))))
+                    :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:msci-rating :TICKER] :defaultSorted [{:id :msci-rating :desc true}]
+                    }]
+
+                  )]]))
 
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
@@ -198,8 +226,8 @@
     [box :padding "80px 20px" :class "rightelement"
      :child (case active-esg
               :msci [msci-table]
-              :refinitiv [v-box :gap "20px" :class "body" :children [[find-issuers] [table-top-view] [table-detailed-view]]]
-              :ccc-exposure [ccc-exposure]
+              :refinitiv [v-box :gap "20px" :class "body" :children [[refinitiv-find-issuers] [refinitiv-table-top-view] [refinitiv-table-detailed-view]]]
+              :holdings [holdings]
               [:div.output "nothing to display"])]))
 
 

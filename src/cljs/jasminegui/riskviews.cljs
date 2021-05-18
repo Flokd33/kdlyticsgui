@@ -40,7 +40,7 @@
 
 (defn add-total-line-to-pivot [pivoted-table kportfolios]
   (let [total-line (merge
-                     (into {} (for [k [:jpm-region :qt-jpm-sector :qt-risk-country-name :TICKER :NAME :description :isin :qt-iam-int-lt-median-rating-score :qt-final-maturity-band]] [k "Total"]))
+                     (into {} (for [k [:jpm-region :qt-jpm-sector :qt-risk-country-name :TICKER :NAME :description :isin :qt-iam-int-lt-median-rating-score :qt-final-maturity-band :msci-rating]] [k "Total"]))
                      (into {} (for [p kportfolios] [p (reduce + (map p pivoted-table))])))]
     (conj pivoted-table total-line)))
 

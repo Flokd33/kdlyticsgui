@@ -58,6 +58,7 @@
 
 (def esg-navigation
   [{:code :msci          :name "MSCI"}
+   {:code :holdings            :name "Holdings through MSCI"}
    {:code :refinitiv            :name "Refinitiv"}
    ])
 

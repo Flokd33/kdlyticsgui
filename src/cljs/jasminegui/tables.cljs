@@ -191,6 +191,11 @@
       [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
       "-")))
 
+(defn sort-msci-rating [a b]
+  (let [ax (.indexOf ["Total" "AAA" "AA" "A" "BBB" "BB" "B" "CCC" "NA"] a )
+        bx (.indexOf ["Total" "AAA" "AA" "A" "BBB" "BB" "B" "CCC" "NA"] b)]
+    (<= ax bx)))
+
 ;(defn roundpc [fmt this]
 ;  (r/as-element
 ;    (if-let [x (aget this "value")]
@@ -282,7 +287,7 @@
      :jensen-ytd               {:Header "Jensen" :accessor "jensen-ytd" :width 50 :style {:textAlign "right"} :aggregate sum-rows :Cell round1*100 :filterable true :filterMethod nb-filter-OR-AND}
      :quant-value-2d           {:Header "2D" :accessor "quant-value-2d" :width 50 :aggregate sum-rows :Cell #(nb-cell-format "%.2f" 1. %) :getProps red-negatives :filterable true :filterMethod nb-filter-OR-AND}
      :quant-value-4d           {:Header "4D" :accessor "quant-value-4d" :width 50 :aggregate sum-rows :Cell #(nb-cell-format "%.2f" 1. %) :getProps red-negatives :filterable true :filterMethod nb-filter-OR-AND}
-
+     :msci-rating              {:Header "Rating" :accessor "msci-rating" :width 75  :sortMethod sort-msci-rating}
      }))
 
 (defn invrtg-to-string [this] (aget this "row" "Rating"))
