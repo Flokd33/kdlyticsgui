@@ -43,7 +43,7 @@
 (rf/reg-event-fx
   :esg/fetch-data
   (fn [{:keys [db]} [_ detail]]
-    (println (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail))
+    ;(println (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail))
     {:db                db
      :http-get-dispatch {:url          (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail)
                          :dispatch-key (if (= detail "top") [:esg/data] [:esg/data-detailed])}}))
@@ -202,7 +202,6 @@
           pivoted-data (riskviews/get-pivoted-data (:positions db) (:portfolios db) (:all-instrument-ids db) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
           pivoted-data-hide-zero (filter thfil pivoted-data)]
-      (println (count pivoted-data) (count pivoted-data-hide-zero))
       (riskviews/add-total-line-to-pivot (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero) (map keyword (:portfolios db))))))
 
 (defn holdings []
