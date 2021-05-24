@@ -79,6 +79,7 @@
    :SENIOR                              {:Header "Snr" :accessor "SENIOR" :width 35}
    :SENIOR-WIDE                         {:Header "Senior" :accessor "SENIOR" :width 50 :style {:textAlign "center"}}
    :HYBRID-WIDE                         {:Header "Hybrid" :accessor "HYBRID" :width 50 :style {:textAlign "center"}}
+   :INTERNATIONAL_SUKUK                 {:Header "Sukuk" :accessor "INTERNATIONAL_SUKUK" :width 50 :style {:textAlign "center"}}
    :ESG                                 {:Header "ESG" :accessor "ESG" :width 50 :style {:textAlign "center"} :Cell esg-span}
    :MSCI-SCORE                          {:Header "MSCI" :accessor "msci-IVA_COMPANY_RATING" :width 50 :style {:textAlign "center"}}
    :COUPON                              {:Header "Coupon" :accessor "COUPON" :width 55 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -345,21 +346,21 @@
        {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}
        {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}]
       "Screener (SVR)"
-      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :MSCI-SCORE :AMT_OUTSTANDING_3 :COUPON])}]
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :AMT_OUTSTANDING_3 :COUPON])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
                {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}])
       "Model portfolios"
-      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Ticker :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Ticker :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK  :ESG :AMT_OUTSTANDING_3 :COUPON])}]
               [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :IG-model :TR-model :CEMBI-model-objective :IG-model-objective :TR-model-objective])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
       "Advanced spot charts"
-      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :Ticker :CRNCY :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :ESG :AMT_OUTSTANDING_3 :COUPON])}]
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :Ticker :CRNCY :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :AMT_OUTSTANDING_3 :COUPON])}]
               [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}]
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :difference_svr_2_2d])}])

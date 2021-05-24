@@ -141,6 +141,7 @@
                                      [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
                                      [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output" (conj (keys (first data)) :ISIN))]
                                      ])]
+                 [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
                  [:> ReactTable
                   {:data            data :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)
                    :showPagination  true :defaultPageSize 15 :pageSizeOptions [15 25 50 100]
@@ -311,7 +312,7 @@
                                                                                                       [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (take 50 (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))]]]
 
                                                            [oz/vega-lite (qscharts/advanced-spot-chart-vega-spec @advanced-spot-chart-isins @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-2d-curves-sov-only)]]]
-       [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns."]
+       [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
        [h-box :gap "50px" :children
         [
          [:> ReactTable

@@ -95,6 +95,14 @@
 
 (defn text-filter-OR [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box}
+  OR through comma separation, AND through &"
+  (let [id (.toLowerCase ^string (str (aget row (aget filterfn "id"))))]
+    (some true?
+          (map (fn [line] (every? true? (map #(lower-case-s-in-value? % id) (.split ^js/String line "&"))))
+               (.split ^js/String (.toLowerCase ^js/String (aget filterfn "value")) ",")))))
+
+(defn text-filter-OR-old [filterfn row]
+  "filterfn is {id: column_name value: text_in_filter_box}
   OR through comma separation"
   (let [filter-values (clojure.string/split (.toLowerCase ^string (aget filterfn "value")) ",")]
     (some true? (map (fn [s]  (if (= (.charAt s 0) "-")

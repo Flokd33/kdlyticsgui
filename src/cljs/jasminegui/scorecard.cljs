@@ -21,58 +21,194 @@
     [jasminegui.riskviews :as riskviews]
     [jasminegui.qs.quantscores :as quantscores]
     [jasminegui.qs.qstables :as qstables]
-    [cljs-time.core :refer [today]]
-    [oz.core :as oz])
+    [cljs-time.core :refer [today plus]]
+    [cljs-time.format :as ctf]
+    [oz.core :as oz]
+    [goog.object :as gobj])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
 
 (def qdb-sectors
   {
-   "CONSUMERS"
-   "FINANCIALS"
-   "INDUSTRIALS"
-   "INFRASTRUCTURE"
-   "METALSMINING"
-   "OILGAS"
-   "PULPPAPER"
-   "REALESTATE"
-   "TELECOMS"
-   "UTILITIES"})
+   "Consumer" "CONSUMERS"
+   "Financials" "FINANCIALS"
+   "Industrials" "INDUSTRIALS"
+   "Infrastructure" "INFRASTRUCTURE"
+   "Metals & Mining" "METALSMINING"
+   "Oil & Gas" "OILGAS"
+   "Pulp & Paper" "PULPPAPER"
+   "Real Estate" "REALESTATE"
+   "TMT" "TELECOMS"
+   "Transport" "Transport"
+   "Utilities" "UTILITIES"})
 
 (def qdb-server "https://ldprdfiorcdc1:6100/v1/emcd/")
 
 (rf/reg-event-fx
   :get-qdb-securities
   (fn [{:keys [db]} [_ sector]]
-    {:http-get-dispatch {:url          (str qdb-server "securities?sectors=" sector)
-                         :dispatch-key [:get-qdb-scores]}}))
+    {:http-get-dispatch {:url (str qdb-server "securities?sectors=" sector) :dispatch-key [:get-qdb-scores]}}))
 
 (rf/reg-event-fx
   :get-qdb-scores
   (fn [{:keys [db]} [_ qdb-securities]]
     (let [isins (map :security_id (:result qdb-securities))]
-      {:db                 (assoc db :scorecard/qdb-securities isins)
+      {:db (assoc db :scorecard/qdb-securities isins)
        :http-json-post-dispatch
-                           {:url          (str qdb-server "scores")
-                            :json-params  {:security_ids isins ;["XS1061043367"]
-                                           :metrics      [] ; ["EMCD_TECH_S_D"]
-                                           :date_params  {  :as_at_date (cljs-time.format/unparse (cljs-time.format/formatter "yyyy-MM-dd") (today))
-                                                          ;:start_date "2021-02-01" :end_date "2021-02-07"
-                                                          :max_stale_days 15}}
-                            :dispatch-key [:scorecard/qdb-scores]}})))
+           [{:url (str qdb-server "scores")
+             :json-params {:security_ids isins :metrics [] :date_params  {:as_at_date (ctf/unparse (ctf/formatter "yyyy-MM-dd") (today)) :max_stale_days 25}} ;:start_date "2021-02-01" :end_date "2021-02-07"
+             :dispatch-key [:clean-qdb-scores]}
+            {:url (str qdb-server "scores")
+             :json-params {:security_ids isins :metrics [] :date_params  {:as_at_date (ctf/unparse (ctf/formatter "yyyy-MM-dd") (plus (today) {:days -14})) :max_stale_days 25}} ;:start_date "2021-02-01" :end_date "2021-02-07"
+             :dispatch-key [:clean-qdb-scores-previous]}
+            ]})))
+
+(rf/reg-event-db
+  :clean-qdb-scores
+  (fn [db [_ data]]
+    (let [isins (distinct (map :security_id (:result data)))
+          subqm (into {} (for [line (filter #(some #{(:ISIN %)} isins) (:quant-model/model-output db))] [(:ISIN line) line]))]
+      (assoc db :scorecard/qdb-scores (into [] (for [[s block] (group-by :security_id (:result data))] (into (subqm s) (for [line block] [(:metric line) (:value line)]))))))))
+
+(rf/reg-event-db
+  :clean-qdb-scores-previous
+  (fn [db [_ data]]
+    (let [isins (distinct (map :security_id (:result data)))]
+      (assoc db :scorecard/qdb-scores-previous (into [] (for [[s block] (group-by :security_id (:result data))] (into {:ISIN s} (for [line block] [(:metric line) (:value line)]))))))))
+
+(rf/reg-sub
+  :scorecard/qdb-scores-with-difference
+  (fn [db]
+    (let [spot (:scorecard/qdb-scores db)
+          prev (into {} (for [line (:scorecard/qdb-scores-previous db)] [(:ISIN line) line]))
+          k (keys (first (vals prev)))
+          dc (zipmap k (map #(str % "-PREV") k))]
+      (into [] (for [line spot]
+                 (merge line (clojure.set/rename-keys (prev (:ISIN line)) dc)))))))
 
 (def standard-box-width-nb 1800)
 (def standard-box-width (str standard-box-width-nb "px"))
 
-(def scorecard-scores-template
-  [:bond-id [:name :cembi-model :ig-model :tr-model]
-   :pricing [:gspread :price :yield]
-   :valuationscore [:urs :hrs :qual :val]
-   :qualscore [:gov :mna :capex :refi]
-   :techscore {}
+;(def scorecard-scores-template
+;  [:bond-id [:name :cembi-model :ig-model :tr-model]
+;   :pricing [:gspread :price :yield]
+;   :valuationscore [:urs :hrs :qual :val]
+;   :qualscore [:gov :mna :capex :refi]
+;   :techscore {}
+;
+;   ]
+;  )
 
-   ]
+;(defn background-color [state rowInfo column]
+;  "We match the colours of the Excel sheet"
+;  (println (gobj/getValueByKeys rowInfo "row"))
+;  (if (some? rowInfo)
+;      #js {:style #js {:textAlign "right"}}
+;      #js {:style #js {:textAlign "right"}}
+;      )
+;
+;    )
+
+  ;(if (and (some? rowInfo) (neg? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id")))) ;(aget rowInfo "row" (aget column "id"))
+  ;  #js {:style #js {:color "red" :textAlign "right"}}
+  ;  #js {:style #js {:textAlign "right"}})
+
+
+
+(def group-headers [{:group-header "Description" :id :description :style {:textAlign "left" :backgroundColor "white"}}
+                    {:group-header "Pricing" :id :pricing :style {:textAlign "right" :backgroundColor "#E2EEDB"}}
+                     {:group-header "Valuation" :id :valuation  :style {:textAlign "right" :backgroundColor "#FFE4C4"}}
+                     {:group-header "Quality" :id :quality  :style {:textAlign "right" :backgroundColor "#D8EBF1"}}
+                     {:group-header "Technicals" :id :technicals  :style {:textAlign "right" :backgroundColor "#FBC8E0"}}
+                     {:group-header "Total" :id :total :style {:textAlign "right" :backgroundColor "#E4E4E4"}}
+                     {:group-header "ESG" :id :esg :style {:textAlign "right" :backgroundColor "#C7DEB8"}}])
+
+(defn score-cell-format
+  "This will write a single cell.
+  Note that [this] has access to the full row so conditional evaluation is possible (e.g. change column B based on values in column A)
+  Here we take the input value if it's there, scale it (useful for percentages) and format it."
+  [this]
+  ;(println (aget this "value")
+  ;         (aget this "column" "accessor")
+  ;         (keys (js->clj (aget this "column" "accessor")))
+  ;         )
+  ;(if (aget this "value") (println (aget this "row" "_original" (str (aget this "column" "id") "-PREV"))))
+  (if-let [x (aget this "value")]
+    (str x "/" (aget this "row" "_original" (str (aget this "column" "id") "-PREV")))
+    "-"))
+
+(def score-fields
+  [
+   {:Header "Bond" :grp :description :accessor "Bond" :width 130}
+   {:accessor "ISIN" :grp :description :Header "ISIN" :width 110}
+
+  {:Header "Price" :accessor "Used_Price" :grp :pricing :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2  :filterMethod tables/nb-filter-OR-AND}
+  {:Header "Rating source" :accessor "Rating_String" :width 110 :filterMethod tables/nb-filter-OR-AND-x100}
+  {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil  :filterMethod tables/nb-filter-OR-AND}
+  {:Header "ZTW" :accessor "Used_ZTW" :grp :pricing :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND}
+  {:Header "G" :accessor "G_SPREAD_MID_CALC" :grp :pricing :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND}
+  {:Header "YTW" :accessor "Used_YTW" :grp :pricing :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format  :filterMethod tables/nb-filter-OR-AND}
+  {:Header "Dur." :accessor "Used_Duration" :grp :pricing :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterMethod tables/nb-filter-OR-AND}
+
+   {:accessor "EMCD_VAL_UNIVERSAL_REL" :grp :valuation :Header "Univ." :Cell score-cell-format}
+   {:accessor "EMCD_VAL_HISTORICAL_REL" :grp :valuation :Header "Hist."  :Cell score-cell-format}
+   {:accessor "EMCD_VAL_QUALITATIVE" :grp :valuation :Header "Quality"  :Cell score-cell-format}
+   {:accessor "EMCD_VAL_TOTAL" :grp :valuation :Header "Total" :Cell tables/round2}
+
+   {:accessor "EMCD_QUAL_CORP_GOVERNANCE" :grp :quality :Header "Corp. gov."  :Cell score-cell-format}
+   {:accessor "EMCD_QUAL_M_A" :grp :quality :Header "M&A"  :Cell score-cell-format}
+   {:accessor "EMCD_QUAL_CAPEX_FLEX" :grp :quality :Header "Capex flex"  :Cell score-cell-format}
+   {:accessor "EMCD_QUAL_REFIN_RISK" :grp :quality :Header "Refi risk"  :Cell score-cell-format}
+   {:accessor "EMCD_QUAL_GOV_SUPPORT" :grp :quality :Header "Govt. / Reg."  :Cell score-cell-format}
+   {:accessor "EMCD_QUAL_EBITDA_GROWTH" :grp :quality :Header "EBITDA growth" :Cell score-cell-format}
+   {:accessor "EMCD_QUAL_EDITDA_MARGIN" :grp :quality :Header "EBITDA margin" :Cell score-cell-format}
+   {:accessor "EMCD_QUAL_LEVERAGE" :grp :quality :Header "Lvrg." :Cell score-cell-format}
+   {:accessor "EMCD_QUAL_TOTAL" :grp :quality :Header "Total" :Cell tables/round2}
+
+   {:accessor "EMCD_TECH_S_D" :grp :technicals :Header "Supply / D" :Cell score-cell-format}
+   {:accessor "EMCD_TECH_INDEX_INV_BASE" :grp :technicals :Header "Index inv." :Cell score-cell-format}
+   {:accessor "EMCD_TECH_LIQUIDITY" :grp :technicals :Header "Liqdty." :Cell score-cell-format}
+   {:accessor "EMCD_TECH_TOTAL" :grp :technicals :Header "Total" :Cell tables/round2}
+
+   {:accessor "EMCD_TOTAL" :grp :total :Header "Total score" :Cell tables/round2}
+
+   {:accessor "EMCD_ESG_CREDIT_RATING_IMPACT" :grp :esg :Header "Rating impact" :Cell score-cell-format}
+   {:accessor "EMCD_ESG_SENSITIVITY_RISK" :grp :esg :Header "Sensty. risk" :Cell score-cell-format}
+   {:accessor "EMCD_ESG_CREDIT_IMPACT" :grp :esg :Header "Total" :Cell score-cell-format}
+
+
+
+
+
+
+    ]
+
+  )
+
+(defn scorecard-table []
+  (let [sector @(rf/subscribe [:scorecard/sector])
+        data-old @(rf/subscribe [:scorecard/qdb-scores])
+        data @(rf/subscribe [:scorecard/qdb-scores-with-difference])
+        ]
+
+    ;(println (first data2))
+    [v-box :class "element" :width "100%" :gap "10px"
+     :children [[title :level :level2 :label (str "Scorecard for " sector)]
+                [:> ReactTable
+                 {:data           data
+                  :columns        (into []
+                                        (for [group group-headers]
+                                          {:Header (:group-header group) :columns (into [] (for [row (t/chainfilter {:grp (:id group)} score-fields)]
+                                                                                             (assoc row
+                                                                                               :width (if (contains? row :width) (row :width) 50)
+                                                                                               :headerStyle {:overflow nil :whiteSpace "pre-line" :wordWrap   "break-word"}
+                                                                                               :style (:style group)
+                                                                                               )))}
+
+                                          )
+                                        )
+                  :defaultPageSize 50 :showPagination true :sortable true :showPageSizeOptions true :defaultSorted [{:id "EMCD_TOTAL" :desc true}]}]]]) ; :className "-striped -highlight"
   )
 
 
@@ -175,7 +311,7 @@
 (rf/reg-event-fx
   :scorecard/change-portfolio
   (fn [{:keys [db]} [_ portfolio]]
-    (println "scorecard-change" portfolio (:scorecard/sector db) (count (:positions db)))
+    ;(println "scorecard-change" portfolio (:scorecard/sector db) (count (:positions db)))
     {:db (assoc db :scorecard/portfolio portfolio)
      :http-post-dispatch {:url (str static/ta-server-address "scorecard-request")
                          :edn-params {:portfolio portfolio
@@ -186,13 +322,15 @@
   :scorecard/change-sector
   (fn [{:keys [db]} [_ sector]]
     {:db (assoc db :scorecard/sector sector)
+     :fx [[:dispatch [:get-qdb-securities (qdb-sectors sector)]]]
      :http-post-dispatch
          {:url          (str static/ta-server-address "scorecard-request") :edn-params {:portfolio (:scorecard/portfolio db) :isin-seq (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector sector :original-quantity pos?} (:positions db)))}
           :dispatch-key [:scorecard/trade-analyser-data]}}))
 
-(defn change-sector [sector]
-  (rf/dispatch [:scorecard/sector sector])
-  (rf/dispatch [:get-scorecard-trade-analyser (map :isin @(rf/subscribe [:scorecard-risk/table]))]))
+;(defn change-sector [sector]
+;  (rf/dispatch [:scorecard/sector sector])
+;  (rf/dispatch [:get-qdb-securities (qdb-sectors sector)])
+;  (rf/dispatch [:get-scorecard-trade-analyser (map :isin @(rf/subscribe [:scorecard-risk/table]))]))
 
 (def expander (r/atom {0 {}}))
 
@@ -200,8 +338,8 @@
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
         vdisplay @(rf/subscribe [:scorecard-risk/table])]
-    (println @(rf/subscribe [:scorecard/qdb-securities]))
-    (println @(rf/subscribe [:scorecard/qdb-scores]))
+    ;(println @(rf/subscribe [:scorecard/qdb-securities]))
+    ;(println @(rf/subscribe [:scorecard/qdb-scores]))
     [v-box :gap "20px" :align :start
      :children [[h-box :class "element" :width "60%" :gap "75px" :align :center
                  :children [[title :level :level2 :label "Portfolio and sector selection"]
@@ -269,10 +407,11 @@
                               :columns        (concat (mapv tables/risk-table-columns [:issuer :name]) cols)
                               :showPagination false :sortable true :filterable false :pageSize (count (distinct (map :TICKER @(rf/subscribe [:scorecard-risk/multiple-tree]))))
                               :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:TICKER] :defaultSorted [{:id :OGEMCORD :desc true}]}])]]
+                ;[scorecard-table]
                 ]]))
 
 (defn view []
-  (rf/dispatch [:get-scorecard-attribution @(rf/subscribe [:scorecard/portfolio])])
-  (rf/dispatch [:get-qdb-securities "METALSMINING"])
+  ;(rf/dispatch [:get-scorecard-attribution @(rf/subscribe [:scorecard/portfolio])])
+  ;(rf/dispatch [:get-qdb-securities "CONSUMERS"])
   [box :width standard-box-width :padding "80px 20px" :class "subbody" :child [risk-view]])
 

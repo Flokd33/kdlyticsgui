@@ -163,6 +163,7 @@
                  :esg/msci-scores                         []
 
                  :quant-model/model-output                []
+                 :quant-model/bond-isin-map               {}
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
                  :quant-model/rating-curves-sov-only      []
@@ -185,6 +186,7 @@
                  :scorecard/trade-analyser-data nil
                  :scorecard/qdb-securities              []
                  :scorecard/qdb-scores                  []
+                 :scorecard/qdb-scores-previous                  []
 
                  :dummy nil                                 ;can be useful
 
@@ -313,6 +315,7 @@
            :scorecard/trade-analyser-data
            :scorecard/qdb-securities
            :scorecard/qdb-scores
+           :scorecard/qdb-scores-previous
 
            :time-machine/enabled
            :time-machine/date
@@ -380,9 +383,14 @@
 (rf/reg-event-db
   :quant-model/model-output
   (fn [db [_ model]]
-    (assoc db
-      :quant-model/model-output (array-of-lists->records model)
-              :navigation/show-mounting-modal false)))
+    (let [                                                  ;bond-isin (zipmap (model :Bond) (model :ISIN))
+          a 1
+          ]
+      (assoc db
+        :quant-model/model-output (array-of-lists->records model)
+        :navigation/show-mounting-modal false
+        ;:quant-model/bond-isin-map (merge bond-isin (clojure.set/map-invert bond-isin))
+        ))))
 
 ;(rf/reg-event-db
 ;  :positions-new
@@ -491,11 +499,14 @@
 
 (rf/reg-fx :http-get-dispatch http-get-dispatch)
 
-(defn http-post-dispatch [request]
+(defn http-post-dispatch
   "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
-  (go (let [response (<! (http/post (:url request) (if (:edn-params request) {:edn-params (:edn-params request)} {:json-params (:json-params request)})))]
-        (rf/dispatch (conj (:dispatch-key request) (:body response)))
-        (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
+  [request]
+  (let [vr (if (vector? request) request [request])]
+    (doseq [r vr]
+      (go (let [response (<! (http/post (:url r) (if (:edn-params r) {:edn-params (:edn-params r)} {:json-params (:json-params r)})))]
+            (rf/dispatch (conj (:dispatch-key r) (:body response)))
+            (if (:flag r) (rf/dispatch [(:flag r) (:flag-value r)])))))))
 
 (rf/reg-fx :http-post-dispatch http-post-dispatch)
 
