@@ -32,15 +32,15 @@
 (def qdb-sectors
   {
    "Consumer" "CONSUMERS"
-   "Financials" "FINANCIALS"
+   "Financial" "FINANCIALS"
    "Industrials" "INDUSTRIALS"
-   "Infrastructure" "INFRASTRUCTURE"
+   "Infrastructure" "INFRASTRUCTURES"
    "Metals & Mining" "METALSMINING"
    "Oil & Gas" "OILGAS"
    "Pulp & Paper" "PULPPAPER"
    "Real Estate" "REALESTATE"
    "TMT" "TELECOMS"
-   "Transport" "Transport"
+   "Transport" "Transport"                                  ;;doesn't exist
    "Utilities" "UTILITIES"})
 
 (def qdb-server "https://ldprdfiorcdc1:6100/v1/emcd/")
@@ -48,19 +48,27 @@
 (rf/reg-event-fx
   :get-qdb-securities
   (fn [{:keys [db]} [_ sector]]
-    {:http-get-dispatch {:url (str qdb-server "securities?sectors=" sector) :dispatch-key [:get-qdb-scores]}}))
+    {:http-get-dispatch {:url (str qdb-server "sectors?sectors=" sector "&include_inactive=False") :dispatch-key [:get-qdb-scores]}}))
+
+;old request
+;(rf/reg-event-fx
+;  :get-qdb-securities
+;  (fn [{:keys [db]} [_ sector]]
+;    {:http-get-dispatch {:url (str qdb-server "securities?sectors=" sector) :dispatch-key [:get-qdb-scores]}}))
 
 (rf/reg-event-fx
   :get-qdb-scores
   (fn [{:keys [db]} [_ qdb-securities]]
-    (let [isins (map :security_id (:result qdb-securities))]
-      {:db (assoc db :scorecard/qdb-securities isins)
+    (let [isins (get-in qdb-securities [:result 0 :security_ids])
+          latest-date (first (get-in qdb-securities [:result 0 :upload_dates]))
+          previous-date (second (get-in qdb-securities [:result 0 :upload_dates]))]
+      {:db (assoc db :scorecard/qdb-securities isins :scorecard/latest-date latest-date :scorecard/previous-date previous-date)
        :http-json-post-dispatch
            [{:url (str qdb-server "scores")
-             :json-params {:security_ids isins :metrics [] :date_params  {:as_at_date (ctf/unparse (ctf/formatter "yyyy-MM-dd") (today)) :max_stale_days 25}} ;:start_date "2021-02-01" :end_date "2021-02-07"
+             :json-params {:security_ids isins :metrics [] :date_params  {:as_at_date latest-date :max_stale_days 0}} ;:start_date "2021-02-01" :end_date "2021-02-07" ;(ctf/unparse (ctf/formatter "yyyy-MM-dd") (today)) :max_stale_days 25
              :dispatch-key [:clean-qdb-scores]}
             {:url (str qdb-server "scores")
-             :json-params {:security_ids isins :metrics [] :date_params  {:as_at_date (ctf/unparse (ctf/formatter "yyyy-MM-dd") (plus (today) {:days -14})) :max_stale_days 25}} ;:start_date "2021-02-01" :end_date "2021-02-07"
+             :json-params {:security_ids isins :metrics [] :date_params  {:as_at_date previous-date :max_stale_days 0}} ;:start_date "2021-02-01" :end_date "2021-02-07";{:as_at_date (ctf/unparse (ctf/formatter "yyyy-MM-dd") (plus (today) {:days -14})) :max_stale_days 25}
              :dispatch-key [:clean-qdb-scores-previous]}
             ]})))
 
@@ -129,13 +137,14 @@
   Note that [this] has access to the full row so conditional evaluation is possible (e.g. change column B based on values in column A)
   Here we take the input value if it's there, scale it (useful for percentages) and format it."
   [this]
-  ;(println (aget this "value")
-  ;         (aget this "column" "accessor")
-  ;         (keys (js->clj (aget this "column" "accessor")))
-  ;         )
-  ;(if (aget this "value") (println (aget this "row" "_original" (str (aget this "column" "id") "-PREV"))))
   (if-let [x (aget this "value")]
-    (str x "/" (aget this "row" "_original" (str (aget this "column" "id") "-PREV")))
+    (if-let [y (aget this "row" "_original" (str (aget this "column" "id") "-PREV"))]
+      (str x (if (not= x y)
+               (let [d (- (js/parseInt x) (js/parseInt y))]
+                 (str " (" (if (pos? d) "+") d ")"))
+               ))
+      (str x " (na)")
+      )
     "-"))
 
 (def score-fields
@@ -188,13 +197,9 @@
 
 (defn scorecard-table []
   (let [sector @(rf/subscribe [:scorecard/sector])
-        data-old @(rf/subscribe [:scorecard/qdb-scores])
-        data @(rf/subscribe [:scorecard/qdb-scores-with-difference])
-        ]
-
-    ;(println (first data2))
-    [v-box :class "element" :width "100%" :gap "10px"
-     :children [[title :level :level2 :label (str "Scorecard for " sector)]
+        data @(rf/subscribe [:scorecard/qdb-scores-with-difference])]
+    [v-box :class "element" :style {:backgroundColor "lightyellow"} :width "100%" :gap "10px"
+     :children [[title :level :level2 :label (str "IN DEV DO NOT USE Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date]))]
                 [:> ReactTable
                  {:data           data
                   :columns        (into []
@@ -407,11 +412,11 @@
                               :columns        (concat (mapv tables/risk-table-columns [:issuer :name]) cols)
                               :showPagination false :sortable true :filterable false :pageSize (count (distinct (map :TICKER @(rf/subscribe [:scorecard-risk/multiple-tree]))))
                               :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:TICKER] :defaultSorted [{:id :OGEMCORD :desc true}]}])]]
-                ;[scorecard-table]
+                [scorecard-table]
                 ]]))
 
 (defn view []
   ;(rf/dispatch [:get-scorecard-attribution @(rf/subscribe [:scorecard/portfolio])])
-  ;(rf/dispatch [:get-qdb-securities "CONSUMERS"])
+  (rf/dispatch [:get-qdb-securities "CONSUMERS"])
   [box :width standard-box-width :padding "80px 20px" :class "subbody" :child [risk-view]])
 

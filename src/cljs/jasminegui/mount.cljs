@@ -187,6 +187,8 @@
                  :scorecard/qdb-securities              []
                  :scorecard/qdb-scores                  []
                  :scorecard/qdb-scores-previous                  []
+                 :scorecard/latest-date nil
+                 :scorecard/previous-date nil
 
                  :dummy nil                                 ;can be useful
 
@@ -316,6 +318,8 @@
            :scorecard/qdb-securities
            :scorecard/qdb-scores
            :scorecard/qdb-scores-previous
+           :scorecard/latest-date
+           :scorecard/previous-date
 
            :time-machine/enabled
            :time-machine/date
