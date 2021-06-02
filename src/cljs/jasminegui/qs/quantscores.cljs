@@ -308,7 +308,7 @@
                                                                        [gap :size "10px"] [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-rating-choice #{}) :disabled? (zero? (count @spot-chart-rating-choice))]
                                                                        [gap :size "20px"] [title :label "Bookmarks" :level :level3] [button :label "Save new" :class "btn btn-primary btn-block" :on-click #(reset! show-chart-modal :save-advanced)][gap :size "10px"] [button :label "Open" :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:get-quant-model-saved-advanced-charts]) (reset! show-chart-modal :open-advanced))]
                                                                        ]))]
-                                                          [v-box :gap "10px" :width "125px" :children [[title :level :level4 :label "Filter table then click draw to see first 50 bonds." ]
+                                                          [v-box :gap "10px" :width "125px" :children [[title :level :level4 :label "Filter table then click draw to see first 100 bonds." ]
                                                                                                       [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (take 50 (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))]]]
 
                                                            [oz/vega-lite (qscharts/advanced-spot-chart-vega-spec @advanced-spot-chart-isins @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-2d-curves-sov-only)]]]
@@ -317,11 +317,11 @@
         [
          [:> ReactTable
           {:data           data :columns (qstables/table-style->qs-table-col "Advanced spot charts" nil)
-           :showPagination true :pageSize 50 :showPageSizeOptions false
+           :showPagination true :pageSize 100 :showPageSizeOptions false
            :filterable     true :defaultFilterMethod tables/text-filter-OR :onFilteredChange #(reset! advanced-chart-filter %) :defaultFiltered @reagent-chart-filter
            :ref            #(do (reset! advanced-spot-chart-view %) ;we're going to go through here TWICE first time likely with empty stuff. THIS IS TRICKY
                                 (when @open-update
-                                  (reset! advanced-spot-chart-isins (take 50 (js->clj (if % (.map (. (.getResolvedState %) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))
+                                  (reset! advanced-spot-chart-isins (take 100 (js->clj (if % (.map (. (.getResolvedState %) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))
                                   (if % (reset! open-update false))))
            :getTrProps     on-click-context :className "-striped -highlight"}]
          ]]]]]))
