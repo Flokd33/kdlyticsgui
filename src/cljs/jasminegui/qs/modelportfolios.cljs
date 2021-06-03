@@ -104,9 +104,9 @@
                {:portfolio         v
                 :nav               (reduce + (map k data))
                 :Used_YTW          (/ (reduce + (map #(* (k %) (:Used_YTW %)) data)) 100.)
-                :Used_Duration     (/ (reduce + (map (keyword (str (name k) "-dur")) data)) 100.) ;(/ (reduce + (map #(* (k %) (:Used_Duration %)) data)) 100.)
+                :Used_Duration     (reduce + (map (keyword (str (name k) "-dur")) data)) ;(/ (reduce + (map #(* (k %) (:Used_Duration %)) data)) 100.)
                 :Used_ZTW          (/ (reduce + (map #(* (k %) (:Used_ZTW %)) data)) 100.)
-                :dur_x_sp          (/ (reduce + (map (keyword (str (name k) "-dur-x-sp")) data)) 100.)
+                :dur_x_sp          (reduce + (map (keyword (str (name k) "-dur-x-sp")) data))
                 :G_SPREAD_MID_CALC (/ (reduce + (map #(* (k %) (:G_SPREAD_MID_CALC %)) data)) 100.)
                 :Used_Rating_Score (+ (/ (reduce + (map #(* (k %) (:Used_Rating_Score %)) data)) 100.) (* 0.01 6 (- 100 (reduce + (map k data))))) ;cash is rated A = 6
                 :hy                (reduce + (map k (t/chainfilter {:Used_Rating_Score #(> % 10)} data)))
