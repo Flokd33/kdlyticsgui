@@ -67,7 +67,7 @@
 
 (defn bnc
   [header accessor width]
-  {:Header header :accessor accessor :width width :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND})
+  {:Header header :accessor accessor :width width :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND})
 
 (def quant-score-table-columns
   {:ISIN                                {:Header "ISIN" :accessor "ISIN" :width 100}
@@ -83,12 +83,12 @@
    :ESG                                 {:Header "ESG" :accessor "ESG" :width 50 :style {:textAlign "center"} :Cell esg-span}
    :MSCI-SCORE                          {:Header "MSCI" :accessor "msci-IVA_COMPANY_RATING" :width 50 :style {:textAlign "center"}}
    :COUPON                              {:Header "Coupon" :accessor "COUPON" :width 55 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :cembi                               {:Header "CEMBI" :accessor "cembi" :width 52 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :cembi-ig                            {:Header "CEMBI IG" :accessor "cembi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :embi                                {:Header "EMBI" :accessor "embi" :width 52 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :embi-ig                             {:Header "EMBI IG" :accessor "embi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :us-agg                              {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :global-agg                          {:Header "Glb agg" :accessor "global-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-pos :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :cembi                               {:Header "CEMBI" :accessor "cembi" :width 52 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :cembi-ig                            {:Header "CEMBI IG" :accessor "cembi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :embi                                {:Header "EMBI" :accessor "embi" :width 52 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :embi-ig                             {:Header "EMBI IG" :accessor "embi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :us-agg                              {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :global-agg                          {:Header "Glb agg" :accessor "global-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :CRNCY                               {:Header "Currency" :accessor "CRNCY" :width 65}
    :Bond-sticky                         {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                          {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -258,11 +258,11 @@
    :NXT_CALL_PX                         {:Header "Call price" :accessor "NXT_CALL_PX" :width 80 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round3 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    ;:model-weight                        {:Header "Weight" :accessor "model-weight" :width 65 :Cell model-weight-input-cell :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :CEMBI-model                         {:Header "Main" :accessor "CEMBI-model" :width 65 :Cell tables/round2-if-pos :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
-   :Allianz-model                         {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell tables/round2-if-pos  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
-   :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-pos  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
-   :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-pos :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
-   :TR-model                         {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-pos  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :CEMBI-model                         {:Header "Main" :accessor "CEMBI-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :Allianz-model                         {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell tables/round2-if-not0  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-not0  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :TR-model                         {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-not0  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
 
    :CEMBI-model-objective                         {:Header "Main" :accessor "CEMBI-model-objective" :width 65 :show false}
    :Allianz-model-objective                         {:Header "Allianz" :accessor "Allianz-model-objective" :width 65 :show false}
@@ -270,16 +270,16 @@
    :BNP-model-objective                         {:Header "BNP" :accessor "BNP-model-objective" :width 65 :show false}
    :TR-model-objective                         {:Header "TR" :accessor "TR-model-objective" :width 65 :show false}
 
-   :CEMBI-model-dur       {:Header "Main" :accessor "CEMBI-model-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :CEMBI-model-dur-x-sp  {:Header "Main" :accessor "CEMBI-model-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :IG-model-dur       {:Header "IG" :accessor "IG-model-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :IG-model-dur-x-sp  {:Header "IG" :accessor "IG-model-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :TR-model-dur       {:Header "TR" :accessor "TR-model-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :TR-model-dur-x-sp  {:Header "TR" :accessor "TR-model-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :cembi-dur       {:Header "CEMBI" :accessor "cembi-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :cembi-dur-x-sp  {:Header "CEMBI" :accessor "cembi-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :cembi-ig-dur       {:Header "CEMBI IG" :accessor "cembi-ig-dur" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :cembi-ig-dur-x-sp  {:Header "CEMBI IG" :accessor "cembi-ig-dur-x-sp" :width 65 :Cell tables/round2-if-pos :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :CEMBI-model-dur       {:Header "Main" :accessor "CEMBI-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :CEMBI-model-dur-x-sp  {:Header "Main" :accessor "CEMBI-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :IG-model-dur       {:Header "IG" :accessor "IG-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :IG-model-dur-x-sp  {:Header "IG" :accessor "IG-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :TR-model-dur       {:Header "TR" :accessor "TR-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :TR-model-dur-x-sp  {:Header "TR" :accessor "TR-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-dur       {:Header "CEMBI" :accessor "cembi-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-dur-x-sp  {:Header "CEMBI" :accessor "cembi-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-ig-dur       {:Header "CEMBI IG" :accessor "cembi-ig-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-ig-dur-x-sp  {:Header "CEMBI IG" :accessor "cembi-ig-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
 
 
    })
