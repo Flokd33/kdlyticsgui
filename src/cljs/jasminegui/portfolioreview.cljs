@@ -692,7 +692,7 @@
         positions (t/chainfilter {:portfolio @(rf/subscribe [:portfolio-review/portfolio]) } @(rf/subscribe [:positions])) ;:original-quantity #(not (zero? %))
         ust (t/chainfilter {:TICKER "T"} positions)
         bbb-flat-and-better (t/chainfilter {:TICKER #(not= % "T") :rating-score #(< % 10)} positions)
-        bbb-minus-and-worse (t/chainfilter {:rating-score #(>= % 10)} positions)
+        bbb-minus-and-worse (t/chainfilter {:TICKER #(not= % "T") :rating-score #(>= % 10)} positions) ;futures have no rating
         durations ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"]
         prep (fn [data] (into [] (for [m durations] {:performance "portfolio" :group m :value (reduce + (map dur-key (t/chainfilter {:qt-final-maturity-band m} data)))})))
         dust (prep ust) dig (prep bbb-flat-and-better) dhy (prep bbb-minus-and-worse)
