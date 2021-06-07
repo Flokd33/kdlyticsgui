@@ -89,9 +89,10 @@
 (defn lower-case-s-in-value?
   "Checks if s (already assumed lower case) is in value. If s starts by -, excludes it"
   [^js/String s ^js/String value]
-  (if (= (.charAt s 0) "-")
-    (not (.includes ^js/String (.toLowerCase ^js/String value) (.substring s 1)))
-    (.includes ^js/String (.toLowerCase ^js/String value) s)))
+  (if value                                                 ;checks for nil
+    (if (= (.charAt s 0) "-")
+      (not (.includes ^js/String (.toLowerCase ^js/String value) (.substring s 1)))
+      (.includes ^js/String (.toLowerCase ^js/String value) s))))
 
 (defn text-filter-OR [filterfn row]
   "filterfn is {id: column_name value: text_in_filter_box}
