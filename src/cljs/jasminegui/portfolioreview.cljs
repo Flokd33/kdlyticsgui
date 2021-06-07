@@ -377,7 +377,8 @@
                         activity-pages
                         quant-value-pages
                         risk-pages
-                        [{:title "Interest rate breakdown" :nav-request :ir-breakdown :data-request nil}]
+                        [{:title "Interest rate breakdown" :nav-request :ir-breakdown :data-request nil :dur-key :contrib-mdur}
+                         {:title "Interest rate breakdown vs index" :nav-request :ir-breakdown :data-request nil :dur-key :mdur-delta}]
                         [{:title "The End" :nav-request :end :data-request nil}]
                         ))))
 
@@ -686,16 +687,17 @@
       (portfolio-review-box-template [[oz/vega-lite (quant-value-waterfall-chart clean-data-sorted max-total)]]))))
 
 (defn ir-breakdown []
-  (let [positions (t/chainfilter {:portfolio @(rf/subscribe [:portfolio-review/portfolio]) :original-quantity #(not (zero? %))} @(rf/subscribe [:positions]))
-        ;positions (t/chainfilter {:portfolio @(rf/subscribe [:portfolio-review/portfolio]) :weight pos?} @(rf/subscribe [:positions]))
+  (let [
+        dur-key (get-in pages [@current-page :dur-key])
+        positions (t/chainfilter {:portfolio @(rf/subscribe [:portfolio-review/portfolio]) } @(rf/subscribe [:positions])) ;:original-quantity #(not (zero? %))
         ust (t/chainfilter {:TICKER "T"} positions)
         bbb-flat-and-better (t/chainfilter {:TICKER #(not= % "T") :rating-score #(< % 10)} positions)
         bbb-minus-and-worse (t/chainfilter {:rating-score #(>= % 10)} positions)
         durations ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"]
-        prep (fn [data] (into [] (for [m durations] {:performance "portfolio" :group m :value (reduce + (map :contrib-mdur (t/chainfilter {:qt-final-maturity-band m} data)))})))
+        prep (fn [data] (into [] (for [m durations] {:performance "portfolio" :group m :value (reduce + (map dur-key (t/chainfilter {:qt-final-maturity-band m} data)))})))
         dust (prep ust) dig (prep bbb-flat-and-better) dhy (prep bbb-minus-and-worse)
         maxd (apply max (concat (map :value dust) (map :value dig) (map :value dhy)))
-        st (fn [data] (str (gstring/format "%.1f" (reduce + (map :contrib-mdur data))) "y"))
+        st (fn [data] (str (gstring/format "%.1f" (reduce + (map dur-key data))) "y"))
         chartfn (fn [data title] [oz/vega-lite (simple-horizontal-bars data title ".1f" 0.5 3 20 {:scale {:domain [0 (inc (int maxd))]}})])]
     (portfolio-review-box-template
       [[h-box :gap "20px" :children [(chartfn dust (str "UST: " (st ust))) (chartfn dig (str "BBB and better: " (st bbb-flat-and-better))) (chartfn dhy (str "BBB- and weaker: " (st bbb-minus-and-worse)))]]])))
