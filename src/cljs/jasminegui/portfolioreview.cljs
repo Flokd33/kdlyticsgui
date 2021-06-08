@@ -33,6 +33,15 @@
 ;;;;;;;;;;;;
 
 (rf/reg-event-fx
+  :change-portfolio
+  (fn [{:keys [db]} [_ portfolio]]
+    {:db (assoc db :portfolio-review/portfolio portfolio
+                   :portfolio-review/active-tab :summary)
+    :http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=summary&portfolio=" portfolio)
+                         :dispatch-key [:portfolio-review/summary-data]}})
+  )
+
+(rf/reg-event-fx
   :get-portfolio-review-summary-data
   (fn [{:keys [db]} [_ portfolio]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=summary&portfolio=" portfolio)
@@ -437,6 +446,7 @@
         f (fn [x] (if x (gstring/format "%.0fbps" (* 100 x)) ""))
         g (fn [x] (if x (gstring/format "%.2f" x) ""))
         h (fn [x] (if x (gstring/format "%.1f" x) ""))]
+    (reset! current-page 0)                                 ;HACK WHEN CHANGING PORTFOLIO
     (portfolio-review-box-template [[title :level :level2 :label (str "MTD, " portfolio " returned " (f (get-in data [:mtd :portfolio])) " vs " (f (get-in data [:mtd :index])) " for the index, " (f (get-in data [:mtd :alpha])) " of alpha.")]
                                     [title :level :level2 :label (str "YTD, " portfolio " returned " (f (get-in data [:ytd :portfolio])) " vs " (f (get-in data [:ytd :index])) " for the index, " (f (get-in data [:ytd :alpha])) " of alpha.")]
                                     [title :level :level2 :label (str "The portfolio yield is " (g (* 100 (reduce + (map :contrib-yield positions)))) "% vs " (g (* 100 (reduce + (map :bm-contrib-yield positions)))) "% for the index.")]
@@ -720,9 +730,12 @@
       [:div.output "nothing to display"])))
 
 (defn portfolio-change [portfolio]
-  (rf/dispatch [:portfolio-review/portfolio portfolio])
-  (rf/dispatch [:get-portfolio-review-summary-data portfolio])
-  (go-to-page 0 portfolio))
+  ;(reset! current-page 0)                                   ;(go-to-page 0 portfolio)
+  (rf/dispatch [:change-portfolio portfolio])               ;THERE WILL BE A HACK IN DISPLAY SUMMARY
+  ;(reset! current-page 0)
+  ;(rf/dispatch [:portfolio-review/portfolio portfolio])
+  ;(rf/dispatch [:get-portfolio-review-summary-data portfolio])
+  )
 
 (defn nav []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])

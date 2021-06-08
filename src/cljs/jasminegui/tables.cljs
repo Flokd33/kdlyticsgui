@@ -102,14 +102,14 @@
           (map (fn [line] (every? true? (map #(lower-case-s-in-value? % id) (.split ^js/String line "&"))))
                (.split ^js/String (.toLowerCase ^js/String (aget filterfn "value")) ",")))))
 
-(defn text-filter-OR-old [filterfn row]
-  "filterfn is {id: column_name value: text_in_filter_box}
-  OR through comma separation"
-  (let [filter-values (clojure.string/split (.toLowerCase ^string (aget filterfn "value")) ",")]
-    (some true? (map (fn [s]  (if (= (.charAt s 0) "-")
-                                (not (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) (.substring s 1)))
-                                (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) s)))
-                     filter-values))))
+;(defn text-filter-OR-old [filterfn row]
+;  "filterfn is {id: column_name value: text_in_filter_box}
+;  OR through comma separation"
+;  (let [filter-values (clojure.string/split (.toLowerCase ^string (aget filterfn "value")) ",")]
+;    (some true? (map (fn [s]  (if (= (.charAt s 0) "-")
+;                                (not (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) (.substring s 1)))
+;                                (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) s)))
+;                     filter-values))))
 
 (defn cljs-text-filter-OR-fn
   "Used for pivot tables - creates the filter function which will filter the source data directly. Slow as re-renders everytime."

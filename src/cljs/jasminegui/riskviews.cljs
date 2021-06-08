@@ -437,7 +437,7 @@
     [:> ReactTable
      {:data           @(rf/subscribe [:summary-display/table])
       :columns        [{:Header "Portfolio" :accessor "portfolio" :width 90}
-                       {:Header "Balance" :columns (mapv tables/risk-table-columns [:value :cash-pct])}
+                       {:Header "Balance" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:value :cash-pct]))}
                        {:Header "Value" :columns [(assoc (tables/risk-table-columns :contrib-yield) :Header "Yield")
                                                   (tables/risk-table-columns :contrib-bond-yield)
                                                   (assoc (tables/risk-table-columns :contrib-mdur) :Header "M Dur")
@@ -446,8 +446,8 @@
                                                   (assoc (tables/risk-table-columns :contrib-zspread) :Header "Z-spread")
                                                   (assoc (tables/risk-table-columns :contrib-gspread) :Header "G-spread")
                                                   (assoc (tables/risk-table-columns :contrib-beta) :Header "Beta")
-                                                  (assoc (tables/risk-table-columns :quant-value-4d) :Header "4D")
-                                                  (assoc (tables/risk-table-columns :quant-value-2d) :Header "2D")]}]
+                                                  (assoc (tables/risk-table-columns :quant-value-4d) :Header "4D" :filterable false)
+                                                  (assoc (tables/risk-table-columns :quant-value-2d) :Header "2D" :filterable false)]}]
       :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]]]])
 
 
@@ -464,6 +464,6 @@
                                   (tables/risk-table-columns :isin)
                                   (tables/risk-table-columns :issuer)
                                   {:Header "Held %" :accessor "pct_held" :width 80 :Cell #(tables/nb-cell-format "%.1f%" 100. %) :style {:textAlign "right"}}
-                                  (tables/risk-table-columns :nominal)
+                                  (assoc (tables/risk-table-columns :nominal) :filterable false)
                                   {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 100 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
                  :showPagination true :pageSize 30 :showPageSizeOptions false :className "-striped -highlight"}]]]])
