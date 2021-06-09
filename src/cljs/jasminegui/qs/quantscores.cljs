@@ -450,6 +450,7 @@
         (assoc-in [:quant-model/new-bond-entry :TICKER] (:TICKER data))
         (assoc-in [:quant-model/new-bond-entry :CRNCY] (:CRNCY data))
         (assoc-in [:quant-model/new-bond-entry :CNTRY_OF_RISK] (:CNTRY_OF_RISK data))
+        (assoc-in [:quant-model/new-bond-entry :FIRST_SETTLE_DT] (:FIRST_SETTLE_DT data)) ; this is purely transitive, get it from server send it back
         (assoc-in [:quant-model/new-bond-entry :JPM_SECTOR] (if-let [x (:JPM_SECTOR data)] x "")))))
 
 (rf/reg-event-fx
