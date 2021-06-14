@@ -150,6 +150,63 @@
                    :ref             #(reset! qstables/qs-table-view %)
                    :getTrProps      on-click-context :className "-striped -highlight"}]]])
 
+(def index-crawler-filter (r/atom []))
+(def index-crawler-expander (r/atom {}))                    ;0 {}
+
+(defn index-crawler []
+  (let [data @(rf/subscribe [:quant-model/model-output])
+        cembi-embi (map #(assoc % :totaldummy "") (filter #(or (pos? (:cembi %)) (pos? (:cembi-ig %)) (pos? (:embi %)) (pos? (:embi-ig %))) data))
+        final (tables/cljs-text-filter-OR @index-crawler-filter cembi-embi)]
+    [box :padding "80px 10px" :class "rightelement"
+     :child
+             [v-box :class "element" :gap "20px" :width "1690px"
+              :children [[title :label "Index crawler" :level :level1]
+                         [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
+                         [:> ReactTable
+                          {:data final :columns (qstables/table-style->qs-table-col "IndexCrawler" nil)
+                           :showPagination  false :pageSize 1
+                           :filterable      true :defaultFilterMethod (fn [filterfn row] true)
+                           :onFilteredChange #(reset! index-crawler-filter %)
+                           :getTrProps      on-click-context :className "-striped -highlight"
+                           :pivotBy [:totaldummy]
+                           :expanded @index-crawler-expander :onExpandedChange #(reset! index-crawler-expander %)}]
+                         [title :level :level4 :label "Aggregate results from filter below, with median valuation:"]
+                         [:> ReactTable
+                          {:data     (into [] (for [i [:cembi :cembi-ig :embi :embi-ig]]
+                                                (let [unv (filter (comp pos? i) final)]
+                                                  {:idx      i :bonds (count unv) :issuers (count (distinct (map :Ticker unv))) :nav (reduce + (map i unv))
+                                                   :Used_YTW (tables/median (map :Used_YTW unv))
+                                                   :Used_ZTW (tables/median (map :Used_ZTW unv))
+                                                   :G        (tables/median (map :G_SPREAD_MID_CALC unv))
+                                                   :Used_Duration (tables/median (map :Used_Duration unv))
+                                                   :Used_Rating_Score (tables/median (map :Used_Rating_Score unv))
+                                                   })))
+                           :columns  [{:Header "Index" :accessor "idx" :width 60}
+                                      {:Header "Bonds" :accessor "bonds" :width 60 :style {:textAlign "right"}}
+                                      {:Header "Issuers" :accessor "issuers" :width 60 :style {:textAlign "right"}}
+                                      {:Header "NAV" :accessor "nav" :width 60 :style {:textAlign "right"} :Cell tables/round2}
+                                      {:Header "YTW" :accessor "Used_YTW" :width 60 :style {:textAlign "right"} :Cell tables/round2}
+                                      {:Header "ZTW" :accessor "Used_ZTW" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                                      {:Header "G" :accessor "G" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                                      {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :Cell tables/round1}
+                                      {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"}}]
+                           :pageSize 4 :filterable false :showPageSizeOptions false :showPagination false}
+                          ]]]])
+
+  )
+
+;(defn tree-table-risk-table [data columns is-tree accessors ref table-filter expander get-tr-props-fn]
+;  [:> ReactTable
+;   {:data @(rf/subscribe [data]) :columns columns
+;    :showPagination (not is-tree) :pageSize (if is-tree 1 18) :showPageSizeOptions false
+;    :sortable true
+;    :defaultFilterMethod (if is-tree (fn [filterfn row] true) text-filter-OR)
+;    :ref #(reset! ref %)
+;    :expanded @(rf/subscribe [expander]) :onExpandedChange #(rf/dispatch [expander %])
+;    :pivotBy (if is-tree (concat [:totaldummy] accessors) [])
+;    :className "-striped -highlight" :getTrProps (if is-tree (fn [state rowInfo instance] #js {}) get-tr-props-fn)
+;    :filterable true :defaultFiltered @(rf/subscribe [table-filter]) :onFilteredChange #(rf/dispatch [table-filter %])}])
+
 (def show-duration-modal (r/atom false))
 (def calculator-target (r/atom {:Sector "Oil & Gas" :Country "BR" :Used_Duration "9.0" :Used_Rating_Score "13" :CRNCY "USD"})) ;find out why there are some ::CRNCY instead of :CRNCY in the model
 (def calculator-chart-options (r/atom {:labels true :other-countries false :rating-neighbours false :country-neighbours false :rating-curves true :rating-curves-sov-only false}))
@@ -516,6 +573,7 @@
       :trade-finder       [trade-finder]
       :universe-des       [harvest/universe-overview]
       :universe-harvest   [harvest/universe-harvest]
+      :index-crawler      [index-crawler]
       :add-bonds          [add-bonds]
       :methodology        [methodology]
       :model-portfolios   [modelportfolios/model-portfolio-view]

@@ -98,6 +98,7 @@
    :G-SPREAD                            {:Header "G" :accessor "G_SPREAD_MID_CALC" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :Used_YTW                            {:Header "YTW" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :Used_Duration                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :FIRST_SETTLE_DT                     {:Header "Issued" :accessor "FIRST_SETTLE_DT" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1 %) :filterable true}
 
    :predicted_spread_legacy_1           {:Header "Legacy" :accessor "predicted_spread_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :predicted_spread_new_1              {:Header "New" :accessor "predicted_spread_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -282,6 +283,7 @@
    :cembi-ig-dur-x-sp  {:Header "CEMBI IG" :accessor "cembi-ig-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
 
 
+   :totaldummy   {:Header " " :accessor "totaldummy" :width 30}
    })
 
 
@@ -301,7 +303,7 @@
        {:Header "Universe score" :columns (mapv quant-score-table-columns [:URV_legacy_1 :URV_new_1 :URV_svr_1])}
        {:Header "Historical score" :columns (mapv quant-score-table-columns [:HRV_legacy_1 :HRV_new_1 :HRV_svr_1])}]
       "Full"
-      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond-sticky :ISIN :Country :Sector :SENIOR])}
+      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond-sticky :ISIN :Country :Sector :SENIOR :FIRST_SETTLE_DT])}
        {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
        {:Header "Model prediction" :columns (mapv quant-score-table-columns [:predicted_spread_legacy_1 :predicted_spread_new_1 :predicted_spread_svr_1])}
        {:Header "Cheapness (>0)" :columns (mapv quant-score-table-columns [:difference_legacy_1 :difference_new_1 :difference_svr_1])}
@@ -364,6 +366,14 @@
               [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}]
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :difference_svr_2_2d])}])
+      "IndexCrawler"
+      (concat [{:Header " " :columns (mapv quant-score-table-columns [:totaldummy])}
+               {:Header "Description" :columns (mapv quant-score-table-columns [:Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT :Bond])}]
+              [{:Header "Index weight" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}]
+              [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}]
+              [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
+               {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
+               {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}])
       ))
   )
 

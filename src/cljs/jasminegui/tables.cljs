@@ -88,6 +88,17 @@
 
 (defn lower-case-s-in-value?
   "Checks if s (already assumed lower case) is in value. If s starts by -, excludes it"
+  [s value]
+  (if value                                                 ;checks for nil
+    (case (.charAt s 0)
+      ">" (> value (* 1 (cljs.reader/read-string (subs s 1))))
+      "<" (< value (* 1 (cljs.reader/read-string (subs s 1))))
+      "=" (= value (* 1 (cljs.reader/read-string (subs s 1))))
+      "-" (not (.includes ^js/String (.toLowerCase ^js/String value) (.substring s 1)))
+      (.includes ^js/String (.toLowerCase ^js/String value) s))))
+
+(defn lower-case-s-in-value-stable?
+  "Checks if s (already assumed lower case) is in value. If s starts by -, excludes it"
   [^js/String s ^js/String value]
   (if value                                                 ;checks for nil
     (if (= (.charAt s 0) "-")

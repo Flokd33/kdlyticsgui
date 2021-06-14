@@ -51,6 +51,7 @@
    {:code :trade-finder       :name "Trade finder"}
    {:code :universe-des       :name "Universe overview"}
    {:code :universe-harvest   :name "Universe harvest"}
+   {:code :index-crawler      :name "Index crawler"}
    {:code :add-bonds          :name "Add bonds"}
    {:code :methodology        :name "Methodology"}
    {:code :model-portfolios   :name "Model portfolios (WIP)"}
@@ -95,10 +96,11 @@
 
 
 (def portfolio-alignment-groups
-  [{:id :cembi   :label "CEMBI"   :portfolios ["OGEMCORD" "AIFGLBCD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD" "IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-   {:id :allianz :label "Allianz" :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-   {:id :ig      :label "IG"      :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
-   {:id :talanx  :label "Talanx"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3"]}])
+  [{:id :cembi   :label "CEMBI"       :portfolios ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
+   {:id :allianz :label "Allianz"     :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
+   {:id :tr      :label "TR"          :portfolios ["AIFGLBCD" "OOGEMTRC"]}
+   {:id :ig      :label "IG"          :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
+   {:id :talanx  :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3"]}])
 
 (def risk-field-choices
   [
