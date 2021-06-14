@@ -95,7 +95,7 @@
       "<" (< value (* 1 (cljs.reader/read-string (subs s 1))))
       "=" (= value (* 1 (cljs.reader/read-string (subs s 1))))
       "-" (not (.includes ^js/String (.toLowerCase ^js/String value) (.substring s 1)))
-      (.includes ^js/String (.toLowerCase ^js/String value) s))))
+      (if (number? value) (= (cljs.reader/read-string s) value) (.includes ^js/String (.toLowerCase ^js/String value) s)))))
 
 (defn lower-case-s-in-value-stable?
   "Checks if s (already assumed lower case) is in value. If s starts by -, excludes it"
