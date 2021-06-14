@@ -122,15 +122,28 @@
 ;                                (.includes ^string (.toLowerCase ^string (str (aget row (aget filterfn "id")))) s)))
 ;                     filter-values))))
 
+
 (defn cljs-text-filter-OR-fn
   "Used for pivot tables - creates the filter function which will filter the source data directly. Slow as re-renders everytime."
   [filterfn]
   (let [filter-chain (into {} (for [line filterfn] [(keyword (aget line "id")) (aget line "value")]))]
     (into {} (for [[k filter-values] filter-chain]
                [k
-                (fn [value]
+                (fn [line]
                   (some true?
-                        (map #(lower-case-s-in-value? % value)
+                        (map (fn [subline] (every? true? (map #(lower-case-s-in-value? % line) (.split ^js/String subline "&"))))
+                             (.split (.toLowerCase ^js/String filter-values) ","))))]))))
+
+
+(defn cljs-text-filter-OR-fn-alpha
+  "Used for pivot tables - creates the filter function which will filter the source data directly. Slow as re-renders everytime."
+  [filterfn]
+  (let [filter-chain (into {} (for [line filterfn] [(keyword (aget line "id")) (aget line "value")]))]
+    (into {} (for [[k filter-values] filter-chain]
+               [k
+                (fn [line]
+                  (some true?
+                        (map #(lower-case-s-in-value? % line)
                              (.split (.toLowerCase ^js/String filter-values) ","))))]))))
 
 (defn cljs-text-filter-OR
