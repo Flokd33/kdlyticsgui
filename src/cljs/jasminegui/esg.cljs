@@ -175,6 +175,7 @@
                                               {:Header "Final" :accessor "msci-WEIGHTED_AVERAGE_SCORE" :Cell tables/round1  :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
                                               {:Header "CO2 int. 1+2" :accessor "msci-CARBON_EMISSIONS_SCOPE_12_INTEN" :Cell tables/round1  :style {:textAlign "right"} :width 80 :filterMethod tables/nb-filter-OR-AND}
                                               {:Header "CO2 ems. 1+2" :accessor "msci-CARBON_EMISSIONS_SCOPE_12" :Cell tables/nfcell2  :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "CO2 source" :accessor "msci-CARBON_EMISSIONS_SOURCE" :width 90 :filterMethod tables/nb-filter-OR-AND}
                                               {:Header "Comment" :accessor "msci-ESG_HEADLINE" :width 500}
                                               ]}
                                    ]
