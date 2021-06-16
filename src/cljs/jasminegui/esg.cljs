@@ -159,7 +159,7 @@
      :children [
                 [h-box :align :center :children [[title :label "MSCI scores for quant universe" :level :level1]
                                                  [gap :size "1"]
-                                                 [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (sort-by :Ticker data) "msci"  [:Ticker :Country :Sector :Equity :ISIN :ID_ISIN :NAME :msci-IVA_COMPANY_RATING :msci-ENVIRONMENTAL_PILLAR_SCORE :msci-SOCIAL_PILLAR_SCORE :msci-GOVERNANCE_PILLAR_SCORE :msci-WEIGHTED_AVERAGE_SCORE :msci-CARBON_EMISSIONS_SCOPE_12_INTEN :msci-CARBON_EMISSIONS_SCOPE_12 :msci-ESG_HEADLINE] "\t")]]]
+                                                 [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (sort-by :Ticker data) "msci"  [:Ticker :Country :Sector :Equity :ISIN :ID_ISIN :NAME :msci-IVA_COMPANY_RATING :msci-ENVIRONMENTAL_PILLAR_SCORE :msci-SOCIAL_PILLAR_SCORE :msci-GOVERNANCE_PILLAR_SCORE :msci-WEIGHTED_AVERAGE_SCORE :msci-CARBON_EMISSIONS_SCOPE_12_INTEN :msci-CARBON_EMISSIONS_SCOPE_12 :msci-CARBON_EMISSIONS_SCOPE_12_KEY :msci-CARBON_EMISSIONS_SOURCE :msci-ESG_HEADLINE] "\t")]]]
                 [:> ReactTable
                  {:data           data
                   :columns        [
@@ -172,8 +172,7 @@
                                               {:Header "E" :accessor "msci-ENVIRONMENTAL_PILLAR_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 35 :filterMethod tables/nb-filter-OR-AND}
                                               {:Header "S" :accessor "msci-SOCIAL_PILLAR_SCORE" :Cell tables/round1  :style {:textAlign "right"} :width 35 :filterMethod tables/nb-filter-OR-AND}
                                               {:Header "G" :accessor "msci-GOVERNANCE_PILLAR_SCORE" :Cell tables/round1  :style {:textAlign "right"} :width 35 :filterMethod tables/nb-filter-OR-AND}
-                                              {:Header "Final" :accessor "msci-WEIGHTED_AVERAGE_SCORE" :Cell tables/round1  :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
-                                              ]}
+                                              {:Header "Final" :accessor "msci-WEIGHTED_AVERAGE_SCORE" :Cell tables/round1  :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}]}
                                    {:Header "MSCI emissions" :headerStyle header-style
                                     :columns [{:Header "CO2 int. 1+2" :accessor "msci-CARBON_EMISSIONS_SCOPE_12_INTEN" :Cell tables/round1  :style {:textAlign "right"} :width 80 :filterMethod tables/nb-filter-OR-AND}
                                               {:Header "CO2 ems. 1+2" :accessor "msci-CARBON_EMISSIONS_SCOPE_12" :Cell tables/nfcell2  :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
