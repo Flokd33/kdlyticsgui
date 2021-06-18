@@ -54,18 +54,30 @@
   :single-portfolio-risk/table
   (fn [db]
     (let [portfolio (:single-portfolio-risk/portfolio db)
-          portfolio-total-line (assoc ((:total-positions db) (keyword portfolio)) :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
-          portfolio-positions (filter #(= (:portfolio %) portfolio) (:positions db))
-          viewable-positions (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0) portfolio-positions) portfolio-positions)
-          ;xform (if (:single-portfolio-risk/hide-zero-holdings db)
-          ;        (comp (filter #(not= (:original-quantity %) 0))
-          ;              (filter #(= (:portfolio %) portfolio)))
-          ;        (filter #(= (:portfolio %) portfolio)))
-          ;v2 (transduce xform conj (:positions db))
+          portfolio-total-line (-> ((:total-positions db) (keyword portfolio))
+                                   (assoc :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
+                                   (update :weight * 100.) (update :bm-weight * 100.) (update :weight-delta * 100.)
+                                   (update :contrib-yield * 100.) (update :bm-contrib-yield * 100.)
+                                   )
+          ;(assoc ((:total-positions db) (keyword portfolio)) :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
+          ;portfolio-positions (filter #(= (:portfolio %) portfolio) (:positions db))
+          ;viewable-positions (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0) portfolio-positions) portfolio-positions)
+          xform (comp
+                  (filter #(= (:portfolio %) portfolio))
+                  (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0)) identity)
+                  (map #(update % :weight * 100.))
+                  (map #(update % :bm-weight * 100.))
+                  (map #(update % :weight-delta * 100.))
+                  (map #(update % :qt-yield * 100.))
+                  (map #(update % :total-return-ytd * 100.))
+                  (map #(update % :jensen-ytd * 100.))
+                  (map #(update % :contrib-yield * 100.))
+                  (map #(update % :bm-contrib-yield * 100.)))
+          v2 (into [] xform (:positions db))
           risk-choices (let [rfil (:single-portfolio-risk/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
-          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions)]
+          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) v2)] ;viewable-positions
       (clj->js
         (if (= (:single-portfolio-risk/display-style db) "Tree")
           (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
@@ -162,10 +174,14 @@
   :summary-display/table
   (fn [db]
     (into [] (for [p (:portfolios db)]
-               (merge
-                 {:portfolio       p}
-                 (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score :contrib-beta-1y-daily :quant-value-4d :quant-value-2d]] [k (get-in (:total-positions db) [(keyword p) k])]))
-                 {:contrib-bond-yield (- (get-in (:total-positions db) [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (not= (:asset-class %) "BONDS")) (:positions db)))))})))))
+
+               (reduce #(update %1 %2 * 100.)
+                       (merge
+                         {:portfolio p}
+                         (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :mdur-delta :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score :contrib-beta-1y-daily :quant-value-4d :quant-value-2d]] [k (get-in (:total-positions db) [(keyword p) k])]))
+                         {:contrib-bond-yield (- (get-in (:total-positions db) [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (not= (:asset-class %) "BONDS")) (:positions db)))))})
+                       [:cash-pct :contrib-yield :contrib-bond-yield]
+                       )))))
 
 ;;;;;;;;;
 ;; GUI ;;
@@ -327,7 +343,7 @@
      [v-box :class "element" :align-self :center :justify :center :gap "20px" :width max-width
       :children [[h-box :align :center :children [[title :label (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) :level :level1]
                                                   [gap :size "1"]
-                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio (concat ["NAME" "isin" "description"] (map name (keys (last @(rf/subscribe [:single-portfolio-risk/table]))))))]]]
+                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio (concat ["NAME" "isin" "description"] (keys (js->clj (last @(rf/subscribe [:single-portfolio-risk/table]))))))]]]
                  [h-box :gap "10px" :align :center
                   :children (concat
                               [[title :label "Display:" :level :level3]
@@ -440,16 +456,18 @@
      {:data           @(rf/subscribe [:summary-display/table])
       :columns        [{:Header "Portfolio" :accessor "portfolio" :width 90}
                        {:Header "Balance" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:value :cash-pct]))}
-                       {:Header "Value" :columns [(assoc (tables/risk-table-columns :contrib-yield) :Header "Yield")
-                                                  (tables/risk-table-columns :contrib-bond-yield)
-                                                  (assoc (tables/risk-table-columns :contrib-mdur) :Header "M Dur")
-                                                  (tables/risk-table-columns :rating)
-                                                  (assoc (tables/risk-table-columns :rating-score) :width 50)
-                                                  (assoc (tables/risk-table-columns :contrib-zspread) :Header "Z-spread")
-                                                  (assoc (tables/risk-table-columns :contrib-gspread) :Header "G-spread")
-                                                  (assoc (tables/risk-table-columns :contrib-beta) :Header "Beta")
-                                                  (assoc (tables/risk-table-columns :quant-value-4d) :Header "4D" :filterable false)
-                                                  (assoc (tables/risk-table-columns :quant-value-2d) :Header "2D" :filterable false)]}]
+                       {:Header "Value" :columns (mapv #(assoc % :filterable false)
+                                                       [(assoc (tables/risk-table-columns :contrib-yield) :Header "Yield")
+                                                        (tables/risk-table-columns :contrib-bond-yield)
+                                                        (assoc (tables/risk-table-columns :contrib-mdur) :Header "M Dur")
+                                                        (assoc (tables/risk-table-columns :mdur-delta) :Header "Dur D")
+                                                        (tables/risk-table-columns :rating)
+                                                        (assoc (tables/risk-table-columns :rating-score) :width 50)
+                                                        (assoc (tables/risk-table-columns :contrib-zspread) :Header "Z-spread")
+                                                        (assoc (tables/risk-table-columns :contrib-gspread) :Header "G-spread")
+                                                        (assoc (tables/risk-table-columns :contrib-beta) :Header "Beta")
+                                                        (assoc (tables/risk-table-columns :quant-value-4d) :Header "4D")
+                                                        (assoc (tables/risk-table-columns :quant-value-2d) :Header "2D")])}]
       :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]]]])
 
 

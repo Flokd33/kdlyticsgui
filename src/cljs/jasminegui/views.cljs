@@ -47,7 +47,7 @@
                                             [[gap :size "1"]
                                              [box :align-self :center :height "50%" :width "3px" :child [line :color "#CA3E47" :size "3px"]]
                                              [box :width "3px" :child ""] ;this is just equal to line above - ugly hack
-                                             [box :width "150px" :class "dropdown" :child [hyperlink :label (gstring/unescapeEntities "pampar &trade;") :on-click nil]]]))]
+                                             [box :width "150px" :class "dropdown" :child [hyperlink :label (gstring/unescapeEntities "pampar &trade;") :on-click #(rf/dispatch [:navigation/active-view :entry])]]]))]
                 [line :color "#CA3E47" :class "separatorline"]]]))
 
 (defn modal-global-password []
@@ -73,7 +73,11 @@
              :heading [box  :align :center :child [throbber :size :large]]
              :closeable? false]]))
 
-(defn entry [] [box :padding "80px 0px" :class "subbody" :child [box :align-self :center :class "element" :child [label :label "Please select an item at the top."]]])
+(defn entry [] [box :padding "280px 0px" :class "subbody" :child
+                [v-box :align-self :center :class "titlescreen" :children
+                 ;[label :label "Please select an item at the top."]
+                 [[:p {:class "titlescreen"} "pampar"] [:p ""]] ;2nd [:p] to avoid the cursor blinking next to the logo
+                 ]])
 
 (defn active-view []
   (let [active-view @(rf/subscribe [:navigation/active-view])]
