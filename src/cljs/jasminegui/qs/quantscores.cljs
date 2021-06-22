@@ -513,6 +513,7 @@
 (rf/reg-event-fx
   :quant-model-new-bond/save-to-bond-universe
   (fn [{:keys [db]} [_ data]]
+    (println data)
     {:db db :http-post-dispatch {:url (str static/server-address "quant-model-save-new-bond") :edn-params data :dispatch-key [:quant-model-new-bond/save-bond-response]}}))
 
 (rf/reg-event-db

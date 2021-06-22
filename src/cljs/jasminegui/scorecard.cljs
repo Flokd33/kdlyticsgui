@@ -231,12 +231,34 @@
                           (into {} (for [k (keys (first res)) :when (not (some #{k} [:Issuer :Country :Sector]))] [k (reduce + (map k res))])))]
     (conj (reverse (sort-by :Total-Effect-ytd (conj (grp false) rest-line))) total-line)))
 
+;(comp
+;  (filter #(= (:portfolio %) portfolio))
+;  (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0)) identity)
+;  (map #(update % :weight * 100.))
+;  (map #(update % :bm-weight * 100.))
+;  (map #(update % :weight-delta * 100.))
+;  (map #(update % :qt-yield * 100.))
+;  (map #(update % :total-return-ytd * 100.))
+;  (map #(update % :jensen-ytd * 100.))
+;  (map #(update % :contrib-yield * 100.))
+;  (map #(update % :bm-contrib-yield * 100.)))
+
 (rf/reg-sub
   :scorecard-risk/table
   (fn [db]
     (let [qm (:quant-model/model-output db)
           ta (:scorecard/trade-analyser-data db)
-          viewable-positions (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db))
+          ;vp (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db))
+          viewable-positions (into [] (comp
+                                        (map #(update % :weight * 100.))
+                                        (map #(update % :bm-weight * 100.))
+                                        (map #(update % :weight-delta * 100.))
+                                        (map #(update % :qt-yield * 100.))
+                                        (map #(update % :total-return-ytd * 100.))
+                                        (map #(update % :jensen-ytd * 100.))
+                                        (map #(update % :contrib-yield * 100.))
+                                        (map #(update % :bm-contrib-yield * 100.)))
+                                   (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db)))
           grouping-columns (into [] (for [r [:name :sector]] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           res (conj (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) viewable-positions))]
@@ -247,7 +269,17 @@
 (rf/reg-sub
   :scorecard-risk/tree
   (fn [db]
-    (let [viewable-positions (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db)} (:positions db))
+    (let [                                                  ;viewable-positions (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db)} (:positions db))
+          viewable-positions (into [] (comp
+                                        (map #(update % :weight * 100.))
+                                        (map #(update % :bm-weight * 100.))
+                                        (map #(update % :weight-delta * 100.))
+                                        (map #(update % :qt-yield * 100.))
+                                        (map #(update % :total-return-ytd * 100.))
+                                        (map #(update % :jensen-ytd * 100.))
+                                        (map #(update % :contrib-yield * 100.))
+                                        (map #(update % :bm-contrib-yield * 100.)))
+                                   (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db)} (:positions db)))
           risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))]
