@@ -204,6 +204,7 @@
        :child [:> ReactTable
                {:data                data
                 :columns             (concat [{:Header "Date" :accessor "TradeDate" :width 90 :Cell subs10}
+                                              {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 90 :style {:textAlign "center"}}
                                               {:Header "Type" :accessor "TransactionTypeName" :width 90}
                                               ;{:Header "Instrument" :accessor "IssueName" :width 400}
                                               {:Header "Instrument" :accessor "NAME" :width 180}
@@ -214,7 +215,10 @@
                                               {:Header "Counterparty" :accessor "counterparty_code" :width 90}
                                               {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
                                               {:Header "Region" :accessor "JPMRegion" :width 85}
-                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 105}]
+                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 105}
+                                              ;{:Header "First settle date" :accessor "FIRST_SETTLE_DT" :width 105}
+
+                                              ]
                                              (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
                                                (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
                                                      (for [[h a] [["Total return" "total-return"] ["TR vs CEMBI" "tr-vs-cembi"] ["TR vs CEMBIIG" "tr-vs-cembiig"] ["TR vs EMBI" "tr-vs-embi"] ["TR vs EMBIIG" "tr-vs-embiig"]]]
