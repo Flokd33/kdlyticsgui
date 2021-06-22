@@ -38,8 +38,7 @@
     {:db (assoc db :portfolio-review/portfolio portfolio
                    :portfolio-review/active-tab :summary)
     :http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=summary&portfolio=" portfolio)
-                         :dispatch-key [:portfolio-review/summary-data]}})
-  )
+                         :dispatch-key [:portfolio-review/summary-data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-summary-data
@@ -63,8 +62,7 @@
   :get-portfolio-review-jensen-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
     {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" grouping)
-                         :dispatch-key [:portfolio-review/jensen-chart-data]
-                         }}))
+                         :dispatch-key [:portfolio-review/jensen-chart-data]}}))
 
 (rf/reg-event-fx
   :get-portfolio-review-marginal-beta-chart-data
@@ -384,6 +382,7 @@
                          jensen-pages
                         [{:title "Three year daily backtest" :nav-request :backtest-history :data-request nil}]
                         activity-pages
+                        [{:title "Portfolio vintage vs index" :nav-request :vintage :data-request nil}]
                         quant-value-pages
                         risk-pages
                         [{:title "Interest rate breakdown" :nav-request :ir-breakdown :data-request nil :dur-key :contrib-mdur}
@@ -400,6 +399,7 @@
          {:code :jensen           :name "Jensen"            }
          {:code :backtest-history :name "Backtest"          }
          {:code :activity         :name "Activity"          }
+         {:code :vintage          :name "Vintage"       }
          {:code :quant-value      :name "Quant value"       }
          {:code :risk             :name "Risk"              }
          {:code :ir-breakdown     :name "Interest rate risk"}]))
@@ -670,6 +670,40 @@
 
 (defn activity-page [] (portfolio-review-box-template [[aggregate-trade-table]]))
 
+(defn vintage-chart []
+  (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
+        bonds-only (t/chainfilter {:portfolio portfolio :asset-class "BONDS" :TICKER #(not= % "INVESTEC")} @(rf/subscribe [:positions]))
+        year-cut #(condp >= %
+                    2010 "<=2010"
+                    2015 "2011-2015"
+                    2016 "2016"
+                    2017 "2017"
+                    2018 "2018"
+                    2019 "2019"
+                    2020 "2020"
+                    2021 "2021"
+                    2022 "2022"
+                    2023 "2023")
+        grp (group-by (comp year-cut js/parseInt :issuance-year) bonds-only)
+        res (into [] (for [[k g] grp field [:weight :bm-weight]] {:vintage k :field (if (= field :weight) portfolio "Index") :nav (reduce + (map field g))}))
+        final (sort-by #(.indexOf ["<=2010" "2011-2015" "2016" "2017" "2018" "2019" "2020" "2021" "2022" "2023"] (:vintage %)) res)]
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+     :data    {:values final},
+     :title   nil
+     :facet   {:column {:field "vintage", :type "nominal", :sort (mapv :vintage final), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "center"}}},
+     :spec    {:layer
+               [{:mark "bar", :width 75 :height (- standard-box-height-nb 400)
+                 :encoding {:x     {:field "field", :type "nominal", :sort  (distinct (mapv :group final))
+                                    :axis  {:title nil, :titleFontSize chart-text-size, :titleFontWeight "normal" :labels false :labelFontSize chart-text-size}},
+                            :y     {:field "nav", :type "quantitative", :axis {:title "Weight (%)", :titleFontSize chart-text-size :labels true :labelFontSize chart-text-size}},
+                            :color {:field "field", :type "nominal", :scale {:range (reverse (take 2 performance-colors))}, :legend {:title "", :labelFontSize chart-text-size}}}}]},
+     :config  {:view {:stroke "transparent"}, :axis {:domainWidth 1}}}))
+
+(defn vintage-page [] (portfolio-review-box-template [[oz/vega-lite (vintage-chart)]
+                                                      [gap :size "1"]
+                                                      [v-box :width "100%" :gap "0px" :align :end
+                                                       :children [[p {:style {:text-align "right" :z-index 500}} "Fund is ex cash, collateral, forwards, and sub parts in other funds."]]]])) ;
+
 (defn quant-value-page []
   (when (= (get-in pages [@current-page :nav-request]) :quant-value) ;there is a risk here from using re-frame + reagent atoms together - race condition, reagent updated beforey
     (let [g (second (get-in pages [@current-page :grouping]))
@@ -723,6 +757,7 @@
       :jensen                        [contribution-or-alpha-chart @(rf/subscribe [:portfolio-review/jensen-chart-data])]
       :backtest-history              [backtest-history-page]
       :activity                      [activity-page]
+      :vintage                       [vintage-page]
       :quant-value                   [quant-value-page]
       :risk                          [risk-page]
       :ir-breakdown                  [ir-breakdown]
