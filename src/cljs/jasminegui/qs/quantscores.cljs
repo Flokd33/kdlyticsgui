@@ -155,7 +155,7 @@
 
 (defn index-crawler []
   (let [data @(rf/subscribe [:quant-model/model-output])
-        cembi-embi (map #(assoc % :totaldummy "") (filter #(or (pos? (:cembi %)) (pos? (:cembi-ig %)) (pos? (:embi %)) (pos? (:embi-ig %))) data))
+        cembi-embi (map #(assoc % :totaldummy "") (filter #(or (pos? (:cembi %)) (pos? (:cembi-ig %)) (pos? (:embi %)) (pos? (:embi-ig %)) (pos? (:jaci %))) data))
         final (tables/cljs-text-filter-OR @index-crawler-filter cembi-embi)]
     [box :padding "80px 10px" :class "rightelement"
      :child
@@ -172,7 +172,7 @@
                            :expanded @index-crawler-expander :onExpandedChange #(reset! index-crawler-expander %)}]
                          [title :level :level4 :label "Aggregate results from filter below, with median valuation:"]
                          [:> ReactTable
-                          {:data     (into [] (for [i [:cembi :cembi-ig :embi :embi-ig]]
+                          {:data     (into [] (for [i [:cembi :cembi-ig :embi :embi-ig :jaci]]
                                                 (let [unv (filter (comp pos? i) final)]
                                                   {:idx      i :bonds (count unv) :issuers (count (distinct (map :Ticker unv))) :nav (reduce + (map i unv))
                                                    :Used_YTW (tables/median (map :Used_YTW unv))
@@ -190,22 +190,10 @@
                                       {:Header "G" :accessor "G" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
                                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :Cell tables/round1}
                                       {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"}}]
-                           :pageSize 4 :filterable false :showPageSizeOptions false :showPagination false}
+                           :pageSize 5 :filterable false :showPageSizeOptions false :showPagination false}
                           ]]]])
 
   )
-
-;(defn tree-table-risk-table [data columns is-tree accessors ref table-filter expander get-tr-props-fn]
-;  [:> ReactTable
-;   {:data @(rf/subscribe [data]) :columns columns
-;    :showPagination (not is-tree) :pageSize (if is-tree 1 18) :showPageSizeOptions false
-;    :sortable true
-;    :defaultFilterMethod (if is-tree (fn [filterfn row] true) text-filter-OR)
-;    :ref #(reset! ref %)
-;    :expanded @(rf/subscribe [expander]) :onExpandedChange #(rf/dispatch [expander %])
-;    :pivotBy (if is-tree (concat [:totaldummy] accessors) [])
-;    :className "-striped -highlight" :getTrProps (if is-tree (fn [state rowInfo instance] #js {}) get-tr-props-fn)
-;    :filterable true :defaultFiltered @(rf/subscribe [table-filter]) :onFilteredChange #(rf/dispatch [table-filter %])}])
 
 (def show-duration-modal (r/atom false))
 (def calculator-target (r/atom {:Sector "Oil & Gas" :Country "BR" :Used_Duration "9.0" :Used_Rating_Score "13" :CRNCY "USD"})) ;find out why there are some ::CRNCY instead of :CRNCY in the model
