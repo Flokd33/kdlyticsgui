@@ -118,18 +118,15 @@
                               :benchmark (* 100 x)
                               :predict   (* 100 (+ alpha (* beta x)))})
                            portfolio-returns benchmark-returns)]
-    ;(println benchmark-returns)
-    ;(print "absmax" (apply max (map #(Math/abs %) returns)))
     {:title    nil
      :data     {:values data
                 :format {:type "json" :parse {:portfolio "number" :benchmark "number" :predict "number"}}}
-     :layer [
-             {:mark {:type "point" :filled true}
+     :layer [{:mark {:type "point" :filled true}
               :encoding {:x {:field "benchmark" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}}
                          :y {:field "portfolio" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}}}}
              {:mark {:type "line" :color "firebrick"}
               :encoding {:x {:field "benchmark" :type "quantitative"}
                          :y {:field "predict" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}}}}
-             ]
-     :width    width
-     :height   height}))
+             {:mark {:type "rule", :color "green", :strokeDash [10 10]},
+              :encoding {:x {:datum -3, :type "quantitative"}, :y {:datum -3, :type "quantitative"}, :x2 {:datum 3, :type "quantitative"}, :y2 {:datum 3, :type "quantitative"}}}]
+     :width width :height height}))

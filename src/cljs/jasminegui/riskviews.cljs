@@ -284,7 +284,7 @@
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
         cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
                         {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
-                         :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-pos :contrib-mdur tables/round2-if-not0 v))}))]
+                         :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
     [tables/tree-table-risk-table
      :multiple-portfolio-risk/table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
@@ -304,7 +304,7 @@
         base-portfolio (first group)
         portfolios (rest group)
         display-key @(rf/subscribe [:portfolio-alignment/field])
-        cell-one (let [v (get-in tables/risk-table-columns [display-key :Cell])] (case display-key :nav tables/round2*100-if-pos :contrib-mdur tables/round2-if-not0 v)) ;(get-in tables/risk-table-columns [display-key :Cell])
+        cell-one (let [v (get-in tables/risk-table-columns [display-key :Cell])] (case display-key :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) ;(get-in tables/risk-table-columns [display-key :Cell])
         width-one 80
         is-tree (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))

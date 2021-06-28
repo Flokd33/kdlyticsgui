@@ -438,7 +438,7 @@
                 [v-box :class "element" :width "100%" :gap "10px"
                  :children [[title :level :level2 :label (str sector " NAV across portfolios, grouped by issuer")]
                             (let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
-                                                  {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-pos}))]
+                                                  {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-not0}))]
                             [:> ReactTable
                              {:data           @(rf/subscribe [:scorecard-risk/multiple-tree])
                               :columns        (concat (mapv tables/risk-table-columns [:issuer :name]) cols)
