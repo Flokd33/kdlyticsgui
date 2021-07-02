@@ -158,8 +158,6 @@
 
 (defn round2*100-if-not0 [this] (if-let [x (aget this "value")] (if (and (number? x) (not (zero? x))) (gstring/format "%.2f" (* 100. x)) "-") "-"))
 (defn round2-if-not0 [this] (if-let [x (aget this "value")] (if (and (number? x) (not (zero? x))) (gstring/format "%.2f" x) "-") "-"))
-;(defn round2*100-if-pos [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" (* 100. x)) "-") "-")))
-;(defn round2-if-pos [this] (r/as-element (if-let [x (aget this "value")] (if (and (number? x) (pos? x)) (gstring/format "%.2f" x) "-") "-")))
 
 (defn roundpc [fmt this]
   (r/as-element
@@ -187,7 +185,6 @@
 (defn rating-score-to-string [this] (aget this "row" "qt-iam-int-lt-median-rating"))
 
 (defn total-txt [row] "Total")
-;(defn total-txt [row] (r/as-element [:span "Total"]))
 
 (defn text-col [header accessor width] {:Header header :accessor accessor :width width})
 (defn nb-col [header accessor width cell aggregate]

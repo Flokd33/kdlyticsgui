@@ -128,5 +128,5 @@
               :encoding {:x {:field "benchmark" :type "quantitative"}
                          :y {:field "predict" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"}}}}
              {:mark {:type "rule", :color "green", :strokeDash [10 10]},
-              :encoding {:x {:datum -3, :type "quantitative"}, :y {:datum -3, :type "quantitative"}, :x2 {:datum 3, :type "quantitative"}, :y2 {:datum 3, :type "quantitative"}}}]
+              :encoding {:x {:datum -2.5, :type "quantitative"}, :y {:datum -2.5, :type "quantitative"}, :x2 {:datum 2.5, :type "quantitative"}, :y2 {:datum 2.5, :type "quantitative"}}}]
      :width width :height height}))
