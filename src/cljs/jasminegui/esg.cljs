@@ -164,7 +164,17 @@
                           "SOCIAL_PILLAR_SCORE"
                           "GOVERNANCE_PILLAR_SCORE"
                           "WEIGHTED_AVERAGE_SCORE"
-                          "ESG_HEADLINE"])
+                          "ESG_HEADLINE"
+                          ;2019 data below
+                          "CARBON_EMISSIONS_SCOPE_12_FY19"
+                          "CARBON_EMISSIONS_SCOPE_12_INTEN_FY19"
+                          "CARBON_EMISSIONS_SCOPE_12_KEY_FY19"
+                          "CARBON_EMISSIONS_SCOPE_1_FY19"
+                          "CARBON_EMISSIONS_SCOPE_1_KEY_FY19"
+                          "CARBON_EMISSIONS_SCOPE_2_FY19"
+                          "CARBON_EMISSIONS_SCOPE_2_KEY_FY19"
+                          "CARBON_EMISSIONS_SCOPE_3_FY19"
+                          ])
 
 (def msci-cols (concat [:Ticker :Country :Sector :Equity :ISIN :ID_ISIN :NAME] (map #(keyword (str "msci-" %)) server-msci-metrics)))
 
@@ -200,6 +210,14 @@
                                                    {:Header "Source" :accessor "msci-CARBON_EMISSIONS_SOURCE" :width 90 :filterMethod tables/nb-filter-OR-AND}]}
                                         {:Header  "MSCI comment" :headerStyle header-style
                                          :columns [{:Header "" :accessor "msci-ESG_HEADLINE" :width 500}]}
+                                        {:Header  "FY2019 MSCI carbon emissions" :headerStyle header-style
+                                         :columns [{:Header "Scope 1" :accessor "msci-CARBON_EMISSIONS_SCOPE_1_FY19" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                   {:Header "Scope 2" :accessor "msci-CARBON_EMISSIONS_SCOPE_2_FY19" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                   {:Header "Scope 1+2" :accessor "msci-CARBON_EMISSIONS_SCOPE_12_FY19" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                   {:Header "1+2 int" :accessor "msci-CARBON_EMISSIONS_SCOPE_12_INTEN_FY19" :Cell tables/round1 :style {:textAlign "right"} :width 80 :filterMethod tables/nb-filter-OR-AND}
+                                                   {:Header "1+2 key" :accessor "msci-CARBON_EMISSIONS_SCOPE_12_KEY_FY19" :width 150 :filterMethod tables/nb-filter-OR-AND}
+                                                   {:Header "Scope 3" :accessor "msci-CARBON_EMISSIONS_SCOPE_3_FY19" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                   ]}
                                         ]
                   :pageSize            20
                   :showPagination      true
