@@ -488,15 +488,25 @@
 (rf/reg-event-db
   :quant-model/new-bond-entry-result
   (fn [db [_  data]]
-    (-> db
-        (assoc :quant-model/new-bond-tested true :quant-model/new-bond-already-exists (:already-exists data))
-        (update-in [:quant-model/new-bond-entry :ISIN] #(if (:already-exists data) (str % " " (:message data)) %))
-        (assoc-in [:quant-model/new-bond-entry :NAME] (if-let [x (:SECURITY_NAME data)] x ""))
-        (assoc-in [:quant-model/new-bond-entry :TICKER] (:TICKER data))
-        (assoc-in [:quant-model/new-bond-entry :CRNCY] (:CRNCY data))
-        (assoc-in [:quant-model/new-bond-entry :CNTRY_OF_RISK] (:CNTRY_OF_RISK data))
-        (assoc-in [:quant-model/new-bond-entry :FIRST_SETTLE_DT] (:FIRST_SETTLE_DT data)) ; this is purely transitive, get it from server send it back
-        (assoc-in [:quant-model/new-bond-entry :JPM_SECTOR] (if-let [x (:JPM_SECTOR data)] x "")))))
+    (let [new-bond-entry (-> data
+                             (update :JPM_SECTOR #(if % % ""))
+                             (assoc :NAME (if-let [x (:SECURITY_NAME data)] x ""))
+                             (update :ISIN #(if (:already-exists data) (str % " " (:message data)) %)))]
+      (-> db
+          (assoc :quant-model/new-bond-tested true :quant-model/new-bond-already-exists (:already-exists data))
+          (update :quant-model/new-bond-entry merge new-bond-entry)))
+    ;(-> db
+    ;    (assoc :quant-model/new-bond-tested true :quant-model/new-bond-already-exists (:already-exists data))
+    ;    (update-in [:quant-model/new-bond-entry :ISIN] #(if (:already-exists data) (str % " " (:message data)) %))
+    ;    (assoc-in [:quant-model/new-bond-entry :NAME] (if-let [x (:SECURITY_NAME data)] x ""))
+    ;    (assoc-in [:quant-model/new-bond-entry :TICKER] (:TICKER data))
+    ;    (assoc-in [:quant-model/new-bond-entry :CRNCY] (:CRNCY data))
+    ;    (assoc-in [:quant-model/new-bond-entry :CNTRY_OF_RISK] (:CNTRY_OF_RISK data))
+    ;    (assoc-in [:quant-model/new-bond-entry :FIRST_SETTLE_DT] (:FIRST_SETTLE_DT data)) ; this is purely transitive, get it from server send it back
+    ;    (assoc-in [:quant-model/new-bond-entry :ISSUE_PX] (:ISSUE_PX data)) ; this is purely transitive, get it from server send it back
+    ;    (assoc-in [:quant-model/new-bond-entry :JPM_SECTOR] (if-let [x (:JPM_SECTOR data)] x "")))
+
+    ))
 
 (rf/reg-event-fx
   :quant-model-new-bond/save-to-bond-universe
@@ -526,7 +536,7 @@
         new-bond-tested @(rf/subscribe [:quant-model/new-bond-tested])
         hb (fn [v] [h-box  :gap "10px" :align :center :children v])
         bond-saved-message @(rf/subscribe [:quant-model/new-bond-saved-message])]
-    (fn []                                                  ;we had weird problems with input-text without this, where at each key stroke we lost focus as the enitre component was being redrawn
+    (fn []                                                  ;we had weird problems with input-text without this, where at each key stroke we lost focus as the entire component was being redrawn
       [v-box :width "400px" :gap "10px" :class "element"
        :children [[title :label "Add bond to universe" :level :level1]
                   [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model ISIN :change-on-blur? false :on-change #(rf/dispatch [:quant-model-new-bond/change-isin %])]]]
