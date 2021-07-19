@@ -100,7 +100,7 @@
    {:id :allianz :label "Allianz"     :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
    {:id :tr      :label "TR"          :portfolios ["AIFGLBCD" "OOGEMTRC"]}
    {:id :ig      :label "IG"          :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
-   {:id :talanx  :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3"]}])
+   {:id :talanx  :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}])
 
 (def risk-field-choices
   [

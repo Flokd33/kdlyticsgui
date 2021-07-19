@@ -23,10 +23,44 @@
     [jasminegui.riskviews :as riskviews]
     [jasminegui.tradehistory :as th]
     [jasminegui.tools :as t]
+
+    [helix.core :as helix :refer [defnc $]]
+    ["@nivo/treemap" :refer [ResponsiveTreeMap]]
     )
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
+
+;; NIVO ;;
+
+(defn component-factory [component]
+  (fn factory-constructor [props]
+    (helix/create-element component (clj->js props))))
+
+(def ^:export tree-map-chart (component-factory ResponsiveTreeMap))
+
+(defn tree-map-chart-example [data]
+  (tree-map-chart
+    {:data data
+     :identity "name"
+     :value "value"
+     ;:valueFormat ".02s"
+     :margin       {:top 10, :right 10, :bottom 10, :left 10}
+     :labelSkipSize 12
+     :valueFormat  ">-.2p"
+     :labelTextColor {:from "color" :modifiers [["darker" 1.2]]}
+     :parentLabelTextColor {:from "color" :modifiers [["darker" 2]]}
+     :borderColor {:from "color" :modifiers [["darker" 0.1]]}
+     }
+    )
+  )
+(defn three-way-grouping [coll weight f1 f2 f3 threshold]
+  (sort-by :name (into [] (for [[a1 v1] (group-by f1 coll)]
+                            {:name a1 :children (sort-by :name (into [] (for [[a2 v2] (group-by f2 v1)]
+                                                                          {:name a2 :children (sort-by :name (into [] (for [[a3 v3] (group-by f3 v2)]
+                                                                                                                        {:name a3 :value (reduce + (map weight v3))})))})))}))))
+
+;(three-way-grouping (filter (comp pos? :weight) ogemcord) :weight #(if (and (some? (:rating-score %)) (number? (:rating-score %)) (> (:rating-score %) 10)) "HY" "IG") :qt-jpm-sector :TICKER nil)
 
 ;;;;;;;;;;;;
 ;; EVENTS ;;
@@ -388,6 +422,7 @@
                         [{:title "Interest rate breakdown" :nav-request :ir-breakdown :data-request nil :dur-key :contrib-mdur}
                          {:title "Interest rate breakdown vs index" :nav-request :ir-breakdown :data-request nil :dur-key :mdur-delta}]
                         [{:title "The End" :nav-request :end :data-request nil}]
+                        [{:title "Testing" :nav-request :testing :data-request nil}]
                         ))))
 
 (def portfolio-review-navigation
@@ -402,7 +437,9 @@
          {:code :vintage          :name "Vintage"       }
          {:code :quant-value      :name "Quant value"       }
          {:code :risk             :name "Risk"              }
-         {:code :ir-breakdown     :name "Interest rate risk"}]))
+         {:code :ir-breakdown     :name "Interest rate risk"}
+         {:code :testing          :name "testing stuff"}
+         ]))
 
 (def maximum-page (count pages))
 (def current-page (r/atom 0))
@@ -670,6 +707,30 @@
 
 (defn activity-page [] (portfolio-review-box-template [[aggregate-trade-table]]))
 
+(defn nivo-testing []
+  (let [data (three-way-grouping (filter (comp pos? :weight) (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions])))
+                                 :weight
+                                 #(if (and (some? (:rating-score %)) (number? (:rating-score %)) (> (:rating-score %) 10)) "HY" "IG")
+                                 :qt-jpm-sector
+                                 :qt-jpm-sector      ;:TICKER
+                                 nil)
+        idxdata (three-way-grouping (filter (comp pos? :bm-weight) (filter #(= (:portfolio %) @(rf/subscribe [:portfolio-review/portfolio])) @(rf/subscribe [:positions])))
+                                 :bm-weight
+                                 #(if (and (some? (:rating-score %)) (number? (:rating-score %)) (> (:rating-score %) 10)) "HY" "IG")
+                                    :qt-jpm-sector
+                                    :qt-jpm-sector      ;:TICKER
+                                 nil)
+        ]
+
+    (portfolio-review-box-template
+      [[v-box :width "1200px" :height "700px" :children
+        [[tree-map-chart-example {:name @(rf/subscribe [:portfolio-review/portfolio]) :children data}]
+         [tree-map-chart-example {:name "CEMBI" :children idxdata}]]
+        ]]
+
+      ))
+  )
+
 (defn vintage-chart []
   (let [portfolio @(rf/subscribe [:portfolio-review/portfolio])
         bonds-only (t/chainfilter {:portfolio portfolio :asset-class "BONDS" :TICKER #(not= % "INVESTEC")} @(rf/subscribe [:positions]))
@@ -762,6 +823,7 @@
       :risk                          [risk-page]
       :ir-breakdown                  [ir-breakdown]
       :end                           [end]
+      :testing                       [nivo-testing]
       [:div.output "nothing to display"])))
 
 (defn portfolio-change [portfolio]
@@ -794,3 +856,6 @@
                                     :on-click #(go-to-block! (:code item))]))]]]))
 
 (defn view [] [h-box :gap "10px" :padding "0px" :children [[nav] [active-home]]])
+
+
+

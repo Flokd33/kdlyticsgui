@@ -11,6 +11,7 @@
                  [re-pressed "0.3.1"]
                  [org.clojars.frozenlock/reagent-contextmenu "0.4.3"]
                  [metasoarous/oz "1.6.0-alpha34"]           ;was alpha6
+                 [lilactown/helix "0.1.1"]
                  ]
 
   :plugins []

@@ -529,7 +529,7 @@
 
 (defn new-bond-entry []
   (let [new-bond (rf/subscribe [:quant-model/new-bond-entry])
-        ISIN      (r/cursor new-bond [:ISIN])
+        ISIN     (r/cursor new-bond [:ISIN])
         name     (r/cursor new-bond [:NAME])
         sector   (r/cursor new-bond [:JPM_SECTOR])
         country  (r/cursor new-bond [:CNTRY_OF_RISK])
