@@ -136,17 +136,27 @@
                           ]]
               [button :style {:width "100%"} :class "btn btn-primary btn-block" :label "Take me there!" :on-click #(rf/dispatch [:rebuild-time-machine @(rf/subscribe [:time-machine/enabled]) @(rf/subscribe [:time-machine/date]) @(rf/subscribe [:time-machine/model])])]
               [p "Note: takes about 5 minutes to load. Tested dates include 30/12/19, 21/01/20, 23/03/20, 20/05/20, and July 2020 onwards (20/07/20 for GIC). Ask Alex for any other date."]
-
-
-
-
-
               ]]
   )
 
+(defn last-updated-logs []
+  ;(println (keys @(rf/subscribe [:last-updated-logs])))
+  [v-box
+   :gap "10px"
+   :width "600px"
+   :class "subbody element"
+   :children
+   (into [[title :label "Last updated logs" :level :level1]]
+         (for [[k v] (sort-by first @(rf/subscribe [:last-updated-logs]))]
+           [h-box :gap "5px" :children [[label :width "400px" :label (str k)]
+                                        [v-box :width "200px" :gap "5px" :children (into [] (for [dt v] [label :label (subs dt 0 19)]))]
+                                        ]]))]
+  )
+
 (defn administration-view []
+  (rf/dispatch [:get-last-updated-logs])                    ;very impure, very dirty
   [v-box                                                  ;:gap "10px"
    :gap "10px"
    :padding "80px 25px"
-   :children [[modal-success] [time-machine] [debug-operations] ]]
+   :children [[modal-success] [time-machine] [debug-operations] [last-updated-logs]]]
   )

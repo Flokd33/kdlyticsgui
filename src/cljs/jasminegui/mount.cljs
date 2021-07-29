@@ -190,6 +190,8 @@
                  :scorecard/latest-date nil
                  :scorecard/previous-date nil
 
+                 :last-updated-logs nil
+
                  :dummy nil                                 ;can be useful
 
                  })
@@ -328,6 +330,8 @@
            :model-portfolios/trades
            :model-portfolios/hide-zeros
            :model-portfolios/aggregation
+
+           :last-updated-logs
 
            :dummy
 
@@ -552,6 +556,7 @@
    {:get-key :get-attribution-available-months    :url-tail "attribution?query-type=available-months" :dis-key :attribution/available-months}
    {:get-key :get-model-portfolios    :url-tail "model-portfolios" :dis-key :model-portfolios/trades}
    {:get-key :get-msci-scores    :url-tail "msci-scores" :dis-key :esg/msci-scores}
+   {:get-key :get-last-updated-logs    :url-tail "last-updated" :dis-key :last-updated-logs}
    ])
 
 
