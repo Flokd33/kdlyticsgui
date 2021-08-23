@@ -67,3 +67,15 @@
                     (* 0.5 periods (discount-at-period periods))))
       (inc semi-coupon))))
 
+;;;
+
+(defn naive-rank
+  "We care about top ranks, so we replace nil values accordingly
+  BUGS: some nil comes as Double/NaN which also needs to be filtered for"
+  [coll ascending?]
+  (let [clean-coll (map #(if (some? %) % (if ascending? js/Infinity (- js/Infinity))) coll)]
+    (map inc
+         (map
+           (clojure.set/map-invert
+             (into {} (map (comp first second) (group-by second (map-indexed vector (sort (if ascending? < >) clean-coll))))))
+           clean-coll))))

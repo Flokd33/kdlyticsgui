@@ -89,11 +89,17 @@
   :scorecard/qdb-scores-with-difference
   (fn [db]
     (let [spot (:scorecard/qdb-scores db)
-          prev (into {} (for [line (:scorecard/qdb-scores-previous db)] [(:ISIN line) line]))
-          k (keys (first (vals prev)))
-          dc (zipmap k (map #(str % "-PREV") k))]
-      (into [] (for [line spot]
-                 (merge line (clojure.set/rename-keys (prev (:ISIN line)) dc)))))))
+          spot-rank (t/naive-rank (map #(get % "EMCD_TOTAL") spot) false)
+          spot-with-rank (mapv #(assoc %1 "RANK" %2) spot spot-rank)
+          prev (:scorecard/qdb-scores-previous db)
+          prev-rank (t/naive-rank (map #(get % "EMCD_TOTAL") prev) false)
+          prev-with-rank (mapv #(assoc %1 "RANK" %2) prev prev-rank)
+          prev-map (into {} (for [line prev-with-rank] [(:ISIN line) line]))
+          k (keys (first (vals prev-map)))
+          dc (zipmap k (map #(str % "-PREV") k))
+          both (into [] (for [line spot-with-rank] (merge line (clojure.set/rename-keys (prev-map (:ISIN line)) dc))))
+          ]
+      (into [] (for [line both] (assoc line "RANK-CHANGE" (- (get line "RANK-PREV") (get line "RANK"))))))))
 
 (def standard-box-width-nb 1800)
 (def standard-box-width (str standard-box-width-nb "px"))
@@ -124,7 +130,7 @@
 
 
 
-(def group-headers [{:group-header "Description" :id :description :style {:textAlign "left" :backgroundColor "white"}}
+(def group-headers [{:group-header "Description" :id :description :style {:textAlign "left" :backgroundColor "#deeaee"}}
                     {:group-header "Pricing" :id :pricing :style {:textAlign "right" :backgroundColor "#E2EEDB"}}
                      {:group-header "Valuation" :id :valuation  :style {:textAlign "right" :backgroundColor "#FFE4C4"}}
                      {:group-header "Quality" :id :quality  :style {:textAlign "right" :backgroundColor "#D8EBF1"}}
@@ -147,13 +153,19 @@
       )
     "-"))
 
+(defn rank-change-format [this]
+  (if-let [x (aget this "value")]
+    (if (pos? x) (str "+" x) (str x))
+    "-")
+  )
+
 (def score-fields
   [
    {:Header "Bond" :grp :description :accessor "Bond" :width 130}
-   {:accessor "ISIN" :grp :description :Header "ISIN" :width 110}
+   ;{:accessor "ISIN" :grp :description :Header "ISIN" :width 110}
 
   {:Header "Price" :accessor "Used_Price" :grp :pricing :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2  :filterMethod tables/nb-filter-OR-AND}
-  {:Header "Rating source" :accessor "Rating_String" :width 110 :filterMethod tables/nb-filter-OR-AND-x100}
+  {:Header "Rating source" :grp :description :accessor "Rating_String" :width 120 :filterMethod tables/nb-filter-OR-AND-x100}
   {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil  :filterMethod tables/nb-filter-OR-AND}
   {:Header "ZTW" :accessor "Used_ZTW" :grp :pricing :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND}
   {:Header "G" :accessor "G_SPREAD_MID_CALC" :grp :pricing :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND}
@@ -181,6 +193,9 @@
    {:accessor "EMCD_TECH_TOTAL" :grp :technicals :Header "Total" :Cell tables/round2}
 
    {:accessor "EMCD_TOTAL" :grp :total :Header "Total score" :Cell tables/round2}
+   {:accessor "RANK" :grp :total :Header "Rank"}
+   {:accessor "RANK-PREV" :grp :total :Header "Prev. Rank"}
+   {:accessor "RANK-CHANGE" :grp :total :Header "Rank change" :Cell rank-change-format :getProps tables/red-negatives}
 
    {:accessor "EMCD_ESG_CREDIT_RATING_IMPACT" :grp :esg :Header "Rating impact" :Cell score-cell-format}
    {:accessor "EMCD_ESG_SENSITIVITY_RISK" :grp :esg :Header "Sensty. risk" :Cell score-cell-format}
@@ -198,8 +213,8 @@
 (defn scorecard-table []
   (let [sector @(rf/subscribe [:scorecard/sector])
         data @(rf/subscribe [:scorecard/qdb-scores-with-difference])]
-    [v-box :class "element" :style {:backgroundColor "lightyellow"} :width "100%" :gap "10px"
-     :children [[title :level :level2 :label (str "IN DEV DO NOT USE Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date]))]
+    [v-box :class "element"  :width "100%" :gap "10px"      ;:style {:backgroundColor "lightyellow"}
+     :children [[title :level :level2 :label (str "Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date]))]
                 [:> ReactTable
                  {:data           data
                   :columns        (into []
