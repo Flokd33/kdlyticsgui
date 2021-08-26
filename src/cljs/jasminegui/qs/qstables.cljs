@@ -227,9 +227,13 @@
 
    :gross-cheapness                     {:Header "Gross cheapness" :accessor "gross-cheapness" :style {:textAlign "right"} :aggregate tables/median :Cell tables/nb-thousand-cell-format :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :upside1y                            {:Header "Upside" :accessor "upside1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :expected1y                          {:Header "Median" :accessor "expected1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :downside1y                          {:Header "Downside" :accessor "downside1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :upside1y                            {:Header "To tight" :accessor "upside1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :expected1y                          {:Header "To median" :accessor "expected1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :downside1y                          {:Header "To wide" :accessor "downside1y" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :svr4d1yrtn                          {:Header "4D" :accessor "svr4d1yrtn" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :svr2d1yrtn                          {:Header "2D" :accessor "svr2d1yrtn" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_svr_3              {:Header "4D" :accessor "predicted_spread_svr" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :predicted_spread_svr_2d_3           {:Header "2D" :accessor "predicted_spread_svr_2d" :width 75 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1ymin                              {:Header "Tight" :accessor "z1ymin" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1ymax                              {:Header "Wide" :accessor "z1ymax" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1ymedian                           {:Header "Median" :accessor "z1ymedian" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -343,11 +347,15 @@
        {:Header "Ranking" :columns (mapv quant-score-table-columns [:URS_rank_svr_2 :URS_rank_svr_1D_2 :URS_rank_svr_1W_2 :URS_rank_svr_1M_2])}
        {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}]
       "Upside/Downside"
-      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :cembi :cembi-ig :embi :embi-ig])}
-       {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration])}
-       {:Header "Target returns (%)" :columns (mapv quant-score-table-columns [:upside1y :expected1y :downside1y])}
-       {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}
-       {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}]
+      (concat
+        [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :COUPON])}]
+        (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
+        (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
+        [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration])}
+         {:Header "Predicted Z-spreads" :columns (mapv quant-score-table-columns [:predicted_spread_svr_3 :predicted_spread_svr_2d_3])}
+         {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}
+         {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}
+         {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}])
       "Screener (SVR)"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :AMT_OUTSTANDING_3 :COUPON])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
