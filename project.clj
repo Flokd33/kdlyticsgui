@@ -4,13 +4,13 @@
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library]]
                  [thheller/shadow-cljs "2.11.15"]
-                 [reagent "1.1.0"]                         ;was 0.10.0
-                 [re-frame "1.2.0"]                        ;was 0.12.0
-                 [re-com "2.13.2"]                           ;was 2.8.0
+                 [reagent "1.1.0"]
+                 [re-frame "1.2.0"]
+                 [re-com "2.13.2"]
                  [cljs-http "0.1.46"]
                  [re-pressed "0.3.1"]
                  [org.clojars.frozenlock/reagent-contextmenu "0.4.3"]
-                 [metasoarous/oz "1.6.0-alpha34"]           ;was alpha6
+                 [metasoarous/oz "1.6.0-alpha34"]
                  [lilactown/helix "0.1.1"]
                  ]
 
