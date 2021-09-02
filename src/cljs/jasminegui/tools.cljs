@@ -1,4 +1,6 @@
-(ns jasminegui.tools)
+(ns jasminegui.tools
+  (:require ["html2canvas" :as html2canvas])
+  )
 
 (defn int-to-gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
 (defn gdate-to-yyyymmdd [x] (subs (.toString x) 0 8))
@@ -79,3 +81,23 @@
            (clojure.set/map-invert
              (into {} (map (comp first second) (group-by second (map-indexed vector (sort (if ascending? < >) clean-coll))))))
            clean-coll))))
+
+;;;;;
+(defn save-png
+  "From https://stackoverflow.com/questions/31656689/how-to-save-img-to-users-local-computer-using-html2canvas"
+  [uri filename]
+  (let [el (js/document.createElement "a")]
+    (set! (.-href el) uri)
+    (set! (.-download el) filename)
+    (.appendChild js/document.body el)
+    (.click el)
+    (.removeChild js/document.body el)))
+
+(defn save-image
+  "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
+  [hashid filename]
+  (fn []
+    (-> (html2canvas (js/document.querySelector hashid) {}) ;js/document.body
+        (.then #(save-png (.toDataURL %) filename))
+        (.catch #(js/console.log %))
+        (.finally #(js/console.log "cleanup")))))

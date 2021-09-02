@@ -11,6 +11,7 @@
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
     ["react-table-v6" :as rt :default ReactTable]
+    ["html2canvas" :as html2canvas]
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
@@ -448,36 +449,39 @@
 
 (defn summary-display []
   ;(println @(rf/subscribe [:summary-display/table]))
-   [box :class "subbody rightelement" :child
-     [v-box :class "element" :align-self :center :justify :center :gap "20px"
-      :children [[h-box :align :center :children [[title :label (str "Summary " @(rf/subscribe [:qt-date])) :level :level1]
-                                                  [gap :size "1"]
-                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:summary-display/table]) "summary")]]]
-    [:> ReactTable
-     {:data           @(rf/subscribe [:summary-display/table])
-      :columns        [{:Header "Portfolio" :accessor "portfolio" :width 90}
-                       {:Header "Balance" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:value :cash-pct]))}
-                       {:Header "Value" :columns (mapv #(assoc % :filterable false)
-                                                       [(assoc (tables/risk-table-columns :contrib-yield) :Header "Yield")
-                                                        (tables/risk-table-columns :contrib-bond-yield)
-                                                        (assoc (tables/risk-table-columns :contrib-mdur) :Header "M Dur")
-                                                        (assoc (tables/risk-table-columns :mdur-delta) :Header "Dur D")
-                                                        (tables/risk-table-columns :rating)
-                                                        (assoc (tables/risk-table-columns :rating-score) :width 50)
-                                                        (assoc (tables/risk-table-columns :contrib-zspread) :Header "Z-spread")
-                                                        (assoc (tables/risk-table-columns :contrib-gspread) :Header "G-spread")
-                                                        (assoc (tables/risk-table-columns :contrib-beta) :Header "Beta")
-                                                        (assoc (tables/risk-table-columns :quant-value-4d) :Header "4D")
-                                                        (assoc (tables/risk-table-columns :quant-value-2d) :Header "2D")])}
-                       {:Header "Flags" :columns (mapv #(assoc % :filterable false) [(tables/nb-col "HY" "HY" 60 tables/round2pc tables/sum-rows)
-                                                                                     (tables/nb-col "ESG" "ESG" 60 tables/round2pc tables/sum-rows)
-                                                                                     (tables/nb-col "Sub" "SUBORDINATED" 60 tables/round2pc tables/sum-rows)
-                                                                                     (tables/nb-col "Hybrid" "HYBRID" 60 tables/round2pc tables/sum-rows)
-                                                                                     (tables/nb-col "Sukuk" "INTERNATIONAL_SUKUK" 60 tables/round2pc tables/sum-rows)
-                                                                                     (tables/text-col "Ad hoc" "ad-hoc" 200)
-                                                                                     ])}
-                       ]
-      :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]]]])
+
+  [box :class "subbody rightelement" :child
+   [:div {:id "summary-id"}
+    [v-box :class "element" :align-self :center :justify :center :gap "20px"
+     :children [[h-box :gap "10px" :align :center :children [[title :label (str "Summary " @(rf/subscribe [:qt-date])) :level :level1]
+                                                 [gap :size "1"]
+                                                 [md-circle-icon-button :md-icon-name "zmdi-camera" :on-click (t/save-image "#summary-id" "summary.png")]
+                                                 [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:summary-display/table]) "summary")]]]
+                [:> ReactTable
+                 {:data           @(rf/subscribe [:summary-display/table])
+                  :columns        [{:Header "Portfolio" :accessor "portfolio" :width 90}
+                                   {:Header "Balance" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:value :cash-pct]))}
+                                   {:Header "Value" :columns (mapv #(assoc % :filterable false)
+                                                                   [(assoc (tables/risk-table-columns :contrib-yield) :Header "Yield")
+                                                                    (tables/risk-table-columns :contrib-bond-yield)
+                                                                    (assoc (tables/risk-table-columns :contrib-mdur) :Header "M Dur")
+                                                                    (assoc (tables/risk-table-columns :mdur-delta) :Header "Dur D")
+                                                                    (tables/risk-table-columns :rating)
+                                                                    (assoc (tables/risk-table-columns :rating-score) :width 50)
+                                                                    (assoc (tables/risk-table-columns :contrib-zspread) :Header "Z-spread")
+                                                                    (assoc (tables/risk-table-columns :contrib-gspread) :Header "G-spread")
+                                                                    (assoc (tables/risk-table-columns :contrib-beta) :Header "Beta")
+                                                                    (assoc (tables/risk-table-columns :quant-value-4d) :Header "4D")
+                                                                    (assoc (tables/risk-table-columns :quant-value-2d) :Header "2D")])}
+                                   {:Header "Flags" :columns (mapv #(assoc % :filterable false) [(tables/nb-col "HY" "HY" 60 tables/round2pc tables/sum-rows)
+                                                                                                 (tables/nb-col "ESG" "ESG" 60 tables/round2pc tables/sum-rows)
+                                                                                                 (tables/nb-col "Sub" "SUBORDINATED" 60 tables/round2pc tables/sum-rows)
+                                                                                                 (tables/nb-col "Hybrid" "HYBRID" 60 tables/round2pc tables/sum-rows)
+                                                                                                 (tables/nb-col "Sukuk" "INTERNATIONAL_SUKUK" 60 tables/round2pc tables/sum-rows)
+                                                                                                 (tables/text-col "Ad hoc" "ad-hoc" 200)
+                                                                                                 ])}
+                                   ]
+                  :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]]]]])
 
 
 

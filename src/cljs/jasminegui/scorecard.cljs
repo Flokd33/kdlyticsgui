@@ -213,22 +213,27 @@
 (defn scorecard-table []
   (let [sector @(rf/subscribe [:scorecard/sector])
         data @(rf/subscribe [:scorecard/qdb-scores-with-difference])]
-    [v-box :class "element"  :width "100%" :gap "10px"      ;:style {:backgroundColor "lightyellow"}
-     :children [[title :level :level2 :label (str "Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date]))]
-                [:> ReactTable
-                 {:data           data
-                  :columns        (into []
-                                        (for [group group-headers]
-                                          {:Header (:group-header group) :columns (into [] (for [row (t/chainfilter {:grp (:id group)} score-fields)]
-                                                                                             (assoc row
-                                                                                               :width (if (contains? row :width) (row :width) 50)
-                                                                                               :headerStyle {:overflow nil :whiteSpace "pre-line" :wordWrap   "break-word"}
-                                                                                               :style (:style group)
-                                                                                               )))}
+    [:div {:id "scorecard-id"}
+     [v-box :class "element" :width "100%" :gap "10px"      ;:style {:backgroundColor "lightyellow"}
+      :children [
+                 [h-box :gap "10px" :align :center :children [[title :level :level2 :label (str "Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date]))]
+                                                              [gap :size "1"]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-camera" :on-click (t/save-image "#scorecard-id" "scorecard.png")]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "scorecard")]]]
+                 [:> ReactTable
+                  {:data            data
+                   :columns         (into []
+                                          (for [group group-headers]
+                                            {:Header (:group-header group) :columns (into [] (for [row (t/chainfilter {:grp (:id group)} score-fields)]
+                                                                                               (assoc row
+                                                                                                 :width (if (contains? row :width) (row :width) 50)
+                                                                                                 :headerStyle {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}
+                                                                                                 :style (:style group)
+                                                                                                 )))}
 
+                                            )
                                           )
-                                        )
-                  :defaultPageSize 50 :showPagination true :sortable true :showPageSizeOptions true :defaultSorted [{:id "EMCD_TOTAL" :desc true}]}]]]) ; :className "-striped -highlight"
+                   :defaultPageSize (count data) :showPagination false :sortable true :showPageSizeOptions false :defaultSorted [{:id "EMCD_TOTAL" :desc true}]}]]]]) ; :className "-striped -highlight"
   )
 
 
