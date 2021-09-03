@@ -233,7 +233,7 @@
 
                                             )
                                           )
-                   :defaultPageSize (count data) :showPagination false :sortable true :showPageSizeOptions false :defaultSorted [{:id "EMCD_TOTAL" :desc true}]}]]]]) ; :className "-striped -highlight"
+                   :pageSize (count data) :showPagination false :sortable true :showPageSizeOptions false :defaultSorted [{:id "EMCD_TOTAL" :desc true}]}]]]]) ; :className "-striped -highlight"
   )
 
 
