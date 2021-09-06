@@ -448,15 +448,14 @@
 (defn go-to-portfolio-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:navigation/active-home :single-portfolio]) (rf/dispatch [:single-portfolio-risk/portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
 
 (defn summary-display []
-  ;(println @(rf/subscribe [:summary-display/table]))
-
   [box :class "subbody rightelement" :child
    [:div {:id "summary-id"}
     [v-box :class "element" :align-self :center :justify :center :gap "20px"
      :children [[h-box :gap "10px" :align :center :children [[title :label (str "Summary " @(rf/subscribe [:qt-date])) :level :level1]
-                                                 [gap :size "1"]
-                                                 [md-circle-icon-button :md-icon-name "zmdi-camera" :on-click (t/save-image "#summary-id" "summary.png")]
-                                                 [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:summary-display/table]) "summary")]]]
+                                                             [gap :size "1"]
+                                                             [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :on-click (t/open-image-in-new-tab "#summary-id")]
+                                                             [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :on-click (t/save-image "#summary-id" "summary.png")]
+                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:summary-display/table]) "summary")]]]
                 [:> ReactTable
                  {:data           @(rf/subscribe [:summary-display/table])
                   :columns        [{:Header "Portfolio" :accessor "portfolio" :width 90}

@@ -131,24 +131,27 @@
 (defn qs-table [mytitle data]
      [v-box :class "element"  :gap "20px" :width "1690px"
       :children [[title :label mytitle :level :level1]
-                 [h-box :align :center :gap "20px"
+                 [h-box :align :center :gap "10px"
                   :children (concat (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Upside/Downside" "Screener (SVR)"]]
                                                ^{:key c} [radio-button :label c :value c :model qstables/table-style :on-change #(reset! qstables/table-style %)]))   ;; key should be unique among siblings
                                     [[gap :size "20px"]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "1"]
+                                     [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :on-click (t/open-image-in-new-tab "#quant-table-output-id")]
+                                     [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :on-click (t/save-image "#quant-table-output-id" "quant-table-output.png")]
                                      [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
                                      [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output" (conj (keys (first data)) :ISIN))]
                                      ])]
                  [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
-                 [:> ReactTable
-                  {:data            data :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)
-                   :showPagination  true :defaultPageSize 15 :pageSizeOptions [15 25 50 100]
-                   :filterable      true :defaultFilterMethod tables/text-filter-OR
-                   :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
-                   :ref             #(reset! qstables/qs-table-view %)
-                   :getTrProps      on-click-context :className "-striped -highlight"}]]])
+                 [:div {:id "quant-table-output-id"}
+                  [:> ReactTable
+                   {:data            data :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)
+                    :showPagination  true :defaultPageSize 15 :pageSizeOptions [15 25 50 100]
+                    :filterable      true :defaultFilterMethod tables/text-filter-OR
+                    :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
+                    :ref             #(reset! qstables/qs-table-view %)
+                    :getTrProps      on-click-context :className "-striped -highlight"}]]]])
 
 (def index-crawler-filter (r/atom []))
 (def index-crawler-expander (r/atom {}))                    ;0 {}

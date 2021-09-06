@@ -101,3 +101,15 @@
         (.then #(save-png (.toDataURL %) filename))
         (.catch #(js/console.log %))
         (.finally #(js/console.log "cleanup")))))
+
+(defn open-image-in-new-tab
+  "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
+  [hashid]
+  (fn []
+    (-> (html2canvas (js/document.querySelector hashid) {})
+        (.then #(.toDataURL % "png"))
+        (.then #((let [w (js/window.open "about:blank")
+                       el (.document.createElement w "iframe")]
+                   (set! (.. el -style -cssText) "border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;")
+                   (set! (.-src (.document.body.appendChild w el)) %)
+                   (.document.close w)))))))
