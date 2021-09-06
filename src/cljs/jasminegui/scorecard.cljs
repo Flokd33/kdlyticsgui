@@ -77,7 +77,7 @@
   (fn [db [_ data]]
     (let [isins (distinct (map :security_id (:result data)))
           subqm (into {} (for [line (filter #(some #{(:ISIN %)} isins) (:quant-model/model-output db))] [(:ISIN line) line]))]
-      (assoc db :scorecard/qdb-scores (into [] (for [[s block] (group-by :security_id (:result data))] (into (subqm s) (for [line block] [(:metric line) (:value line)]))))))))
+      (assoc db :scorecard/qdb-scores (into [] (for [[s block] (group-by :security_id (:result data)) :when (some #{s} (keys subqm))] (into (subqm s) (for [line block] [(:metric line) (:value line)]))))))))
 
 (rf/reg-event-db
   :clean-qdb-scores-previous
@@ -88,6 +88,8 @@
 (rf/reg-sub
   :scorecard/qdb-scores-with-difference
   (fn [db]
+    ;(println "db" (:scorecard/qdb-scores db))
+    (println "spot-rank" (t/naive-rank (map #(get % "EMCD_TOTAL") (:scorecard/qdb-scores db)) false))
     (let [spot (:scorecard/qdb-scores db)
           spot-rank (t/naive-rank (map #(get % "EMCD_TOTAL") spot) false)
           spot-with-rank (mapv #(assoc %1 "RANK" %2) spot spot-rank)
