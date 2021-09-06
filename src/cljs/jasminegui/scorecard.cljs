@@ -220,8 +220,8 @@
       :children [
                  [h-box :gap "10px" :align :center :children [[title :level :level2 :label (str "Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date]))]
                                                               [gap :size "1"]
-                                                              [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :on-click (t/open-image-in-new-tab "#scorecard-id")]
-                                                              [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :on-click (t/save-image "#scorecard-id" "scorecard.png")]]]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#scorecard-id")]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#scorecard-id" "scorecard.png")]]]
                  [:> ReactTable
                   {:data            data
                    :columns         (into []

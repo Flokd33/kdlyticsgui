@@ -138,10 +138,10 @@
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "1"]
-                                     [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :on-click (t/open-image-in-new-tab "#quant-table-output-id")]
-                                     [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :on-click (t/save-image "#quant-table-output-id" "quant-table-output.png")]
-                                     [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
-                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :on-click #(t/csv-link data "quant-model-output" (conj (keys (first data)) :ISIN))]
+                                     [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#quant-table-output-id")]
+                                     [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#quant-table-output-id" "quant-table-output.png")]
+                                     [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
+                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :tooltip-position :above-center :on-click #(t/csv-link data "quant-model-output" (conj (keys (first data)) :ISIN))]
                                      ])]
                  [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
                  [:div {:id "quant-table-output-id"}
