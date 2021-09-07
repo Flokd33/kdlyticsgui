@@ -138,8 +138,8 @@
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "1"]
-                                     [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#quant-table-output-id")]
-                                     [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#quant-table-output-id" "quant-table-output.png")]
+                                     [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "quant-table-output-id")]
+                                     [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "quant-table-output-id")]
                                      [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
                                      [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :tooltip-position :above-center :on-click #(t/csv-link data "quant-model-output" (conj (keys (first data)) :ISIN))]
                                      ])]
@@ -158,7 +158,7 @@
 
 (defn index-crawler []
   (let [data @(rf/subscribe [:quant-model/model-output])
-        cembi-embi (map #(assoc % :totaldummy "") (filter #(or (pos? (:cembi %)) (pos? (:cembi-ig %)) (pos? (:embi %)) (pos? (:embi-ig %)) (pos? (:jaci %))) data))
+        cembi-embi (map #(assoc % :totaldummy "") (filter #(or (pos? (:cembi %)) (pos? (:cembi-ig %)) (pos? (:cembi-hy %)) (pos? (:embi %)) (pos? (:embi-ig %)) (pos? (:jaci %))) data))
         final (tables/cljs-text-filter-OR @index-crawler-filter cembi-embi)]
     [box :padding "80px 10px" :class "rightelement"
      :child
@@ -175,7 +175,7 @@
                            :expanded @index-crawler-expander :onExpandedChange #(reset! index-crawler-expander %)}]
                          [title :level :level4 :label "Aggregate results from filter below, with median valuation:"]
                          [:> ReactTable
-                          {:data     (into [] (for [i [:cembi :cembi-ig :embi :embi-ig :jaci]]
+                          {:data     (into [] (for [i [:cembi :cembi-ig :cembi-hy :embi :embi-ig :jaci]]
                                                 (let [unv (filter (comp pos? i) final)]
                                                   {:idx      i :bonds (count unv) :issuers (count (distinct (map :Ticker unv))) :nav (reduce + (map i unv))
                                                    :Used_YTW (tables/median (map :Used_YTW unv))
@@ -184,7 +184,7 @@
                                                    :Used_Duration (tables/median (map :Used_Duration unv))
                                                    :Used_Rating_Score (tables/median (map :Used_Rating_Score unv))
                                                    })))
-                           :columns  [{:Header "Index" :accessor "idx" :width 60}
+                           :columns  [{:Header "Index" :accessor "idx" :width 70}
                                       {:Header "Bonds" :accessor "bonds" :width 60 :style {:textAlign "right"}}
                                       {:Header "Issuers" :accessor "issuers" :width 60 :style {:textAlign "right"}}
                                       {:Header "NAV" :accessor "nav" :width 60 :style {:textAlign "right"} :Cell tables/round2}

@@ -24,7 +24,8 @@
     [cljs-time.core :refer [today plus]]
     [cljs-time.format :as ctf]
     [oz.core :as oz]
-    [goog.object :as gobj])
+    [goog.object :as gobj]
+    [jasminegui.guitools :as gt])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
@@ -203,40 +204,23 @@
    {:accessor "EMCD_ESG_SENSITIVITY_RISK" :grp :esg :Header "Sensty. risk" :Cell score-cell-format}
    {:accessor "EMCD_ESG_CREDIT_IMPACT" :grp :esg :Header "Total" :Cell score-cell-format}
 
-
-
-
-
-
-    ]
-
-  )
+   ])
 
 (defn scorecard-table []
   (let [sector @(rf/subscribe [:scorecard/sector])
         data @(rf/subscribe [:scorecard/qdb-scores-with-difference])]
-    [:div {:id "scorecard-id"}
-     [v-box :class "element" :width "100%" :gap "10px"      ;:style {:backgroundColor "lightyellow"}
-      :children [
-                 [h-box :gap "10px" :align :center :children [[title :level :level2 :label (str "Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date]))]
-                                                              [gap :size "1"]
-                                                              [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#scorecard-id")]
-                                                              [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#scorecard-id" "scorecard.png")]]]
-                 [:> ReactTable
-                  {:data            data
-                   :columns         (into []
-                                          (for [group group-headers]
-                                            {:Header (:group-header group) :columns (into [] (for [row (t/chainfilter {:grp (:id group)} score-fields)]
-                                                                                               (assoc row
-                                                                                                 :width (if (contains? row :width) (row :width) 50)
-                                                                                                 :headerStyle {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}
-                                                                                                 :style (:style group)
-                                                                                                 )))}
-
-                                            )
-                                          )
-                   :pageSize (count data) :showPagination false :sortable true :showPageSizeOptions false :defaultSorted [{:id "EMCD_TOTAL" :desc true}]}]]]]) ; :className "-striped -highlight"
-  )
+    (gt/element-box "scorecard-scores" "100%" (str "Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date])) data
+                    [[:> ReactTable
+                      {:data            data
+                       :columns         (into []
+                                              (for [group group-headers]
+                                                {:Header (:group-header group) :columns (into [] (for [row (t/chainfilter {:grp (:id group)} score-fields)]
+                                                                                                   (assoc row
+                                                                                                     :width (if (contains? row :width) (row :width) 50)
+                                                                                                     :headerStyle {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}
+                                                                                                     :style (:style group)
+                                                                                                     )))}))
+                       :pageSize (count data) :showPagination false :sortable true :showPageSizeOptions false :defaultSorted [{:id "EMCD_TOTAL" :desc true}]}]])))
 
 
 (defn compress-data [table sector]
@@ -397,97 +381,68 @@
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
         vdisplay @(rf/subscribe [:scorecard-risk/table])]
-    ;(println @(rf/subscribe [:scorecard/qdb-securities]))
-    ;(println @(rf/subscribe [:scorecard/qdb-scores]))
     [v-box :gap "20px" :align :start
-     :children [[h-box :class "element" :width "60%" :gap "75px" :align :center
-                 :children [[title :level :level2 :label "Portfolio and sector selection"]
-                            [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution %]) (rf/dispatch [:scorecard/change-portfolio %]))]
-                            [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/change-sector %])]]]
-                [:div {:id "scorecard-risk-id"}
-                 [v-box :class "element" :width "100%" :gap "10px"
-                  :children [[h-box :gap "10px" :align :center :children [[title :level :level2 :label (str portfolio " " sector " risk")]
-                                                                          [gap :size "1"]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#scorecard-risk-id")]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#scorecard-risk-id" "scorecard-risk.png")]]]
-                             [:> ReactTable
-                              {:data           vdisplay
-                               :columns        [{:Header "" :columns [(assoc (:name tables/risk-table-columns) :Header "Bond" :width 150 :filterable false)]}
-                                                {:Header  "Contribution"
-                                                 :columns (into [] (for [[k v] [[:nav "NAV"] [:contrib-mdur "Dur"] [:contrib-yield "Yield"] [:contrib-zspread "Z"] [:contrib-beta "Beta"] [:quant-value-4d "Q4D"] [:quant-value-2d "Q2D"]]]
-                                                                     (assoc (k tables/risk-table-columns) :Header v :filterable false :width 45)))}
-                                                {:Header "Bond analytics" :columns (map #(assoc % :filterable false)
-                                                                                        (concat
-                                                                                          [(assoc (:rating tables/risk-table-columns) :Header "silent")
-                                                                                           (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]
-                                                                                          (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])
-                                                                                          [{:Header (gstring/unescapeEntities "4D &Delta;") :accessor "difference_svr" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}
-                                                                                           {:Header (gstring/unescapeEntities "2D &Delta;") :accessor "difference_svr_2d" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}]))}
-                                                {:Header "Trade analyser target" :columns [{:Header "Strategy" :accessor "strategy" :width 70}
-                                                                                           {:Header "Description" :accessor "relval-target-description" :width 240}
-                                                                                           {:Header "Level" :accessor "relval-alert-level" :width 40 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.1f" 1)}
-                                                                                           {:Header "Triggered?" :accessor "relval-target-triggered-date" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.0f" 1)}]}]
-                               :showPagination false :sortable true :pageSize (count vdisplay) :showPageSizeOptions false :className "-striped -highlight"}]]]]
-                [:div {:id "scorecard-risk-pivot-id"}
-                 [v-box :class "element" :width "100%" :gap "10px"
-                  :children [[h-box :gap "10px" :align :center :children [[title :level :level2 :label (str portfolio " " sector " risk country pivot")]
-                                                                          [gap :size "1"]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#scorecard-risk-pivot-id")]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#scorecard-risk-pivot-id" "scorecard-risk-pivot.png")]]]
-                             [:> ReactTable
-                              {:data           @(rf/subscribe [:scorecard-risk/tree])
-                               :columns        [{:Header "Bond" :columns [(assoc (:sector tables/risk-table-columns) :filterable false)
-                                                                          (assoc (:country tables/risk-table-columns) :filterable false)
-                                                                          (assoc (:name tables/risk-table-columns) :Header "NAV" :width 150 :filterable false)
-                                                                          (assoc (:rating tables/risk-table-columns) :Header "silent")
-                                                                          (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]}
-                                                {:Header "NAV" :columns (map #(assoc % :getProps tables/red-negatives :filterable false) (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta]))}
-                                                {:Header "Duration" :columns (map #(assoc % :getProps tables/red-negatives) (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta]))}
-                                                {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
-                                                {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
-                                                {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
-                                                {:Header "Quant model" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d]))}]
-                               :showPagination false :sortable true :pageSize 2 :showPageSizeOptions false :className "-striped -highlight"
-                               :pivotBy        [:qt-jpm-sector :qt-risk-country-name]
-                               :expanded       @expander :onExpandedChange #(reset! expander %)
-                               :sorted         [{:id :bm-weight :desc true}]}]]]]
-                [:div {:id "scorecard-vega-chart-id"}
-                 [v-box :class "element" :width "100%" :gap "10px"
-                  :children [
-                             [h-box :gap "10px" :align :center :children [[title :level :level2 :label (str portfolio " " sector " bonds held")]
-                                                                          [gap :size "1"]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#scorecard-vega-chart-id")]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#scorecard-vega-chart-id" "scorecard-vega-chart.png")]]]
-                             [oz/vega-lite (spot-chart-vega-spec (set (map :isin vdisplay)))]]]]
-                [:div {:id "scorecard-attribution-id"}
-                 [v-box :class "element" :width "100%" :gap "10px"
-                  :children [[h-box :gap "10px" :align :center :children [[title :level :level2 :label (str portfolio " " sector " attribution, top/bottom 5 YTD and weekly as of " @(rf/subscribe [:attribution-date]))]
-                                                                          [gap :size "1"]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#scorecard-attribution-id")]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#scorecard-attribution-id" "scorecard-attribution-.png")]]]
-                             (let [data (compress-data @(rf/subscribe [:scorecard/attribution-table]) sector)]
-                               [:> ReactTable
-                                {:data           data
-                                 :columns        [{:Header "Groups" :columns (mapv tables/attribution-table-columns [:issuer :country])}
-                                                  {:Header "Weekly" :columns (mapv tables/attribution-table-columns [:total-effect-wtd :contribution-wtd :bm-contribution-wtd])}
-                                                  {:Header "Previous week" :columns (mapv tables/attribution-table-columns [:total-effect-pwtd :contribution-pwtd :bm-contribution-pwtd])}
-                                                  {:Header "Year to date" :columns (mapv tables/attribution-table-columns [:total-effect-ytd :contribution-ytd :bm-contribution-ytd])}
-                                                  {:Header "YTD weights" :columns (mapv tables/attribution-table-columns [:xs-weight-ytd :weight-ytd :bm-weight-ytd])}]
-                                 :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}])]]]
-                [:div {:id "scorecard-nav-portfolios-id"}
-                 [v-box :class "element" :width "100%" :gap "10px"
-                  :children [
-                             [h-box :gap "10px" :align :center :children [[title :level :level2 :label (str sector " NAV across portfolios, grouped by issuer")]
-                                                                          [gap :size "1"]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "#scorecard-nav-portfolios-id")]
-                                                                          [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "#scorecard-nav-portfolios-id" "scorecard-nav-portfolios.png")]]]
-                             (let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
-                                                   {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-not0}))]
-                               [:> ReactTable
-                                {:data                @(rf/subscribe [:scorecard-risk/multiple-tree])
-                                 :columns             (concat (mapv tables/risk-table-columns [:issuer :name]) cols)
-                                 :showPagination      false :sortable true :filterable false :pageSize (count (distinct (map :TICKER @(rf/subscribe [:scorecard-risk/multiple-tree]))))
-                                 :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:TICKER] :defaultSorted [{:id :OGEMCORD :desc true}]}])]]]
+     :children [[h-box :class "element" :gap "20px" :align :center
+                 :children [[box :child [title :level :level1 :label "Portfolio and sector selection"]]
+                            [box :child [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution %]) (rf/dispatch [:scorecard/change-portfolio %]))]]
+                            [box :child [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/change-sector %])]]]]
+                (gt/element-box "scorecard-risk" "100%" (str portfolio " " sector " risk") vdisplay
+                             [[:> ReactTable
+                               {:data           vdisplay
+                                :columns        [{:Header "" :columns [(assoc (:name tables/risk-table-columns) :Header "Bond" :width 150 :filterable false)]}
+                                                 {:Header  "Contribution"
+                                                  :columns (into [] (for [[k v] [[:nav "NAV"] [:contrib-mdur "Dur"] [:contrib-yield "Yield"] [:contrib-zspread "Z"] [:contrib-beta "Beta"] [:quant-value-4d "Q4D"] [:quant-value-2d "Q2D"]]]
+                                                                      (assoc (k tables/risk-table-columns) :Header v :filterable false :width 45)))}
+                                                 {:Header "Bond analytics" :columns (map #(assoc % :filterable false)
+                                                                                         (concat
+                                                                                           [(assoc (:rating tables/risk-table-columns) :Header "silent")
+                                                                                            (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]
+                                                                                           (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])
+                                                                                           [{:Header (gstring/unescapeEntities "4D &Delta;") :accessor "difference_svr" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}
+                                                                                            {:Header (gstring/unescapeEntities "2D &Delta;") :accessor "difference_svr_2d" :width 45 :Cell (partial tables/nb-cell-format "%0.0f" 1.) :getProps tables/red-negatives}]))}
+                                                 {:Header "Trade analyser target" :columns [{:Header "Strategy" :accessor "strategy" :width 70}
+                                                                                            {:Header "Description" :accessor "relval-target-description" :width 240}
+                                                                                            {:Header "Level" :accessor "relval-alert-level" :width 40 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.1f" 1)}
+                                                                                            {:Header "Triggered?" :accessor "relval-target-triggered-date" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.0f" 1)}]}]
+                                :showPagination false :sortable true :pageSize (count vdisplay) :showPageSizeOptions false :className "-striped -highlight"}]])
+                (gt/element-box "scorecard-risk-pivot" "100%" (str portfolio " " sector " risk country pivot") @(rf/subscribe [:scorecard-risk/tree])
+                                [[:> ReactTable
+                                  {:data           @(rf/subscribe [:scorecard-risk/tree])
+                                   :columns        [{:Header "Bond" :columns [(assoc (:sector tables/risk-table-columns) :filterable false)
+                                                                              (assoc (:country tables/risk-table-columns) :filterable false)
+                                                                              (assoc (:name tables/risk-table-columns) :Header "NAV" :width 150 :filterable false)
+                                                                              (assoc (:rating tables/risk-table-columns) :Header "silent")
+                                                                              (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]}
+                                                    {:Header "NAV" :columns (map #(assoc % :getProps tables/red-negatives :filterable false) (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta]))}
+                                                    {:Header "Duration" :columns (map #(assoc % :getProps tables/red-negatives) (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta]))}
+                                                    {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
+                                                    {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
+                                                    {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
+                                                    {:Header "Quant model" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d]))}]
+                                   :showPagination false :sortable true :pageSize 2 :showPageSizeOptions false :className "-striped -highlight"
+                                   :pivotBy        [:qt-jpm-sector :qt-risk-country-name]
+                                   :expanded       @expander :onExpandedChange #(reset! expander %)
+                                   :sorted         [{:id :bm-weight :desc true}]}]])
+                (gt/element-box "scorecard-risk-chart" "100%" (str portfolio " " sector " bonds held") (filter #(contains? (set (map :isin vdisplay)) (:ISIN %)) @(rf/subscribe [:quant-model/model-output]))
+                                [[oz/vega-lite (spot-chart-vega-spec (set (map :isin vdisplay)))]])
+                (let [data (compress-data @(rf/subscribe [:scorecard/attribution-table]) sector)]
+                  (gt/element-box "scorecard-attribution" "100%" (str portfolio " " sector " attribution, top/bottom 5 YTD and weekly as of " @(rf/subscribe [:attribution-date])) data
+                                  [[:> ReactTable
+                                    {:data           data
+                                     :columns        [{:Header "Groups" :columns (mapv tables/attribution-table-columns [:issuer :country])}
+                                                      {:Header "Weekly" :columns (mapv tables/attribution-table-columns [:total-effect-wtd :contribution-wtd :bm-contribution-wtd])}
+                                                      {:Header "Previous week" :columns (mapv tables/attribution-table-columns [:total-effect-pwtd :contribution-pwtd :bm-contribution-pwtd])}
+                                                      {:Header "Year to date" :columns (mapv tables/attribution-table-columns [:total-effect-ytd :contribution-ytd :bm-contribution-ytd])}
+                                                      {:Header "YTD weights" :columns (mapv tables/attribution-table-columns [:xs-weight-ytd :weight-ytd :bm-weight-ytd])}]
+                                     :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}]]))
+                (gt/element-box "scorecard-nav-portfolios" "100%" (str sector " NAV across portfolios, grouped by issuer") @(rf/subscribe [:scorecard-risk/multiple-tree])
+                                [(let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
+                                                       {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-not0}))]
+                                   [:> ReactTable
+                                    {:data                @(rf/subscribe [:scorecard-risk/multiple-tree])
+                                     :columns             (concat (mapv tables/risk-table-columns [:issuer :name]) cols)
+                                     :showPagination      false :sortable true :filterable false :pageSize (count (distinct (map :TICKER @(rf/subscribe [:scorecard-risk/multiple-tree]))))
+                                     :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:TICKER] :defaultSorted [{:id :OGEMCORD :desc true}]}])])
                 [scorecard-table]
                 ]]))
 

@@ -18,6 +18,7 @@
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.tables :as tables]
     [jasminegui.tools :as tools]
+    [jasminegui.guitools :as gt]
     [oz.core :as oz])
   )
 

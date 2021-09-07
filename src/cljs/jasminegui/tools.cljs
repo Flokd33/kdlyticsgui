@@ -95,18 +95,18 @@
 
 (defn save-image
   "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
-  [hashid filename]
+  [id]
   (fn []
-    (-> (html2canvas (js/document.querySelector hashid) {}) ;js/document.body
-        (.then #(save-png (.toDataURL %) filename))
+    (-> (html2canvas (js/document.querySelector (str "#" id)) {}) ;js/document.body
+        (.then #(save-png (.toDataURL %) (str id "-" (gdate-to-yyyymmdd (cljs-time.core/today)))))
         (.catch #(js/console.log %))
         (.finally #(js/console.log "cleanup")))))
 
 (defn open-image-in-new-tab
   "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
-  [hashid]
+  [id]
   (fn []
-    (-> (html2canvas (js/document.querySelector hashid) {})
+    (-> (html2canvas (js/document.querySelector (str "#" id)) {})
         (.then #(.toDataURL % "png"))
         (.then #((let [w (js/window.open "about:blank")
                        el (.document.createElement w "iframe")]

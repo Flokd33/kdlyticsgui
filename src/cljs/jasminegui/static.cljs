@@ -96,11 +96,12 @@
 
 
 (def portfolio-alignment-groups
-  [{:id :cembi   :label "CEMBI"       :portfolios ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IMETEMCD" "IKZVKEMD"]}
-   {:id :allianz :label "Allianz"     :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-   {:id :tr      :label "TR"          :portfolios ["AIFGLBCD" "OOGEMTRC"]}
-   {:id :ig      :label "IG"          :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
-   {:id :talanx  :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}])
+  [{:id :cembi    :label "CEMBI"       :portfolios ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IEZVKEMD" "IMETEMCD" "IKZVKEMD"]}
+   {:id :allianz  :label "Allianz"     :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
+   {:id :tr       :label "TR"          :portfolios ["AIFGLBCD" "OOGEMTRC"]}
+   {:id :ig       :label "IG"          :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
+   {:id :munichre :label "Munich Re"   :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
+   {:id :talanx   :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}])
 
 (def risk-field-choices
   [

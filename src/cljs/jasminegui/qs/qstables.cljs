@@ -84,8 +84,10 @@
    :MSCI-SCORE                          {:Header "MSCI" :accessor "msci-IVA_COMPANY_RATING" :width 50 :style {:textAlign "center"}}
    :COUPON                              {:Header "Coupon" :accessor "COUPON" :width 55 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}
    :cembi                               {:Header "CEMBI" :accessor "cembi" :width 52 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :cembi-hy                            {:Header "CEMBI HY" :accessor "cembi-hy" :width 70 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :cembi-ig                            {:Header "CEMBI IG" :accessor "cembi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :embi                                {:Header "EMBI" :accessor "embi" :width 52 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :embi-hy                             {:Header "EMBI HY" :accessor "embi-hy" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :embi-ig                             {:Header "EMBI IG" :accessor "embi-ig" :width 62 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :us-agg                              {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :global-agg                          {:Header "Glb agg" :accessor "global-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -378,7 +380,7 @@
       "IndexCrawler"
       (concat [{:Header " " :columns (mapv quant-score-table-columns [:totaldummy])}
                {:Header "Description" :columns (mapv quant-score-table-columns [:Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT :Bond])}]
-              [{:Header "Index weight" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}]
+              [{:Header "Index weight" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :cembi-hy :embi :embi-ig :us-agg :global-agg :jaci])}]
               [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}]
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}

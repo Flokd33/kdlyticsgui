@@ -15,6 +15,7 @@
     [jasminegui.tables :as tables]
     [jasminegui.static :as static]
     [jasminegui.charting :as charting]
+    [jasminegui.guitools :as gt]
     [oz.core :as oz]))
 
 
@@ -88,9 +89,7 @@
 (def dropdown-width "150px")
 
 (defn var-table-view []
-  [v-box
-   :class "element" :width "100%" :gap "20px"
-   :children [[title :label "Backtested VaR" :level :level1] [var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."] ]])
+  (gt/element-box "var-table" standard-box-width "Backtested VaR" @(rf/subscribe [:var/table]) [[var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]]))
 
 (defn backtest-chart []
   (let [dates @(rf/subscribe [:var/dates])
@@ -99,7 +98,7 @@
         line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
         days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
      [v-box
-      :class "element" :width "100%" :gap "20px"
+      :class "element" :width standard-box-width :gap "20px"
       :children [[title :label "Backtested portfolio value" :level :level1]
                  [oz/vega-lite (charting/backtest-chart
                                  (take-last days (get-in dates [(line :frequency)]))
@@ -113,7 +112,7 @@
         line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
         days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
     [v-box
-     :class "element" :width "100%" :gap "20px"
+     :class "element" :width standard-box-width :gap "20px"
      :children [[title :label "Return histogram" :level :level1]
                 [oz/vega-lite (charting/return-histogram
                                 (take-last days (get-in data [:portfolio-returns (line :frequency)]))
@@ -125,7 +124,7 @@
         line (first (filter #(= (:id %) chart-period) static/var-charts-choice-map))
         days (case (line :frequency) :daily (* (line :period) 250) :weekly (* (line :period) 52) :monthly (* (line :period) 12))]
     [v-box
-     :class "element" :width "100%" :gap "20px"
+     :class "element" :width standard-box-width :gap "20px"
      :children [[title :label "Regression" :level :level1]
                 [oz/vega-lite (charting/regression-output
                                 (take-last days (get-in data [:portfolio-returns (line :frequency)]))
@@ -138,16 +137,12 @@
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         portfolio (rf/subscribe [:var/portfolio])
         chart-period (rf/subscribe [:var/chart-period])]
-     [v-box
-      :class "element" :width "100%" :gap "20px"
+     [h-box
+      :class "element" :width standard-box-width :gap "20px" :justify :between
       :children [[title :label "Display selection" :level :level1]
-                 [h-box
-                  :gap "20px" :padding "0px 20px 0px 0px"
-                  :children [[title :label "Portfolio:" :level :level3]
-                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:get-portfolio-var %])]
-                             [gap :size "20px"]
-                             [title :label "Chart period:" :level :level3]
-                             [single-dropdown :width dropdown-width :model chart-period :choices static/var-charts-choice-map :on-change #(rf/dispatch [:var/chart-period %])]]]]]))
+                 [v-box :gap "5px" :children [[title :label "Portfolio:" :level :level3][single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:get-portfolio-var %])]]]
+                 [v-box :gap "5px" :children [[title :label "Chart period:" :level :level3][single-dropdown :width dropdown-width :model chart-period :choices static/var-charts-choice-map :on-change #(rf/dispatch [:var/chart-period %])]]]
+                 ]]))
 
 (defn proxy-table []
   (let [data @(rf/subscribe [:var/proxies])
