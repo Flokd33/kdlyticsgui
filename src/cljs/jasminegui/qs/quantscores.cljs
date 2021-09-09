@@ -22,6 +22,7 @@
     [jasminegui.qs.qscharts :as qscharts]
     [jasminegui.qs.modelportfolios :as modelportfolios]
     [jasminegui.qs.harvest :as harvest]
+    [jasminegui.guitools :as gt]
     )
   )
 
@@ -147,7 +148,7 @@
                  [:div {:id "quant-table-output-id"}
                   [:> ReactTable
                    {:data            data :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)
-                    :showPagination  true :defaultPageSize 15 :pageSizeOptions [15 25 50 100]
+                    :showPagination  true :defaultPageSize 15 :pageSizeOptions [5 10 15 25 50 100]
                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                     :ref             #(reset! qstables/qs-table-view %)
@@ -227,25 +228,31 @@
                                   (if (:country-neighbours @calculator-chart-options) {other-country "#591739"}))
         curve-data (filter #(some #{(:Rating %)} (conj (if (:rating-neighbours @calculator-chart-options) [(inc rating-score) (dec rating-score)] []) rating-score))
                            (if (:rating-curves-sov-only @calculator-chart-options) @(rf/subscribe [:quant-model/rating-curves-sov-only]) @(rf/subscribe [:quant-model/rating-curves])))]
-    [v-box :class "element"  :gap "10px" :width "1620px"
-     :children [[h-box :align :center :justify :between :children [[title :label "Comparables chart" :level :level1] [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
-                [h-box :gap "50px" :children [[checkbox :model (r/cursor calculator-chart-options [:labels]) :label "Bond labels" :on-change #(swap! calculator-chart-options assoc :labels %)]
-                                              [checkbox :model (r/cursor calculator-chart-options [:rating-curves]) :label "2D model curve" :on-change #(swap! calculator-chart-options assoc :rating-curves %)]
-                                              [checkbox :model (r/cursor calculator-chart-options [:rating-curves-sov-only]) :label "2D curve sov only?" :on-change #(swap! calculator-chart-options assoc :rating-curves-sov-only %)]]]
+    (gt/element-box "calculator-comparable-chart" "1280px" "Comparables chart"  data
+                    [[h-box :gap "50px" :children [[checkbox :model (r/cursor calculator-chart-options [:labels]) :label "Bond labels" :on-change #(swap! calculator-chart-options assoc :labels %)]
+                                                   [checkbox :model (r/cursor calculator-chart-options [:rating-curves]) :label "2D model curve" :on-change #(swap! calculator-chart-options assoc :rating-curves %)]
+                                                   [checkbox :model (r/cursor calculator-chart-options [:rating-curves-sov-only]) :label "2D curve sov only?" :on-change #(swap! calculator-chart-options assoc :rating-curves-sov-only %)]]]
+                     [h-box :gap "50px" :children [[checkbox :model (r/cursor calculator-chart-options [:other-countries]) :label "Other countries (same sector and rating)" :on-change #(swap! calculator-chart-options assoc :other-countries %)]
+                                                   [checkbox :model (r/cursor calculator-chart-options [:rating-neighbours]) :label "Rating neighbours (same sector, rating up/down a notch)" :on-change #(swap! calculator-chart-options assoc :rating-neighbours %)]
+                                                   [checkbox :model (r/cursor calculator-chart-options [:country-neighbours]) :label "Country neighbours (same country and rating)" :on-change #(swap! calculator-chart-options assoc :country-neighbours %)]]]
+                     [title :level :level4 :label "Left button to move chart, wheel to zoom" ]
+                     [oz/vega-lite (qscharts/fair-value-calculator-chart data color-domain-scale (:labels @calculator-chart-options) (:rating-curves @calculator-chart-options) curve-data)]]
+                    )
 
-                [h-box :gap "50px" :children [[checkbox :model (r/cursor calculator-chart-options [:other-countries]) :label "Other countries (same sector and rating)" :on-change #(swap! calculator-chart-options assoc :other-countries %)]
-                                              [checkbox :model (r/cursor calculator-chart-options [:rating-neighbours]) :label "Rating neighbours (same sector, rating up/down a notch)" :on-change #(swap! calculator-chart-options assoc :rating-neighbours %)]
-                                              [checkbox :model (r/cursor calculator-chart-options [:country-neighbours]) :label "Country neighbours (same country and rating)" :on-change #(swap! calculator-chart-options assoc :country-neighbours %)]]]
-                [oz/vega-lite (qscharts/fair-value-calculator-chart data color-domain-scale (:labels @calculator-chart-options) (:rating-curves @calculator-chart-options) curve-data)]]]))
+    ))
+
+(defn calculator-result-data [data calc-data]
+  (into [] (for [[k txt c] [[:d4 "Four factor" (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Used_Duration) data))]
+                            [:d3country (str (:Country @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Used_Duration) data))]
+                            [:d3sector (str (:Sector @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Country :Used_Duration) data))]
+                            [:d2 (str (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Country :Used_Duration) data))]]]
+             {:model txt :svr (get-in calc-data [:svr k]) :legacy (get-in calc-data [:legacy k]) :new (get-in calc-data [:new k]) :comps c}))
+  )
 
 (defn calculator-result-table []
   (let [data @(rf/subscribe [:quant-model/model-output])
         calc-data @(rf/subscribe [:quant-model/calculator-spreads])
-        display (into [] (for [[k txt c] [[:d4 "Four factor" (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Used_Duration) data))]
-                                          [:d3country (str (:Country @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Used_Duration) data))]
-                                          [:d3sector (str (:Sector @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Country :Used_Duration) data))]
-                                          [:d2 (str (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Country :Used_Duration) data))]]]
-                           {:model txt :svr (get-in calc-data [:svr k]) :legacy (get-in calc-data [:legacy k]) :new (get-in calc-data [:new k]) :comps c}))]
+        display (calculator-result-data data calc-data)]
     [:> ReactTable
      {:data           display
       :columns        [{:Header "Model" :accessor "model" :width 200}
@@ -265,23 +272,44 @@
         update-sector-fn (fn [sector] (do (swap! calculator-target assoc :Sector sector) (when (= sector "Sovereign") (swap! calculator-chart-options assoc :rating-curves-sov-only true) (infer-rating-fn (:Country @calculator-target)))))
         update-country-fn (fn [country] (do (swap! calculator-target assoc :Country country) (when (= (:Sector @calculator-target) "Sovereign") (infer-rating-fn (:Country @calculator-target)))))]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
-     :children [[v-box :class "element" :gap "0px" :width "1620px"
-                 :children [[title :label "New issue calculator" :level :level1] [gap :size "20px"]
-                            [h-box :gap "50px" :align :center
-                             :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"][label :width "80px" :label "Currency"]]]
-                                                                                     [h-box :gap "10px" :children [[single-dropdown :width "200px" :model (r/cursor calculator-target [:Country]) :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil])) :filter-box? true]
-                                                                                                                   [single-dropdown :width "200px" :model (r/cursor calculator-target [:Sector]) :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]
-                                                                                                                   [single-dropdown :width "80px" :model (r/cursor calculator-target [:CRNCY]) :choices [{:id "USD" :label "USD"} {:id "EUR" :label "EUR"}] :on-change #(do (swap! calculator-target assoc :CRNCY %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]]]
-                                                                                     [gap :size "20px"]
-                                                                                     [h-box :gap "10px" :children [[label :width "130px" :label "Duration"] [gap :size "50px"] [label :width "100px" :label "Rating score"] [label :width "100px" :label "Rating"]]]
-                                                                                     [h-box :gap "10px" :align :center :children [[input-text :width "100px" :model (r/cursor calculator-target [:Used_Duration]) :on-change #(do (swap! calculator-target assoc :Used_Duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                                                                                                                  [box :width "20px" :child [md-circle-icon-button :md-icon-name "zmdi-help" :size :smaller :on-click #(reset! show-duration-modal true)]]
-                                                                                                                                  [gap :size "50px"]
-                                                                                                                                  [input-text :width "100px" :model (r/cursor calculator-target [:Used_Rating_Score]) :on-change #(do (swap! calculator-target assoc :Used_Rating_Score %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
-                                                                                                                   [label :width "100px" :label (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))]]]]]
+     :children [
 
-                                        [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread (:CRNCY @calculator-target) (:Country @calculator-target) (:Sector @calculator-target) (:Used_Rating_Score @calculator-target) (:Used_Duration @calculator-target)])]
-                                        [calculator-result-table]]]]]
+                (gt/element-box "calculator-controller" "1280px" "New issue calculator" (calculator-result-data @(rf/subscribe [:quant-model/model-output]) @(rf/subscribe [:quant-model/calculator-spreads]))
+                                [[h-box :gap "50px" :align :center
+                                  :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"][label :width "80px" :label "Currency"]]]
+                                                                                        [h-box :gap "10px" :children [[single-dropdown :width "200px" :model (r/cursor calculator-target [:Country]) :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil])) :filter-box? true]
+                                                                                                                      [single-dropdown :width "200px" :model (r/cursor calculator-target [:Sector]) :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]
+                                                                                                                      [single-dropdown :width "80px" :model (r/cursor calculator-target [:CRNCY]) :choices [{:id "USD" :label "USD"} {:id "EUR" :label "EUR"}] :on-change #(do (swap! calculator-target assoc :CRNCY %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]]]
+                                                                                        [gap :size "20px"]
+                                                                                        [h-box :gap "10px" :children [[label :width "130px" :label "Duration"] [gap :size "50px"] [label :width "100px" :label "Rating score"] [label :width "100px" :label "Rating"]]]
+                                                                                        [h-box :gap "10px" :align :center :children [[input-text :width "100px" :model (r/cursor calculator-target [:Used_Duration]) :on-change #(do (swap! calculator-target assoc :Used_Duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                                                                                                                     [box :width "20px" :child [md-circle-icon-button :md-icon-name "zmdi-help" :size :smaller :on-click #(reset! show-duration-modal true)]]
+                                                                                                                                     [gap :size "50px"]
+                                                                                                                                     [input-text :width "100px" :model (r/cursor calculator-target [:Used_Rating_Score]) :on-change #(do (swap! calculator-target assoc :Used_Rating_Score %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                                                                                                                                     [label :width "100px" :label (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))]]]]]
+
+                                             [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread (:CRNCY @calculator-target) (:Country @calculator-target) (:Sector @calculator-target) (:Used_Rating_Score @calculator-target) (:Used_Duration @calculator-target)])]
+                                             [calculator-result-table]]]]
+                                )
+
+
+                ;[v-box :class "element" :gap "0px" :width "1280px"
+                ; :children [[title :label "New issue calculator" :level :level1] [gap :size "20px"]
+                ;            [h-box :gap "50px" :align :center
+                ;             :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"][label :width "80px" :label "Currency"]]]
+                ;                                                                     [h-box :gap "10px" :children [[single-dropdown :width "200px" :model (r/cursor calculator-target [:Country]) :choices countries :on-change #(do (update-country-fn %) (rf/dispatch [:quant-model/calculator-spreads nil])) :filter-box? true]
+                ;                                                                                                   [single-dropdown :width "200px" :model (r/cursor calculator-target [:Sector]) :choices sectors :on-change #(do (update-sector-fn %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]
+                ;                                                                                                   [single-dropdown :width "80px" :model (r/cursor calculator-target [:CRNCY]) :choices [{:id "USD" :label "USD"} {:id "EUR" :label "EUR"}] :on-change #(do (swap! calculator-target assoc :CRNCY %) (rf/dispatch [:quant-model/calculator-spreads nil]))  :filter-box? true]]]
+                ;                                                                     [gap :size "20px"]
+                ;                                                                     [h-box :gap "10px" :children [[label :width "130px" :label "Duration"] [gap :size "50px"] [label :width "100px" :label "Rating score"] [label :width "100px" :label "Rating"]]]
+                ;                                                                     [h-box :gap "10px" :align :center :children [[input-text :width "100px" :model (r/cursor calculator-target [:Used_Duration]) :on-change #(do (swap! calculator-target assoc :Used_Duration %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                ;                                                                                                                  [box :width "20px" :child [md-circle-icon-button :md-icon-name "zmdi-help" :size :smaller :on-click #(reset! show-duration-modal true)]]
+                ;                                                                                                                  [gap :size "50px"]
+                ;                                                                                                                  [input-text :width "100px" :model (r/cursor calculator-target [:Used_Rating_Score]) :on-change #(do (swap! calculator-target assoc :Used_Rating_Score %) (rf/dispatch [:quant-model/calculator-spreads nil]))]
+                ;                                                                                                   [label :width "100px" :label (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))]]]]]
+                ;
+                ;                        [button :style {:width "100px"} :label "Calculate" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-calculator-spread (:CRNCY @calculator-target) (:Country @calculator-target) (:Sector @calculator-target) (:Used_Rating_Score @calculator-target) (:Used_Duration @calculator-target)])]
+                ;                        [calculator-result-table]]]]]
                 [comparable-chart
                  (cljs.reader/read-string (:Used_Duration @calculator-target))
                  (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:legacy :d4])
