@@ -75,7 +75,7 @@
    :Sector                              {:Header "Sector" :accessor "Sector" :width 80}
    :Ticker                              {:Header "Ticker" :accessor "Ticker" :width 80}
    :Use                                 {:Header "Use" :accessor "Use" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
-   :Bond                                {:Header "Bond" :accessor "Bond" :width 130}
+   :Bond                                {:Header "Bond" :accessor "Bond" :width 120}
    :SENIOR                              {:Header "Snr" :accessor "SENIOR" :width 35}
    :SENIOR-WIDE                         {:Header "Senior" :accessor "SENIOR" :width 50 :style {:textAlign "center"}}
    :HYBRID-WIDE                         {:Header "Hybrid" :accessor "HYBRID" :width 50 :style {:textAlign "center"}}
