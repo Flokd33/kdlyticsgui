@@ -192,7 +192,7 @@
                                                     {:Header "Type" :accessor "trade" :width 75}
                                                     {:Header "Price" :accessor "price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
                                                     {:Header "Portfolio" :columns (into []
-                                                                                        (for [p @(rf/subscribe [:portfolios])]
+                                                                                        (for [p (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))] ;@(rf/subscribe [:portfolios])
                                                                                           {:Header p :accessor p :width 90 :style {:textAlign "right"} :Cell nfh}))}]
                                    :showPagination false :pageSize (count display) :className "-striped -highlight"}])]]])))
 

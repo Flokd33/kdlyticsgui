@@ -9,27 +9,42 @@
     )
   )
 
+(defn element-box-generic
+  "opts will have either :download-table or :on-click-action, and can have target-id"
+  [id width title-str opts children]
+  [:div {:id id}
+   [v-box :class "element" :align-self :center :justify :center :gap "20px" :width width
+    :children (concat [[h-box :gap "10px" :align :center
+                        :children [[title :label title-str :level :level1]
+                                   [gap :size "1"]
+                                   [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab (if-let [tid (:target-id opts)] tid id))]
+                                   [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image (if-let [tid (:target-id opts)] tid id))]
+                                   [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click (if-let [ocl (:on-click-action opts)] ocl #(t/csv-link (:download-table opts) (str id "-" (t/gdate-to-yyyymmdd (cljs-time.core/today)))))]]]]
+                      children)]])
+
 (defn element-box
+  ([id width title-str download-table children] (element-box-generic id width title-str {:download-table download-table} children))
+  ([id width title-str download-table on-click-action children] (element-box-generic id width title-str {:on-click-action on-click-action} children)))
 
-  ([id width title-str download-table children]
-   [:div {:id id}
-    [v-box :class "element" :align-self :center :justify :center :gap "20px" :width width
-     :children (concat [[h-box :gap "10px" :align :center
-                         :children [[title :label title-str :level :level1]
-                                    [gap :size "1"]
-                                    [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab id)]
-                                    [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image id)]
-                                    [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click #(t/csv-link download-table (str id "-" (t/gdate-to-yyyymmdd (cljs-time.core/today))))]]]]
-                       children)]])
-  ([id width title-str download-table on-click-action children]
-   [:div {:id id}
-    [v-box :class "element" :align-self :center :justify :center :gap "20px" :width width
-     :children (concat [[h-box :gap "10px" :align :center
-                         :children [[title :label title-str :level :level1]
-                                    [gap :size "1"]
-                                    [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab id)]
-                                    [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image id)]
-                                    [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click on-click-action]]]]
-                       children)]])
 
-  )
+;([id width title-str download-table children]
+; [:div {:id id}
+;  [v-box :class "element" :align-self :center :justify :center :gap "20px" :width width
+;   :children (concat [[h-box :gap "10px" :align :center
+;                       :children [[title :label title-str :level :level1]
+;                                  [gap :size "1"]
+;                                  [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab id)]
+;                                  [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image id)]
+;                                  [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click #(t/csv-link download-table (str id "-" (t/gdate-to-yyyymmdd (cljs-time.core/today))))]]]]
+;                     children)]])
+;([id width title-str download-table on-click-action children]
+; [:div {:id id}
+;  [v-box :class "element" :align-self :center :justify :center :gap "20px" :width width
+;   :children (concat [[h-box :gap "10px" :align :center
+;                       :children [[title :label title-str :level :level1]
+;                                  [gap :size "1"]
+;                                  [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab id)]
+;                                  [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image id)]
+;                                  [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click on-click-action]]]]
+;                     children)]])
+

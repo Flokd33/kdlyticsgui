@@ -41,7 +41,7 @@
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-home
       :summary                        [riskviews/summary-display]
-      :single-portfolio               [riskviews/single-portfolio-risk-controller]
+      :single-portfolio               [riskviews/single-portfolio-risk-display]
       :all-portfolios                 [riskviews/multiple-portfolio-risk-controller]
       :portfolio-alignment            [riskviews/portfolio-alignment-risk-controller]
       ;:trade-history                  [th/trade-history]

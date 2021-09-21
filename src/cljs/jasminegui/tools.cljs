@@ -48,8 +48,18 @@
   ([data filename cols sep]
    (download-object-as-csv (clj->js (vector-of-maps->csv-atomic data cols sep)) (str filename ".csv"))))
 
-(defn react-table-to-csv [view filename cols]
-  (csv-link (js->clj (. (.getResolvedState view) -sortedData)) filename cols))
+(defn react-table-pivot-to-csv [view]         ;_pivotVal
+  (let [pivot (first (js->clj (. (.getResolvedState view) -sortedData)))
+        subrows (pivot "_subRows")]
+    (into [(dissoc pivot "_subRows")] (for [row subrows] (dissoc row "_subRows")))))
+
+(defn react-table-to-csv
+  ([view filename cols]
+   (csv-link (js->clj (. (.getResolvedState view) -sortedData)) filename cols))
+  ([view filename cols pivoted?]
+   (if pivoted?
+     (csv-link (react-table-pivot-to-csv view) filename (concat ["_pivotVal"] cols))
+     (react-table-to-csv view filename cols))))
 
 (defn copy-to-clipboard [val]
   (let [el (js/document.createElement "textarea")]

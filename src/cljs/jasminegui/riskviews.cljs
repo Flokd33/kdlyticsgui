@@ -221,30 +221,25 @@
 
 
 
-(defn single-portfolio-risk-display []
-  (let [is-tree (= @(rf/subscribe [:single-portfolio-risk/display-style]) "Tree")
-        risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
-        additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))]
-    [tables/tree-table-risk-table
-     :single-portfolio-risk/table
-     [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-      {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
-      {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
-      {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
-      {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
-      {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
-      {:Header "Quant model" :columns (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d])}
-      {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
-      ;{:Header "Index contribution" :columns (mapv tables/table-columns [:bm-contrib-yield :bm-contrib-eir-duration])}
-      {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}
-      {:Header "Description" :columns (mapv tables/risk-table-columns (into [] (concat [:rating :isin] additional-des-cols [:description])))}]
-     is-tree
-     (mapv :accessor grouping-columns)
-     single-portfolio-risk-display-view
-     :single-portfolio-risk/table-filter
-     :single-portfolio-risk/expander
-     on-click-context]))
+;(defn single-portfolio-risk-display [is-tree grouping-columns additional-des-cols]
+;  [tables/tree-table-risk-table
+;   :single-portfolio-risk/table
+;   [{:Header (str "Groups (" @(rf/subscribe [:single-portfolio-risk/portfolio]) " " @(rf/subscribe [:qt-date]) ")" ) :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+;    {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
+;    {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
+;    {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
+;    {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
+;    {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
+;    {:Header "Quant model" :columns (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d])}
+;    {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
+;    {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}
+;    {:Header "Description" :columns (mapv tables/risk-table-columns (concat [:rating :isin] additional-des-cols [:description]))}]
+;   is-tree
+;   (mapv :accessor grouping-columns)
+;   single-portfolio-risk-display-view
+;   :single-portfolio-risk/table-filter
+;   :single-portfolio-risk/expander
+;   on-click-context])
 
 
 (defn single-bond-trade-flat-history [state rowInfo instance]
@@ -262,7 +257,7 @@
   (do (rf/dispatch [:get-single-bond-flat-history
                     (aget rowInfo "row" "_original" "NAME")
                     (aget rowInfo "row" "_original" "id")
-                    @(rf/subscribe [:portfolios])
+                    (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))
                     "01Jan2019"
                     @(rf/subscribe [:qt-date])])))
 
@@ -278,26 +273,26 @@
 (defn on-click-context-multiple [state rowInfo instance]
   (clj->js {:onClick #(fnevt-multiple state rowInfo instance %) :style {:cursor "pointer"}}))
 
-(defn multiple-portfolio-risk-display []
-  (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
-        width-one 80
-        is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
-        risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
-        cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
-                        {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
-                         :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
-    [tables/tree-table-risk-table
-     :multiple-portfolio-risk/table
-     [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-      {:Header (str "Portfolio " (name display-key-one)) :columns cols}
-      {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
-     (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
-     (mapv :accessor grouping-columns)
-     multiple-portfolio-risk-display-view
-     :multiple-portfolio-risk/table-filter
-     :multiple-portfolio-risk/expander
-     on-click-context-multiple]))
+;(defn multiple-portfolio-risk-display []
+;  (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
+;        width-one 80
+;        is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
+;        risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+;        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
+;        cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
+;                        {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
+;                         :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
+;    [tables/tree-table-risk-table
+;     :multiple-portfolio-risk/table
+;     [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+;      {:Header (str "Portfolio " (name display-key-one)) :columns cols}
+;      {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
+;     (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
+;     (mapv :accessor grouping-columns)
+;     multiple-portfolio-risk-display-view
+;     :multiple-portfolio-risk/table-filter
+;     :multiple-portfolio-risk/expander
+;     on-click-context-multiple]))
 
 (def portfolio-alignment-risk-display-view (atom nil))
 
@@ -336,14 +331,20 @@
     (into [] (for [i (range 1 4)]
                [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [key i %])]))))
 
-(defn single-portfolio-risk-controller []
+(defn single-portfolio-risk-display []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         display-style (rf/subscribe [:single-portfolio-risk/display-style])
         portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
-        hide-zero-risk (rf/subscribe [:single-portfolio-risk/hide-zero-holdings])]
+        hide-zero-risk (rf/subscribe [:single-portfolio-risk/hide-zero-holdings])
+        is-tree (= @(rf/subscribe [:single-portfolio-risk/display-style]) "Tree")
+        risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
+        additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
+        download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
     [box :class "subbody rightelement" :child
-     (gt/element-box "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) nil #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio (concat ["NAME" "isin" "description"] (keys (js->clj (last @(rf/subscribe [:single-portfolio-risk/table]))))))
-                     [[h-box :gap "10px" :align :center
+     (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
+                             {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)}
+                             [[h-box :gap "10px" :align :center
                        :children (concat
                                    [[title :label "Display:" :level :level3]
                                     [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:single-portfolio-risk/display-style %]) (rf/dispatch [:single-portfolio-risk/hide-zero-holdings (= % "Table")]))]
@@ -353,10 +354,27 @@
                                    (into [] (concat [[title :label "Filtering:" :level :level3]
                                                      [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
                                                     (filtering-row :single-portfolio-risk/filter)
-                                                    [[gap :size "30px"]]
-                                                    ))
+                                                    [[gap :size "30px"]]))
                                    (shortcut-row :single-portfolio-risk/shortcut))]
-                      [single-portfolio-risk-display]])]))
+                              [:div {:id "single-portfolio-risk-table"}
+                               [tables/tree-table-risk-table
+                                :single-portfolio-risk/table
+                                [{:Header (str "Groups (" @(rf/subscribe [:single-portfolio-risk/portfolio]) " " @(rf/subscribe [:qt-date]) ")" ) :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+                                 {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
+                                 {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
+                                 {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
+                                 {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
+                                 {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
+                                 {:Header "Quant model" :columns (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d])}
+                                 {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
+                                 {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}
+                                 {:Header "Description" :columns (mapv tables/risk-table-columns (concat [:rating :isin] additional-des-cols [:description]))}]
+                                is-tree
+                                (mapv :accessor grouping-columns)
+                                single-portfolio-risk-display-view
+                                :single-portfolio-risk/table-filter
+                                :single-portfolio-risk/expander
+                                on-click-context]]])]))
 
 (defn multiple-portfolio-risk-controller []
   (let [portfolio-map (into [] (for [p  @(rf/subscribe [:portfolios])] {:id p :label p}))
@@ -367,13 +385,14 @@
         field-one (rf/subscribe [:multiple-portfolio-risk/field-one])
         ;field-two (rf/subscribe [:multiple-portfolio-risk/field-two])
         hide-zero-risk (rf/subscribe [:multiple-portfolio-risk/hide-zero-holdings])
+        is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
         ;download-columns-old (concat (map keyword portfolios) (map keyword (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))) [:isin :description])
-        download-columns (concat ["NAME" "isin" "description"] portfolios (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
+        download-columns (concat ["NAME" "isin" "description"] (filter @selected-portfolios portfolios) (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
     [box :class "subbody rightelement" :child
-     (gt/element-box "multiple-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) nil #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "pivot" download-columns)
-                     [[h-box :gap "50px"
+     (gt/element-box-generic "multiple-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "pivot" download-columns is-tree)}
+                             [[h-box :gap "50px"
                        :children
                        [[v-box :gap "20px"
                          :children [[h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %])  (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
@@ -388,7 +407,28 @@
                         [selection-list :width dropdown-width :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]
                         [v-box :gap "20px"
                          :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]]]]]
-                      [multiple-portfolio-risk-display]])]))
+                      ;[multiple-portfolio-risk-display]
+                      (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
+                            width-one 80
+                            risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+                            grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
+                            cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
+                                            {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
+                                             :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
+                        [:div {:id "multiple-portfolio-risk-table"}
+                         [tables/tree-table-risk-table
+                          :multiple-portfolio-risk/table
+                          [{:Header (str "Groups (" @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+                           {:Header (str "Portfolio " (name display-key-one)) :columns cols}
+                           {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
+                          (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
+                          (mapv :accessor grouping-columns)
+                          multiple-portfolio-risk-display-view
+                          :multiple-portfolio-risk/table-filter
+                          :multiple-portfolio-risk/expander
+                          on-click-context-multiple]])
+
+                      ])]))
 
 (defn portfolio-alignment-risk-controller []
   (let [display-style (rf/subscribe [:portfolio-alignment/display-style])
