@@ -17,6 +17,8 @@
 (def default-db {
                  ;data
                  :positions                                          []
+                 :naked-positions                                    []
+                 :instruments                                        {}
                  :rating-to-score                                    nil
                  :portfolios                                         []
                  :ex-emcd-portfolios                                 []
@@ -180,7 +182,7 @@
                  :model-portfolios/aggregation            "Region"
 
                  :scorecard/portfolio                   "OGEMCORD"
-                 :scorecard/sector                      "Consumer"
+                 :scorecard/sector                      nil ;"Consumer"
                  :scorecard/ogemcord-risk  []
                  :scorecard/attribution-table  []
                  :scorecard/trade-analyser-data nil
@@ -231,7 +233,7 @@
            :multiple-portfolio-risk/field-two
            :multiple-portfolio-risk/selected-portfolios
            :multiple-portfolio-risk/hide-zero-holdings
-           :multiple-portfolio-risk/shortcut
+           ;:multiple-portfolio-risk/shortcut
            :multiple-portfolio-risk/table-filter
            :multiple-portfolio-risk/expander
 
@@ -239,7 +241,7 @@
            :portfolio-alignment/field
            :portfolio-alignment/group
            :portfolio-alignment/threshold
-           :portfolio-alignment/shortcut
+           ;:portfolio-alignment/shortcut
            :portfolio-alignment/table-filter
            :portfolio-alignment/expander
 
@@ -366,15 +368,39 @@
 ;        ;:pivoted-positions (static/get-pivoted-data res)
 ;        :navigation/show-mounting-modal false))))
 
+;(rf/reg-event-fx
+;  :positions
+;  (fn [{:keys [db]} [_ positions]]
+;    (let [res (array-of-lists->records positions)]
+;      {:db                 (assoc db :positions res :all-instrument-ids (distinct (map :id res)) :navigation/show-mounting-modal false)
+;       :http-post-dispatch {:url          (str static/ta-server-address "scorecard-request")
+;                            :edn-params   {:portfolio (:scorecard/portfolio db)
+;                                           :isin-seq  (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} res))}
+;                            :dispatch-key [:scorecard/trade-analyser-data]}})))
+
 (rf/reg-event-fx
-  :positions
-  (fn [{:keys [db]} [_ positions]]
-    (let [res (array-of-lists->records positions)]
-      {:db                 (assoc db :positions res :all-instrument-ids (distinct (map :id res)) :navigation/show-mounting-modal false)
-       :http-post-dispatch {:url          (str static/ta-server-address "scorecard-request")
-                            :edn-params   {:portfolio (:scorecard/portfolio db)
-                                           :isin-seq  (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} res))}
-                            :dispatch-key [:scorecard/trade-analyser-data]}})))
+  :naked-positions
+  (fn [{:keys [db]} [_ naked-positions]]
+    (let [res (array-of-lists->records naked-positions)
+          positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res))]
+      {:db                 (assoc db :naked-positions res
+                                     :navigation/show-mounting-modal false
+                                     :positions positions)
+       ;:http-post-dispatch {:url          (str static/ta-server-address "scorecard-request")
+       ;                     :edn-params   {:portfolio (:scorecard/portfolio db)
+       ;                                    :isin-seq  (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} positions))}
+       ;                     :dispatch-key [:scorecard/trade-analyser-data]}
+
+       })))
+
+(rf/reg-event-fx
+  :instruments
+  (fn [{:keys [db]} [_ instruments]]
+    {:db (assoc db :all-instrument-ids (keys instruments)
+                   :instruments instruments
+                   :positions (if (and (= (:positions db) []) (:naked-positions db)) (mapv #(merge % (get-in db [:instruments (:id %)])) (:naked-positions db))))
+     }))
+
 ;(rf/reg-event-db
 ;  :pivoted-positions
 ;  (fn [db [_ pivoted-positions]]
@@ -391,14 +417,11 @@
 (rf/reg-event-db
   :quant-model/model-output
   (fn [db [_ model]]
-    (let [                                                  ;bond-isin (zipmap (model :Bond) (model :ISIN))
-          a 1
-          ]
-      (assoc db
-        :quant-model/model-output (array-of-lists->records model)
-        :navigation/show-mounting-modal false
-        ;:quant-model/bond-isin-map (merge bond-isin (clojure.set/map-invert bond-isin))
-        ))))
+    (assoc db
+      :quant-model/model-output (array-of-lists->records model)
+      :navigation/show-mounting-modal false
+      ;:quant-model/bond-isin-map (merge bond-isin (clojure.set/map-invert bond-isin))
+      )))
 
 ;(rf/reg-event-db
 ;  :positions-new
@@ -501,9 +524,11 @@
 
 (defn http-get-dispatch [request]
   "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
-  (go (let [response (<! (http/get (:url request)))]
-        (rf/dispatch (conj (:dispatch-key request) (:body response)))
-        (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
+  (let [vr (if (vector? request) request [request])]
+    (doseq [r vr]
+      (go (let [response (<! (http/get (:url r)))]
+            (rf/dispatch (conj (:dispatch-key r) (:body response)))
+            (if (:flag r) (rf/dispatch [(:flag r) (:flag-value r)])))))))
 
 (rf/reg-fx :http-get-dispatch http-get-dispatch)
 
@@ -531,6 +556,8 @@
   [                                                         ;{:get-key :get-positions           :url-tail "positions"           :dis-key :positions :mounting-modal true}
    ;{:get-key :get-positions           :url-tail "position-array"           :dis-key :positions :mounting-modal true}
    {:get-key :get-positions           :url-tail "position-transit-array"           :dis-key :positions :mounting-modal true}
+   {:get-key :get-naked-positions     :url-tail "naked-position-transit-array"           :dis-key :naked-positions :mounting-modal true}
+   {:get-key :get-instruments         :url-tail "instruments"           :dis-key :instruments}
    {:get-key :get-rating-to-score     :url-tail "rating-to-score"     :dis-key :rating-to-score}
    {:get-key :get-portfolios          :url-tail "portfolios"          :dis-key :portfolios}
    ;{:get-key :get-pivoted-positions   :url-tail "pivoted-positions"   :dis-key :pivoted-positions}

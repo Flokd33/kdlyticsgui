@@ -24,11 +24,23 @@
     [jasminegui.tradehistory :as th]))
 
 
-(defn navigation-event [item]
+(defn navigation-event
   "This is really not pure. But it saves loading time at mount."
+  [item]
   (doseq [k (:load-events item)]
     (rf/dispatch (if (vector? k) k [k])))                                      ;send http-requests sequentially
   (rf/dispatch [:navigation/active-view (:code item)]))
+
+;(defn sub-navigation-event
+;  [subitem]
+;  (doseq [k (:load-events subitem)]
+;    (let [kv (if (vector? k) k [k]) v @(rf/subscribe [kv])]
+;      (if (or (nil? v) (and (seq? v) (zero? (count v))))
+;        (rf/dispatch (if (vector? k) k [k]))
+;
+;        ))
+;    (rf/dispatch (if (vector? k) k [k])))
+;  )
 
 (defn nav-bar []
   (let [active-view @(rf/subscribe [:navigation/active-view])]

@@ -162,7 +162,12 @@
    [v-box :class "element" :width "100%" :gap "20px"
     :children [[title :label "Bond proxies" :level :level1] [portfolio-proxy-table]]])
 
-(defn main-var-view []
+(defn main-var-view
+  "Quite ugly micro-optimisation to save on mounting time"
+  []
+  (when (nil? @(rf/subscribe [:var/proxies]))
+    (doseq [k [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
+      (rf/dispatch (if (vector? k) k [k]))))
   [v-box :width standard-box-width
    :gap "20px"
    :padding "80px 20px"
@@ -192,5 +197,6 @@
       [:div.output "nothing to display"])))
 
 
-(defn var-view []
+(defn var-view
+  []
   [h-box :gap "10px" :padding "0px" :children [[nav-var-bar] [active-home]]])

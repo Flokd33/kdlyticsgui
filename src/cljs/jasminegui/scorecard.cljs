@@ -385,7 +385,7 @@
      :children [[h-box :class "element" :gap "20px" :align :center
                  :children [[box :child [title :level :level1 :label "Portfolio and sector selection"]]
                             [box :child [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution %]) (rf/dispatch [:scorecard/change-portfolio %]))]]
-                            [box :child [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/change-sector %])]]]]
+                            [box :child [single-dropdown :width "250px" :placeholder "Sector" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/change-sector %])]]]]
                 (gt/element-box "scorecard-risk" "100%" (str portfolio " " sector " risk") vdisplay
                              [[:> ReactTable
                                {:data           vdisplay
