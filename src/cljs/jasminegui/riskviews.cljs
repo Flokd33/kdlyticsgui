@@ -497,7 +497,10 @@
 
 
 
-(defn large-exposures []
+(defn large-exposures
+  "another ugly microoptimisation"
+  []
+  (when-not (seq @(rf/subscribe [:large-exposures])) (rf/dispatch [:get-large-exposures]))
   [box :class "subbody rightelement" :child
    (gt/element-box "large-exposures" "100%" (str "Large exposures (>5%) " @(rf/subscribe [:qt-date])) @(rf/subscribe [:large-exposures])
                    [[:> ReactTable
