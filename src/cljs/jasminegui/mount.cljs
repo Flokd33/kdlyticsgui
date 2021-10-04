@@ -169,6 +169,7 @@
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
                  :quant-model/rating-curves-sov-only      []
+                 :quant-model/generic-rating-curves      {}
                  :quant-model/isin-history                []
                  :quant-model/new-bond-entry              nil
                  :quant-model/new-bond-tested             true
@@ -307,6 +308,7 @@
            :quant-model/calculator-spreads
            :quant-model/rating-curves
            :quant-model/rating-curves-sov-only
+           :quant-model/generic-rating-curves
            :quant-model/isin-history
            :quant-model/new-bond-tested
            :quant-model/new-bond-already-exists
@@ -575,6 +577,7 @@
    {:get-key :get-quant-model         :url-tail "quant-model-output-transit-array"  :dis-key :quant-model/model-output :mounting-modal true}
    {:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
    {:get-key :get-quant-rating-curves-sov-only :url-tail "quant-rating-curves-sov-only" :dis-key :quant-model/rating-curves-sov-only}
+   {:get-key :get-generic-rating-curves :url-tail "quant-generic-rating-curves" :dis-key :quant-model/generic-rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
    {:get-key :get-jpm-sectors     :url-tail "jpm-sectors"     :dis-key :jpm-sectors}
    {:get-key :get-time-machine-status :url-tail "time-machine-status" :dis-key :time-machine-status}

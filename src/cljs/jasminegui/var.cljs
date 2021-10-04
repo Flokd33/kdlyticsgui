@@ -178,6 +178,7 @@
                                      [h-box :align :start :children [[regression-chart]]]]])
 
 (defn main-proxy-view []
+  (when (nil? @(rf/subscribe [:var/proxies])) (rf/dispatch [:get-var-proxies]))
   [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"
    :children [[h-box :align :start :children [[portfolio-proxies]]]]])
 

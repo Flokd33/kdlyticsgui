@@ -22,8 +22,9 @@
     )
   )
 
-(defn spot-chart-vega-spec [model ratings issuers sov-only-2d]
-  (let [raw-data (if sov-only-2d @(rf/subscribe [:quant-model/rating-curves-sov-only]) @(rf/subscribe [:quant-model/rating-curves]))
+(defn spot-chart-vega-spec [model ratings issuers rating-curves-key]
+  ;(println @(rf/subscribe [:quant-model/generic-rating-curves]))
+  (let [raw-data (@(rf/subscribe [:quant-model/generic-rating-curves]) rating-curves-key)
         data (filter #(contains? ratings (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
         target (case model "Legacy" "predicted_spread_legacy" "New" "predicted_spread_new" "SVR" "predicted_spread_svr")
         ktarget (keyword target)
@@ -72,8 +73,9 @@
      :width  1000
      :height 625}))
 
-(defn advanced-spot-chart-vega-spec [isins model ratings sov-only-2d]
-  (let [raw-data (if sov-only-2d @(rf/subscribe [:quant-model/rating-curves-sov-only]) @(rf/subscribe [:quant-model/rating-curves]))
+(defn advanced-spot-chart-vega-spec [isins model ratings rating-curves-key]
+  (let [raw-data (@(rf/subscribe [:quant-model/generic-rating-curves]) rating-curves-key)
+        ;raw-data (if sov-only-2d @(rf/subscribe [:quant-model/rating-curves-sov-only]) @(rf/subscribe [:quant-model/rating-curves]))
         data (filter #(contains? ratings (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
         target (case model "Legacy" "predicted_spread_legacy" "New" "predicted_spread_new" "SVR" "predicted_spread_svr")
         ktarget (keyword target)

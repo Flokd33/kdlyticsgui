@@ -90,7 +90,7 @@
   :scorecard/qdb-scores-with-difference
   (fn [db]
     ;(println "db" (:scorecard/qdb-scores db))
-    (println "spot-rank" (t/naive-rank (map #(get % "EMCD_TOTAL") (:scorecard/qdb-scores db)) false))
+    ;(println "spot-rank" (t/naive-rank (map #(get % "EMCD_TOTAL") (:scorecard/qdb-scores db)) false))
     (let [spot (:scorecard/qdb-scores db)
           spot-rank (t/naive-rank (map #(get % "EMCD_TOTAL") spot) false)
           spot-with-rank (mapv #(assoc %1 "RANK" %2) spot spot-rank)
@@ -304,9 +304,9 @@
       (riskviews/add-total-line-to-pivot (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero) (map keyword (:portfolios db))))))
 
 (defn spot-chart-vega-spec [bond-isin-set]
-  (let [raw-data @(rf/subscribe [:quant-model/rating-curves])
+  (let [raw-data (:base @(rf/subscribe [:quant-model/generic-rating-curves]))
         bonds (filter #(contains? bond-isin-set (:ISIN %)) @(rf/subscribe [:quant-model/model-output]))
-        rtgs (map :Used_Rating_Score bonds)
+        rtgs (remove nil? (map :Used_Rating_Score bonds))
         data (filter #(contains? (set (range (apply min rtgs) (inc (apply max rtgs)))) (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
         target "predicted_spread_svr"
         ktarget (keyword target)

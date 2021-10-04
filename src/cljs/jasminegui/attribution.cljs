@@ -252,11 +252,11 @@
                               :children [
                                          [h-box
                                           :gap "10px"
-                                          :children [[title :label "X axis:" :level :level3] [gap :size "1"]
+                                          :children [[title :label "Y axis:" :level :level3] [gap :size "1"]
                                                      [single-dropdown :width dropdown-width :model x-axis :choices (rest static/attribution-choice-map) :on-change #(rf/dispatch [:attribution-index-returns/x-filter %])]]]
                                          [h-box
                                           :gap "10px"
-                                          :children [[title :label "Y axis:" :level :level3] [gap :size "1"]
+                                          :children [[title :label "X axis:" :level :level3] [gap :size "1"]
                                                      [single-dropdown :width dropdown-width :model y-axis :choices (rest static/attribution-choice-map) :on-change #(rf/dispatch [:attribution-index-returns/y-filter %])]]]]]]]
                  [title :label "Warning: these are weighted average returns from StatPro. Totals won't add-up nor will they match real sub index time series." :level :level3]
                  [index-returns-display]]]]))

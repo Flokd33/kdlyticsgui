@@ -321,8 +321,9 @@
 (defn qs-table-container []
   [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
 
-
+(def spot-chart-rating-curves-keys (zipmap ["Base" "Sov only" "Non ESG (SVR)" "ESG (SVR)" "ESG benefit (SVR)"] [:base :sov-only :nesg :esg :esg-benefit])) ;UNUSED ATM BUT IMPORTANT LOGIC
 (def spot-chart-model-choice (r/atom "SVR"))
+(def spot-chart-rating-curves-choice (r/atom "Base"))
 (def spot-chart-rating-choice (r/atom #{3 6 9 12 15 18}))               ;3 6 9 12 15 18
 (def spot-chart-issuer-choice (r/atom (set nil)))           ;["BRAZIL"]
 (def spot-chart-2d-curves-sov-only (r/atom false))
@@ -332,7 +333,10 @@
 (defn show-save-chart-modal [] nil)
 (defn open-saved-chart-modal [] nil)
 
-(defn spot-chart []
+(defn spot-chart
+  "NEED SOME BOOKMARK LOGIC: Base or Sov only"
+
+  []
   (let [data @(rf/subscribe [:quant-model/model-output])
         issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data)))))]
     [box :padding "80px 10px" :class "rightelement" :child
@@ -343,8 +347,14 @@
           (into [] (concat
                       (into [[title :label "Model type" :level :level3]]
                             (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
-                      [[gap :size "10px"] [title :label "Rating curves" :level :level3]
-                        [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)][gap :size "10px"]
+                      ;(into [[gap :size "10px"][title :label "Rating curves" :level :level3]]
+                      ;      (for [c ["Base" "Sov only" "Non ESG (SVR)" "ESG (SVR)" "ESG benefit (SVR)"]] ^{:key c} [radio-button :label c :value c :model spot-chart-rating-curves-choice :on-change #(reset! spot-chart-rating-curves-choice %)]))
+                      [
+
+
+                       [title :label "Rating curves" :level :level3]
+                        [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)]
+                       [gap :size "10px"]
                        [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]
                        [gap :size "10px"] [button :label "Clear all" :class "btn btn-primary btn-block" :on-click #(reset! spot-chart-rating-choice #{}) :disabled? (zero? (count @spot-chart-rating-choice))]
                        [gap :size "20px"] [title :label "Bookmarks" :level :level3] [button :label "Save new" :class "btn btn-primary btn-block" :on-click #(reset! show-chart-modal :save)][gap :size "10px"] [button :label "Open" :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:get-quant-model-saved-charts]) (reset! show-chart-modal :open))]
@@ -361,7 +371,8 @@
             :placeholder "Search here"
             :on-change #(swap! spot-chart-issuer-choice (if (contains? @spot-chart-issuer-choice (:id %)) disj conj) (:id %))
             :change-on-blur? true :immediate-model-update? false :rigid? false :disabled? false]]]
-         [oz/vega-lite (qscharts/spot-chart-vega-spec @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice @spot-chart-2d-curves-sov-only)]]]]]]))
+         [oz/vega-lite
+          (qscharts/spot-chart-vega-spec @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice (if @spot-chart-2d-curves-sov-only :sov-only :base))]]]]]])) ;@spot-chart-rating-curves-choice
 
 (def advanced-spot-chart-view (atom nil))
 (def advanced-spot-chart-isins (r/atom []))
@@ -387,7 +398,7 @@
                                                           [v-box :gap "10px" :width "125px" :children [[title :level :level4 :label "Filter table then click draw to see first 100 bonds." ]
                                                                                                       [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (take 100 (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))]]]
 
-                                                           [oz/vega-lite (qscharts/advanced-spot-chart-vega-spec @advanced-spot-chart-isins @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-2d-curves-sov-only)]]]
+                                                           [oz/vega-lite (qscharts/advanced-spot-chart-vega-spec @advanced-spot-chart-isins @spot-chart-model-choice @spot-chart-rating-choice (if @spot-chart-2d-curves-sov-only :sov-only :base))]]]
        [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
        [h-box :gap "50px" :children
         [

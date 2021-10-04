@@ -202,7 +202,7 @@
                     @(rf/subscribe [:qt-date])])
       (rf/dispatch [:get-bond-price-history
                     (aget rowInfo "row" "_original" "NAME")
-                    "01Jan19"
+                    "01Jan2019"
                     @(rf/subscribe [:qt-date])])))
 
 (def single-portfolio-risk-display-view (atom nil))
