@@ -460,6 +460,65 @@
 
 (defn go-to-portfolio-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:navigation/active-home :single-portfolio]) (rf/dispatch [:single-portfolio-risk/portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
 
+(defn irrisk []
+  (let [absrel (r/atom :contrib-mdur)
+        spread-or-rating (r/atom :rating-score)
+        cut-off (r/atom 10.0)]
+    (fn []
+
+      (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+            portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
+            positions (t/chainfilter {:portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])} @(rf/subscribe [:positions])) ;:original-quantity #(not (zero? %))
+            ust (t/chainfilter {:TICKER "T"} positions)
+            ir-sensitive (t/chainfilter {:TICKER #(not= % "T") @spread-or-rating #(< % @cut-off)} positions)
+            ir-insensitive (t/chainfilter {:TICKER #(not= % "T") @spread-or-rating #(>= % @cut-off)} positions) ;futures have no rating
+            durations ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"]
+            prep (fn [data] (into [] (for [m durations] {:performance "portfolio" :group m :value (reduce + (map @absrel (t/chainfilter {:qt-final-maturity-band m} data)))})))
+            dust (prep ust) dig (prep ir-sensitive) dhy (prep ir-insensitive)
+            maxd (apply max (concat (map :value dust) (map :value dig) (map :value dhy)))
+            st (fn [data] (str (gstring/format "%.1f" (reduce + (map @absrel data))) "y"))
+            data (into [{:maturity-band "Total"
+                         :ust           (reduce + (map @absrel ust))
+                         :sensitive     (reduce + (map @absrel ir-sensitive))
+                         :insensitive   (reduce + (map @absrel ir-insensitive))
+                         :total         (reduce + (map @absrel positions))}]
+                       (for [d durations]
+                         {:maturity-band d
+                          :ust           (reduce + (map @absrel (t/chainfilter {:qt-final-maturity-band d} ust)))
+                          :sensitive     (reduce + (map @absrel (t/chainfilter {:qt-final-maturity-band d} ir-sensitive)))
+                          :insensitive   (reduce + (map @absrel (t/chainfilter {:qt-final-maturity-band d} ir-insensitive)))
+                          :total         (reduce + (map @absrel (t/chainfilter {:qt-final-maturity-band d} positions)))}))
+            label-insensitive (if (= @spread-or-rating :rating-score) (str (jasminegui.qs.qstables/get-implied-rating (str @cut-off)) " and below") (str @cut-off "bps and above"))
+            label-sensitive (if (= @spread-or-rating :rating-score) (str (jasminegui.qs.qstables/get-implied-rating (str (dec @cut-off))) " and above") (str @cut-off "bps and below"))
+            ]
+        [box :class "subbody rightelement" :child
+         (gt/element-box "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
+                         [[h-box :gap "5px" :align :center  :children [[title :level :level3 :label "Portfolio:"] [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
+                                                       [gap :size "20px"]
+                                                       [title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]]]
+
+                          [h-box :gap "5px" :align :center :children [[title :level :level3 :label "Cut-off type:"] [single-dropdown :width dropdown-width :model spread-or-rating :choices [{:id :rating-score :label "Rating"} {:id :qt-libor-spread :label "Z-spread"}] :on-change #(do (reset! spread-or-rating %) (reset! cut-off (if (= % :rating-score) 10.0 250.0)))]
+                                                       [gap :size "20px"]
+                                                       [title :level :level3 :label "Level:"] [slider
+                                                                                               :model cut-off
+                                                                                               :min (if (= @spread-or-rating :rating-score) 3.0 100.0)
+                                                                                               :max (if (= @spread-or-rating :rating-score) 14.0 600.0)
+                                                                                               :step (if (= @spread-or-rating :rating-score) 1.0 50.0)
+                                                                                               :on-change #(reset! cut-off %)
+                                                                                               :width "200px"]
+                                                                      [label :label (if (= @spread-or-rating :rating-score) (jasminegui.qs.qstables/get-implied-rating (str @cut-off)) (str @cut-off "bps"))]]]
+
+
+
+                          [:> ReactTable
+                           {:data           data
+                            :columns        [{:Header "Maturity band" :accessor "maturity-band" :width 120}
+                                             {:Header "UST & hedges" :accessor "ust" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                             {:Header label-sensitive :accessor "sensitive" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                             {:Header label-insensitive :accessor "insensitive" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                             {:Header "Total" :accessor "total" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
+                            :showPagination false :pageSize (count data) :className "-striped -highlight"}]])]))))
+
 (defn summary-display []
   (let [data @(rf/subscribe [:summary-display/table])]
     [box :class "subbody rightelement" :child
