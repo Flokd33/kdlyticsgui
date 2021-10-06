@@ -39,6 +39,13 @@
     #js {:style #js {:color "red" :textAlign "right"}}
     #js {:style #js {:textAlign "right"}}))
 
+(defn red-negatives-bold-if-a-b [row-header row-name col-name state rowInfo column]
+  "right align, with red text if negative, bold if is row-name and col-name"
+  (let [cid (gobj/get column "id")]
+    (if (and (some? rowInfo) (neg? (gobj/getValueByKeys rowInfo "row" cid))) ;(aget rowInfo "row" (aget column "id"))
+      #js {:style #js {:color "red" :textAlign "right" :fontWeight (if (and (= cid col-name) (= (aget rowInfo "original" row-header) row-name)) "bold" "normal")}}
+      #js {:style #js {:textAlign "right" :fontWeight (if (and (= cid col-name) (= (aget rowInfo "original" row-header) row-name)) "bold" "normal")}})))
+
 ;CELL RENDERING
 
 (defn nb-cell-format

@@ -18,6 +18,7 @@
     [jasminegui.tables :as tables]
     [jasminegui.tools :as t]
     [jasminegui.guitools :as gt]
+    [jasminegui.qs.qstables :as qstables]
     ;[jasminegui.tradehistory :as th]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [cljs-time.core :refer [today]]
@@ -463,7 +464,11 @@
 (defn irrisk []
   (let [absrel (r/atom :contrib-mdur)
         spread-or-rating (r/atom :rating-score)
-        cut-off (r/atom 10.0)]
+        cut-off (r/atom 10.0)
+        clicked (r/atom ["Total" "total"])
+        show-main-elements (fn [state rowInfo column instance] (clj->js {:onClick #(reset! clicked [(aget rowInfo "original" "maturity-band") (aget column "id")]) :style {:cursor "pointer"}}))
+
+        ]
     (fn []
 
       (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
@@ -488,8 +493,14 @@
                           :sensitive     (reduce + (map @absrel (t/chainfilter {:qt-final-maturity-band d} ir-sensitive)))
                           :insensitive   (reduce + (map @absrel (t/chainfilter {:qt-final-maturity-band d} ir-insensitive)))
                           :total         (reduce + (map @absrel (t/chainfilter {:qt-final-maturity-band d} positions)))}))
-            label-insensitive (if (= @spread-or-rating :rating-score) (str (jasminegui.qs.qstables/get-implied-rating (str @cut-off)) " and below") (str @cut-off "bps and above"))
-            label-sensitive (if (= @spread-or-rating :rating-score) (str (jasminegui.qs.qstables/get-implied-rating (str (dec @cut-off))) " and above") (str @cut-off "bps and below"))
+            label-insensitive (if (= @spread-or-rating :rating-score) (str (qstables/get-implied-rating (str @cut-off)) " and below") (str @cut-off "bps and above"))
+            label-sensitive (if (= @spread-or-rating :rating-score) (str (qstables/get-implied-rating (str (dec @cut-off))) " and above") (str @cut-off "bps and below"))
+            display (sort-by @absrel (t/chainfilter {:qt-final-maturity-band (if (= "Total" (first @clicked)) some? (first @clicked))}
+                                                    (case (second @clicked)
+                                                      "total" positions
+                                                      "ust" ust
+                                                      "sensitive" ir-sensitive
+                                                      "insensitive" ir-insensitive)))
             ]
         [box :class "subbody rightelement" :child
          (gt/element-box "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
@@ -506,18 +517,40 @@
                                                                                                :step (if (= @spread-or-rating :rating-score) 1.0 50.0)
                                                                                                :on-change #(reset! cut-off %)
                                                                                                :width "200px"]
-                                                                      [label :label (if (= @spread-or-rating :rating-score) (jasminegui.qs.qstables/get-implied-rating (str @cut-off)) (str @cut-off "bps"))]]]
+                                                                      [label :label (if (= @spread-or-rating :rating-score) (qstables/get-implied-rating (str @cut-off)) (str @cut-off "bps"))]]]
 
-
-
+                          [gap :size "20px"]
+                          [title :level :level3 :label "Click on cell to see position breakdown"]
                           [:> ReactTable
                            {:data           data
                             :columns        [{:Header "Maturity band" :accessor "maturity-band" :width 120}
-                                             {:Header "UST & hedges" :accessor "ust" :width 120 :getProps tables/red-negatives :Cell tables/round2}
-                                             {:Header label-sensitive :accessor "sensitive" :width 120 :getProps tables/red-negatives :Cell tables/round2}
-                                             {:Header label-insensitive :accessor "insensitive" :width 120 :getProps tables/red-negatives :Cell tables/round2}
-                                             {:Header "Total" :accessor "total" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
-                            :showPagination false :pageSize (count data) :className "-striped -highlight"}]])]))))
+                                             {:Header "UST & hedges" :accessor "ust" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
+                                             {:Header label-sensitive :accessor "sensitive" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
+                                             {:Header label-insensitive :accessor "insensitive" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
+                                             {:Header "Total" :accessor "total" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}]
+                            :showPagination false :getTdProps show-main-elements :pageSize (count data) :className "-striped -highlight"}]
+                          [gap :size "20px"]
+
+                          [title :level :level3 :label (str "Top 20 contributors ranked by " (if (= @absrel :contrib-mdur) "fund contribution" "contribution vs index") " " (str (first @clicked) " / " (second @clicked)))]
+                          [:> ReactTable
+                           {:data           (reverse (take-last 20 display))
+                            :columns        [{:Header "Issuer" :accessor "TICKER" :width 120}
+                                             {:Header "Name" :accessor "NAME" :width 120}
+                                             {:Header "Fund" :accessor "contrib-mdur" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                             {:Header "Index" :accessor "bm-contrib-eir-duration" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                             {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
+                            :showPagination false :pageSize 20 :className "-striped -highlight"}]
+                          [title :level :level3 :label (str "Bottom 20 contributors ranked by " (if (= @absrel :contrib-mdur) "fund contribution" "contribution vs index") " " (str (first @clicked) " / " (second @clicked)))]
+                          [:> ReactTable
+                           {:data           (reverse (take 20 display))
+                            :columns        [{:Header "Issuer" :accessor "TICKER" :width 120}
+                                             {:Header "Name" :accessor "NAME" :width 120}
+                                             {:Header "Fund" :accessor "contrib-mdur" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                             {:Header "Index" :accessor "bm-contrib-eir-duration" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                             {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
+                            :showPagination false :pageSize 20 :className "-striped -highlight"}]
+
+                          ])]))))
 
 (defn summary-display []
   (let [data @(rf/subscribe [:summary-display/table])]
