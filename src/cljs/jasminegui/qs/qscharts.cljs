@@ -128,12 +128,12 @@
   (let [data @(rf/subscribe [:quant-model/isin-history])]
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :title   nil                                           ;(str @(rf/subscribe [:single-bond-trade-history/bond]) " trading history")
-     :data    {:values data :format {:parse {:Date "date:'%Y%m%d'" :HRS_legacy "quantitative" :REH_legacy "quantitative" :HCS "quantitative" :URS_legacy "quantitative" :Median_Rating "quantitative"}}}
+     :data    {:values data :format {:parse {:Date "date:'%Y%m%d'" :HRS_svr "quantitative" :REH_svr "quantitative" :HCS "quantitative" :URS_svr "quantitative" :Median_Rating "quantitative"}}}
      :vconcat (remove nil? [
                             (if cheapness?
                               {:mark "line" :width 800 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                                          :y {:field "REH_legacy" :type "quantitative" :axis {:title "Cheapness (bps)"}}}})
+                                          :y {:field "REH_svr" :type "quantitative" :axis {:title "Cheapness (bps)"}}}})
                             (if spread?
                               {:mark "line" :width 800 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
@@ -141,11 +141,11 @@
                             (if universe?
                               {:mark "line" :width 800 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                                          :y {:field "URS_legacy" :type "quantitative" :axis {:title "Universe"}}}})
+                                          :y {:field "URS_svr" :type "quantitative" :axis {:title "Universe"}}}})
                             (if historical?
                               {:mark "line" :width 800 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                                          :y {:field "HRS_legacy" :type "quantitative" :axis {:title "Historical"}}}})
+                                          :y {:field "HRS_svr" :type "quantitative" :axis {:title "Historical"}}}})
                             (if rating?
                               {:mark "line" :width 800 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
