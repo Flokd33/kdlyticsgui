@@ -557,7 +557,7 @@
 (def simple-http-get-events
   [                                                         ;{:get-key :get-positions           :url-tail "positions"           :dis-key :positions :mounting-modal true}
    ;{:get-key :get-positions           :url-tail "position-array"           :dis-key :positions :mounting-modal true}
-   {:get-key :get-positions           :url-tail "position-transit-array"           :dis-key :positions :mounting-modal true}
+   ;{:get-key :get-positions           :url-tail "position-transit-array"           :dis-key :positions :mounting-modal true}
    {:get-key :get-naked-positions     :url-tail "naked-position-transit-array"           :dis-key :naked-positions :mounting-modal true}
    {:get-key :get-instruments         :url-tail "instruments"           :dis-key :instruments}
    {:get-key :get-rating-to-score     :url-tail "rating-to-score"     :dis-key :rating-to-score}
