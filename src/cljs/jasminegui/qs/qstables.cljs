@@ -96,7 +96,7 @@
    :CRNCY                               {:Header "Currency" :accessor "CRNCY" :width 65}
    :Bond-sticky                         {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                          {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :Rating_String                       {:Header "Rating source" :accessor "Rating_String" :width 110 :filterable true :filterMethod tables/nb-filter-OR-AND-x100}
+   :Rating_String                       {:Header "Rating (S/F/M)" :accessor "Rating_String" :width 110 :filterable true :filterMethod tables/nb-filter-OR-AND-x100}
    :Used_Rating_Score                   {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
    :Used_ZTW                            {:Header "ZTW" :accessor "Used_ZTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :G-SPREAD                            {:Header "G" :accessor "G_SPREAD_MID_CALC" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}

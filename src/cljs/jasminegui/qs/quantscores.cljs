@@ -347,8 +347,6 @@
           (into [] (concat
                       (into [[title :label "Model type" :level :level3]]
                             (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
-                      ;(into [[gap :size "10px"][title :label "Rating curves" :level :level3]]
-                      ;      (for [c ["Base" "Sov only" "Non ESG (SVR)" "ESG (SVR)" "ESG benefit (SVR)"]] ^{:key c} [radio-button :label c :value c :model spot-chart-rating-curves-choice :on-change #(reset! spot-chart-rating-curves-choice %)]))
                       [
 
 
@@ -429,6 +427,64 @@
      [p "The legacy and new model will give the same curve steepness to all credits: the steepness is independent from the spread level which is intuitively and factually wrong. In the legacy model, the spread ratio between durations is a fixed ratio of the duration difference, while in the new model, it's a fixed ratio of the duration ratio. Convexity makes the approach slightly better in the legacy model, and even worse in the new model."]
      ]]]
   )
+
+(rf/reg-event-fx
+  :save-issuer-coverage
+  (fn [{:keys [db]} [_ parameters]]
+    {:http-post-dispatch
+     {:url          (str static/server-address "save-issuer-coverage")
+      :edn-params   parameters
+      :dispatch-key [:quant-model/issuer-coverage]}}))
+
+(def show-issuer-rationale-modal (r/atom nil))
+
+(defn issuer-rationale-modal []
+  (if @show-issuer-rationale-modal
+    [modal-panel
+     :wrap-nicely? true
+     :backdrop-on-click #(reset! show-issuer-rationale-modal false)
+     :child [v-box :gap "10px" :align :center :children
+             [[title :label "Rationale" :level :level2]
+              [p (js/decodeURIComponent @show-issuer-rationale-modal)]]]]))
+
+(defn issuer-coverage []
+  (let [data @(rf/subscribe [:quant-model/model-output])
+        issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker (filter #(not= (:Sector %) "Sovereign") data))))))
+        analyst (r/atom nil)
+        date (r/atom (cljs-time.core/today))
+        ticker (r/atom nil)
+        idecision (r/atom nil)
+        green (r/atom "No")
+        rationale (r/atom nil)
+        on-click-issuer-coverage (fn [state rowInfo instance] (clj->js {:onClick #(reset! show-issuer-rationale-modal (aget rowInfo "original" "rationale")) :style {:cursor "pointer"}}))]
+    (fn []
+      [v-box :padding "80px 10px" :gap "20px" :class "rightelement" :children
+       [[v-box :class "element" :gap "10px"
+         :children [[title :level :level1 :label "Add issuer note"]
+                    [h-box :gap "5px" :align :center
+                     :children [
+                                [single-dropdown :width "175px" :model ticker :placeholder "Issuer" :on-change #(reset! ticker %) :choices issuer-choices :filter-box? true]
+                                [single-dropdown :placeholder "Analyst" :width "175px" :model analyst :choices (into [] (for [k @(rf/subscribe [:analysts])] {:id k :label k})) :filter-box? true :on-change #(reset! analyst %)]
+                                [single-dropdown :placeholder "Decision" :width "175px" :model idecision :choices (into [] (for [k ["Investable" "Uninvestable - financials" "Uninvestable - ESG" "No time to review"]] {:id k :label k})) :on-change #(reset! idecision %)]
+                                [datepicker-dropdown :model date :start-of-week 0 :format "dd/MM/yyyy" :show-today? true :on-change #(reset! date %)]]]
+                    [h-box :gap "10px" :children [[label :label "In relation to green issuance:"]
+                                                  ^{:key "No"} [radio-button :label "No" :value "No" :model green :on-change #(reset! green %)]
+                                                  ^{:key "Yes"} [radio-button :label "Yes" :value "Yes" :model green :on-change #(reset! green %)]]]
+                    [input-textarea :placeholder "Rationale" :width "600px" :rows "10" :model rationale :on-change #(reset! rationale %) :disabled? (not (or (= @idecision "uninvestable-financials") (= @idecision "uninvestable-esg")))]
+                    [button :label "Save!" :class "btn btn-primary btn-block" :disabled? (not (and @ticker @idecision @analyst @date))
+                     :on-click #(rf/dispatch [:save-issuer-coverage {:ticker @ticker :analyst @analyst :decision @idecision :date (t/gdate-to-yyyymmdd @date) :green @green :rationale (js/encodeURIComponent @rationale)}])]]]
+        [v-box :class "element" :children [[title :level :level1 :label "Full history"]
+                                           [:> ReactTable
+                                            {:data           (reverse (sort-by :date @(rf/subscribe [:quant-model/issuer-coverage])))
+                                             :columns        [{:Header "Date" :accessor "date" :width 75}
+                                                              {:Header "Ticker" :accessor "ticker" :width 100}
+                                                              {:Header "Analyst" :accessor "analyst" :width 100}
+                                                              {:Header "Decision" :accessor "decision" :width 150}
+                                                              {:Header "Green issuance" :accessor "green" :width 150}
+                                                              {:Header "Rationale" :accessor "rationale" :show false}]
+                                             :showPagination true :defaultPageSize 20 :pageSizeOptions [20 50]
+                                             :filterable     true :defaultFilterMethod tables/text-filter-OR
+                                             :getTrProps     on-click-issuer-coverage :className "-striped -highlight"}]]]]])))
 
 (def trade-finder-isin (r/atom nil))
 (defn trade-finder []
@@ -537,17 +593,6 @@
       (-> db
           (assoc :quant-model/new-bond-tested true :quant-model/new-bond-already-exists (:already-exists data))
           (update :quant-model/new-bond-entry merge new-bond-entry)))
-    ;(-> db
-    ;    (assoc :quant-model/new-bond-tested true :quant-model/new-bond-already-exists (:already-exists data))
-    ;    (update-in [:quant-model/new-bond-entry :ISIN] #(if (:already-exists data) (str % " " (:message data)) %))
-    ;    (assoc-in [:quant-model/new-bond-entry :NAME] (if-let [x (:SECURITY_NAME data)] x ""))
-    ;    (assoc-in [:quant-model/new-bond-entry :TICKER] (:TICKER data))
-    ;    (assoc-in [:quant-model/new-bond-entry :CRNCY] (:CRNCY data))
-    ;    (assoc-in [:quant-model/new-bond-entry :CNTRY_OF_RISK] (:CNTRY_OF_RISK data))
-    ;    (assoc-in [:quant-model/new-bond-entry :FIRST_SETTLE_DT] (:FIRST_SETTLE_DT data)) ; this is purely transitive, get it from server send it back
-    ;    (assoc-in [:quant-model/new-bond-entry :ISSUE_PX] (:ISSUE_PX data)) ; this is purely transitive, get it from server send it back
-    ;    (assoc-in [:quant-model/new-bond-entry :JPM_SECTOR] (if-let [x (:JPM_SECTOR data)] x "")))
-
     ))
 
 (rf/reg-event-fx
@@ -617,6 +662,7 @@
       :index-crawler      [index-crawler]
       :add-bonds          [add-bonds]
       :methodology        [methodology]
+      :issuer-coverage    [issuer-coverage]
       :model-portfolios   [modelportfolios/model-portfolio-view]
       [:div.output "nothing to display"])))
 
@@ -679,4 +725,4 @@
 
 
 (defn view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio] [issuer-rationale-modal]]])

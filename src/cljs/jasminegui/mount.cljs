@@ -177,6 +177,7 @@
                  :quant-model/new-bond-already-exists     false
                  :quant-model/saved-charts                {}
                  :quant-model/saved-advanced-charts       {}
+                 :quant-model/issuer-coverage             []
 
                  :model-portfolios/trades                 {}
                  :model-portfolios/hide-zeros                false
@@ -194,6 +195,8 @@
                  :scorecard/previous-date nil
 
                  :last-updated-logs nil
+
+                 :analysts nil
 
                  :dummy nil                                 ;can be useful
 
@@ -316,6 +319,7 @@
            ;:quant-model/table-filter
            :quant-model/saved-charts
            :quant-model/saved-advanced-charts
+           :quant-model/issuer-coverage
 
            :scorecard/attribution-table
            :scorecard/portfolio
@@ -336,6 +340,8 @@
            :model-portfolios/aggregation
 
            :last-updated-logs
+
+           :analysts
 
            :dummy
 
@@ -545,6 +551,18 @@
 
 (rf/reg-fx :http-post-dispatch http-post-dispatch)
 
+(defn http-post-dispatch-test
+  "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
+  [request]
+  (let [vr (if (vector? request) request [request])]
+    (doseq [r vr]
+      (go (let [response (<! (http/post (:url r) (if (:edn-params r) {:edn-params (:edn-params r) :content-type "application/json;charset=UTF-8"} {:json-params (:json-params r)  :content-type "application/json;charset=UTF-8"})))]
+            (rf/dispatch (conj (:dispatch-key r) (:body response)))
+            (if (:flag r) (rf/dispatch [(:flag r) (:flag-value r)])))))))
+
+(rf/reg-fx :http-post-dispatch-test http-post-dispatch-test)
+
+
 ;(defn http-json-post-dispatch [request]
 ;  "if response header is application/json keys will get keywordized automatically - otherwise send as text/plain"
 ;  (go (let [response (<! (http/post (:url request) {:json-params (:json-params request)}))]
@@ -577,6 +595,7 @@
    {:get-key :get-quant-model         :url-tail "quant-model-output-transit-array"  :dis-key :quant-model/model-output :mounting-modal true}
    {:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
    {:get-key :get-quant-rating-curves-sov-only :url-tail "quant-rating-curves-sov-only" :dis-key :quant-model/rating-curves-sov-only}
+   {:get-key :get-issuer-coverage               :url-tail "issuer-coverage"              :dis-key :quant-model/issuer-coverage}
    {:get-key :get-generic-rating-curves :url-tail "quant-generic-rating-curves" :dis-key :quant-model/generic-rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
    {:get-key :get-jpm-sectors     :url-tail "jpm-sectors"     :dis-key :jpm-sectors}
@@ -587,6 +606,7 @@
    {:get-key :get-model-portfolios    :url-tail "model-portfolios" :dis-key :model-portfolios/trades}
    {:get-key :get-msci-scores    :url-tail "msci-scores" :dis-key :esg/msci-scores}
    {:get-key :get-last-updated-logs    :url-tail "last-updated" :dis-key :last-updated-logs}
+   {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
    ])
 
 

@@ -6,7 +6,7 @@
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [ :get-qt-date :get-total-positions   :get-naked-positions :get-instruments] ;:get-positions
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
-        quant-events [:get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios] ;:get-quant-rating-curves :get-quant-rating-curves-sov-only
+        quant-events [:get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts] ;:get-quant-rating-curves :get-quant-rating-curves-sov-only
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         ]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
@@ -57,6 +57,7 @@
    {:code :index-crawler      :name "Index crawler"}
    {:code :add-bonds          :name "Add bonds"}
    {:code :methodology        :name "Methodology"}
+   {:code :issuer-coverage    :name "Issuer coverage"}
    {:code :model-portfolios   :name "Model portfolios (WIP)"}
    ])
 
