@@ -92,7 +92,7 @@
   (let [id (.toLowerCase ^string (str (aget row (aget filterfn "id"))))]
     (some true?
           (map (fn [line] (every? true? (map #(lower-case-s-in-value? % id) (.split ^js/String line "&"))))
-               (.split ^js/String (.toLowerCase ^js/String (aget filterfn "value")) ",")))))
+               (.split ^js/String (.replaceAll (.toLowerCase ^js/String (aget filterfn "value")) " " "") ",")))))
 
 ;(defn text-filter-OR-old [filterfn row]
 ;  "filterfn is {id: column_name value: text_in_filter_box}
@@ -113,7 +113,7 @@
                 (fn [line]
                   (some true?
                         (map (fn [subline] (every? true? (map #(lower-case-s-in-value? % line) (.split ^js/String subline "&"))))
-                             (.split (.toLowerCase ^js/String filter-values) ","))))]))))
+                             (.split (.replaceAll (.toLowerCase ^js/String filter-values) " " "") ","))))]))))
 
 
 (defn cljs-text-filter-OR-fn-alpha

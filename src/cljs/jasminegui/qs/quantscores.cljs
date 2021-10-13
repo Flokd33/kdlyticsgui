@@ -470,7 +470,7 @@
                     [h-box :gap "10px" :children [[label :label "In relation to green issuance:"]
                                                   ^{:key "No"} [radio-button :label "No" :value "No" :model green :on-change #(reset! green %)]
                                                   ^{:key "Yes"} [radio-button :label "Yes" :value "Yes" :model green :on-change #(reset! green %)]]]
-                    [input-textarea :placeholder "Rationale" :width "600px" :rows "10" :model rationale :on-change #(reset! rationale %) :disabled? (not (or (= @idecision "uninvestable-financials") (= @idecision "uninvestable-esg")))]
+                    [input-textarea :placeholder "Rationale" :width "600px" :rows "10" :model rationale :on-change #(reset! rationale %) :disabled? (not (or (= @idecision "Uninvestable - financials") (= @idecision "Uninvestable - ESG")))]
                     [button :label "Save!" :class "btn btn-primary btn-block" :disabled? (not (and @ticker @idecision @analyst @date))
                      :on-click #(rf/dispatch [:save-issuer-coverage {:ticker @ticker :analyst @analyst :decision @idecision :date (t/gdate-to-yyyymmdd @date) :green @green :rationale (js/encodeURIComponent @rationale)}])]]]
         [v-box :class "element" :children [[title :level :level1 :label "Full history"]
