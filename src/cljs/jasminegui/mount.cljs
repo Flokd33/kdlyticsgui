@@ -136,9 +136,10 @@
                  :single-bond-trade-history/show-throbber            false
                  :portfolio-trade-history/data                       []
                  :portfolio-trade-history/portfolio                  "OGEMCORD"
-                 :portfolio-trade-history/start-date                 (tools/int-to-gdate 20200101)
+                 :portfolio-trade-history/start-date                 (tools/int-to-gdate 20210101)
                  :portfolio-trade-history/end-date                   (tools/int-to-gdate (today))
                  :portfolio-trade-history/performance                "No"
+                 :portfolio-trade-history/pivot                      "No"
 
                  :portfolio-review/portfolio                         "OGEMCORD"
                  :portfolio-review/active-tab                        :summary
@@ -286,6 +287,7 @@
            :portfolio-trade-history/start-date
            :portfolio-trade-history/end-date
            :portfolio-trade-history/performance
+           :portfolio-trade-history/pivot
 
            :portfolio-review/portfolio
            :portfolio-review/active-tab

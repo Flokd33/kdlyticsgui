@@ -198,37 +198,58 @@
 
 
 (defn portfolio-history-table []
-  (let [data @(rf/subscribe [:portfolio-trade-history/data])]
+  (let [data @(rf/subscribe [:portfolio-trade-history/data])
+        pivot @(rf/subscribe [:portfolio-trade-history/pivot])]
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
-       :child [:> ReactTable
-               {:data                data
-                :columns             (concat [{:Header "Date" :accessor "TradeDate" :width 90 :Cell subs10}
-                                              {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 90 :style {:textAlign "center"}}
-                                              {:Header "Type" :accessor "TransactionTypeName" :width 90}
-                                              ;{:Header "Instrument" :accessor "IssueName" :width 400}
-                                              {:Header "Instrument" :accessor "NAME" :width 180}
-                                              {:Header "ISIN" :accessor "ISIN" :width 105}
-                                              {:Header "CCY" :accessor "LocalCcy" :width 50}
-                                              {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
-                                              {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Counterparty" :accessor "counterparty_code" :width 90}
-                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
-                                              {:Header "Region" :accessor "JPMRegion" :width 85}
-                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 105}
-                                              ;{:Header "First settle date" :accessor "FIRST_SETTLE_DT" :width 105}
+       :child
+       (if (= pivot "No")
+         [:> ReactTable
+          {:data                data
+           :columns             (concat [{:Header "Date" :accessor "TradeDate" :width 90 :Cell subs10}
+                                         {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 90 :style {:textAlign "center"}}
+                                         {:Header "Type" :accessor "TransactionTypeName" :width 90}
+                                         ;{:Header "Instrument" :accessor "IssueName" :width 400}
+                                         {:Header "Instrument" :accessor "NAME" :width 180}
+                                         {:Header "ISIN" :accessor "ISIN" :width 105}
+                                         {:Header "CCY" :accessor "LocalCcy" :width 50}
+                                         {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
+                                         {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
+                                         {:Header "Counterparty" :accessor "counterparty_code" :width 90}
+                                         {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
+                                         {:Header "Region" :accessor "JPMRegion" :width 85}
+                                         {:Header "Sector" :accessor "JPM_SECTOR" :width 105}
+                                         ;{:Header "First settle date" :accessor "FIRST_SETTLE_DT" :width 105}
 
-                                              ]
-                                             (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
-                                               (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
-                                                     (for [[h a] [["Total return" "total-return"] ["TR vs CEMBI" "tr-vs-cembi"] ["TR vs CEMBIIG" "tr-vs-cembiig"] ["TR vs EMBI" "tr-vs-embi"] ["TR vs EMBIIG" "tr-vs-embiig"]]]
-                                                       {:Header h :accessor a :width 90 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))))
-                :showPagination      (> (count data) 50)
-                :defaultPageSize     (min 50 (count data))
-                :filterable          true
-                :defaultFilterMethod tables/text-filter-OR
-                :className           "-striped -highlight"}]])))
+                                         ]
+                                        (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
+                                          (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
+                                                (for [[h a] [["Total return" "total-return"] ["TR vs CEMBI" "tr-vs-cembi"] ["TR vs CEMBIIG" "tr-vs-cembiig"] ["TR vs EMBI" "tr-vs-embi"] ["TR vs EMBIIG" "tr-vs-embiig"]]]
+                                                  {:Header h :accessor a :width 90 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))))
+           :showPagination      (> (count data) 50)
+           :defaultPageSize     (min 50 (count data))
+           :pivotBy             []
+           :filterable          true
+           :defaultFilterMethod tables/text-filter-OR
+           :className           "-striped -highlight"}]
+
+         [:> ReactTable
+          {:data          (map #(update % :Quantity int) data)
+           :columns       [{:Header "Instrument" :accessor "NAME" :width 180}
+                           {:Header "ISIN" :accessor "ISIN" :width 105}
+                           {:Header "CCY" :accessor "LocalCcy" :width 50}
+                           {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                           {:Header "Country" :accessor "CNTRY_OF_RISK" :width 120}
+                           {:Header "Sector" :accessor "JPM_SECTOR" :width 120}]
+           :defaultPageSize      (count (distinct (map (case pivot "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
+           :filterable    false
+           :defaultSorted [{:id :Quantity :desc true}]
+           :pivotBy       [(case pivot "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) :NAME]
+           :className     "-striped -highlight"}]
+
+         )])))
+
 
 (defn trade-history []
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
@@ -265,6 +286,9 @@
                                                      [gap :size "20px"]
                                                      [title :label "Get performance?" :level :level3]
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/performance]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/performance %])]
+                                                     [gap :size "20px"]
+                                                     [title :label "Pivot?" :level :level3]
+                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Sector"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
                                                      [gap :size "20px"]
