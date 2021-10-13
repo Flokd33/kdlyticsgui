@@ -241,11 +241,12 @@
                            {:Header "CCY" :accessor "LocalCcy" :width 50}
                            {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
                            {:Header "Country" :accessor "CNTRY_OF_RISK" :width 120}
-                           {:Header "Sector" :accessor "JPM_SECTOR" :width 120}]
-           :defaultPageSize      (count (distinct (map (case pivot "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
+                           {:Header "Sector" :accessor "JPM_SECTOR" :width 120}
+                           {:Header "Region" :accessor "JPMRegion" :width 120}]
+           :defaultPageSize      (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
            :filterable    false
            :defaultSorted [{:id :Quantity :desc true}]
-           :pivotBy       [(case pivot "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) :NAME]
+           :pivotBy       [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) :NAME]
            :className     "-striped -highlight"}]
 
          )])))
@@ -288,7 +289,7 @@
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/performance]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/performance %])]
                                                      [gap :size "20px"]
                                                      [title :label "Pivot?" :level :level3]
-                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Sector"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
+                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Region" "Sector"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
                                                      [gap :size "20px"]
