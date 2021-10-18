@@ -199,7 +199,7 @@
                  (merge
                    (into {:Country (cntry-translate-sub c) :code c} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
                    {"Total" [(count (distinct (map :Ticker grp))) (count grp) (market-cap grp)]})))
-     col-width (if @universe-ignore-sovs-govts? 120 100)]
+     col-width (if @universe-ignore-sovs-govts? 110 95)]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Universe overview"]

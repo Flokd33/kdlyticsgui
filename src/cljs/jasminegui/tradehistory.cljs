@@ -269,21 +269,21 @@
                                                       :width riskviews/dropdown-width
                                                       :model portfolio
                                                       :choices (into [] (for [line (concat [{:strategy "EMCD" :portfolios @(rf/subscribe [:portfolios])}] static/other-portfolios) p (:portfolios line)] {:id p :label p :group (:strategy line)}))
-                                                      :on-change #(rf/dispatch [:portfolio-trade-history/portfolio %])]
+                                                      :on-change #(do (rf/dispatch [:portfolio-trade-history/data []]) (rf/dispatch [:portfolio-trade-history/portfolio %]))]
                                                      [gap :size "20px"]
                                                      [title :label "Start:" :level :level3]
                                                      [datepicker-dropdown
                                                       :model start-date
                                                       :minimum (tools/int-to-gdate 20120101)
                                                       :maximum (today)
-                                                      :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:portfolio-trade-history/start-date %])]
+                                                      :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:portfolio-trade-history/data []]) (rf/dispatch [:portfolio-trade-history/start-date %]))]
                                                      [gap :size "20px"]
                                                      [title :label "End:" :level :level3]
                                                      [datepicker-dropdown
                                                       :model end-date
                                                       :minimum (tools/int-to-gdate 20120101)
                                                       :maximum (today)
-                                                      :format "dd/MM/yyyy" :show-today? false :on-change #(rf/dispatch [:portfolio-trade-history/end-date %])]
+                                                      :format "dd/MM/yyyy" :show-today? false :on-change #(do (rf/dispatch [:portfolio-trade-history/data []]) (rf/dispatch [:portfolio-trade-history/end-date %]))]
                                                      [gap :size "20px"]
                                                      [title :label "Get performance?" :level :level3]
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/performance]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/performance %])]

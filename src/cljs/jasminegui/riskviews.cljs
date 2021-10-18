@@ -603,4 +603,4 @@
                                        {:Header "Held %" :accessor "pct_held" :width 80 :Cell #(tables/nb-cell-format "%.1f%" 100. %) :style {:textAlign "right"}}
                                        (assoc (tables/risk-table-columns :nominal) :filterable false)
                                        {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 100 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
-                      :showPagination true :pageSize 30 :showPageSizeOptions false :className "-striped -highlight"}]])])
+                      :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize 20 :showPageSizeOptions false :className "-striped -highlight"}]])])
