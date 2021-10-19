@@ -220,6 +220,7 @@
                                          {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
                                          {:Header "Region" :accessor "JPMRegion" :width 85}
                                          {:Header "Sector" :accessor "JPM_SECTOR" :width 105}
+                                         {:Header "Rating" :accessor "Used_Rating_Score" :width 105 :Cell tables/low-level-rating-score-to-string}
                                          ;{:Header "First settle date" :accessor "FIRST_SETTLE_DT" :width 105}
 
                                          ]
@@ -234,20 +235,23 @@
            :defaultFilterMethod tables/text-filter-OR
            :className           "-striped -highlight"}]
 
+         ;TODO FIND OUT HOW TO SORT THROUGH PIVOT
          [:> ReactTable
-          {:data          (map #(update % :Quantity int) data)
-           :columns       [{:Header "Instrument" :accessor "NAME" :width 180}
-                           {:Header "ISIN" :accessor "ISIN" :width 105}
-                           {:Header "CCY" :accessor "LocalCcy" :width 50}
-                           {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
-                           {:Header "Country" :accessor "CNTRY_OF_RISK" :width 120}
-                           {:Header "Sector" :accessor "JPM_SECTOR" :width 120}
-                           {:Header "Region" :accessor "JPMRegion" :width 120}]
-           :defaultPageSize      (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
-           :filterable    false
-           :defaultSorted [{:id :Quantity :desc true}]
-           :pivotBy       [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) :NAME]
-           :className     "-striped -highlight"}]
+          {:data            (sort-by (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) (map #(-> % (update :Quantity int)) data))
+           :columns         [;{:Header "" :accessor "totaldummy" :width 30 :filterable false}
+                             {:Header "Instrument" :accessor "NAME" :width 180}
+                             {:Header "ISIN" :accessor "ISIN" :width 105}
+                             {:Header "CCY" :accessor "LocalCcy" :width 50}
+                             {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                             {:Header "Country" :accessor "CNTRY_OF_RISK" :width 120}
+                             {:Header "Sector" :accessor "JPM_SECTOR" :width 120}
+                             {:Header "Region" :accessor "JPMRegion" :width 120}
+                             {:Header "Rating" :accessor "Used_Rating_Score" :width 120 :PivotValue (fn [x] (str (tables/sub-low-level-rating-score-to-string (aget x "row" "_pivotVal")) " (" (count (aget x "row" "_subRows")) ")"))}]
+           :defaultPageSize (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
+           :filterable      false
+           ;:defaultSorted   [{:id :Quantity :desc true}]
+           :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) :NAME]
+           :className       "-striped -highlight"}]
 
          )])))
 
@@ -289,7 +293,7 @@
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/performance]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/performance %])]
                                                      [gap :size "20px"]
                                                      [title :label "Pivot?" :level :level3]
-                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Region" "Sector"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
+                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Region" "Sector" "Rating"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
                                                      [gap :size "20px"]

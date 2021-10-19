@@ -195,6 +195,19 @@
 (def round1pc #(roundpc "%.1f%" %))
 (def round2pc #(roundpc "%.2f%" %))
 
+(defn sub-low-level-rating-score-to-string [x]
+  (let [i (dec (js/parseInt x))]
+    (if (<= 0 i 23)
+      (nth ["AAA" "AA+" "AA" "AA-" "A+" "A" "A-" "BBB+" "BBB" "BBB-" "BB+" "BB" "BB-" "B+" "B" "B-" "CCC+" "CCC" "CCC-" "CC" "C" "D" "NM" "NR"] i)
+      "NA"))
+  )
+
+(defn low-level-rating-score-to-string
+  [this]
+  (if-let [x (aget this "value")]
+    (sub-low-level-rating-score-to-string x)
+     "NA"))
+
 
 (defn rating-score-to-string [this] (aget this "row" "qt-iam-int-lt-median-rating"))
 
