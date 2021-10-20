@@ -222,27 +222,6 @@
 
 
 
-;(defn single-portfolio-risk-display [is-tree grouping-columns additional-des-cols]
-;  [tables/tree-table-risk-table
-;   :single-portfolio-risk/table
-;   [{:Header (str "Groups (" @(rf/subscribe [:single-portfolio-risk/portfolio]) " " @(rf/subscribe [:qt-date]) ")" ) :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-;    {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
-;    {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
-;    {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
-;    {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
-;    {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
-;    {:Header "Quant model" :columns (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d])}
-;    {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
-;    {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}
-;    {:Header "Description" :columns (mapv tables/risk-table-columns (concat [:rating :isin] additional-des-cols [:description]))}]
-;   is-tree
-;   (mapv :accessor grouping-columns)
-;   single-portfolio-risk-display-view
-;   :single-portfolio-risk/table-filter
-;   :single-portfolio-risk/expander
-;   on-click-context])
-
-
 (defn single-bond-trade-flat-history [state rowInfo instance]
   (clj->js {:onClick #(rf/dispatch [:get-single-bond-flat-history
                                    (aget rowInfo "row" "_original" "NAME")
@@ -274,26 +253,6 @@
 (defn on-click-context-multiple [state rowInfo instance]
   (clj->js {:onClick #(fnevt-multiple state rowInfo instance %) :style {:cursor "pointer"}}))
 
-;(defn multiple-portfolio-risk-display []
-;  (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
-;        width-one 80
-;        is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
-;        risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-;        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
-;        cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
-;                        {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
-;                         :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
-;    [tables/tree-table-risk-table
-;     :multiple-portfolio-risk/table
-;     [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-;      {:Header (str "Portfolio " (name display-key-one)) :columns cols}
-;      {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
-;     (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
-;     (mapv :accessor grouping-columns)
-;     multiple-portfolio-risk-display-view
-;     :multiple-portfolio-risk/table-filter
-;     :multiple-portfolio-risk/expander
-;     on-click-context-multiple]))
 
 (def portfolio-alignment-risk-display-view (atom nil))
 
@@ -466,9 +425,7 @@
         spread-or-rating (r/atom :rating-score)
         cut-off (r/atom 10.0)
         clicked (r/atom ["Total" "total"])
-        show-main-elements (fn [state rowInfo column instance] (clj->js {:onClick #(reset! clicked [(aget rowInfo "original" "maturity-band") (aget column "id")]) :style {:cursor "pointer"}}))
-
-        ]
+        show-main-elements (fn [state rowInfo column instance] (clj->js {:onClick #(reset! clicked [(aget rowInfo "original" "maturity-band") (aget column "id")]) :style {:cursor "pointer"}}))]
     (fn []
 
       (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
@@ -548,8 +505,47 @@
                                              {:Header "Fund" :accessor "contrib-mdur" :width 120 :getProps tables/red-negatives :Cell tables/round2}
                                              {:Header "Index" :accessor "bm-contrib-eir-duration" :width 120 :getProps tables/red-negatives :Cell tables/round2}
                                              {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
-                            :showPagination false :pageSize 20 :className "-striped -highlight"}]
+                            :showPagination false :pageSize 20 :className "-striped -highlight"}]])]))))
 
+(defn concentration-risk []
+  (let [index-cut-off 0.01 overweight-multiplier 2 breakdown (r/atom :country-sector)]
+    (fn []
+      (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+            portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
+            positions (t/chainfilter {:portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])} @(rf/subscribe [:positions])) ;:original-quantity #(not (zero? %))
+            grp (group-by (case @breakdown
+                            :country-sector (juxt :qt-risk-country-name :qt-jpm-sector)
+                            :country-rating (juxt :qt-risk-country-name #(> (:rating-score %) 10))
+                            :sector-rating (juxt :qt-jpm-sector #(> (:rating-score %) 10)))  positions)
+            exposures (into [] (for [[[f1 f2] v] grp] (merge {:f1 f1 :f2 f2} (into {} (for [metric [:weight :bm-weight :contrib-mdur :bm-contrib-eir-duration]] [metric (reduce + (map metric v))])))))
+            exposures-post-cut-off (->> exposures (filter #(> (:bm-weight %) index-cut-off)) (filter #(> (/ (:weight %) (:bm-weight %)) overweight-multiplier)))
+            display (reverse
+                      (sort-by :weight-multiplier
+                               (into [] (for [line exposures-post-cut-off] (assoc line :bucket (str (:f1 line) " " (if (= @breakdown :country-sector) (:f2 line) (if (:f2 line) "HY" "IG")))
+                                                                          :weight-multiplier (/ (:weight line) (:bm-weight line))
+                                                                          :mdur-multiplier (/ (:contrib-mdur line) (:bm-contrib-eir-duration line)))))))]
+        [box :class "subbody rightelement" :child
+         (gt/element-box "concentrationrisk" "100%" (str "Concentration risk " @(rf/subscribe [:qt-date])) display
+                         [[title :level :level4 :label "Filtering for buckets of risk where the index is above 1% and we hold more than 2x the index size."]
+                          [h-box :gap "20px" :align :center  :children [[title :level :level3 :label "Portfolio:"]
+                                                                        [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
+                                                                        [title :level :level3 :label "Breakdown:"]
+                                                                        [radio-button :model breakdown :label "Country / Sector" :value :country-sector :on-change #(reset! breakdown %)]
+                                                                        [radio-button :model breakdown :label "Country / HY" :value :country-rating :on-change #(reset! breakdown  %)]
+                                                                        [radio-button :model breakdown :label "Sector / HY" :value :sector-rating :on-change #(reset! breakdown  %)]
+                                                                        ]]
+
+
+                          [:> ReactTable
+                           {:data           display
+                            :columns        [{:Header "Bucket overweight" :columns [{:Header "Bucket" :accessor "bucket" :width 240}
+                                                                                    (assoc (tables/nb-col "Maturity multiplier" "weight-multiplier" 120 tables/round1 nil) :filterable false)
+                                                                                    (assoc (tables/nb-col "Duration multiplier" "mdur-multiplier" 120 tables/round1 nil) :filterable false)]}
+                                             {:Header "NAV" :columns [(assoc (tables/nb-col "Fund" "weight" 120 tables/round2pc nil) :filterable false)
+                                                                      (assoc (tables/nb-col "Index" "bm-weight" 120 tables/round2pc nil) :filterable false)]}
+                                             {:Header "Duration" :columns [(assoc (tables/nb-col "Fund" "contrib-mdur" 120 tables/round2 nil) :filterable false)
+                                                                           (assoc (tables/nb-col "Index" "bm-contrib-eir-duration" 120 tables/round2 nil) :filterable false)]}]
+                            :showPagination false  :pageSize (count display) :className "-striped -highlight"}]
                           ])]))))
 
 (defn summary-display []

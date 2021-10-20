@@ -26,6 +26,7 @@
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
    {:code :portfolio-alignment :name "Portfolio alignment"}
+   {:code :concentration-risk  :name "Concentration risk"}
    {:code :irrisk              :name "Interest rate risk"}
    ;{:code :trade-history       :name "Trade history"}
    {:code :large-exposures     :name "Large exposures"}
