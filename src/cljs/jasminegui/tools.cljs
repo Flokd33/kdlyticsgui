@@ -123,3 +123,21 @@
                    (set! (.. el -style -cssText) "border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;")
                    (set! (.-src (.document.body.appendChild w el)) %)
                    (.document.close w)))))))
+
+;;; below from https://gist.github.com/daveliepmann/cf923140702c8b1de301 ;;;
+(defn local-storage-set-item!
+  "Set `key' in browser's localStorage to `val`."
+  [key val]
+  (.setItem (.-localStorage js/window) key val))
+
+(defn local-storage-get-item
+  "Returns value of `key' from browser's localStorage."
+  [key]
+  (.getItem (.-localStorage js/window) key))
+
+(defn local-storage-remove-item!
+  "Remove the browser's localStorage value for the given `key`"
+  [key]
+  (.removeItem (.-localStorage js/window) key))
+
+;;;

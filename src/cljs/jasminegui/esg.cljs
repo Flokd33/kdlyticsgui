@@ -227,13 +227,7 @@
                   :defaultSorted       [{:id :Ticker :desc false}]
                   :filterable          true
                   :defaultFilterMethod tables/text-filter-OR
-                  :className           "-striped -highlight"}]
-
-                ]]
-
-    )
-
-  )
+                  :className           "-striped -highlight"}]]]))
 
 
 (rf/reg-sub
@@ -263,6 +257,30 @@
 
                   )]]))
 
+(defn esg-scores []
+  (when (zero? (count @(rf/subscribe [:esg/summary-report]))) (rf/dispatch [:get-esg-summary-report]))
+  [v-box :gap "20px" :class "element" :width standard-box-width
+   :children [
+              [h-box :align :center :children [[title :label "ESG summary report" :level :level1]
+                                               [gap :size "1"]
+                                               [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (rf/subscribe [:esg/summary-report]) "esgscores")]]]
+              [:> ReactTable
+               {:data           (sort-by :TICKER @(rf/subscribe [:esg/summary-report]))
+                :columns        [{:Header "Description" :columns [{:Header "Ticker" :accessor "TICKER" :width 80} {:Header "Country" :accessor "CountryCode" :width 55} {:Header "Sector" :accessor "Sector" :width 100}]}
+                                 {:Header "91 scores" :columns [(tables/nb-col "Raw" "EMCD_ESG_RAW_TOTAL" 50 tables/round1 tables/sum-rows) (tables/nb-col "Final" "EMCD_ESG_GRAND_TOTAL" 50 tables/round1 tables/sum-rows)]}
+                                 {:Header "MSCI data" :columns [{:Header "MSCI Rating" :accessor "msci-IVA_COMPANY_RATING" :width 100 :style {:textAlign "center"}}
+                                                                  {:Header "Scope 1" :accessor "msci-CARBON_EMISSIONS_SCOPE_1" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Scope 2" :accessor "msci-CARBON_EMISSIONS_SCOPE_2" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Scope 3" :accessor "msci-CARBON_EMISSIONS_SCOPE_3" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
+                                 {:Header "Portfolios" :columns [{:Header "List" :accessor "Portfolios"}]}]
+                :showPagination true :sortable true :filterable true :pageSize 20
+                :className      "-striped -highlight"
+                }]
+              ]]
+    )
+
+
+
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -271,6 +289,7 @@
               :msci [msci-table]
               :refinitiv [v-box :gap "20px" :class "body" :children [[refinitiv-find-issuers] [refinitiv-table-top-view] [refinitiv-table-detailed-view]]]
               :holdings [holdings]
+              :esg-scores [esg-scores]
               [:div.output "nothing to display"])]))
 
 

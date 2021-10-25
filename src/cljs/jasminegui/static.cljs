@@ -7,12 +7,10 @@
   (let [home-events [ :get-qt-date :get-total-positions   :get-naked-positions :get-instruments] ;:get-positions
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
         quant-events [:get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts] ;:get-quant-rating-curves :get-quant-rating-curves-sov-only
-        var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
-        ]
+        var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil}
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events attr-events}
-   ;{:code :var              :name "VaR"               :dispatch :var              :subs nil :load-events var-events}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events var-events [:get-large-exposures]) :mounting-modal true} ;var-events
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
    {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events quant-events :mounting-modal true}
@@ -59,12 +57,12 @@
    {:code :add-bonds          :name "Add bonds"}
    {:code :methodology        :name "Methodology"}
    {:code :issuer-coverage    :name "Issuer coverage"}
-   {:code :model-portfolios   :name "Model portfolios (WIP)"}
-   ])
+   {:code :model-portfolios   :name "Model portfolios (WIP)"}])
 
 (def esg-navigation
   [{:code :msci          :name "MSCI"}
    {:code :holdings            :name "Holdings through MSCI"}
+   {:code :esg-scores    :name "ESG summary report"}
    {:code :refinitiv            :name "Refinitiv"}
    ])
 
@@ -91,8 +89,7 @@
    {:id :LongCountry   :label "Country"}
    {:id :StringRating  :label "Rating"}
    {:id :Sector        :label "Sector"}
-   {:id :DurationGroup :label "Duration"}
-   ])
+   {:id :DurationGroup :label "Duration"}])
 
 (def scorecard-navigation
   [{:code :risk             :name "Risk"}

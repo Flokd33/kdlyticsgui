@@ -29,6 +29,10 @@
                  :jpm-sectors                                         nil
                  :large-exposures                                    []
 
+                 ;local-storage-cache
+                 :naked-positions-last-timestamp                        nil
+                 :quant-scores-last-timestamp                        nil
+
                  ;navigation
                  :navigation/active-view                             :entry ;:home
                  :navigation/active-home                             :summary
@@ -164,6 +168,7 @@
                  :esg/refinitiv-structure                 []
                  :esg/selected-pillars                    (set nil)
                  :esg/msci-scores                         []
+                 :esg/summary-report                      []
 
                  :quant-model/model-output                []
                  :quant-model/bond-isin-map               {}
@@ -308,7 +313,7 @@
            :esg/active-home
            :esg/selected-pillars
            :esg/msci-scores
-
+           :esg/summary-report
 
            :quant-model/calculator-spreads
            :quant-model/rating-curves
@@ -393,15 +398,16 @@
   (fn [{:keys [db]} [_ naked-positions]]
     (let [res (array-of-lists->records naked-positions)
           positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res))]
+      ;(tools/local-storage-set-item! "naked-positions" naked-positions) ; it's too big :(
       {:db                 (assoc db :naked-positions res
                                      :navigation/show-mounting-modal false
                                      :positions positions)
-       ;:http-post-dispatch {:url          (str static/ta-server-address "scorecard-request")
-       ;                     :edn-params   {:portfolio (:scorecard/portfolio db)
-       ;                                    :isin-seq  (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} positions))}
-       ;                     :dispatch-key [:scorecard/trade-analyser-data]}
-
        })))
+;:http-post-dispatch {:url          (str static/ta-server-address "scorecard-request")
+;                     :edn-params   {:portfolio (:scorecard/portfolio db)
+;                                    :isin-seq  (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} positions))}
+;                     :dispatch-key [:scorecard/trade-analyser-data]}
+
 
 (rf/reg-event-fx
   :instruments
@@ -609,6 +615,7 @@
    {:get-key :get-msci-scores    :url-tail "msci-scores" :dis-key :esg/msci-scores}
    {:get-key :get-last-updated-logs    :url-tail "last-updated" :dis-key :last-updated-logs}
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
+   {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
    ])
 
 
@@ -621,11 +628,32 @@
          :http-get-dispatch {:url           (str static/server-address (:url-tail line))
                              :dispatch-key  [(:dis-key line)]}}))))
 
-;(rf/reg-event-fx
-;  :get-positions-new
-;  (fn [{:keys [db]} [_ portfolio]]
-;    {:http-get-dispatch {:url          (str static/server-address "positions-new?portfolio=" portfolio)
-;                         :dispatch-key [:positions-new portfolio]}}))
+
+(rf/reg-event-fx
+  :check-naked-positions-timestamp
+  (fn [{:keys [db]} [_ last-updated]]
+    (let [last-position-timestamp (first (get last-updated :jasmine.positions/positions))]
+      (println "last-position-timestamp" last-position-timestamp)
+      (if (= last-position-timestamp (db :naked-positions-last-timestamp))
+        (let [res (array-of-lists->records (tools/local-storage-get-item "naked-positions"))
+              positions (mapv #(merge % (get-in db [:instruments (:id %)])) res)]
+          {:db (assoc db :naked-positions res
+                         :navigation/show-mounting-modal false
+                         :positions positions
+                         :naked-positions-last-timestamp last-position-timestamp)}))
+      {:db (assoc db :navigation/show-mounting-modal true)
+       :http-get-dispatch {:url           (str static/server-address "naked-position-transit-array")
+                           :dispatch-key  [:naked-positions]}})))
+
+
+(rf/reg-event-fx
+  :get-naked-positions-timestamp
+  (fn [{:keys [db]} [_]]
+    {:http-get-dispatch {:url          (str static/server-address "last-updated")
+                         :dispatch-key [:check-naked-positions-timestamp]}}))
+
+
+
 
 (rf/reg-event-fx
   :get-var-data
