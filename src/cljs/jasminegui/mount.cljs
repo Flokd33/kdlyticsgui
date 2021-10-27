@@ -366,11 +366,19 @@
   :multiple-portfolio-attribution/table
   (fn [db [_ data]] (assoc db :multiple-portfolio-attribution/table data :navigation/show-mounting-modal false)))
 
-(defn array-of-lists->records [data]
+(defn array-of-lists->records-stable [data]
   (let [model (into {} (for [[k v] data] [k (vec v)]))]
     (mapv #(into {} (for [k (keys model)] [k (nth (model k) %)]))
           (range (count (model (first (keys model))))))))
 
+(defn array-of-lists->records [data]
+  (let [ks (mapv first data)                                ;mapv faster?
+        values (mapv vec (mapv second data))                ;transducer fails for some reason
+        n (count (first values))]
+    (loop [i 0 records (transient [])]
+      (if (< i n)
+        (recur (inc i) (conj! records (zipmap ks (mapv #(nth % i) values)))) ;mapv faster?
+        (persistent! records)))))
 
 ;(rf/reg-event-db
 ;  :positions
@@ -393,9 +401,12 @@
 ;                                           :isin-seq  (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} res))}
 ;                            :dispatch-key [:scorecard/trade-analyser-data]}})))
 
+;(def nkp (atom nil))
+
 (rf/reg-event-fx
   :naked-positions
   (fn [{:keys [db]} [_ naked-positions]]
+    ;(reset! nkp naked-positions)
     (let [res (array-of-lists->records naked-positions)
           positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res))]
       ;(tools/local-storage-set-item! "naked-positions" naked-positions) ; it's too big :(
