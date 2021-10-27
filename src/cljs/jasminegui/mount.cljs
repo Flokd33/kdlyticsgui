@@ -371,13 +371,16 @@
     (mapv #(into {} (for [k (keys model)] [k (nth (model k) %)]))
           (range (count (model (first (keys model))))))))
 
-(defn array-of-lists->records [data]
-  (let [ks (mapv first data)                                ;mapv faster?
-        values (mapv vec (mapv second data))                ;transducer fails for some reason
+(defn array-of-lists->records
+  "Converts transit [[:key1 [values]] [:key2 [values]]] to [{:key1 val01 :key2 val02} {:key1 val11 :key2 val12}]
+  This implementation is about 10-15% than the above."
+  [data]
+  (let [ks (mapv first data)                                ;mapv faster than map
+        values (mapv vec (mapv second data))                ;mapv faster than map, but transducer fails for some reason
         n (count (first values))]
-    (loop [i 0 records (transient [])]
+    (loop [i 0 records (transient [])]                      ;using transients. Atom failed on memory.
       (if (< i n)
-        (recur (inc i) (conj! records (zipmap ks (mapv #(nth % i) values)))) ;mapv faster?
+        (recur (inc i) (conj! records (zipmap ks (mapv #(nth % i) values)))) ;mapv faster than map
         (persistent! records)))))
 
 ;(rf/reg-event-db

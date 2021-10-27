@@ -136,7 +136,7 @@
 (def group-headers [{:group-header "Description" :id :description :style {:textAlign "left" :backgroundColor "#deeaee"}}
                     {:group-header "Pricing" :id :pricing :style {:textAlign "right" :backgroundColor "#E2EEDB"}}
                      {:group-header "Valuation" :id :valuation  :style {:textAlign "right" :backgroundColor "#FFE4C4"}}
-                     {:group-header "Quality" :id :quality  :style {:textAlign "right" :backgroundColor "#D8EBF1"}}
+                     {:group-header "Fundamentals" :id :quality  :style {:textAlign "right" :backgroundColor "#D8EBF1"}}
                      {:group-header "Technicals" :id :technicals  :style {:textAlign "right" :backgroundColor "#FBC8E0"}}
                      {:group-header "Total" :id :total :style {:textAlign "right" :backgroundColor "#E4E4E4"}}
                      {:group-header "ESG" :id :esg :style {:textAlign "right" :backgroundColor "#C7DEB8"}}])
@@ -211,16 +211,16 @@
         data @(rf/subscribe [:scorecard/qdb-scores-with-difference])]
     (gt/element-box "scorecard-scores" "100%" (str "Scorecard for " sector " " @(rf/subscribe [:scorecard/latest-date]) " vs " @(rf/subscribe [:scorecard/previous-date])) data
                     [[:> ReactTable
-                      {:data            data
-                       :columns         (into []
-                                              (for [group group-headers]
-                                                {:Header (:group-header group) :columns (into [] (for [row (t/chainfilter {:grp (:id group)} score-fields)]
-                                                                                                   (assoc row
-                                                                                                     :width (if (contains? row :width) (row :width) 50)
-                                                                                                     :headerStyle {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}
-                                                                                                     :style (:style group)
-                                                                                                     )))}))
-                       :pageSize (count data) :showPagination false :sortable true :showPageSizeOptions false :defaultSorted [{:id "EMCD_TOTAL" :desc true}]}]])))
+                      {:data     (reverse (sort-by #(get % "EMCD_TOTAL") data))
+                       :columns  (into []
+                                       (for [group group-headers]
+                                         {:Header (:group-header group) :columns (into [] (for [row (t/chainfilter {:grp (:id group)} score-fields)]
+                                                                                            (assoc row
+                                                                                              :width (if (contains? row :width) (row :width) 50)
+                                                                                              :headerStyle {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}
+                                                                                              :style (:style group)
+                                                                                              )))}))
+                       :pageSize (count data) :showPagination false :sortable true :showPageSizeOptions false}]])))
 
 
 (defn compress-data [table sector]
