@@ -412,7 +412,7 @@
     ;(reset! nkp naked-positions)
     (let [res (array-of-lists->records naked-positions)
           positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res))]
-      ;(tools/local-storage-set-item! "naked-positions" naked-positions) ; it's too big :(
+      ;(println "hihi")
       {:db                 (assoc db :naked-positions res
                                      :navigation/show-mounting-modal false
                                      :positions positions)

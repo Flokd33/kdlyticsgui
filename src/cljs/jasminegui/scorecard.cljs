@@ -58,11 +58,12 @@
 ;    {:http-get-dispatch {:url (str qdb-server "securities?sectors=" sector) :dispatch-key [:get-qdb-scores]}}))
 
 (rf/reg-event-fx
+  ;TODO THIS NEEDS TO REVERT TO PREVIOUS DATE = 1
   :get-qdb-scores
   (fn [{:keys [db]} [_ qdb-securities]]
     (let [isins (get-in qdb-securities [:result 0 :security_ids])
           latest-date (first (get-in qdb-securities [:result 0 :upload_dates]))
-          previous-date (second (get-in qdb-securities [:result 0 :upload_dates]))]
+          previous-date (nth (get-in qdb-securities [:result 0 :upload_dates]) 2)] ;(second (get-in qdb-securities [:result 0 :upload_dates]))
       {:db (assoc db :scorecard/qdb-securities isins :scorecard/latest-date latest-date :scorecard/previous-date previous-date)
        :http-json-post-dispatch
            [{:url (str qdb-server "scores")
@@ -143,12 +144,12 @@
 
 (defn score-cell-format
   "This will write a single cell.
-  Note that [this] has access to the full row so conditional evaluation is possible (e.g. change column B based on values in column A)
-  Here we take the input value if it's there, scale it (useful for percentages) and format it."
+  Note that [this] has access to the full row so conditional evaluation is possible (e.g. change column B based on values in column A)"
+  ;TODO remove esg override
   [this]
   (if-let [x (aget this "value")]
     (if-let [y (aget this "row" "_original" (str (aget this "column" "id") "-PREV"))]
-      (str x (if (not= x y)
+      (str x (if (and (not (some #{(aget this "column" "id")} ["EMCD_ESG_CREDIT_RATING_IMPACT" "EMCD_ESG_SENSITIVITY_RISK" "EMCD_ESG_CREDIT_IMPACT"])) (not= x y))
                (let [d (- (js/parseInt x) (js/parseInt y))]
                  (str " (" (if (pos? d) "+") d ")"))
                ))
