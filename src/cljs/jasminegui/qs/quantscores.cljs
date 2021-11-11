@@ -213,9 +213,8 @@
 
 (defn score-vs-outlook2 []
   (let [data @(rf/subscribe [:quant-model/model-output])
-          data_upgrade (sort-by (juxt :Country :Bond) (filter #(= (:UpgradeDowngradeCandidate %) -1) data))
-        data_downgrade (sort-by (juxt :Country :Bond) (filter #(= (:UpgradeDowngradeCandidate %) 1) data))
-        ]
+        data_upgrade (sort-by (juxt :Country :Bond) (filter #(= (:UpgradeDowngradeCandidate %) -1) data))
+        data_downgrade (sort-by (juxt :Country :Bond) (filter #(= (:UpgradeDowngradeCandidate %) 1) data))]
     [v-box :class "subbody" :gap "20px"
      :children [
                 [box :class "rightelement" :child
