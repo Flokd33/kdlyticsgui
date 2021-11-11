@@ -57,7 +57,9 @@
    {:code :add-bonds          :name "Add bonds"}
    {:code :methodology        :name "Methodology"}
    {:code :issuer-coverage    :name "Issuer coverage"}
-   {:code :model-portfolios   :name "Model portfolios (WIP)"}])
+   {:code :model-portfolios   :name "Model portfolios (WIP)"}
+   {:code :score-vs-outlook2   :name "Up/down candidates"}
+   ])
 
 (def esg-navigation
   [{:code :msci          :name "MSCI"}
