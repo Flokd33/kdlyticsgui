@@ -39,6 +39,10 @@
 (def show-historical-scores (r/atom false))
 (def show-rating-history (r/atom false))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def dropdown-width "100px")
+
+
+
 
 (rf/reg-event-fx
   :get-calculator-spread
@@ -184,6 +188,8 @@
                                                    :G        (tables/median (map :G_SPREAD_MID_CALC unv))
                                                    :Used_Duration (tables/median (map :Used_Duration unv))
                                                    :Used_Rating_Score (tables/median (map :Used_Rating_Score unv))
+                                                   :ytd-return (tables/median (map :ytd-return unv)) ;FC
+                                                   :ytd-z-delta (tables/median (map :ytd-z-delta unv)) ;FC
                                                    })))
                            :columns  [{:Header "Index" :accessor "idx" :width 70}
                                       {:Header "Bonds" :accessor "bonds" :width 60 :style {:textAlign "right"}}
@@ -193,11 +199,57 @@
                                       {:Header "ZTW" :accessor "Used_ZTW" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
                                       {:Header "G" :accessor "G" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
                                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :Cell tables/round1}
-                                      {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"}}]
+                                      {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"}}
+                                      {:Header "TR %*" :accessor "ytd-return" :width 60 :style {:textAlign "right"}:Cell tables/round2pc} ; FC
+                                      {:Header (gstring/unescapeEntities "&Delta; ZTW*") :accessor "ytd-z-delta" :width 80 :style {:textAlign "right"}:Cell tables/zspread-format} ; FC
+
+                                      ]
                            :pageSize 5 :filterable false :showPageSizeOptions false :showPagination false}
-                          ]]]])
+                          ]
+                         [title :level :level4 :label "*NB: figures do not include new issues as well as matured and called bonds"]
+                         ]]])
 
   )
+
+(defn score-vs-outlook2 []
+  (let [data @(rf/subscribe [:quant-model/model-output])
+          data_upgrade (sort-by (juxt :Country :Bond) (filter #(= (:UpgradeDowngradeCandidate %) -1) data))
+        data_downgrade (sort-by (juxt :Country :Bond) (filter #(= (:UpgradeDowngradeCandidate %) 1) data))
+        ]
+    [v-box :class "subbody" :gap "20px"
+     :children [
+                [box :class "rightelement" :child
+                 (gt/element-box "score-vs-outlook2" "100%" (str "Potential upgrade candidates " @(rf/subscribe [:qt-date])) data_upgrade
+                                 [
+                                  [:> ReactTable
+                                   {:data            data_upgrade :columns (qstables/table-style->qs-table-col "Upgrades/Downgrades" nil) ;@qstables/table-style @qstables/table-checkboxes
+                                    :showPagination  true :defaultPageSize 15 :pageSizeOptions [5 10 15 25 50 100]
+                                    :filterable      true :defaultFilterMethod tables/text-filter-OR
+                                    :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
+                                    :ref             #(reset! qstables/qs-table-view %)
+                                    :getTrProps      on-click-context :className "-striped -highlight"}]
+                                  [gap :size "20px"]])
+                 ]
+
+                [box :class "rightelement" :child
+
+                 (gt/element-box "score-vs-outlook2" "100%" (str "Potential downgrade candidates " @(rf/subscribe [:qt-date])) data_downgrade
+                                 [
+                                  [:> ReactTable
+                                   {:data            data_downgrade :columns (qstables/table-style->qs-table-col "Upgrades/Downgrades" nil)
+                                    :showPagination  true :defaultPageSize 100 :pageSizeOptions [5 10 15 25 50 100]
+                                    :filterable      true :defaultFilterMethod tables/text-filter-OR
+                                    :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
+                                    :ref             #(reset! qstables/qs-table-view %)
+                                    :getTrProps      on-click-context :className "-striped -highlight"}]
+                                  [gap :size "20px"]])
+
+
+                 ]
+
+                ]]
+    ))
+
 
 (def show-duration-modal (r/atom false))
 (def calculator-target (r/atom {:Sector "Oil & Gas" :Country "BR" :Used_Duration "9.0" :Used_Rating_Score "13" :CRNCY "USD"})) ;find out why there are some ::CRNCY instead of :CRNCY in the model
@@ -320,6 +372,8 @@
 
 (defn qs-table-container []
   [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
+
+
 
 (def spot-chart-rating-curves-keys (zipmap ["Base" "Sov only" "Non ESG (SVR)" "ESG (SVR)" "ESG benefit (SVR)"] [:base :sov-only :nesg :esg :esg-benefit])) ;UNUSED ATM BUT IMPORTANT LOGIC
 (def spot-chart-model-choice (r/atom "SVR"))
@@ -537,9 +591,6 @@
                                                    (reset! show-duration-modal false))]]]]))))
 
 
-
-
-
 (defn qs-historical-charts []
   (let [source-data @(rf/subscribe [:quant-model/model-output])
         bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data)))))]
@@ -568,7 +619,6 @@
                                                              (rf/dispatch [:get-historical-quant-scores isin])))
                                            :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]]]
                                         [oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-cheapness @show-historical-spreads @show-universe-scores @show-historical-scores @show-rating-history)]]]]]]]))
-
 
 
 (rf/reg-event-db :quant-model-new-bond/change-isin (fn [db [_ isin]] (assoc db :quant-model/new-bond-entry {:ISIN isin}))) ;cleans the whole thing
@@ -640,9 +690,6 @@
 
 (defn add-bonds [] [box :padding "80px 10px" :class "rightelement" :child [new-bond-entry]])
 
-
-
-
 ;;;;;;
 
 (defn active-home []
@@ -664,6 +711,7 @@
       :methodology        [methodology]
       :issuer-coverage    [issuer-coverage]
       :model-portfolios   [modelportfolios/model-portfolio-view]
+      :score-vs-outlook2   [score-vs-outlook2]              ; FC
       [:div.output "nothing to display"])))
 
 (defn display-saved-chart [line]
@@ -722,7 +770,6 @@
                               [h-box :gap "10px" :children [[button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
           nil
           )))))
-
 
 (defn view []
   [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio] [issuer-rationale-modal]]])
