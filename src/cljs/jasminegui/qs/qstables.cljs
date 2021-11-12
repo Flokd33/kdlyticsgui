@@ -290,9 +290,11 @@
    :cembi-ig-dur       {:Header "CEMBI IG" :accessor "cembi-ig-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :cembi-ig-dur-x-sp  {:Header "CEMBI IG" :accessor "cembi-ig-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
 
-   :RTG_SP_OUTLOOK             {:Header "S&P Outlook" :accessor "RTG_SP_OUTLOOK" :width 120 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :RTG_FITCH_OUTLOOK             {:Header "Fitch Outlook" :accessor "RTG_FITCH_OUTLOOK" :width 120 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :RTG_MDY_OUTLOOK             {:Header "Moody's Outlook" :accessor "RTG_MDY_OUTLOOK" :width 120 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :RTG_SP_OUTLOOK             {:Header "S&P" :accessor "RTG_SP_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :RTG_FITCH_OUTLOOK             {:Header "Fitch" :accessor "RTG_FITCH_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :RTG_MDY_OUTLOOK             {:Header "Moody's" :accessor "RTG_MDY_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+
+   :n91held             {:Header "Held?" :accessor "n91held" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show false}
 
    :totaldummy   {:Header " " :accessor "totaldummy" :width 30}
    })
@@ -369,11 +371,9 @@
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
                {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}])
-
       "Upgrades/Downgrades"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON :Rating_String ])}]
-              [{:Header "Outlook" :columns (mapv quant-score-table-columns [:RTG_SP_OUTLOOK :RTG_FITCH_OUTLOOK :RTG_MDY_OUTLOOK ])}])
-
+              [{:Header "Outlook" :columns (mapv quant-score-table-columns [:RTG_SP_OUTLOOK :RTG_FITCH_OUTLOOK :RTG_MDY_OUTLOOK])}])
       "Model portfolios"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Ticker :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK  :ESG :AMT_OUTSTANDING_3 :COUPON])}]
               [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :IG-model :TR-model :CEMBI-model-objective :IG-model-objective :TR-model-objective])}]

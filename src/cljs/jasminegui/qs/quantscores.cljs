@@ -124,10 +124,10 @@
                                   (rf/dispatch [:navigation/active-qs :historical-charts]) (rf/dispatch [:get-historical-quant-scores (aget rowInfo "original" "ISIN")])))]         ; <---- the name is a span
      ]))
 
+(defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
+
 (defn on-click-context [state rowInfo instance]
-  (clj->js {:onClick #(fnevt state rowInfo instance %) :style {:cursor "pointer"}}))
-
-
+  (clj->js {:onClick #(fnevt state rowInfo instance %) :style (merge {:cursor "pointer"} (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"}))}))
 
 (def qs-table-filter (atom []))
 ;USING A NORMAL ATOM INSTEAD OF REAGENT ACCELERATES THINGS - NOT SURE WHY OR IF IT'S RIGHT THING
@@ -211,43 +211,31 @@
 
   )
 
-(defn score-vs-outlook2 []
+(defn score-vs-outlook []
   (let [data @(rf/subscribe [:quant-model/model-output])
         data_upgrade (sort-by (juxt :Country :Bond) (filter #(= (:UpgradeDowngradeCandidate %) -1) data))
         data_downgrade (sort-by (juxt :Country :Bond) (filter #(= (:UpgradeDowngradeCandidate %) 1) data))]
     [v-box :class "subbody" :gap "20px"
-     :children [
-                [box :class "rightelement" :child
+     :children [[box :class "rightelement" :child
                  (gt/element-box "score-vs-outlook2" "100%" (str "Potential upgrade candidates " @(rf/subscribe [:qt-date])) data_upgrade
-                                 [
-                                  [:> ReactTable
+                                 [[:> ReactTable
                                    {:data            data_upgrade :columns (qstables/table-style->qs-table-col "Upgrades/Downgrades" nil) ;@qstables/table-style @qstables/table-checkboxes
-                                    :showPagination  true :defaultPageSize 15 :pageSizeOptions [5 10 15 25 50 100]
+                                    ;:showPagination  true :defaultPageSize 15 :pageSizeOptions [5 10 15 25 50 100]
+                                    :pageSize (count data_upgrade) :showPagination false
                                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                                     :ref             #(reset! qstables/qs-table-view %)
-                                    :getTrProps      on-click-context :className "-striped -highlight"}]
-                                  [gap :size "20px"]])
-                 ]
-
+                                    :getTrProps      on-click-context :className "-striped -highlight"}]])]
                 [box :class "rightelement" :child
-
                  (gt/element-box "score-vs-outlook2" "100%" (str "Potential downgrade candidates " @(rf/subscribe [:qt-date])) data_downgrade
-                                 [
-                                  [:> ReactTable
+                                 [[:> ReactTable
                                    {:data            data_downgrade :columns (qstables/table-style->qs-table-col "Upgrades/Downgrades" nil)
-                                    :showPagination  true :defaultPageSize 100 :pageSizeOptions [5 10 15 25 50 100]
+                                    :pageSize (count data_downgrade) :showPagination false
+                                    ;:showPagination  true :defaultPageSize 100 :pageSizeOptions [5 10 15 25 50 100]
                                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                                     :ref             #(reset! qstables/qs-table-view %)
-                                    :getTrProps      on-click-context :className "-striped -highlight"}]
-                                  [gap :size "20px"]])
-
-
-                 ]
-
-                ]]
-    ))
+                                    :getTrProps      on-click-context :className "-striped -highlight"}]])]]]))
 
 
 (def show-duration-modal (r/atom false))
@@ -710,7 +698,7 @@
       :methodology        [methodology]
       :issuer-coverage    [issuer-coverage]
       :model-portfolios   [modelportfolios/model-portfolio-view]
-      :score-vs-outlook2   [score-vs-outlook2]              ; FC
+      :score-vs-outlook2   [score-vs-outlook]              ; FC
       [:div.output "nothing to display"])))
 
 (defn display-saved-chart [line]

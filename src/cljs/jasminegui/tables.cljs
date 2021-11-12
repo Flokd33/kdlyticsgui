@@ -160,6 +160,7 @@
 (def round3         #(txt-format "%.3f" 1. %))
 (def round2         #(txt-format "%.2f" 1. %))
 (def round1         #(txt-format "%.1f" 1. %))
+(def round0         #(txt-format "%.0f" 1. %))
 (def yield-format   #(txt-format "%.2f%" 1. %))
 (def zspread-format #(txt-format "%.0fbps" 1. %))
 (def round2*100     #(txt-format "%.2f" 100. %))
