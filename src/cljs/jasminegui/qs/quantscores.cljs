@@ -175,7 +175,7 @@
                            :showPagination  false :pageSize 1
                            :filterable      true :defaultFilterMethod (fn [filterfn row] true)
                            :onFilteredChange #(reset! index-crawler-filter %)
-                           :getTrProps      on-click-context :className "-striped -highlight"
+                           :className "-striped -highlight" ;:getTrProps      on-click-context
                            :pivotBy [:totaldummy]
                            :expanded @index-crawler-expander :onExpandedChange #(reset! index-crawler-expander %)}]
                          [title :level :level4 :label "Aggregate results from filter below, with median valuation:"]
