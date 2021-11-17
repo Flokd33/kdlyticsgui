@@ -181,7 +181,7 @@
                (reduce #(update %1 %2 * 100.)
                        (merge
                          {:portfolio p}
-                         (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :mdur-delta :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score :contrib-beta-1y-daily :quant-value-4d :quant-value-2d :ESG :raw-esg-over-50 :final-esg-over-50 :SUBORDINATED :HYBRID :INTERNATIONAL_SUKUK :HYBRIDNONFINS :HY :COCOS :ad-hoc]] [k (get-in (:total-positions db) [(keyword p) k])]))
+                         (into {} (for [k [:cash-pct :base-value :contrib-yield :contrib-zspread :contrib-gspread :contrib-mdur :mdur-delta :qt-iam-int-lt-median-rating :qt-iam-int-lt-median-rating-score :contrib-beta-1y-daily :quant-value-4d :quant-value-2d :ESG :raw-esg-over-50 :final-esg-over-50 :SUBORDINATED :HYBRID :INTERNATIONAL_SUKUK :HYBRIDNONFINS :HY :COCOS :ad-hoc :downgrade-candidates]] [k (get-in (:total-positions db) [(keyword p) k])]))
                          {:contrib-bond-yield (- (get-in (:total-positions db) [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (not= (:asset-class %) "BONDS")) (:positions db)))))})
                        [:cash-pct :contrib-yield :contrib-bond-yield]
                        )))))
@@ -577,6 +577,7 @@
                                                                                                        (tables/nb-col "Hybrid" "HYBRID" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/nb-col "Corp Hyb." "HYBRIDNONFINS" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/nb-col "Sukuk" "INTERNATIONAL_SUKUK" 70 tables/round2pc tables/sum-rows)
+                                                                                                       (tables/nb-col "FA risk" "downgrade-candidates" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/text-col "Ad hoc" "ad-hoc" 220)])}
                                          ]
                         :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]]
