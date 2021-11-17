@@ -412,15 +412,11 @@
     ;(reset! nkp naked-positions)
     (let [res (array-of-lists->records naked-positions)
           positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res))]
-      ;(println "hihi")
       {:db                 (assoc db :naked-positions res
                                      :navigation/show-mounting-modal false
                                      :positions positions)
        })))
-;:http-post-dispatch {:url          (str static/ta-server-address "scorecard-request")
-;                     :edn-params   {:portfolio (:scorecard/portfolio db)
-;                                    :isin-seq  (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} positions))}
-;                     :dispatch-key [:scorecard/trade-analyser-data]}
+
 
 
 (rf/reg-event-fx

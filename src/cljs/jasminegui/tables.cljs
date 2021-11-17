@@ -224,6 +224,7 @@
     {:id                       {:Header "ID" :accessor "id" :show false}
      :id-show                  (text-col "ID" "id" 65)
      :region                   (text-col "Region" "jpm-region" 120)
+     :emd-region               (text-col "Region" "emd-region" 120)
      :country                  (text-col "Country" "qt-risk-country-name" 120)
      :issuer                   (text-col "Issuer" "TICKER" 80)
      :sector                   (text-col "Sector" "qt-jpm-sector" 120)

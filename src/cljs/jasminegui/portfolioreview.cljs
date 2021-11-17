@@ -62,6 +62,8 @@
 
 ;(three-way-grouping (filter (comp pos? :weight) ogemcord) :weight #(if (and (some? (:rating-score %)) (number? (:rating-score %)) (> (:rating-score %) 10)) "HY" "IG") :qt-jpm-sector :TICKER nil)
 
+(def emd-portfolios ["OGEMHCD" "IUSSEMD"])
+
 ;;;;;;;;;;;;
 ;; EVENTS ;;
 ;;;;;;;;;;;;
@@ -83,32 +85,39 @@
 (rf/reg-event-fx
   :get-portfolio-review-contribution-chart-data
   (fn [{:keys [db]} [_ portfolio period grouping]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping=" grouping)
-                         :dispatch-key [:portfolio-review/contribution-chart-data]}}))
+    (let [g (if (and (some #{portfolio} emd-portfolios) (= grouping "Region")) "EMDRegion" grouping)]                                              ;ugly hack for EMD portfolios
+      {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=contribution&portfolio=" portfolio "&period=" period "&grouping=" g)
+                           :dispatch-key [:portfolio-review/contribution-chart-data]}})))
 
 (rf/reg-event-fx
   :get-portfolio-review-alpha-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" grouping)
-                         :dispatch-key [:portfolio-review/alpha-chart-data]}}))
+    (let [g (if (and (some #{portfolio} emd-portfolios) (= grouping "Region")) "EMDRegion" grouping)]                                              ;ugly hack for EMD portfolios
+      {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=alpha&portfolio=" portfolio "&grouping=" g)
+                           :dispatch-key [:portfolio-review/alpha-chart-data]}})))
 
 (rf/reg-event-fx
   :get-portfolio-review-jensen-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" grouping)
-                         :dispatch-key [:portfolio-review/jensen-chart-data]}}))
+    (let [g (if (and (some #{portfolio} emd-portfolios) (= grouping "Region")) "EMDRegion" grouping)]                                              ;ugly hack for EMD portfolios
+      {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=jensen&portfolio=" portfolio "&grouping=" g)
+                           :dispatch-key [:portfolio-review/jensen-chart-data]}})))
 
 (rf/reg-event-fx
   :get-portfolio-review-marginal-beta-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=marginal-beta&portfolio=" portfolio "&grouping=" grouping)
-                         :dispatch-key [:portfolio-review/marginal-beta-chart-data]}}))
+    (println portfolio grouping)
+    (let [g (if (and (some #{portfolio} emd-portfolios) (= grouping "Region")) "EMDRegion" grouping)]                                              ;ugly hack for EMD portfolios
+      {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=marginal-beta&portfolio=" portfolio "&grouping=" g)
+                           :dispatch-key [:portfolio-review/marginal-beta-chart-data]}})))
 
 (rf/reg-event-fx
   :get-portfolio-review-historical-beta-chart-data
   (fn [{:keys [db]} [_ portfolio countries]]
-    {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=historical-beta&portfolio=" portfolio "&countries=" countries)
-                         :dispatch-key [:portfolio-review/historical-beta-chart-data]}}))
+    (let [c (if (some #{portfolio} emd-portfolios) ["CN" "EG" "CO" "MX" "BR" "GH"] ["BR", "CN", "AR", "TR", "MX"])]
+      (println portfolio c)
+      {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=historical-beta&portfolio=" portfolio "&countries=" c)
+                           :dispatch-key [:portfolio-review/historical-beta-chart-data]}})))
 
 (rf/reg-event-fx
   :get-portfolio-review-historical-performance-chart-data

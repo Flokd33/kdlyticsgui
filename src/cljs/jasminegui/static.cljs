@@ -75,7 +75,9 @@
    {:id :issuer        :label "Issuer"}
    {:id :rating-score  :label "Rating"}
    {:id :sector        :label "Sector"}
-   {:id :maturity-band :label "Maturity"}])
+   {:id :maturity-band :label "Maturity"}
+   {:id :emd-region    :label "EMD region"}
+   ])
 
 (def attribution-choice-map
   [{:id "None"         :label "None"}
