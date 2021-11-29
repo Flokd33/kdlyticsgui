@@ -672,7 +672,7 @@
                   [hb [[label :width "100px" :label "Country"] [single-dropdown :width "250px" :model country :choices (mapv #(clojure.set/rename-keys % {:CountryCode :id :LongName :label}) @(rf/subscribe [:country-codes])) :filter-box? true :on-change #(rf/dispatch [:quant-model/new-bond-entry :CNTRY_OF_RISK %])]]]
                   [hb [(if @(rf/subscribe [:quant-model/new-bond-already-exists])
                          [label :label "Can't save, bond already in database."]
-                         [button :style {:width "360px"} :label "Save to bond universe!" :disabled? (save-new-bond-impossible) :on-click #(rf/dispatch [:quant-model-new-bond/save-to-bond-universe @new-bond])])]]
+                         [button :style {:width "360px"} :label "Save to base universe!" :disabled? (save-new-bond-impossible) :on-click #(rf/dispatch [:quant-model-new-bond/save-to-bond-universe @new-bond])])]]
                   [hb [[label :width "100px" :label bond-saved-message]]]]])))
 
 (defn add-bonds [] [box :padding "80px 10px" :class "rightelement" :child [new-bond-entry]])
