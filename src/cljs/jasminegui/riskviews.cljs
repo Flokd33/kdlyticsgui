@@ -231,14 +231,14 @@
 
 
 
-(defn single-bond-trade-flat-history [state rowInfo instance]
-  (clj->js {:onClick #(rf/dispatch [:get-single-bond-flat-history
-                                   (aget rowInfo "row" "_original" "NAME")
-                                   (aget rowInfo "row" "_original" "id")
-                                   @(rf/subscribe [:portfolios])
-                                   "01Jan2019"
-                                   @(rf/subscribe [:qt-date])])
-            :style {:cursor "pointer"}}))
+;(defn single-bond-trade-flat-history [state rowInfo instance]
+;  (clj->js {:onClick #(rf/dispatch [:get-single-bond-flat-history
+;                                   (aget rowInfo "row" "_original" "NAME")
+;                                   (aget rowInfo "row" "_original" "id")
+;                                   @(rf/subscribe [:portfolios])
+;                                   "01Jan2019"
+;                                   @(rf/subscribe [:qt-date])])
+;            :style {:cursor "pointer"}}))
 
 (def multiple-portfolio-risk-display-view (atom nil))
 
@@ -248,7 +248,19 @@
                     (aget rowInfo "row" "_original" "id")
                     (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))
                     "01Jan2019"
-                    @(rf/subscribe [:qt-date])])))
+                    @(rf/subscribe [:qt-date])
+                    "nominal"
+                    ])))
+
+
+(defn multiple-bond-trade-history-nav-event [state rowInfo instance]
+  (do (rf/dispatch [:get-single-bond-flat-history
+                    (aget rowInfo "row" "_original" "NAME")
+                    (aget rowInfo "row" "_original" "id")
+                    (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))
+                    "01Jan2019"
+                    @(rf/subscribe [:qt-date])
+                    "nav"])))
 
 (defn fnevt-multiple [state rowInfo instance evt]
   (rcm/context!
@@ -256,6 +268,7 @@
     [(aget rowInfo "original" "NAME")                                         ; <---- string is a section title
      ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "isin")))]
      ["Trade history" (fn [] (multiple-bond-trade-history-event state rowInfo instance))]         ; <---- the name is a span
+     ["Trade history (% NAV)" (fn [] (multiple-bond-trade-history-nav-event state rowInfo instance))]         ; <---- the name is a span
      ;["Build ticket" (fn [] (prn "my-fn"))]
      ]))
 

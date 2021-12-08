@@ -44,11 +44,11 @@
 
 (rf/reg-event-fx
   :get-single-bond-flat-history
-  (fn [{:keys [db]} [_ name bond-sedol portfolios start-date end-date]]
+  (fn [{:keys [db]} [_ name bond-sedol portfolios start-date end-date datatype]]
     {:db (assoc db :single-bond-trade-history/bond name
                    :single-bond-trade-history/show-flat-modal true
                    :single-bond-trade-history/show-throbber true)
-     :http-get-dispatch {:url          (str static/server-address "flat-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date)
+     :http-get-dispatch {:url          (str static/server-address "flat-bond-history?id=" bond-sedol "&portfolios=" portfolios "&start-date=" start-date "&end-date=" end-date "&datatype=" datatype)
                          :dispatch-key [:single-bond-trade-history/flat-data]}}))
 
 (rf/reg-event-fx
@@ -162,18 +162,24 @@
                                                    [v-box :children [[:> ReactTable
                                                                       {:data           display
                                                                        :columns        [{:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
-                                                                                        {:Header "Type" :accessor "TransactionTypeName" :width 100}
-                                                                                        {:Header "Notional" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh}
-                                                                                        {:Header "Price" :accessor "PriceLcl" :width 100 :style {:textAlign "right"} :Cell tables/round2}
-                                                                                        {:Header "Counterparty" :accessor "counterparty_code" :width 100}]
-                                                                       :showPagination false :pageSize (count display) :className "-striped -highlight"}]]]
+                                                                                        {:Header "Type" :accessor "TransactionTypeName" :width 90}
+                                                                                        {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh}
+                                                                                        {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format}
+                                                                                        {:Header "Price" :accessor "PriceLcl" :width 90 :style {:textAlign "right"} :Cell tables/round2}
+                                                                                        {:Header "Counterparty" :accessor "counterparty_code" :width 90}]
+                                                                       :showPagination false :pageSize (count display) :className "-striped -highlight"}]
+                                                                     [p "(*) based on latest NAV, not at time of trade"]
+                                                                     ]]
                                                    [oz/vega-lite (facet-trade-history-chart)]]])]]])))
 
 (defn modal-single-bond-flat-trade-history []
   (let [modal-data @(rf/subscribe [:single-bond-trade-history/flat-data])
         show-modal @(rf/subscribe [:single-bond-trade-history/show-flat-modal])
         bond-name @(rf/subscribe [:single-bond-trade-history/bond])
-        display (reverse (sort-by :date (remove #(some #{(:trade %)} ["Coupon Payment" "Scrip Transfer"]) modal-data)))]
+        display (reverse (sort-by :date (remove #(some #{(:trade %)} ["Coupon Payment" "Scrip Transfer"]) modal-data)))
+        nominal (> (Math/abs (first (vals (dissoc (first display) :date :trade :price)))) 100000) ;if bigger than 100k, it's a nominal, otherwise bps
+        ]
+    ;(println (vals (dissoc (first display) :date :trade :price)))
     (if show-modal
       [modal-panel
        :wrap-nicely? true
@@ -193,8 +199,10 @@
                                                     {:Header "Price" :accessor "price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
                                                     {:Header "Portfolio" :columns (into []
                                                                                         (for [p (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))] ;@(rf/subscribe [:portfolios])
-                                                                                          {:Header p :accessor p :width 90 :style {:textAlign "right"} :Cell nfh}))}]
-                                   :showPagination false :pageSize (count display) :className "-striped -highlight"}])]]])))
+                                                                                          {:Header p :accessor p :width 90 :getProps tables/red-negatives :Cell (if nominal nfh tables/zspread-format)}))}]
+                                   :showPagination false :pageSize (count display) :className "-striped -highlight"}])
+                    [p (if nominal "" "bps based on latest NAV, not at time of trade")]
+                   ]]])))
 
 
 (defn portfolio-history-table []
@@ -216,11 +224,12 @@
                                          {:Header "CCY" :accessor "LocalCcy" :width 50}
                                          {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
                                          {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
+                                         {:Header "Vs NAV(*)" :accessor "bps" :width 65 :getProps tables/red-negatives :Cell tables/zspread-format}
                                          {:Header "Counterparty" :accessor "counterparty_code" :width 90}
                                          {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
                                          {:Header "Region" :accessor "JPMRegion" :width 85}
                                          {:Header "Sector" :accessor "JPM_SECTOR" :width 105}
-                                         {:Header "Rating" :accessor "Used_Rating_Score" :width 105 :Cell tables/low-level-rating-score-to-string}
+                                         {:Header "Rating(*)" :accessor "Used_Rating_Score" :width 65 :Cell tables/low-level-rating-score-to-string}
                                          ;{:Header "First settle date" :accessor "FIRST_SETTLE_DT" :width 105}
 
                                          ]
@@ -243,6 +252,7 @@
                              {:Header "ISIN" :accessor "ISIN" :width 105}
                              {:Header "CCY" :accessor "LocalCcy" :width 50}
                              {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                             {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 120}
                              {:Header "Sector" :accessor "JPM_SECTOR" :width 120}
                              {:Header "Region" :accessor "JPMRegion" :width 120}
@@ -298,4 +308,7 @@
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
                                                      [gap :size "20px"]
                                                      [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio)]]]]]]]
-                 [portfolio-history-table]]]]))
+                 [portfolio-history-table]
+                 [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]
+
+                 ]]]))
