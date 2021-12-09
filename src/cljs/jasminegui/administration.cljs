@@ -153,10 +153,24 @@
                                         ]]))]
   )
 
+(defn integrity []
+  (when (nil? @(rf/subscribe [:integrity])) (rf/dispatch [:get-integrity]))
+  [v-box
+   :gap "10px"
+   :width "900px"
+   :class "subbody element"
+   :children
+   (into [[title :label "Integrity report" :level :level1]]
+         (for [[k v] (sort-by first @(rf/subscribe [:integrity]))]
+           [h-box :gap "5px" :children [[label :width "400px" :label (str k)]
+                                        [p (str v)]
+                                        ]]))]
+  )
+
 (defn administration-view []
   (rf/dispatch [:get-last-updated-logs])                    ;very impure, very dirty
   [v-box                                                  ;:gap "10px"
    :gap "10px"
    :padding "80px 25px"
-   :children [[modal-success] [time-machine] [debug-operations] [last-updated-logs]]]
+   :children [[modal-success] [time-machine] [debug-operations] [last-updated-logs] [integrity]]]
   )

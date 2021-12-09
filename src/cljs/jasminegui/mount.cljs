@@ -201,6 +201,7 @@
                  :scorecard/previous-date nil
 
                  :last-updated-logs nil
+                 :integrity nil
 
                  :analysts nil
 
@@ -347,6 +348,7 @@
            :model-portfolios/aggregation
 
            :last-updated-logs
+           :integrity
 
            :analysts
 
@@ -624,6 +626,7 @@
    {:get-key :get-model-portfolios    :url-tail "model-portfolios" :dis-key :model-portfolios/trades}
    {:get-key :get-msci-scores    :url-tail "msci-scores" :dis-key :esg/msci-scores}
    {:get-key :get-last-updated-logs    :url-tail "last-updated" :dis-key :last-updated-logs}
+   {:get-key :get-integrity    :url-tail "integrity" :dis-key :integrity}
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
    ])
