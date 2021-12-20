@@ -32,6 +32,11 @@
    {:code :proxies             :name "Bond proxies"}
    ])
 
+(def trade-history-navigation
+  [{:code :single-portfolio          :name "Single Portfolio"}
+   {:code :recent-trades             :name "Recent Trades"}
+   ])
+
 (def attribution-navigation
   [{:code :summary             :name "Overview"}
    {:code :single-portfolio    :name "Single portfolio"}

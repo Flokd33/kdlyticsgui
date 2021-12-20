@@ -97,7 +97,7 @@
     (case active-view
       :entry            [entry]
       :home             [home/home-view]
-      :trade-history    [th/trade-history]
+      :trade-history    [th/trade-history-view]
       :attribution      [attribution/home-view]
       :var              [var/var-view]
       :portfolio-review [pr/view]

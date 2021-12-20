@@ -98,6 +98,7 @@
                  ;trade history
                  :trade-history/active-bond                          nil
                  :trade-history/history                              nil
+                 :trade-history/active-home                         :single-portfolio
 
                  ;single-portfolio attribution
                  :single-portfolio-attribution/display-style         "Tree"
@@ -314,6 +315,8 @@
            :esg/selected-pillars
            :esg/msci-scores
            :esg/summary-report
+
+           :trade-history/active-home
 
            :quant-model/calculator-spreads
            :quant-model/rating-curves

@@ -59,6 +59,13 @@
      :http-get-dispatch {:url          (str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
                          :dispatch-key [:portfolio-trade-history/data]}}))
 
+(rf/reg-event-fx
+  :recent-trade-data
+  (fn [{:keys [db]} [_ date]]
+    {:db (assoc db :recent-trade-data [])
+     :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date=" date)
+                         :dispatch-key [:recent-trade-data]}}))
+
 (rf/reg-event-db
   :single-bond-trade-history/data
   (fn [db [_ data]]
@@ -76,10 +83,6 @@
   (fn [db [_ data]]
     (assoc db :portfolio-trade-history/data data
               :single-bond-trade-history/show-throbber false)))
-
-
-
-
 
 (defn subs10 [this]
   (r/as-element (if-let [x (aget this "value")] [:div (subs x 0 10)] "-")))
@@ -255,12 +258,24 @@
 
          )])))
 
+(defn nav-trade-history-bar []
+  "Create the sidebar"
+  (let [active-trade-history @(rf/subscribe [:trade-history/active-home])]
+    [h-box
+     :children [[v-box
+                 :gap "20px" :class "leftnavbar"
+                 :children (into []
+                                 (for [item static/trade-history-navigation]
+                                   [button
+                                    :class (str "btn btn-primary btn-block" (if (and (= active-trade-history (:code item))) " active"))
+                                    :label (:name item)
+                                    :on-click #(rf/dispatch [:trade-history/active-home (:code item)])]))]]]))
 
 (defn trade-history []
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
         start-date (rf/subscribe [:portfolio-trade-history/start-date])
         end-date (rf/subscribe [:portfolio-trade-history/end-date])]
-    [box :class "subbody" :child
+    [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Trade history for " @portfolio) :level :level1]
                  [h-box :gap "50px"
@@ -299,3 +314,88 @@
                                                      [gap :size "20px"]
                                                      [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio)]]]]]]]
                  [portfolio-history-table]]]]))
+
+
+(defn portfolio-history-table-recent []
+  (let [data @(rf/subscribe [:portfolio-trade-history/data])
+        ;data @(rf/subscribe [:recent-trade-data "2021-12-01T0:00"])
+
+        ;fdata (t/chainfilter { :TradeDate   #(>= % "2021-12-01 0:00")
+        ;                      :portfolio   #(>= % ["OGEMCORD" "OGEMIGC"])
+        ;                      :ISIN (= "IE00BBT33P23")
+        ;
+        ;                      } data)
+        ]
+      [box :align :center
+       :child
+         [:> ReactTable
+          {:data                data
+           :columns             (concat [{:Header "Trade Date" :accessor "TradeDate" :width 200 :style {:textAlign "center" :display "flex" :flexDirection "column" :justifyContent "center"}}
+                                         ;{:Header "OGEMCORD" :accessor "NAME" :width 200 :Cell data}
+                                 {:Header "ISIN" :accessor "ISIN" :width 200 :Cell data}
+                                 ] )
+           :className           "-striped -highlight"}]
+         ]
+      ))
+
+;portfolio-recent-trades
+
+(defn trade-history-recent []
+  "Create the inputs in the body + add the output table at the end"
+  (let [portfolio-map (into [] (for [p  @(rf/subscribe [:portfolios])] {:id p :label p}))
+        portfolios @(rf/subscribe [:portfolios])
+        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
+        ;start-date (rf/subscribe [:portfolio-trade-history/start-date])
+        ;end-date (rf/subscribe [:portfolio-trade-history/end-date])
+        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        ]
+
+    [box :class "subbody rightelement" :child
+     [h-box :class "element" :gap "20px" :align :start
+      :children [[v-box :gap "20px"
+                              :children [[title :label (str "Recent Trade History") :level :level1]
+                                         [h-box :gap "50px" :children
+                                         [[v-box :gap "10px"
+                                          :children  (concat [[title :label "Portfolios:" :level :level3]
+                                                             [button :style {:width "100%"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
+                                                             [button :style {:width "100%"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]
+                                                            (into [] (for [line static/portfolio-alignment-groups]
+                                                                       [button :style {:width "100%"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups))))])]))
+                                                            )
+                                                      ]
+                                         [v-box :gap "10px"
+                                          :children
+                                           [[selection-list :width "125px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]]
+                                         [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:recent-trade-data])]
+                                          ]
+                                          ]
+                                         ]
+                  ]
+                 [v-box :gap "40px" :children [[title :label (str " ") :level :level1]
+                                               [portfolio-history-table-recent]
+                                               ;[p (str @(rf/subscribe [:portfolio-recent-trades/data "2021-12-01"]))]
+                                               [p (str @(rf/subscribe [:portfolio-trade-history/data]))]
+
+                                               ]]
+                 ]
+      ]
+
+      ]
+
+    ))
+
+
+(defn active-home []
+  "Create the body with trade-history"
+  (.scrollTo js/window 0 0)                             ;on view change we go back to top
+  (case @(rf/subscribe [:trade-history/active-home])
+    :single-portfolio [trade-history]
+    :recent-trades [trade-history-recent]
+    [:div.output "nothing to display"]))
+
+
+(defn trade-history-view []
+  "Create the full view with sidebar and body"
+  [h-box :gap "10px" :padding "0px" :children [[nav-trade-history-bar] [active-home]]])
+
