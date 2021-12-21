@@ -282,6 +282,7 @@
                                                      [single-dropdown
                                                       :width riskviews/dropdown-width
                                                       :model portfolio
+                                                      :filter-box? true
                                                       :choices (into [] (for [line (concat [{:strategy "EMCD" :portfolios @(rf/subscribe [:portfolios])}] static/other-portfolios) p (:portfolios line)] {:id p :label p :group (:strategy line)}))
                                                       :on-change #(do (rf/dispatch [:portfolio-trade-history/data []]) (rf/dispatch [:portfolio-trade-history/portfolio %]))]
                                                      [gap :size "20px"]
