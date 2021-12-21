@@ -347,7 +347,7 @@
                                  {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
                                  {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
                                  {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
-                                 {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
+                                 {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA])}
                                  {:Header "Quant model" :columns (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d])}
                                  {:Header "Position" :columns (mapv tables/risk-table-columns [:value :nominal])}
                                  {:Header (if is-tree "Bond analytics (median)" "Bond analytics") :columns (mapv tables/risk-table-columns [:yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd])}

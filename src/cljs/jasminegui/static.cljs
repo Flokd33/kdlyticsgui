@@ -123,7 +123,11 @@
    {:id :contrib-gspread  :label "G-spread contribution"}
    {:id :contrib-beta     :label "Beta contribution"}
    {:id :quant-value-4d   :label "Quant value 4D"}
-   {:id :quant-value-2d   :label "Quant value 2D"}])
+   {:id :quant-value-2d   :label "Quant value 2D"}
+   {:id :contrib-BBG_CEMBI_D1Y_BETA :label "Fund beta contribution CEMBI"}
+   {:id :contrib-delta-BBG_CEMBI_D1Y_BETA :label "Delta beta contribution CEMBI"}
+
+   ])
 
 (def attribution-field-choices
   [

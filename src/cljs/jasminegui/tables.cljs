@@ -261,6 +261,10 @@
      :cembi-beta-last-year     (nb-col (gstring/unescapeEntities "&beta;") "cembi-beta-last-year" 45 round1 median)
      :cembi-beta-previous-year (nb-col (gstring/unescapeEntities "LY &beta;") "cembi-beta-previous-year" 45 round1 median)
 
+     :contrib-BBG_CEMBI_D1Y_BETA (nb-col "Fund Contrib Beta" "contrib-BBG_CEMBI_D1Y_BETA" 50 round2 sum-rows)
+     :bm-contrib-BBG_CEMBI_D1Y_BETA (nb-col "BM Contrib Beta" "bm-contrib-BBG_CEMBI_D1Y_BETA" 50 round2 sum-rows)
+     :contrib-delta-BBG_CEMBI_D1Y_BETA (nb-col "Delta Contrib Beta" "contrib-delta-BBG_CEMBI_D1Y_BETA" 50 round2 sum-rows)
+
      :total-return-ytd         (nb-col "YTD TR" "total-return-ytd" 50 round1 median)
      :jensen-ytd               (nb-col "Jensen" "jensen-ytd" 50 round1 median)
 
