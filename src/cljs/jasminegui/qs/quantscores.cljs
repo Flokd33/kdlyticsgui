@@ -735,7 +735,7 @@
           [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)
            :child [v-box  :width "400px" :height "600px" :gap "10px" :padding "20px"
                    :children [[title :label "Open chart configuration" :level :level1]
-                              [selection-list :max-height "500px" :model chart-to-open :multi-select? false
+                              [selection-list :max-height "450px" :model chart-to-open :multi-select? false
                                :choices (into [] (for [x (sort (map :id saved-charts))] {:id x :label x}))
                                :on-change #(do (display-saved-chart (first (t/chainfilter {:id (first %)} saved-charts))) (reset! show-chart-modal nil))]
                               [h-box :gap "10px" :children [[button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
@@ -751,7 +751,7 @@
           [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)
            :child [v-box  :width "400px" :height "600px" :gap "10px" :padding "20px"
                    :children [[title :label "Open advanced chart configuration" :level :level1]
-                              [selection-list :max-height "500px" :model chart-to-open :multi-select? false
+                              [selection-list :max-height "450px" :model chart-to-open :multi-select? false
                                :choices (into [] (for [x (sort (map :id advanced-saved-charts))] {:id x :label x}))
                                :on-change #(do (display-advanced-saved-chart (first (t/chainfilter {:id (first %)} advanced-saved-charts))) (reset! show-chart-modal nil))]
                               [h-box :gap "10px" :children [[button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
