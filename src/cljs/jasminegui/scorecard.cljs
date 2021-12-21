@@ -418,7 +418,12 @@
                                                     {:Header "Duration" :columns (map #(assoc % :getProps tables/red-negatives) (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta]))}
                                                     {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
                                                     {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
-                                                    {:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
+                                                    {:Header "Beta (Bbg vs CEMBIBD)" :columns (mapv #(assoc % :filterable false)
+                                                                                                    [(tables/risk-table-columns :contrib-beta)
+                                                                                                     (tables/risk-table-columns :contrib-BBG_CEMBI_D1Y_BETA)
+                                                                                                     (tables/risk-table-columns :bm-contrib-BBG_CEMBI_D1Y_BETA)
+                                                                                                     (tables/risk-table-columns :contrib-delta-BBG_CEMBI_D1Y_BETA)])}
+                                                    ;{:Header "Beta" :columns (mapv tables/risk-table-columns [:contrib-beta])}
                                                     {:Header "Quant model" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d]))}]
                                    :showPagination false :sortable true :pageSize 2 :showPageSizeOptions false :className "-striped -highlight"
                                    :pivotBy        [:qt-jpm-sector :qt-risk-country-name]

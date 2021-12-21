@@ -109,25 +109,22 @@
    {:id :munichre :label "Munich Re"   :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
    {:id :talanx   :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}])
 
+;{:id "None"            :label "None"}
 (def risk-field-choices
-  [
-   ;{:id "None"            :label "None"}
-   {:id :nav              :label "NAV"}
-   {:id :weight-delta     :label "NAV delta"}
-   {:id :contrib-mdur     :label "M dur contribution"}
-   {:id :mdur-delta       :label "M dur delta"}
-   {:id :value            :label "Value"}
-   {:id :nominal          :label "Nominal"}
-   {:id :contrib-yield    :label "Yield contribution"}
-   {:id :contrib-zspread  :label "Z-spread contribution"}
-   {:id :contrib-gspread  :label "G-spread contribution"}
-   {:id :contrib-beta     :label "Beta contribution"}
-   {:id :quant-value-4d   :label "Quant value 4D"}
-   {:id :quant-value-2d   :label "Quant value 2D"}
-   {:id :contrib-BBG_CEMBI_D1Y_BETA :label "Fund beta contribution CEMBI"}
-   {:id :contrib-delta-BBG_CEMBI_D1Y_BETA :label "Delta beta contribution CEMBI"}
-
-   ])
+  [{:id :nav :label "NAV"}
+   {:id :weight-delta :label "NAV delta"}
+   {:id :contrib-mdur :label "M dur contribution"}
+   {:id :mdur-delta :label "M dur delta"}
+   {:id :value :label "Value"}
+   {:id :nominal :label "Nominal"}
+   {:id :contrib-yield :label "Yield contribution"}
+   {:id :contrib-zspread :label "Z-spread contribution"}
+   {:id :contrib-gspread :label "G-spread contribution"}
+   {:id :contrib-beta :label "EMCD Beta"}
+   {:id :contrib-BBG_CEMBI_D1Y_BETA :label "Bbg Beta"}
+   {:id :contrib-delta-BBG_CEMBI_D1Y_BETA :label "Bbg Beta delta"}
+   {:id :quant-value-4d :label "Quant value 4D"}
+   {:id :quant-value-2d :label "Quant value 2D"}])
 
 (def attribution-field-choices
   [

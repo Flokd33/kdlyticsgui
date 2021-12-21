@@ -221,56 +221,56 @@
 
 (def risk-table-columns
   (let [round2 #(nb-cell-format "%.2f" 1. %) round1 #(nb-cell-format "%.1f" 1. %) round2pc #(nb-cell-format "%.2f%" 1. %)]
-    {:id                       {:Header "ID" :accessor "id" :show false}
-     :id-show                  (text-col "ID" "id" 65)
-     :region                   (text-col "Region" "jpm-region" 120)
-     :emd-region               (text-col "Region" "emd-region" 120)
-     :country                  (text-col "Country" "qt-risk-country-name" 120)
-     :issuer                   (text-col "Issuer" "TICKER" 80)
-     :sector                   (text-col "Sector" "qt-jpm-sector" 120)
-     :maturity-band            (text-col "Maturity" "qt-final-maturity-band" 120)
-     :rating                   {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}
-     :rating-score             {:Header "Rating" :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}
-     :name                     (text-col "Name" "NAME" 120)
-     :isin                     (text-col "ISIN" "isin" 110)
+    {:id                               {:Header "ID" :accessor "id" :show false}
+     :id-show                          (text-col "ID" "id" 65)
+     :region                           (text-col "Region" "jpm-region" 120)
+     :emd-region                       (text-col "Region" "emd-region" 120)
+     :country                          (text-col "Country" "qt-risk-country-name" 120)
+     :issuer                           (text-col "Issuer" "TICKER" 80)
+     :sector                           (text-col "Sector" "qt-jpm-sector" 120)
+     :maturity-band                    (text-col "Maturity" "qt-final-maturity-band" 120)
+     :rating                           {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}
+     :rating-score                     {:Header "Rating" :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}
+     :name                             (text-col "Name" "NAME" 120)
+     :isin                             (text-col "ISIN" "isin" 110)
 
-     :description              (text-col "thinkFolio ID" "description" 400)
-     :nav                      (nb-col "Fund" "weight" 50 round2 sum-rows)
-     :bm-weight                (nb-col "Index" "bm-weight" 50 round2 sum-rows)
-     :weight-delta             (nb-col "Delta" "weight-delta" 50 round2 sum-rows)
-     :nominal                  (nb-col "Nominal" "original-quantity" 100 nb-thousand-cell-format sum-rows)
-     :value                    (nb-col "Value" "base-value" 100 nb-thousand-cell-format sum-rows)
+     :description                      (text-col "thinkFolio ID" "description" 400)
+     :nav                              (nb-col "Fund" "weight" 50 round2 sum-rows)
+     :bm-weight                        (nb-col "Index" "bm-weight" 50 round2 sum-rows)
+     :weight-delta                     (nb-col "Delta" "weight-delta" 50 round2 sum-rows)
+     :nominal                          (nb-col "Nominal" "original-quantity" 100 nb-thousand-cell-format sum-rows)
+     :value                            (nb-col "Value" "base-value" 100 nb-thousand-cell-format sum-rows)
 
-     :z-spread                 (nb-col "Z" "qt-libor-spread" 45 nb-thousand-cell-format median)
-     :g-spread                 (nb-col "G" "qt-govt-spread" 45 nb-thousand-cell-format median)
-     :duration                 (nb-col "M dur" "qt-modified-duration" 45 round1 median)
-     :yield                    (nb-col "Yield" "qt-yield" 45 round2 median)
+     :z-spread                         (nb-col "Z" "qt-libor-spread" 45 nb-thousand-cell-format median)
+     :g-spread                         (nb-col "G" "qt-govt-spread" 45 nb-thousand-cell-format median)
+     :duration                         (nb-col "M dur" "qt-modified-duration" 45 round1 median)
+     :yield                            (nb-col "Yield" "qt-yield" 45 round2 median)
 
-     :contrib-gspread          (nb-col "G-spread" "contrib-gspread" 60 round1 sum-rows)
-     :contrib-zspread          (nb-col "Fund" "contrib-zspread" 60 round1 sum-rows)
-     :contrib-yield            (nb-col "Fund" "contrib-yield" 50 round2pc sum-rows)
-     :contrib-mdur             (nb-col "Fund" "contrib-mdur" 50 round2 sum-rows)
-     :bm-contrib-yield         (nb-col "Index" "bm-contrib-yield" 50 round2pc sum-rows)
-     :bm-contrib-eir-duration  (nb-col "Index" "bm-contrib-eir-duration" 50 round2 sum-rows)
+     :contrib-gspread                  (nb-col "G-spread" "contrib-gspread" 60 round1 sum-rows)
+     :contrib-zspread                  (nb-col "Fund" "contrib-zspread" 60 round1 sum-rows)
+     :contrib-yield                    (nb-col "Fund" "contrib-yield" 50 round2pc sum-rows)
+     :contrib-mdur                     (nb-col "Fund" "contrib-mdur" 50 round2 sum-rows)
+     :bm-contrib-yield                 (nb-col "Index" "bm-contrib-yield" 50 round2pc sum-rows)
+     :bm-contrib-eir-duration          (nb-col "Index" "bm-contrib-eir-duration" 50 round2 sum-rows)
 
-     :cash-pct                 (nb-col "Cash" "cash-pct" 50 round2pc sum-rows)
-     :contrib-bond-yield       (nb-col "Bond yield" "contrib-bond-yield" 70 round2pc sum-rows)
+     :cash-pct                         (nb-col "Cash" "cash-pct" 50 round2pc sum-rows)
+     :contrib-bond-yield               (nb-col "Bond yield" "contrib-bond-yield" 70 round2pc sum-rows)
 
-     :mdur-delta               (nb-col "Delta" "mdur-delta" 50 round2 sum-rows)
-     :contrib-beta             (nb-col "Fund" "contrib-beta-1y-daily" 50 round2 sum-rows)
-     :cembi-beta-last-year     (nb-col (gstring/unescapeEntities "&beta;") "cembi-beta-last-year" 45 round1 median)
-     :cembi-beta-previous-year (nb-col (gstring/unescapeEntities "LY &beta;") "cembi-beta-previous-year" 45 round1 median)
+     :mdur-delta                       (nb-col "Delta" "mdur-delta" 50 round2 sum-rows)
+     :contrib-beta                     (nb-col "EMCD" "contrib-beta-1y-daily" 50 round2 sum-rows)
+     :cembi-beta-last-year             (nb-col (gstring/unescapeEntities "&beta;") "cembi-beta-last-year" 45 round1 median)
+     :cembi-beta-previous-year         (nb-col (gstring/unescapeEntities "LY &beta;") "cembi-beta-previous-year" 45 round1 median)
 
-     :contrib-BBG_CEMBI_D1Y_BETA (nb-col "Fund Contrib Beta" "contrib-BBG_CEMBI_D1Y_BETA" 50 round2 sum-rows)
-     :bm-contrib-BBG_CEMBI_D1Y_BETA (nb-col "BM Contrib Beta" "bm-contrib-BBG_CEMBI_D1Y_BETA" 50 round2 sum-rows)
-     :contrib-delta-BBG_CEMBI_D1Y_BETA (nb-col "Delta Contrib Beta" "contrib-delta-BBG_CEMBI_D1Y_BETA" 50 round2 sum-rows)
+     :contrib-BBG_CEMBI_D1Y_BETA       (nb-col "Fund Bbg" "contrib-BBG_CEMBI_D1Y_BETA" 65 round2 sum-rows)
+     :bm-contrib-BBG_CEMBI_D1Y_BETA    (nb-col "Index Bbg" "bm-contrib-BBG_CEMBI_D1Y_BETA" 65 round2 sum-rows)
+     :contrib-delta-BBG_CEMBI_D1Y_BETA (nb-col "Delta Bbg" "contrib-delta-BBG_CEMBI_D1Y_BETA" 65 round2 sum-rows)
 
-     :total-return-ytd         (nb-col "YTD TR" "total-return-ytd" 50 round1 median)
-     :jensen-ytd               (nb-col "Jensen" "jensen-ytd" 50 round1 median)
+     :total-return-ytd                 (nb-col "YTD TR" "total-return-ytd" 50 round1 median)
+     :jensen-ytd                       (nb-col "Jensen" "jensen-ytd" 50 round1 median)
 
-     :quant-value-2d           (nb-col "2D" "quant-value-2d" 50 round2 sum-rows)
-     :quant-value-4d           (nb-col "4D" "quant-value-4d" 50 round2 sum-rows)
-     :msci-rating              (assoc (text-col "Rating" "msci-rating" 75) :sortMethod sort-msci-rating)
+     :quant-value-2d                   (nb-col "2D" "quant-value-2d" 50 round2 sum-rows)
+     :quant-value-4d                   (nb-col "4D" "quant-value-4d" 50 round2 sum-rows)
+     :msci-rating                      (assoc (text-col "Rating" "msci-rating" 75) :sortMethod sort-msci-rating)
      }))
 
 (defn invrtg-to-string [this] (aget this "row" "Rating"))
