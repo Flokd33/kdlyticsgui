@@ -60,7 +60,7 @@
                          :dispatch-key [:portfolio-trade-history/data]}}))
 
 (rf/reg-event-fx
-  :recent-trade-data
+  :get-recent-trade-data
   (fn [{:keys [db]} [_ date]]
     {:db (assoc db :recent-trade-data [])
      :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date=" date)
@@ -318,7 +318,7 @@
 
 (defn portfolio-history-table-recent []
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
-        ;data @(rf/subscribe [:recent-trade-data "2021-12-01T0:00"])
+        ;data @(rf/subscribe [:recent-trade-data (LocalDateTime/parse "2021-12-01T00:00:00")])
 
         ;fdata (t/chainfilter { :TradeDate   #(>= % "2021-12-01 0:00")
         ;                      :portfolio   #(>= % ["OGEMCORD" "OGEMIGC"])
@@ -337,8 +337,6 @@
            :className           "-striped -highlight"}]
          ]
       ))
-
-;portfolio-recent-trades
 
 (defn trade-history-recent []
   "Create the inputs in the body + add the output table at the end"
@@ -367,14 +365,14 @@
                                          [v-box :gap "10px"
                                           :children
                                            [[selection-list :width "125px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]]
-                                         [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:recent-trade-data])]
+                                         [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-recent-trade-data "2021-12-01"])]
                                           ]
                                           ]
                                          ]
                   ]
                  [v-box :gap "40px" :children [[title :label (str " ") :level :level1]
                                                [portfolio-history-table-recent]
-                                               ;[p (str @(rf/subscribe [:portfolio-recent-trades/data "2021-12-01"]))]
+                                               ;[p (str @(rf/subscribe [:recent-trade-data]))]
                                                [p (str @(rf/subscribe [:portfolio-trade-history/data]))]
 
                                                ]]
@@ -385,7 +383,6 @@
 
     ))
 
-
 (defn active-home []
   "Create the body with trade-history"
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -393,7 +390,6 @@
     :single-portfolio [trade-history]
     :recent-trades [trade-history-recent]
     [:div.output "nothing to display"]))
-
 
 (defn trade-history-view []
   "Create the full view with sidebar and body"
