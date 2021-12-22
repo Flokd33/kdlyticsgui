@@ -248,6 +248,7 @@
          [:> ReactTable
           {:data            (sort-by (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) (map #(-> % (update :Quantity int)) data))
            :columns         [;{:Header "" :accessor "totaldummy" :width 30 :filterable false}
+                             {:Header "Issuer" :accessor "TICKER" :width 160}
                              {:Header "Instrument" :accessor "NAME" :width 180}
                              {:Header "ISIN" :accessor "ISIN" :width 105}
                              {:Header "CCY" :accessor "LocalCcy" :width 50}
@@ -260,7 +261,7 @@
            :defaultPageSize (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
            :filterable      false
            ;:defaultSorted   [{:id :Quantity :desc true}]
-           :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) :NAME]
+           :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) :TICKER :NAME]
            :className       "-striped -highlight"}]
 
          )])))
