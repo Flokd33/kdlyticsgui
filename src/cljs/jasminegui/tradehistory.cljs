@@ -62,9 +62,9 @@
 (rf/reg-event-fx
   :get-recent-trade-data
   (fn [{:keys [db]} [_ date]]
-    {:db (assoc db :recent-trade-data [])
-     :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date=" date)
-                         :dispatch-key [:recent-trade-data]}}))
+    {:db (assoc db :recent-trade-data/trades [])
+     :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date=" (tools/gdate-to-yyyy-mm-ddT date))
+                         :dispatch-key [:recent-trade-data/trades]}}))
 
 (rf/reg-event-db
   :single-bond-trade-history/data
@@ -315,28 +315,51 @@
                                                      [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio)]]]]]]]
                  [portfolio-history-table]]]]))
 
+(defn recent-trades-display [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [v-box :children (into [] (for [t x]
+                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (last t))) "bps")]
+                                  ))]
+      "-"))
+  )
+
+(defn recent-trades-display-date [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [p (str (subs x 0 10))]))
+  )
 
 (defn portfolio-history-table-recent []
-  (let [data @(rf/subscribe [:portfolio-trade-history/data])
-        ;data @(rf/subscribe [:recent-trade-data (LocalDateTime/parse "2021-12-01T00:00:00")])
-
-        ;fdata (t/chainfilter { :TradeDate   #(>= % "2021-12-01 0:00")
-        ;                      :portfolio   #(>= % ["OGEMCORD" "OGEMIGC"])
-        ;                      :ISIN (= "IE00BBT33P23")
-        ;
-        ;                      } data)
-        ]
+  (let [data (map #(select-keys % [:date (map keyword @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]) @(rf/subscribe [:recent-trade-data/trades]))
+        filter-fn (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
+    clean-data (filter filter-fn data)]
       [box :align :center
        :child
          [:> ReactTable
-          {:data                data
-           :columns             (concat [{:Header "Trade Date" :accessor "TradeDate" :width 200 :style {:textAlign "center" :display "flex" :flexDirection "column" :justifyContent "center"}}
-                                         ;{:Header "OGEMCORD" :accessor "NAME" :width 200 :Cell data}
-                                 {:Header "ISIN" :accessor "ISIN" :width 200 :Cell data}
-                                 ] )
-           :className           "-striped -highlight"}]
+          {:data      clean-data
+           :columns   (into [{:Header "Date" :accessor "date"  :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                            (for [p @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
+                              {:Header p :accessor p :Cell recent-trades-display :width 200})
+                            )
+           :className "-striped -highlight"}]
          ]
       ))
+
+
+;(defn portfolio-history-table-recent []
+;  (let [data @(rf/subscribe [:recent-trade-data/trades])]
+;    [box :align :center
+;     :child
+;     [:> ReactTable
+;      {:data      data
+;       :columns   (into [{:Header "Date" :accessor "date"  :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+;                        (for [p @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
+;                          {:Header p :accessor p :Cell recent-trades-display :width 200})
+;                        )
+;       :className "-striped -highlight"}]
+;     ]
+;    ))
 
 (defn trade-history-recent []
   "Create the inputs in the body + add the output table at the end"
@@ -344,8 +367,7 @@
         portfolios @(rf/subscribe [:portfolios])
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
-        ;start-date (rf/subscribe [:portfolio-trade-history/start-date])
-        ;end-date (rf/subscribe [:portfolio-trade-history/end-date])
+        start-date (rf/subscribe [:recent-trade-data/date])
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         ]
 
@@ -365,22 +387,23 @@
                                          [v-box :gap "10px"
                                           :children
                                            [[selection-list :width "125px" :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]]
-                                         [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-recent-trade-data "2021-12-01"])]
-                                          ]
-                                          ]
-                                         ]
-                  ]
+                                          [v-box :gap "10px"
+                                           :children
+                                           (concat  [[button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-recent-trade-data @start-date])]
+                                          [gap :size "20px"]
+                                          [title :label "From" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model start-date
+                                                      :minimum (tools/int-to-gdate 20210101)
+                                                      :maximum (today)
+                                                      :format "YYYY-MM-DD" :show-today? true :on-change #(do (rf/dispatch [:get-recent-trade-data []]) (rf/dispatch [:recent-trade-data/date %]))]
+
+                                                     ])]]]]]
                  [v-box :gap "40px" :children [[title :label (str " ") :level :level1]
                                                [portfolio-history-table-recent]
-                                               ;[p (str @(rf/subscribe [:recent-trade-data]))]
-                                               [p (str @(rf/subscribe [:portfolio-trade-history/data]))]
-
                                                ]]
                  ]
-      ]
-
-      ]
-
+      ]]
     ))
 
 (defn active-home []

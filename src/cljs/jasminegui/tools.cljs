@@ -4,6 +4,7 @@
 
 (defn int-to-gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
 (defn gdate-to-yyyymmdd [x] (subs (.toString x) 0 8))
+(defn gdate-to-yyyy-mm-ddT [x] (subs (.toString x) 0 8))
 
 (defn chainfilter
   "Chain filter (boolean AND). Defaults to equality if predicate is not a function.
