@@ -63,7 +63,7 @@
   :get-recent-trade-data
   (fn [{:keys [db]} [_ date]]
     {:db (assoc db :recent-trade-data/trades [])
-     :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date=" (tools/gdate-to-yyyy-mm-ddT date))
+     :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date=" date)
                          :dispatch-key [:recent-trade-data/trades]}}))
 
 (rf/reg-event-db
@@ -331,20 +331,17 @@
   )
 
 (defn portfolio-history-table-recent []
-  (let [data (map #(select-keys % [:date (map keyword @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]) @(rf/subscribe [:recent-trade-data/trades]))
+  (let [data (map #(select-keys % (conj @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) :date)) @(rf/subscribe [:recent-trade-data/trades]))
         filter-fn (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
     clean-data (filter filter-fn data)]
       [box :align :center
        :child
          [:> ReactTable
-          {:data      clean-data
-           :columns   (into [{:Header "Date" :accessor "date"  :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+          {:data      (reverse clean-data)                  ;latest first
+           :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
                             (for [p @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
-                              {:Header p :accessor p :Cell recent-trades-display :width 200})
-                            )
-           :className "-striped -highlight"}]
-         ]
-      ))
+                              {:Header p :accessor p :Cell recent-trades-display :width 200}))
+           :className "-striped -highlight"}]]))
 
 
 ;(defn portfolio-history-table-recent []
@@ -392,13 +389,11 @@
                                            (concat  [[button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-recent-trade-data @start-date])]
                                           [gap :size "20px"]
                                           [title :label "From" :level :level3]
-                                                     [datepicker-dropdown
-                                                      :model start-date
-                                                      :minimum (tools/int-to-gdate 20210101)
-                                                      :maximum (today)
-                                                      :format "YYYY-MM-DD" :show-today? true :on-change #(do (rf/dispatch [:get-recent-trade-data []]) (rf/dispatch [:recent-trade-data/date %]))]
-
-                                                     ])]]]]]
+                                         [datepicker-dropdown
+                                          :model start-date
+                                          :minimum (tools/int-to-gdate 20210101)
+                                          :maximum (today)
+                                          :format "DD/MM/YYYY" :show-today? true :on-change #(do (rf/dispatch [:get-recent-trade-data []]) (rf/dispatch [:recent-trade-data/date %]))]])]]]]]
                  [v-box :gap "40px" :children [[title :label (str " ") :level :level1]
                                                [portfolio-history-table-recent]
                                                ]]
