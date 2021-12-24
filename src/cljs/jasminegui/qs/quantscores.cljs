@@ -243,7 +243,7 @@
 (def calculator-chart-options (r/atom {:labels true :other-countries false :rating-neighbours false :country-neighbours false :rating-curves true :rating-curves-sov-only false}))
 (def performance-colors ["#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
 
-(defn comparable-chart [duration legacy new svr table]
+(defn comparable-chart [duration svrmap table]
   (let [prepare-data (fn [tbl txt] (for [line tbl] {:field txt :duration (line :Used_Duration) :spread (line :Used_ZTW) :txt (line :Bond)}))
         rating-score (cljs.reader/read-string (:Used_Rating_Score @calculator-target))
         other (str "Other " (qstables/get-implied-rating (str rating-score)))
@@ -254,19 +254,27 @@
         data
         (concat
           (prepare-data table "comp")
-          [{:field "legacy" :duration duration :spread legacy :txt "legacy"}
-           {:field "new" :duration duration :spread new :txt "new"}
-           {:field "svr" :duration duration :spread svr :txt "svr"}]
+          [
+           {:field "d2" :duration duration :spread (get svrmap :d2) :txt "2D"}
+           {:field "d3sector" :duration duration :spread (get svrmap :d3sector) :txt "3D sctr"}
+           {:field "d3country" :duration duration :spread (get svrmap :d3country) :txt "3D cntry"}
+           {:field "d4" :duration duration :spread (get svrmap :d4) :txt "4D"}
+           ;{:field "legacy" :duration duration :spread legacy :txt "legacy"}
+           ;{:field "new" :duration duration :spread new :txt "new"}
+           ;{:field "svr" :duration duration :spread svr :txt "svr"}
+           ]
           (if (:other-countries @calculator-chart-options) (prepare-data (t/chainfilter {:Sector (:Sector @calculator-target) :Used_Rating_Score rating-score :Country #(not= % (:Country @calculator-target))} qmt) other))
           (if (:rating-neighbours @calculator-chart-options)  (prepare-data (t/chainfilter {:Sector (:Sector @calculator-target) :Used_Rating_Score (inc rating-score)} qmt) rating-up))
           (if (:rating-neighbours @calculator-chart-options)  (prepare-data (t/chainfilter {:Sector (:Sector @calculator-target) :Used_Rating_Score (dec rating-score)} qmt) rating-dw))
           (if (:country-neighbours @calculator-chart-options) (prepare-data (t/chainfilter {:Country (:Country @calculator-target) :Used_Rating_Score rating-score :Sector #(not= % (:Sector @calculator-target))} qmt) other-country)))
-        color-domain-scale (merge {"comp" "#134848" "legacy" "red" "new" "orange" "svr" "blue"}
+        color-domain-scale (merge {"comp" "#134848" "d4" "red" "d3sector" "orange" "d3country" "pink" "d2" "blue"} ;{"comp" "#134848" "legacy" "red" "new" "orange" "svr" "blue"}
                                   (if (:other-countries @calculator-chart-options) {other "#009D80"})
                                   (if (:rating-neighbours @calculator-chart-options) {rating-up "#FDAA94" rating-dw "#74908D"})
                                   (if (:country-neighbours @calculator-chart-options) {other-country "#591739"}))
         curve-data (filter #(some #{(:Rating %)} (conj (if (:rating-neighbours @calculator-chart-options) [(inc rating-score) (dec rating-score)] []) rating-score))
-                           (if (:rating-curves-sov-only @calculator-chart-options) @(rf/subscribe [:quant-model/rating-curves-sov-only]) @(rf/subscribe [:quant-model/rating-curves])))]
+                           (get @(rf/subscribe [:quant-model/generic-rating-curves]) (if (:rating-curves-sov-only @calculator-chart-options) :sov-only :base))
+                           )
+        ]
     (gt/element-box "calculator-comparable-chart" "1280px" "Comparables chart"  data
                     [[h-box :gap "50px" :children [[checkbox :model (r/cursor calculator-chart-options [:labels]) :label "Bond labels" :on-change #(swap! calculator-chart-options assoc :labels %)]
                                                    [checkbox :model (r/cursor calculator-chart-options [:rating-curves]) :label "2D model curve" :on-change #(swap! calculator-chart-options assoc :rating-curves %)]
@@ -351,9 +359,10 @@
                 ;                        [calculator-result-table]]]]]
                 [comparable-chart
                  (cljs.reader/read-string (:Used_Duration @calculator-target))
-                 (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:legacy :d4])
-                 (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:new :d4])
-                 (get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:svr :d4])
+                 (get @(rf/subscribe [:quant-model/calculator-spreads]) :svr)
+                 ;(get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:legacy :d4])
+                 ;(get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:new :d4])
+                 ;(get-in @(rf/subscribe [:quant-model/calculator-spreads]) [:svr :d4])
                  comparables]
                 [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
@@ -635,7 +644,7 @@
 (rf/reg-event-fx
   :quant-model-new-bond/save-to-bond-universe
   (fn [{:keys [db]} [_ data]]
-    (println data)
+
     {:db db :http-post-dispatch {:url (str static/server-address "quant-model-save-new-bond") :edn-params data :dispatch-key [:quant-model-new-bond/save-bond-response]}}))
 
 (rf/reg-event-db

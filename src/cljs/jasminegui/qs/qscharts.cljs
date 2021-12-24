@@ -230,7 +230,7 @@
                      :mark      {:type "point" :filled true}
                      :encoding  {:x       {:field "duration" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [0. (inc (apply max (map :duration data)))]}}
                                  :y       {:field "spread" :type "quantitative" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
-                                 :color   {:field "field" :scale {:domain (keys color-domain-scale) :range (vals color-domain-scale)} :legend {:labelFontSize 14 :title nil}}
+                                 :color   {:field "field" :scale {:domain (keys color-domain-scale) :range (vals color-domain-scale)} :legend nil} ; :legend {:labelFontSize 14 :title nil}
                                  :tooltip [{:field "txt" :type "nominal" :title "Bond"}
                                            {:field "duration" :type "quantitative", :title "Duration"}
                                            {:field "spread" :type "quantitative", :title "Spread"}]}}]
@@ -245,7 +245,7 @@
                                   :y     {:field "predicted_spread_svr" :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
                                   :color {:field "Rating" :type "quantitative" :legend nil}}}])
                    )
-   :width  1000
+   :width  1150
    :height 500}
 
   )
