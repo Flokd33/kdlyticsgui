@@ -228,6 +228,7 @@
                                                     {:Header "CCY" :accessor "LocalCcy" :width 45}
                                                     {:Header "Notional" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
                                                     {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
+                                                    {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
                                                     {:Header "Counterparty" :accessor "counterparty_code" :width 90}
                                                     {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
                                                     {:Header "Region" :accessor "JPMRegion" :width 85}
