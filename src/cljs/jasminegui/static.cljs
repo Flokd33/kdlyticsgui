@@ -33,8 +33,8 @@
    ])
 
 (def trade-history-navigation
-  [{:code :single-portfolio          :name "Single Portfolio"}
-   {:code :recent-trades             :name "Recent Trades"}
+  [{:code :single-portfolio          :name "Single portfolio"}
+   {:code :recent-trades             :name "Recent trades"}
    ])
 
 (def attribution-navigation
@@ -112,7 +112,11 @@
    {:id :tr       :label "TR"          :portfolios ["AIFGLBCD" "OOGEMTRC"]}
    {:id :ig       :label "IG"          :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
    {:id :munichre :label "Munich Re"   :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
-   {:id :talanx   :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}])
+   {:id :talanx   :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
+   {:id :otheremcd :label "Other EMCD" :portfolios ["ITLXEMD4" "OGEMEMSD"]}
+   {:id :hcd :label "HCD" :portfolios ["OGEMHCD" "IUSSEMD"]}
+   {:id :dummies :label "Models" :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
+   ])
 
 (def risk-field-choices
   [
