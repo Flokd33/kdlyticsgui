@@ -98,6 +98,7 @@
                  ;trade history
                  :trade-history/active-bond                          nil
                  :trade-history/history                              nil
+                 :trade-history/active-home                         :single-portfolio
 
                  ;single-portfolio attribution
                  :single-portfolio-attribution/display-style         "Tree"
@@ -144,6 +145,9 @@
                  :portfolio-trade-history/end-date                   (tools/int-to-gdate (today))
                  :portfolio-trade-history/performance                "No"
                  :portfolio-trade-history/pivot                      "No"
+
+                 :recent-trade-data/trades                           []
+                 :recent-trade-data/date                             (tools/int-to-gdate 20211201)
 
                  :portfolio-review/portfolio                         "OGEMCORD"
                  :portfolio-review/active-tab                        :summary
@@ -295,6 +299,9 @@
            :portfolio-trade-history/performance
            :portfolio-trade-history/pivot
 
+           :recent-trade-data/trades
+           :recent-trade-data/date
+
            :portfolio-review/portfolio
            :portfolio-review/active-tab
            :portfolio-review/summary-data
@@ -315,6 +322,8 @@
            :esg/selected-pillars
            :esg/msci-scores
            :esg/summary-report
+
+           :trade-history/active-home
 
            :quant-model/calculator-spreads
            :quant-model/rating-curves

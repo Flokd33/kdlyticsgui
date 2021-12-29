@@ -401,22 +401,49 @@
         ]
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "multiple-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "pivot" download-columns is-tree)}
-                             [[h-box :gap "50px"
-                       :children
-                       [[v-box :gap "20px"
-                         :children [[h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %])  (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
-                                    [checkbox :model hide-zero-risk :label "Hide zero lines?"  :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])] ;:disabled? (= @display-style "Tree")
-                                    [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]]]
-                        [v-box :gap "10px"
-                         :children (concat [[title :label "Portfolios:" :level :level3]
-                                            [button :style {:width "100%"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
-                                            [button :style {:width "100%"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]
-                                           (into [] (for [line static/portfolio-alignment-groups]
-                                                      [button :style {:width "100%"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups))))])])))]
-                        [selection-list :width dropdown-width :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]
-                        [v-box :gap "20px"
-                         :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]]]]]
+                             [[h-box :gap "50px" :align :center
+                               :children
+                                         [
+                                          [h-box :gap "5px" :align :center :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %])  (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
+                                          [checkbox :model hide-zero-risk :label "Hide zero lines?"  :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]
+                                          [h-box :gap "5px" :align :center :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]
+                                          [h-box :gap "5px" :align :center :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]
+                                          ;[v-box :gap "20px"
+                                          ; :children [
+                                          ;             ;:disabled? (= @display-style "Tree")
+                                          ;            ]]
+                                          ;[v-box :gap "10px"
+                                          ; :children (concat [[title :label "Portfolios:" :level :level3]
+                                          ;                    [button :style {:width "100%"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
+                                          ;                    [button :style {:width "100%"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]
+                                          ;                   (into [] (for [line static/portfolio-alignment-groups]
+                                          ;                              [button :style {:width "100%"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups))))])])))]
+                                          ;[selection-list :width dropdown-width :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]
+                                          ;[v-box :gap "20px"
+                                          ; :children []]
+
+                                          ]]
                       ;[multiple-portfolio-risk-display]
+                      ;        [v-box :gap "5px" :children
+                      ;         (into []
+                      ;               (for [line static/portfolio-alignment-groups]
+                      ;                 [h-box :gap "10px" :children
+                      ;                  (into [[button :style {:width "150px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups))))])]]
+                      ;                        (for [portfolio (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                      ;                          [radio-button :model nil :value nil :label portfolio]
+                      ;                          ))]))]
+
+                              [h-box :gap "5px" :children
+                               (into [[title :label "Portfolios:" :level :level3]
+                                      [gap :size "20px"]
+                                      [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
+                                                                   [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]
+                                                                   ]]]
+                                     (for [line static/portfolio-alignment-groups]
+                                          (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                                            [v-box :gap "2px" :children
+                                             [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                                              [selection-list :width dropdown-width :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
                       (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
                             width-one 80
                             risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))

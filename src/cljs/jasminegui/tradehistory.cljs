@@ -59,6 +59,13 @@
      :http-get-dispatch {:url          (str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
                          :dispatch-key [:portfolio-trade-history/data]}}))
 
+(rf/reg-event-fx
+  :get-recent-trade-data
+  (fn [{:keys [db]} [_ date]]
+    {:db (assoc db :recent-trade-data/trades [])
+     :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date=" date)
+                         :dispatch-key [:recent-trade-data/trades]}}))
+
 (rf/reg-event-db
   :single-bond-trade-history/data
   (fn [db [_ data]]
@@ -76,10 +83,6 @@
   (fn [db [_ data]]
     (assoc db :portfolio-trade-history/data data
               :single-bond-trade-history/show-throbber false)))
-
-
-
-
 
 (defn subs10 [this]
   (r/as-element (if-let [x (aget this "value")] [:div (subs x 0 10)] "-")))
@@ -215,28 +218,30 @@
        (if (= pivot "No")
          [:> ReactTable
           {:data                data
-           :columns             (concat [{:Header "Date" :accessor "TradeDate" :width 90 :Cell subs10}
-                                         {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 90 :style {:textAlign "center"}}
-                                         {:Header "Type" :accessor "TransactionTypeName" :width 90}
-                                         ;{:Header "Instrument" :accessor "IssueName" :width 400}
-                                         {:Header "Instrument" :accessor "NAME" :width 180}
-                                         {:Header "ISIN" :accessor "ISIN" :width 105}
-                                         {:Header "CCY" :accessor "LocalCcy" :width 50}
-                                         {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
-                                         {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
-                                         {:Header "Vs NAV(*)" :accessor "bps" :width 65 :getProps tables/red-negatives :Cell tables/zspread-format}
-                                         {:Header "Counterparty" :accessor "counterparty_code" :width 90}
-                                         {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
-                                         {:Header "Region" :accessor "JPMRegion" :width 85}
-                                         {:Header "Sector" :accessor "JPM_SECTOR" :width 105}
-                                         {:Header "Rating(*)" :accessor "Used_Rating_Score" :width 65 :Cell tables/low-level-rating-score-to-string}
-                                         ;{:Header "First settle date" :accessor "FIRST_SETTLE_DT" :width 105}
-
-                                         ]
+           :columns             (concat [{:Header  "Trade"
+                                          :columns [{:Header "Date" :accessor "TradeDate" :width 75 :Cell subs10}
+                                                    {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
+                                                    {:Header "Type" :accessor "TransactionTypeName" :width 75}
+                                                    ;{:Header "Instrument" :accessor "IssueName" :width 400}
+                                                    {:Header "Instrument" :accessor "NAME" :width 180}
+                                                    {:Header "ISIN" :accessor "ISIN" :width 100}
+                                                    {:Header "CCY" :accessor "LocalCcy" :width 45}
+                                                    {:Header "Notional" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
+                                                    {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
+                                                    {:Header "Counterparty" :accessor "counterparty_code" :width 90}
+                                                    {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
+                                                    {:Header "Region" :accessor "JPMRegion" :width 85}
+                                                    {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
+                                                    {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :Cell tables/low-level-rating-score-to-string}
+                                                    ]
+                                          }]
                                         (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
-                                          (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
-                                                (for [[h a] [["Total return" "total-return"] ["TR vs CEMBI" "tr-vs-cembi"] ["TR vs CEMBIIG" "tr-vs-cembiig"] ["TR vs EMBI" "tr-vs-embi"] ["TR vs EMBIIG" "tr-vs-embiig"]]]
-                                                  {:Header h :accessor a :width 90 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))))
+                                          [{:Header "Total return" :columns
+                                                    (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
+                                                          (for [[h a] [["Gross" "total-return"] ["CEMBI" "tr-vs-cembi"] ["CEMBIIG" "tr-vs-cembiig"] ["EMBI" "tr-vs-embi"] ["EMBIIG" "tr-vs-embiig"]]]
+                                                            {:Header h :accessor a :width 70 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))}])
+                                        )
+
            :showPagination      (> (count data) 50)
            :defaultPageSize     (min 50 (count data))
            :pivotBy             []
@@ -266,12 +271,24 @@
 
          )])))
 
+(defn nav-trade-history-bar []
+  "Create the sidebar"
+  (let [active-trade-history @(rf/subscribe [:trade-history/active-home])]
+    [h-box
+     :children [[v-box
+                 :gap "20px" :class "leftnavbar"
+                 :children (into []
+                                 (for [item static/trade-history-navigation]
+                                   [button
+                                    :class (str "btn btn-primary btn-block" (if (and (= active-trade-history (:code item))) " active"))
+                                    :label (:name item)
+                                    :on-click #(rf/dispatch [:trade-history/active-home (:code item)])]))]]]))
 
 (defn trade-history []
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
         start-date (rf/subscribe [:portfolio-trade-history/start-date])
         end-date (rf/subscribe [:portfolio-trade-history/end-date])]
-    [box :class "subbody" :child
+    [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Trade history for " @portfolio) :level :level1]
                  [h-box :gap "50px"
@@ -314,3 +331,90 @@
                  [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]
 
                  ]]]))
+
+(defn recent-trades-display [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [v-box :children (into [] (for [t x]
+                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (last t))) "bps")]
+                                  ))]
+      "-"))
+  )
+
+(defn recent-trades-display-date [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [p (str (subs x 0 10))]))
+  )
+
+(defn portfolio-history-table-recent []
+  (let [data (map #(select-keys % (conj @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) :date)) @(rf/subscribe [:recent-trade-data/trades]))
+        filter-fn (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
+    clean-data (filter filter-fn data)]
+      [box :align :center
+       :child
+         [:> ReactTable
+          {:data      (reverse clean-data)                  ;latest first
+           :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                            (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+                                     (for [p @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
+                                       {:Header p :accessor p :Cell recent-trades-display :width 200})))
+           :className "-striped -highlight"}]]))
+
+
+;(defn portfolio-history-table-recent []
+;  (let [data @(rf/subscribe [:recent-trade-data/trades])]
+;    [box :align :center
+;     :child
+;     [:> ReactTable
+;      {:data      data
+;       :columns   (into [{:Header "Date" :accessor "date"  :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+;                        (for [p @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
+;                          {:Header p :accessor p :Cell recent-trades-display :width 200})
+;                        )
+;       :className "-striped -highlight"}]
+;     ]
+;    ))
+
+(defn trade-history-recent []
+  "Create the inputs in the body + add the output table at the end"
+  (let [portfolios @(rf/subscribe [:portfolios])
+        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
+        start-date (rf/subscribe [:recent-trade-data/date])
+        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
+
+    [box :class "subbody rightelement" :child
+     [v-box :class "element" :gap "20px" :align :start
+      :children [[title :label (str "Recent trade history") :level :level1]
+                 [h-box :gap "5px"  :children
+                  (into [[title :label "Portfolios:" :level :level3]
+                         [gap :size "20px"]
+                         [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
+                                                      [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]]]
+                        (for [line static/portfolio-alignment-groups]
+                          (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                            [v-box :gap "2px" :children
+                             [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                              [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
+                 [h-box :align :center :gap "20px" :children [[title :label "From" :level :level3]
+                                                              [datepicker-dropdown
+                                                               :model start-date
+                                                               :minimum (tools/int-to-gdate 20210101)
+                                                               :maximum (today)
+                                                               :format "DD/MM/YYYY" :show-today? true :on-change #(do (rf/dispatch [:get-recent-trade-data []]) (rf/dispatch [:recent-trade-data/date %]))]
+                                                              [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-recent-trade-data @start-date])]]]
+                 [portfolio-history-table-recent]]]]))
+
+(defn active-home []
+  "Create the body with trade-history"
+  (.scrollTo js/window 0 0)                             ;on view change we go back to top
+  (case @(rf/subscribe [:trade-history/active-home])
+    :single-portfolio [trade-history]
+    :recent-trades [trade-history-recent]
+    [:div.output "nothing to display"]))
+
+(defn trade-history-view []
+  "Create the full view with sidebar and body"
+  [h-box :gap "10px" :padding "0px" :children [[nav-trade-history-bar] [active-home]]])
+
