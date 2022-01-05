@@ -14,8 +14,8 @@
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events var-events [:get-large-exposures]) :mounting-modal true} ;var-events
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
    {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events quant-events :mounting-modal true}
-   {:code :scorecard :name "Scorecard" :dispatch :scorecard :subs nil :load-events (concat [:get-attribution-date [:get-scorecard-attribution "OGEMCORD"]] quant-events home-events) :mounting-modal true}
-   {:code :esg :name "ESG" :dispatch :esg :subs nil :load-events (concat home-events [:get-refinitiv-ids :get-refinitiv-structure :get-msci-scores])}
+   {:code :scorecard        :name "Scorecard"         :dispatch :scorecard        :subs nil :load-events (concat [:get-attribution-date [:get-scorecard-attribution "OGEMCORD"]] quant-events home-events) :mounting-modal true}
+   {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-refinitiv-ids :get-refinitiv-structure :get-msci-scores])}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}]))
 
@@ -33,8 +33,8 @@
    ])
 
 (def trade-history-navigation
-  [{:code :single-portfolio          :name "Single portfolio"}
-   {:code :recent-trades             :name "Recent trades"}
+  [{:code :single-portfolio   :name "Single portfolio"}
+   {:code :recent-trades      :name "Recent trades"}
    ])
 
 (def attribution-navigation
@@ -48,22 +48,23 @@
    {:code :proxies             :name "Proxies"}])
 
 (def qs-navigation
-  [{:code :table              :name "Table"}
-   {:code :calculator         :name "Calculator"}
-   {:code :spot-charts        :name "Spot charts"}
-   {:code :advanced-spot-charts        :name "Advanced spot charts"}
-   {:code :historical-charts  :name "Historical charts"}
-   {:code :top-bottom         :name "Most expensive / cheap"}
-   {:code :median             :name "Median spreads"}
-   {:code :trade-finder       :name "Trade finder"}
-   {:code :universe-des       :name "Universe overview"}
-   {:code :universe-harvest   :name "Universe harvest"}
-   {:code :index-crawler      :name "Index crawler"}
-   {:code :add-bonds          :name "Add bonds"}
-   {:code :methodology        :name "Methodology"}
-   {:code :issuer-coverage    :name "Issuer coverage"}
-   {:code :model-portfolios   :name "Model portfolios (WIP)"}
-   {:code :score-vs-outlook2   :name "Up/down candidates"}
+  [{:code :table                :name "Table"}
+   {:code :calculator           :name "Calculator"}
+   {:code :spot-charts          :name "Spot charts"}
+   {:code :advanced-spot-charts :name "Advanced spot charts"}
+   {:code :historical-charts    :name "Historical charts"}
+   {:code :top-bottom           :name "Most expensive / cheap"}
+   {:code :median               :name "Median spreads"}
+   {:code :histograms           :name "Histograms"}
+   {:code :trade-finder         :name "Trade finder"}
+   {:code :universe-des         :name "Universe overview"}
+   {:code :universe-harvest     :name "Universe harvest"}
+   {:code :index-crawler        :name "Index crawler"}
+   {:code :add-bonds            :name "Add bonds"}
+   {:code :methodology          :name "Methodology"}
+   {:code :issuer-coverage      :name "Issuer coverage"}
+   {:code :model-portfolios     :name "Model portfolios (WIP)"}
+   {:code :score-vs-outlook2    :name "Up/down candidates"}
    ])
 
 (def esg-navigation
@@ -102,38 +103,38 @@
 
 (def scorecard-navigation
   [{:code :risk             :name "Risk"}
-   {:code :ogemcord-perf             :name "OGEMCORD attribution"}
-   {:code :ogemigc-perf             :name "OGEMIGC attribution"}])
+   {:code :ogemcord-perf    :name "OGEMCORD attribution"}
+   {:code :ogemigc-perf     :name "OGEMIGC attribution"}])
 
 
 (def portfolio-alignment-groups
-  [{:id :cembi    :label "CEMBI"       :portfolios ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IEZVKEMD" "IMETEMCD" "IKZVKEMD"]}
-   {:id :allianz  :label "Allianz"     :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-   {:id :tr       :label "TR"          :portfolios ["AIFGLBCD" "OOGEMTRC"]}
-   {:id :ig       :label "IG"          :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
-   {:id :munichre :label "Munich Re"   :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
-   {:id :talanx   :label "Talanx USD"  :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
-   {:id :otheremcd :label "Other EMCD" :portfolios ["ITLXEMD4" "OGEMEMSD"]}
-   {:id :hcd :label "HCD" :portfolios ["OGEMHCD" "IUSSEMD"]}
-   {:id :dummies :label "Models" :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
+  [{:id :cembi      :label "CEMBI"      :portfolios ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IEZVKEMD" "IMETEMCD" "IKZVKEMD"]}
+   {:id :allianz    :label "Allianz"    :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
+   {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC"]}
+   {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
+   {:id :munichre   :label "Munich Re"  :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
+   {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
+   {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGEMEMSD" "OGADB"]}
+   {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD"]}
+   {:id :dummies    :label "Models"     :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
    ])
 
 ;{:id "None"            :label "None"}
 (def risk-field-choices
-  [{:id :nav :label "NAV"}
-   {:id :weight-delta :label "NAV delta"}
-   {:id :contrib-mdur :label "M dur contribution"}
-   {:id :mdur-delta :label "M dur delta"}
-   {:id :value :label "Value"}
-   {:id :nominal :label "Nominal"}
-   {:id :contrib-yield :label "Yield contribution"}
-   {:id :contrib-zspread :label "Z-spread contribution"}
-   {:id :contrib-gspread :label "G-spread contribution"}
-   {:id :contrib-beta :label "EMCD Beta"}
-   {:id :contrib-BBG_CEMBI_D1Y_BETA :label "Bbg Beta"}
+  [{:id :nav                              :label "NAV"}
+   {:id :weight-delta                     :label "NAV delta"}
+   {:id :contrib-mdur                     :label "M dur contribution"}
+   {:id :mdur-delta                       :label "M dur delta"}
+   {:id :value                            :label "Value"}
+   {:id :nominal                          :label "Nominal"}
+   {:id :contrib-yield                    :label "Yield contribution"}
+   {:id :contrib-zspread                  :label "Z-spread contribution"}
+   {:id :contrib-gspread                  :label "G-spread contribution"}
+   {:id :contrib-beta                     :label "EMCD Beta"}
+   {:id :contrib-BBG_CEMBI_D1Y_BETA       :label "Bbg Beta"}
    {:id :contrib-delta-BBG_CEMBI_D1Y_BETA :label "Bbg Beta delta"}
-   {:id :quant-value-4d :label "Quant value 4D"}
-   {:id :quant-value-2d :label "Quant value 2D"}])
+   {:id :quant-value-4d                   :label "Quant value 4D"}
+   {:id :quant-value-2d                   :label "Quant value 2D"}])
 
 (def attribution-field-choices
   [
@@ -179,18 +180,18 @@
 
 (def ta-strategy-choices
   (into {} (for [line
-                 [{:id "Growth risk on" :label "Growth risk on" :group "Top down" :shortcut "TD growth"}
-                  {:id "Duration risk on" :label "Duration risk on" :group "Top down" :shortcut "TD duration"}
-                  {:id "Risk off" :label "Risk off" :group "Top down" :shortcut "TD risk off"}
-                  {:id "Long end technical bid" :label "Long end technical bid" :group "Top down" :shortcut "TD lifers"}
-                  {:id "Momentum" :label "Momentum" :group "Bottom up" :shortcut "BU momentum"}
-                  {:id "Value high conviction" :label "Value high conviction" :group "Bottom up" :shortcut "BU HC"}
-                  {:id "Value relative" :label "Value relative" :group "Bottom up" :shortcut "BU relval"}
-                  {:id "Value low conviction" :label "Value low conviction" :group "Bottom up" :shortcut "BU LC"}
-                  {:id "Market perform" :label "Market perform" :group "Available for sale" :shortcut "FS MP"}
-                  {:id "Cash proxy" :label "Cash proxy" :group "Available for sale" :shortcut "FS cash"}
-                  {:id "Keen to sell" :label "Keen to sell" :group "Available for sale" :shortcut "FS keen"}
-                  {:id "Active exit" :label "Active exit" :group "Available for sale" :shortcut "FS exit"}
-                  {:id "Hedging" :label "Hedging" :group "Other" :shortcut "Oth hedge"}
-                  {:id "Event driven" :label "Event driven" :group "Other" :shortcut "Oth event"}
+                 [{:id "Growth risk on"           :label "Growth risk on"         :group "Top down"           :shortcut "TD growth"}
+                  {:id "Duration risk on"         :label "Duration risk on"       :group "Top down"           :shortcut "TD duration"}
+                  {:id "Risk off"                 :label "Risk off"               :group "Top down"           :shortcut "TD risk off"}
+                  {:id "Long end technical bid"   :label "Long end technical bid" :group "Top down"           :shortcut "TD lifers"}
+                  {:id "Momentum"                 :label "Momentum"               :group "Bottom up"          :shortcut "BU momentum"}
+                  {:id "Value high conviction"    :label "Value high conviction"  :group "Bottom up"          :shortcut "BU HC"}
+                  {:id "Value relative"           :label "Value relative"         :group "Bottom up"          :shortcut "BU relval"}
+                  {:id "Value low conviction"     :label "Value low conviction"   :group "Bottom up"          :shortcut "BU LC"}
+                  {:id "Market perform"           :label "Market perform"         :group "Available for sale" :shortcut "FS MP"}
+                  {:id "Cash proxy"               :label "Cash proxy"             :group "Available for sale" :shortcut "FS cash"}
+                  {:id "Keen to sell"             :label "Keen to sell"           :group "Available for sale" :shortcut "FS keen"}
+                  {:id "Active exit"              :label "Active exit"            :group "Available for sale" :shortcut "FS exit"}
+                  {:id "Hedging"                  :label "Hedging"                :group "Other"              :shortcut "Oth hedge"}
+                  {:id "Event driven"             :label "Event driven"           :group "Other"              :shortcut "Oth event"}
                   ]] [(line :id) (line :shortcut)])))

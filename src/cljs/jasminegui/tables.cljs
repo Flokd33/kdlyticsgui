@@ -231,6 +231,7 @@
      :maturity-band                    (text-col "Maturity" "qt-final-maturity-band" 120)
      :rating                           {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}
      :rating-score                     {:Header "Rating" :accessor "qt-iam-int-lt-median-rating-score" :Cell rating-score-to-string :aggregate first}
+     :financial-seniority              (text-col "Style" "financial-seniority" 120)
      :name                             (text-col "Name" "NAME" 120)
      :isin                             (text-col "ISIN" "isin" 110)
 

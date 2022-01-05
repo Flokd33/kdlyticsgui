@@ -276,8 +276,7 @@
 (rf/reg-sub
   :scorecard-risk/tree
   (fn [db]
-    (let [                                                  ;viewable-positions (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db)} (:positions db))
-          viewable-positions (into [] (comp
+    (let [viewable-positions (into [] (comp
                                         (map #(update % :weight * 100.))
                                         (map #(update % :bm-weight * 100.))
                                         (map #(update % :weight-delta * 100.))
@@ -377,11 +376,14 @@
 ;  (rf/dispatch [:get-scorecard-trade-analyser (map :isin @(rf/subscribe [:scorecard-risk/table]))]))
 
 (def expander (r/atom {0 {}}))
+(def expander-fins (r/atom {0 {}}))
+(def fins-pivot-filter (r/atom []))
 
 (defn risk-view []
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
-        vdisplay @(rf/subscribe [:scorecard-risk/table])]
+        vdisplay @(rf/subscribe [:scorecard-risk/table])
+        filtered-tree (tables/cljs-text-filter-OR @fins-pivot-filter @(rf/subscribe [:scorecard-risk/tree]))]
     [v-box :gap "20px" :align :start
      :children [[h-box :class "element" :gap "20px" :align :center
                  :children [[box :child [title :level :level1 :label "Portfolio and sector selection"]]
@@ -429,6 +431,34 @@
                                    :pivotBy        [:qt-jpm-sector :qt-risk-country-name]
                                    :expanded       @expander :onExpandedChange #(reset! expander %)
                                    :sorted         [{:id :bm-weight :desc true}]}]])
+                (if (= sector "Financial")
+                  (gt/element-box "scorecard-risk-pivot" "100%" (str portfolio " " sector " risk country pivot") filtered-tree
+                                  [[:> ReactTable
+                                    {:data           filtered-tree
+                                     :columns        [{:Header "Bond" :columns [(assoc (:sector tables/risk-table-columns) :filterable false)
+                                                                                (assoc (:financial-seniority tables/risk-table-columns) :filterable true)
+                                                                                (assoc (:country tables/risk-table-columns) :filterable true :filterMethod)
+                                                                                (assoc (:name tables/risk-table-columns) :Header "NAV" :width 150 :filterable false)
+                                                                                (assoc (:rating tables/risk-table-columns) :Header "silent")
+                                                                                (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]}
+                                                      {:Header "NAV" :columns (map #(assoc % :getProps tables/red-negatives :filterable false) (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta]))}
+                                                      {:Header "Duration" :columns (map #(assoc % :getProps tables/red-negatives) (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta]))}
+                                                      {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
+                                                      {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
+                                                      {:Header "Beta (Bbg vs CEMBIBD)" :columns (mapv #(assoc % :filterable false)
+                                                                                                      [(tables/risk-table-columns :contrib-beta)
+                                                                                                       (tables/risk-table-columns :contrib-BBG_CEMBI_D1Y_BETA)
+                                                                                                       (tables/risk-table-columns :bm-contrib-BBG_CEMBI_D1Y_BETA)
+                                                                                                       (tables/risk-table-columns :contrib-delta-BBG_CEMBI_D1Y_BETA)])}
+                                                      {:Header "Quant model" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:quant-value-4d :quant-value-2d]))}]
+                                     :showPagination false :sortable true :pageSize 2 :showPageSizeOptions false :className "-striped -highlight"
+                                     :pivotBy        [:qt-jpm-sector :financial-seniority :qt-risk-country-name]
+                                     :filterable      true :defaultFilterMethod (fn [filterfn row] true)
+                                     :onFilteredChange #(reset! fins-pivot-filter %)
+                                     :expanded       @expander-fins :onExpandedChange #(reset! expander-fins %)
+                                     :sorted         [{:id :bm-weight :desc true}]}]])
+                  [gap :size "1px"]
+                  )
                 (gt/element-box "scorecard-risk-chart" "100%" (str portfolio " " sector " bonds held") (filter #(contains? (set (map :isin vdisplay)) (:ISIN %)) @(rf/subscribe [:quant-model/model-output]))
                                 [[oz/vega-lite (spot-chart-vega-spec (set (map :isin vdisplay)))]])
                 (let [data (compress-data @(rf/subscribe [:scorecard/attribution-table]) sector)]

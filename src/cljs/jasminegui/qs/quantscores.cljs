@@ -461,6 +461,11 @@
            :getTrProps     on-click-context :className "-striped -highlight"}]
          ]]]]]))
 
+(defn histograms []
+  nil
+
+  )
+
 (defn methodology []
   [box :padding "80px 10px" :class "rightelement" :child
    [v-box :class "element" :children
@@ -699,6 +704,7 @@
       :historical-charts  [qs-historical-charts]
       :top-bottom         [harvest/top-bottom]
       :median             [harvest/median-table]
+      :histograms         [histograms]
       :trade-finder       [trade-finder]
       :universe-des       [harvest/universe-overview]
       :universe-harvest   [harvest/universe-harvest]
