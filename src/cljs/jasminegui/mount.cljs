@@ -147,7 +147,8 @@
                  :portfolio-trade-history/pivot                      "No"
 
                  :recent-trade-data/trades                           []
-                 :recent-trade-data/date                             (tools/int-to-gdate 20211201)
+                 :recent-trade-data/date-from                         (tools/int-to-gdate 20211201)
+                 :recent-trade-data/date-to                           (tools/int-to-gdate (today))
 
                  :portfolio-review/portfolio                         "OGEMCORD"
                  :portfolio-review/active-tab                        :summary
@@ -300,7 +301,8 @@
            :portfolio-trade-history/pivot
 
            :recent-trade-data/trades
-           :recent-trade-data/date
+           :recent-trade-data/date-from
+           :recent-trade-data/date-to
 
            :portfolio-review/portfolio
            :portfolio-review/active-tab
