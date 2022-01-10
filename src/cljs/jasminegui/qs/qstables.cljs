@@ -95,7 +95,7 @@
    :us-agg                              {:Header "US agg" :accessor "us-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :global-agg                          {:Header "Glb agg" :accessor "global-agg" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :jaci                                {:Header "JACI" :accessor "jaci" :width 55 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0 :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :CRNCY                               {:Header "Currency" :accessor "CRNCY" :width 65}
+   :CRNCY                               {:Header "CCY" :accessor "CRNCY" :width 40}
    :Bond-sticky                         {:Header "Bond" :accessor "Bond" :width 130 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}
    :Used_Price                          {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :Rating_String                       {:Header "Rating (S/F/M)" :accessor "Rating_String" :width 110 :filterable true :filterMethod tables/nb-filter-OR-AND-x100}
@@ -270,36 +270,36 @@
 
    ;:model-weight                        {:Header "Weight" :accessor "model-weight" :width 65 :Cell model-weight-input-cell :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :CEMBI-model                         {:Header "Main" :accessor "CEMBI-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
-   :Allianz-model                         {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell tables/round2-if-not0  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
-   :IG-model                         {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-not0  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
-   :BNP-model                         {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
-   :TR-model                         {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-not0  :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :Allianz-model                       {:Header "Allianz" :accessor "Allianz-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :IG-model                            {:Header "IG" :accessor "IG-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :BNP-model                           {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :TR-model                            {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
 
-   :CEMBI-model-objective                         {:Header "Main" :accessor "CEMBI-model-objective" :width 65 :show false}
-   :Allianz-model-objective                         {:Header "Allianz" :accessor "Allianz-model-objective" :width 65 :show false}
-   :IG-model-objective                         {:Header "IG" :accessor "IG-model-objective" :width 65 :show false}
-   :BNP-model-objective                         {:Header "BNP" :accessor "BNP-model-objective" :width 65 :show false}
-   :TR-model-objective                         {:Header "TR" :accessor "TR-model-objective" :width 65 :show false}
+   :CEMBI-model-objective               {:Header "Main" :accessor "CEMBI-model-objective" :width 65 :show false}
+   :Allianz-model-objective             {:Header "Allianz" :accessor "Allianz-model-objective" :width 65 :show false}
+   :IG-model-objective                  {:Header "IG" :accessor "IG-model-objective" :width 65 :show false}
+   :BNP-model-objective                 {:Header "BNP" :accessor "BNP-model-objective" :width 65 :show false}
+   :TR-model-objective                  {:Header "TR" :accessor "TR-model-objective" :width 65 :show false}
 
-   :CEMBI-model-dur       {:Header "Main" :accessor "CEMBI-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :CEMBI-model-dur-x-sp  {:Header "Main" :accessor "CEMBI-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :IG-model-dur       {:Header "IG" :accessor "IG-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :IG-model-dur-x-sp  {:Header "IG" :accessor "IG-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :TR-model-dur       {:Header "TR" :accessor "TR-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :TR-model-dur-x-sp  {:Header "TR" :accessor "TR-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :cembi-dur       {:Header "CEMBI" :accessor "cembi-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :cembi-dur-x-sp  {:Header "CEMBI" :accessor "cembi-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :cembi-ig-dur       {:Header "CEMBI IG" :accessor "cembi-ig-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
-   :cembi-ig-dur-x-sp  {:Header "CEMBI IG" :accessor "cembi-ig-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :CEMBI-model-dur                     {:Header "Main" :accessor "CEMBI-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :CEMBI-model-dur-x-sp                {:Header "Main" :accessor "CEMBI-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :IG-model-dur                        {:Header "IG" :accessor "IG-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :IG-model-dur-x-sp                   {:Header "IG" :accessor "IG-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :TR-model-dur                        {:Header "TR" :accessor "TR-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :TR-model-dur-x-sp                   {:Header "TR" :accessor "TR-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-dur                           {:Header "CEMBI" :accessor "cembi-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-dur-x-sp                      {:Header "CEMBI" :accessor "cembi-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-ig-dur                        {:Header "CEMBI IG" :accessor "cembi-ig-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
+   :cembi-ig-dur-x-sp                   {:Header "CEMBI IG" :accessor "cembi-ig-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
 
-   :RTG_SP_OUTLOOK             {:Header "S&P" :accessor "RTG_SP_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :RTG_FITCH_OUTLOOK             {:Header "Fitch" :accessor "RTG_FITCH_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :RTG_MDY_OUTLOOK             {:Header "Moody's" :accessor "RTG_MDY_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :RTG_SP_OUTLOOK                      {:Header "S&P" :accessor "RTG_SP_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :RTG_FITCH_OUTLOOK                   {:Header "Fitch" :accessor "RTG_FITCH_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :RTG_MDY_OUTLOOK                     {:Header "Moody's" :accessor "RTG_MDY_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :n91held             {:Header "Held?" :accessor "n91held" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show false}
+   :n91held                             {:Header "Held?" :accessor "n91held" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show false}
 
-   :BBG_CEMBI_D1Y_BETA {:Header "vs CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 60 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
-   :totaldummy   {:Header " " :accessor "totaldummy" :width 30}
+   :BBG_CEMBI_D1Y_BETA                  {:Header "vs CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 60 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
+   :totaldummy                          {:Header " " :accessor "totaldummy" :width 30}
    })
 
 
@@ -386,7 +386,7 @@
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d])}])
       "Advanced spot charts"
-      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :Ticker :CRNCY :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :AMT_OUTSTANDING_3 :COUPON])}]
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :Ticker :CRNCY :Country :Sector :SENIOR-WIDE :BASEL_III_DESIGNATION :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :AMT_OUTSTANDING_3 :COUPON])}]
               [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg])}]
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :difference_svr_2_2d])}])

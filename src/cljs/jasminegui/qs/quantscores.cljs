@@ -461,10 +461,39 @@
            :getTrProps     on-click-context :className "-striped -highlight"}]
          ]]]]]))
 
-(defn histograms []
-  nil
+(def histogram-target (atom "ytd-return"))
 
-  )
+(def all-histogram-targets
+  (let [rename (fn [grp-name line] (assoc (clojure.set/rename-keys line {:Header :label :accessor :id}) :group grp-name))]
+    (concat
+      (map (partial rename "Performance") (map qstables/quant-score-table-columns [:ytd-return :ytd-z-delta]))
+      (map (partial rename "Valuation") (map qstables/quant-score-table-columns [:difference_svr_2 :difference_svr_2_2d]))
+      (map (partial rename "Pricing") (map qstables/quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])))))
+
+(def histogram-exclude-outliers (atom "10"))
+
+(defn histograms []
+  (let [data @(rf/subscribe [:quant-model/model-output])]
+    [box :padding "80px 10px" :class "rightelement" :child
+     [v-box :class "element" :gap "20px" :width "1620px" :children
+      [[title :label "Histograms" :level :level1]
+       [title :level :level4 :label "Select target measure, filter table then click draw to see the distribution of results." ]
+       [h-box :gap "10px" :children [[title :level :level3 :label "Target:"]
+                                     [single-dropdown :width "150px" :model histogram-target :choices all-histogram-targets :filter-box? true :on-change #(do (reset! advanced-spot-chart-isins []) (reset! histogram-target %))]
+                                     [title :level :level3 :label "Exclude top/bottom X% outliers:"]
+                                     [single-dropdown :width "75px" :model histogram-exclude-outliers :choices [{:id "10" :label "10%"} {:id "5" :label "5%"} {:id "0" :label "No"}] :on-change #(do (reset! advanced-spot-chart-isins []) (reset! histogram-exclude-outliers %))]
+                                     [button :class "btn btn-primary btn-block" :label "Draw" :on-click #(reset! advanced-spot-chart-isins (js->clj (if @advanced-spot-chart-view (.map (. (.getResolvedState @advanced-spot-chart-view) -sortedData) (fn [e] (aget e "_original" "ISIN"))))))]]]
+       [:> ReactTable
+        {:data           data :columns (qstables/table-style->qs-table-col "Advanced spot charts" nil)
+         :showPagination true :pageSize 15 :showPageSizeOptions false
+         :filterable     true :defaultFilterMethod tables/text-filter-OR :onFilteredChange #(do (reset! advanced-spot-chart-isins []) (reset! advanced-chart-filter %)) :defaultFiltered @reagent-chart-filter
+         :ref            #(do (reset! advanced-spot-chart-view %) ;we're going to go through here TWICE first time likely with empty stuff. THIS IS TRICKY
+                              (when @open-update
+                                (reset! advanced-spot-chart-isins (js->clj (if % (.map (. (.getResolvedState %) -sortedData) (fn [e] (aget e "_original" "ISIN"))))))
+                                (if % (reset! open-update false))))
+         :getTrProps     on-click-context :className "-striped -highlight"}]
+       [oz/vega-lite (qscharts/histogram-chart-vega-spec @advanced-spot-chart-isins @histogram-target (:label (first (t/chainfilter {:id @histogram-target} all-histogram-targets))) @histogram-exclude-outliers)]
+       ]]]))
 
 (defn methodology []
   [box :padding "80px 10px" :class "rightelement" :child

@@ -124,6 +124,34 @@
      :width  1000
      :height 625}))
 
+;"selection": {
+;              "series": {
+;                         "type": "multi",
+;                               "encodings": ["color"],
+;                         "on": "click",
+;                               "bind": "legend"
+;                         }
+
+(defn histogram-chart-vega-spec [isins target target-label exclude-outliers]
+  (let [bonds (filter #(contains? (set isins) (:ISIN %)) @(rf/subscribe [:quant-model/model-output]))
+        ktarget (keyword target)
+        bond-data (sort-by ktarget (filter #(some? (% ktarget)) (map #(select-keys % [:Bond ktarget]) bonds)))
+        nbonds (count bond-data)
+        ntail (int (* nbonds (/ exclude-outliers 100.)))
+        cut-bond-data (if (zero? nbonds) bond-data (drop ntail (drop-last ntail bond-data)))
+        decimals (if (some #{target} ["ytd-return" "Used_YTW" "Used_Duration"]) ".2f" ".0f")]
+    {:title  target-label
+     :data   {:values cut-bond-data}
+     :layer  [
+              {:mark      {:type "bar"}                      ;:tooltip {:content "bin_maxbins_20_ytd_return"}
+               :encoding  {:x       {:bin {:maxbins 20} :field target :type "quantitative" :axis {:title nil :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format decimals}} ;:scale {:domain [0. 30.]}
+                           :y       {:aggregate "count" :axis {:title nil :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                           :color   {:value "#134848"}};:tooltip [{:field "datum.bin_maxbins_20_ytd_return"}]
+               ;:selection {:series {:type "single" :on "click" :bind #(println %)}}
+               }]
+     :width  1000
+     :height 625}))
+
 (defn quant-isin-history-chart [cheapness? spread? universe? historical? rating?]
   (let [data @(rf/subscribe [:quant-model/isin-history])]
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
