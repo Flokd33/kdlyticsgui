@@ -9,7 +9,7 @@
         quant-events [:get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts] ;:get-quant-rating-curves :get-quant-rating-curves-sov-only
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
-   {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil}
+   {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil :load-events [:get-country-codes :get-jpm-sectors :get-model-portfolios :get-quant-model]}
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events attr-events}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events var-events [:get-large-exposures]) :mounting-modal true} ;var-events
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
@@ -34,6 +34,7 @@
 
 (def trade-history-navigation
   [{:code :single-portfolio   :name "Single portfolio"}
+   {:code :multiple-portfolio :name "Multiple portfolio"}
    {:code :recent-trades      :name "Recent trades"}
    ])
 

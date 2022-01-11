@@ -139,6 +139,7 @@
                  :single-bond-trade-history/show-modal               false
                  :single-bond-trade-history/show-flat-modal          false
                  :single-bond-trade-history/show-throbber            false
+
                  :portfolio-trade-history/data                       []
                  :portfolio-trade-history/portfolio                  "OGEMCORD"
                  :portfolio-trade-history/start-date                 (tools/int-to-gdate 20210101)
@@ -146,9 +147,16 @@
                  :portfolio-trade-history/performance                "No"
                  :portfolio-trade-history/pivot                      "No"
 
+                 :multiple-portfolio-trade-history/data               []
+                 :multiple-portfolio-trade-history/start-date         (tools/int-to-gdate 20210101)
+                 :multiple-portfolio-trade-history/end-date           (tools/int-to-gdate (today))
+                 :multiple-portfolio-trade-history/pivot              "No"
+
                  :recent-trade-data/trades                           []
                  :recent-trade-data/date-from                         (tools/int-to-gdate 20211201)
                  :recent-trade-data/date-to                           (tools/int-to-gdate (today))
+                 :recent-trade-data/sector                           ["All"]
+                 :recent-trade-data/country                          ["All"]
 
                  :portfolio-review/portfolio                         "OGEMCORD"
                  :portfolio-review/active-tab                        :summary
@@ -294,15 +302,22 @@
            :single-bond-trade-history/show-modal
            :single-bond-trade-history/bond
            :single-bond-trade-history/show-throbber
+
            :portfolio-trade-history/portfolio
            :portfolio-trade-history/start-date
            :portfolio-trade-history/end-date
            :portfolio-trade-history/performance
            :portfolio-trade-history/pivot
 
+           :multiple-portfolio-trade-history/start-date
+           :multiple-portfolio-trade-history/end-date
+           :multiple-portfolio-trade-history/pivot
+
            :recent-trade-data/trades
            :recent-trade-data/date-from
            :recent-trade-data/date-to
+           :recent-trade-data/country
+           :recent-trade-data/sector
 
            :portfolio-review/portfolio
            :portfolio-review/active-tab
