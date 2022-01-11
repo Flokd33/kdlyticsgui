@@ -60,6 +60,13 @@
                          :dispatch-key [:portfolio-trade-history/data]}}))
 
 (rf/reg-event-fx
+  :get-multiple-portfolio-trade-history
+  (fn [{:keys [db]} [_ start-date end-date]]
+    {:db (assoc db :multiple-portfolio-trade-history/data [])
+     :http-get-dispatch {:url          (str static/server-address "multiple-portfolio-trade-history?date-from=" start-date "&date-to=" end-date)
+                         :dispatch-key [:multiple-portfolio-trade-history/data]}}))
+
+(rf/reg-event-fx
   :get-recent-trade-data
   (fn [{:keys [db]} [_ date-from date-to]]
     {:db (assoc db :recent-trade-data/trades [])
@@ -322,7 +329,7 @@
   (r/as-element
     (if-let [x (aget this "value")]
       [v-box :children (into [] (for [t x]
-                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (last t))) "bps")]
+                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next t)) )) "bps")]
                                   ))]
       "-"))
   )
@@ -335,32 +342,26 @@
 
 (defn portfolio-history-table-recent []
   (let [data (map #(select-keys % (conj @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) :date)) @(rf/subscribe [:recent-trade-data/trades]))
-        filter-fn (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
-    clean-data (filter filter-fn data)]
-      [box :align :center
+        sector (rf/subscribe [:recent-trade-data/sector])
+        country (rf/subscribe [:recent-trade-data/country])
+        empty-filter (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
+        sector-filter (fn [row] (if (= @sector "All") true (= (last row) @sector)))
+        country-filter (fn [row] (if (= @country "All") true (= (first (drop 3 row)) @country)))
+        final-data (->> data
+                        (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter sector-filter v))])))
+                        (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter country-filter v))])))
+                        (filter empty-filter)
+                        )
+        ](println final-data)
+    [box :align :center
        :child
          [:> ReactTable
-          {:data      (reverse clean-data)                  ;latest first
+          {:data      (reverse final-data)                  ;latest first
            :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
                             (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
                                      (for [p @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
                                        {:Header p :accessor p :Cell recent-trades-display :width 200})))
            :className "-striped -highlight"}]]))
-
-
-;(defn portfolio-history-table-recent []
-;  (let [data @(rf/subscribe [:recent-trade-data/trades])]
-;    [box :align :center
-;     :child
-;     [:> ReactTable
-;      {:data      data
-;       :columns   (into [{:Header "Date" :accessor "date"  :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
-;                        (for [p @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
-;                          {:Header p :accessor p :Cell recent-trades-display :width 200})
-;                        )
-;       :className "-striped -highlight"}]
-;     ]
-;    ))
 
 (defn trade-history-recent []
   "Create the inputs in the body + add the output table at the end"
@@ -369,8 +370,13 @@
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         date-from (rf/subscribe [:recent-trade-data/date-from])
         date-to (rf/subscribe [:recent-trade-data/date-to])
-        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
-
+        data @(rf/subscribe [:quant-model/model-output])
+        country-codes @(rf/subscribe [:country-codes])
+        countries (concat [{:id "All" :label "All"}] (mapv (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) country-codes)))}) (sort (distinct (map :Country data)))))
+        sectors (concat [{:id "All" :label "All"}] (mapv (fn [x] {:id x :label x}) (sort (distinct (map :Sector data)))))
+        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        ]
+    (println countries)
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history") :level :level1]
@@ -384,26 +390,99 @@
                             [v-box :gap "2px" :children
                              [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
                               [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
-                 [h-box :align :center :gap "20px" :children [[title :label "From" :level :level3]
+                 [h-box :align :center :gap "20px" :children [[title :label "From:" :level :level3]
                                                               [datepicker-dropdown
                                                                :model date-from
                                                                :minimum (tools/int-to-gdate 20210101)
                                                                :maximum (today)
-                                                               :format "DD/MM/YYYY" :show-today? true :on-change #(do (rf/dispatch [:get-recent-trade-data []]) (rf/dispatch [:recent-trade-data/date-from %]))]
-                                                              [title :label "To" :level :level3]
+                                                               :format "DD/MM/YYYY"
+                                                               :show-today? true
+                                                               :on-change #(do (rf/dispatch [:get-recent-trade-data []]) (rf/dispatch [:recent-trade-data/date-from %]))]
+                                                              [title :label "To:" :level :level3]
                                                               [datepicker-dropdown
                                                                :model date-to
                                                                :minimum (tools/int-to-gdate 20210101)
                                                                :maximum (today)
-                                                               :format "DD/MM/YYYY" :show-today? true :on-change #(do (rf/dispatch [:get-recent-trade-data []]) (rf/dispatch [:recent-trade-data/date-to %]))]
+                                                               :format "DD/MM/YYYY"
+                                                               :show-today? true
+                                                               :on-change #(do (rf/dispatch [:get-recent-trade-data []]) (rf/dispatch [:recent-trade-data/date-to %]))]
+                                                              [title :label "Country:" :level :level3]
+                                                              [single-dropdown :width "200px"
+                                                               :model (rf/subscribe [:recent-trade-data/country])
+                                                               :choices countries
+                                                               :on-change #(do  (rf/dispatch [:recent-trade-data/country %]))
+                                                               :filter-box? true]
+                                                              [title :label "Sector:" :level :level3]
+                                                              [single-dropdown :width "200px"
+                                                               :model (rf/subscribe [:recent-trade-data/sector])
+                                                               :choices sectors
+                                                               :on-change #(do  (rf/dispatch [:recent-trade-data/sector %]))
+                                                               :filter-box? true]
                                                               [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-recent-trade-data @date-from @date-to])]]]
-                 [portfolio-history-table-recent]]]]))
+                 [portfolio-history-table-recent]
+                 ]]]))
+
+
+
+(defn multiple-portfolio-history-table []
+  (let [data @(rf/subscribe [:multiple-portfolio-trade-history/data])]
+    (println data)
+    ;[box :align :center
+    ; :child
+    ; [:> ReactTable
+    ;  {:data      (reverse data)                  ;latest first
+    ;   :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+    ;                    (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+    ;                             (for [p @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])]
+    ;                               {:Header p :accessor p :Cell recent-trades-display :width 200})))
+    ;   :className "-striped -highlight"}]
+    ; ]
+)
+  )
+
+
+(defn trade-history-multiple-portfolio []
+  (let [date-from (rf/subscribe [:multiple-portfolio-trade-history/start-date])
+        date-to (rf/subscribe [:multiple-portfolio-trade-history/end-date])
+        ]
+    [box :class "subbody rightelement" :child
+     [v-box :class "element" :gap "20px" :align :start
+      :children [[title :label (str "Trade history - All portfolios") :level :level1]
+                 [h-box :gap "50px"
+                  :children [[v-box :gap "15px"
+                              :children [[h-box
+                                          :width "1200px"
+                                          :gap "10px"
+                                          :children [[title :label "Start:" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model date-from
+                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :maximum (today)
+                                                      :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:multiple-portfolio-trade-history/data []]) (rf/dispatch [:multiple-portfolio-trade-history/start-date %]))]
+                                                     [gap :size "20px"]
+                                                     [title :label "End:" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model date-to
+                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :maximum (today)
+                                                      :format "dd/MM/yyyy" :show-today? false :on-change #(do (rf/dispatch [:multiple-portfolio-trade-history/data []]) (rf/dispatch [:multiple-portfolio-trade-history/end-date %]))]
+                                                     [title :label "Pivot?" :level :level3]
+                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:multiple-portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Sector"]] {:id k :label k})) :on-change #(rf/dispatch [:multiple-portfolio-trade-history/pivot %])]
+                                                     [gap :size "20px"]
+                                                     [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-multiple-portfolio-trade-history @date-from @date-to])]
+                                                     [gap :size "20px"]
+                                                     ]]]]]]
+                 [multiple-portfolio-history-table]]]]
+    )
+  )
+
 
 (defn active-home []
   "Create the body with trade-history"
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
   (case @(rf/subscribe [:trade-history/active-home])
     :single-portfolio [trade-history]
+    :multiple-portfolio [trade-history-multiple-portfolio]
     :recent-trades [trade-history-recent]
     [:div.output "nothing to display"]))
 
