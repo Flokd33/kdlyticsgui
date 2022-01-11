@@ -155,8 +155,8 @@
                  :recent-trade-data/trades                           []
                  :recent-trade-data/date-from                         (tools/int-to-gdate 20211201)
                  :recent-trade-data/date-to                           (tools/int-to-gdate (today))
-                 :recent-trade-data/sector                           ["All"]
-                 :recent-trade-data/country                          ["All"]
+                 :recent-trade-data/sector                           "All"
+                 :recent-trade-data/country                          "All"
 
                  :portfolio-review/portfolio                         "OGEMCORD"
                  :portfolio-review/active-tab                        :summary
