@@ -26,7 +26,7 @@
 (defn period-choices []
   (concat static/attribution-period-choices
           (into [] (for [m @(rf/subscribe [:attribution/available-months])] {:id m :label m}))
-          [{:id "FY2021" :label "FY2021"} {:id "FY2020" :label "FY2020"} {:id "FY2019" :label "FY2019"} {:id "FY2018" :label "FY2018"}]))
+          (into [] (for [y (range 2021 2017 -1)] (let [k (str "FY" y)] {:id k :label k})))))
 
 (def dropdown-width "150px")
 
