@@ -95,6 +95,22 @@
                  :var/dates                                          nil
                  :var/chart-period                                   :daily-3y
 
+                 ;position-history
+                 :position-history/portfolio                        "OGEMCORD"
+                 :position-history/start-period                     "31Dec20"
+                 :position-history/end-period                       "31Dec21"
+                 :position-history/filter                           {1 :region 2 :country 3 :issuer}
+                 :position-history/hide-zero-holdings               true
+                 :position-history/table-filter                     []
+                 :position-history/expander                         {0 {}}
+                 :position-history/shortcut                         1
+                 :position-history/display-style                    "Table"
+                 :position-history/field-one                        :nav
+                 :position-history/breakdown                        "Maximum"
+                 :position-history/absdiff                          :absolute
+                 :position-history/data                             []
+
+
                  ;trade history
                  :trade-history/active-bond                          nil
                  :trade-history/history                              nil
@@ -268,6 +284,20 @@
            ;:portfolio-alignment/shortcut
            :portfolio-alignment/table-filter
            :portfolio-alignment/expander
+
+           :position-history/portfolio
+           :position-history/start-period
+           :position-history/end-period
+           :position-history/filter
+           :position-history/hide-zero-holdings
+           :position-history/table-filter
+           :position-history/expander
+           :position-history/shortcut
+           :position-history/display-style
+           :position-history/breakdown
+           :position-history/field-one
+           :position-history/absdiff
+
 
            :single-portfolio-attribution/portfolio
            :single-portfolio-attribution/display-style

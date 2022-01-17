@@ -46,10 +46,10 @@
       :portfolio-alignment            [riskviews/portfolio-alignment-risk-controller]
       :concentration-risk             [riskviews/concentration-risk]
       :irrisk                         [riskviews/irrisk]
-      ;:trade-history                  [th/trade-history]
       :large-exposures                [riskviews/large-exposures]
       :var                            [var/main-var-view]
       :proxies                        [var/main-proxy-view]
+      :position-history               [riskviews/position-history]
       [:div.output "nothing to display"])))
 
 

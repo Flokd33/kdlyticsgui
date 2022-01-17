@@ -682,3 +682,114 @@
                                        (assoc (tables/risk-table-columns :nominal) :filterable false)
                                        {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 100 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
                       :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize 20 :showPageSizeOptions false :className "-striped -highlight"}]])])
+
+
+
+
+(rf/reg-event-fx
+  :get-position-history
+  (fn [{:keys [db]} [_ portfolio dates]]
+    {:db (assoc db :navigation/show-mounting-modal true)
+     :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :dates dates} :dispatch-key [:position-history/data]}}
+    ))
+
+(rf/reg-event-db
+  :position-history/data
+  (fn [db [_ data]] (println "received" data) (assoc db :navigation/show-mounting-modal false :position-history/data data)))
+
+(rf/reg-sub
+  :position-history/table
+  (fn [db]
+    (let [risk-choices (let [rfil (get-in db [:position-history/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+          grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/risk-table-columns r)))
+          accessors-k (mapv keyword (mapv :accessor grouping-columns))
+          all-dates (sort (distinct (map :date (db :position-history/data))))
+          sorted-data
+          (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k)))
+                   (into [] (for [[k v] (group-by (apply juxt accessors-k) (get db :position-history/data))]
+                              (into (select-keys (first v) accessors-k)
+                                    (for [dt all-dates]
+                                      [(keyword (str "dt" dt))
+                                       (reduce + (map #(get % (keyword (get-in tables/risk-table-columns [(db :position-history/field-one) :accessor])) 0.0)
+                                                      (t/chainfilter {:date dt} v)))]
+                                      ))))) ]
+      (clj->js
+        (if (= (:position-history/display-style db) "Tree")
+          (tables/cljs-text-filter-OR (:position-history/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
+          (conj sorted-data [])))                           ;this should be total line
+      )))
+
+(defn position-history []
+  (let [
+        date-map (into [] (for [k (conj static/position-historical-dates @(rf/subscribe [:qt-date]))] {:id k :label k}))
+        start-period (rf/subscribe [:position-history/start-period])
+        end-period (rf/subscribe [:position-history/end-period])
+        breakdown-map (into [] (for [k ["Maximum" "Quarterly" "Monthly"]] {:id k :label k}))
+        field-one (rf/subscribe [:position-history/field-one])
+        breakdown (rf/subscribe [:position-history/breakdown])
+        absdiff (rf/subscribe [:position-history/absdiff])
+        portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        display-style (rf/subscribe [:position-history/display-style])
+        portfolio (rf/subscribe [:position-history/portfolio])
+        hide-zero-risk (rf/subscribe [:position-history/hide-zero-holdings])
+        is-tree (= @(rf/subscribe [:position-history/display-style]) "Tree")
+        risk-choices (let [rfil @(rf/subscribe [:position-history/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+        grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/risk-table-columns r)))
+        additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
+        download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))
+        get-history-dates (fn [start end]
+                            (let [a (.indexOf static/position-historical-dates start)
+                                  b (.indexOf static/position-historical-dates end)]
+                              (take (inc (- b a)) (drop a static/position-historical-dates))))
+
+        ]
+    ;(println @(rf/subscribe [:position-history/data]))
+    [box :class "subbody rightelement" :child
+     (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio history " @(rf/subscribe [:qt-date]))
+                             {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)}
+                             [[h-box :gap "10px" :align :center
+                               :children (concat
+                                           [[title :label "Display:" :level :level3]
+                                            [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:position-history/display-style %]) (rf/dispatch [:single-portfolio-risk/hide-zero-holdings (= % "Table")]))]
+                                            [gap :size "30px"]
+                                            [checkbox :model hide-zero-risk :label "Hide zero lines?" :on-change #(rf/dispatch [:position-history/hide-zero-holdings %])]
+                                            [title :label "Field:" :level :level3]
+
+                                            [single-dropdown :width dropdown-width :model field-one :choices (take 4 static/risk-field-choices) :on-change #(rf/dispatch [:position-history/field-one %])]
+
+                                            [gap :size "30px"]]
+                                           (into [] (concat [[title :label "Filtering:" :level :level3]
+                                                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:position-history/portfolio %])]]
+                                                            (filtering-row :single-portfolio-risk/filter)
+                                                            [[gap :size "30px"]]))
+                                           (shortcut-row :single-portfolio-risk/shortcut))]
+                              [h-box :gap "10px" :align :center
+                               :children [[title :label "Start period:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model start-period :choices (drop-last date-map) :on-change #(rf/dispatch [:position-history/start-period %])]
+                                          [title :label "End period:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model end-period :choices (rest date-map) :on-change #(rf/dispatch [:position-history/end-period %])]
+                                          [title :label "Breakdown:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model breakdown :choices breakdown-map :on-change #(rf/dispatch [:position-history/breakdown %])]
+                                          [title :label "Position/Change:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model absdiff :choices [{:id :absolute :label "Position"} {:id :difference :label "Difference"}] :on-change #(rf/dispatch [:position-history/absdiff %])]
+                                          [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-position-history @portfolio (get-history-dates @start-period @end-period)])]
+
+                                          ]]
+                              [:div {:id "position-history-risk-table"}
+                               [tables/tree-table-risk-table
+                                :position-history/table
+                                (concat
+                                  [{:Header (str "Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+
+                                   ]
+                                  (into [] (for [dt (map #(keyword (str "dt" %)) (sort (distinct (map :date @(rf/subscribe [:position-history/data])))))]
+                                             {:Header dt :accessor dt :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
+                                              :Cell   (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))
+                                  )
+                                is-tree
+                                (mapv :accessor grouping-columns)
+                                single-portfolio-risk-display-view
+                                :position-history/table-filter
+                                :position-history/expander
+                                on-click-context]]
+                              ])]))
