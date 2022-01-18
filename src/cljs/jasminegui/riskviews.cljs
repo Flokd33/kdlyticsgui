@@ -113,7 +113,7 @@
 (defn get-pivoted-data [instrument-definition table portfolios instruments field]
   (let [grp (group-by (juxt :id :portfolio) table)]
     (into [] (for [instrument instruments]
-               (into (if-let [d (get instrument-definition instrument)] d {}) ;if server has undefined data u still want a map
+               (into (get instrument-definition instrument)
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
 ;(defn get-pivoted-data [instrument-definition table portfolios instruments field]
@@ -331,8 +331,8 @@
 (defn shortcut-row [key]
   (let [shortcut (rf/subscribe [key])]
     (into [] (concat [[title :label "Shortcuts:" :level :level3]]
-               (into [] (for [i (range 1 5)]
-                          [md-circle-icon-button :md-icon-name (str "zmdi-collection-item-" i) :class (if (= @shortcut i) "active" "default") :on-click #(rf/dispatch [key i])]))))))
+                     (into [] (for [i (range 1 5)]
+                                [md-circle-icon-button :md-icon-name (str "zmdi-collection-item-" i) :class (if (= @shortcut i) "active" "default") :on-click #(rf/dispatch [key i])]))))))
 
 (defn filtering-row [key]
   (let [risk-filter (rf/subscribe [key])]
@@ -354,17 +354,17 @@
      (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
                              {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)}
                              [[h-box :gap "10px" :align :center
-                       :children (concat
-                                   [[title :label "Display:" :level :level3]
-                                    [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:single-portfolio-risk/display-style %]) (rf/dispatch [:single-portfolio-risk/hide-zero-holdings (= % "Table")]))]
-                                    [gap :size "30px"]
-                                    [checkbox :model hide-zero-risk :label "Hide zero positions? (index won't sum to 100!)" :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]
-                                    [gap :size "30px"]]
-                                   (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                     [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
-                                                    (filtering-row :single-portfolio-risk/filter)
-                                                    [[gap :size "30px"]]))
-                                   (shortcut-row :single-portfolio-risk/shortcut))]
+                               :children (concat
+                                           [[title :label "Display:" :level :level3]
+                                            [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:single-portfolio-risk/display-style %]) (rf/dispatch [:single-portfolio-risk/hide-zero-holdings (= % "Table")]))]
+                                            [gap :size "30px"]
+                                            [checkbox :model hide-zero-risk :label "Hide zero positions? (index won't sum to 100!)" :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]
+                                            [gap :size "30px"]]
+                                           (into [] (concat [[title :label "Filtering:" :level :level3]
+                                                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
+                                                            (filtering-row :single-portfolio-risk/filter)
+                                                            [[gap :size "30px"]]))
+                                           (shortcut-row :single-portfolio-risk/shortcut))]
                               [:div {:id "single-portfolio-risk-table"}
                                [tables/tree-table-risk-table
                                 :single-portfolio-risk/table
@@ -398,40 +398,42 @@
         ;download-columns-old (concat (map keyword portfolios) (map keyword (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))) [:isin :description])
         download-columns (concat ["NAME" "isin" "description"] (filter @selected-portfolios portfolios) (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
+        ;data  @(rf/subscribe [:multiple-portfolio-risk/field-one])
         ]
+    ;(println data)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "multiple-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "pivot" download-columns is-tree)}
                              [[h-box :gap "50px" :align :center
                                :children
-                                         [
-                                          [h-box :gap "5px" :align :center :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %])  (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
-                                          [checkbox :model hide-zero-risk :label "Hide zero lines?"  :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]
-                                          [h-box :gap "5px" :align :center :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]
-                                          [h-box :gap "5px" :align :center :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]
-                                          ;[v-box :gap "20px"
-                                          ; :children [
-                                          ;             ;:disabled? (= @display-style "Tree")
-                                          ;            ]]
-                                          ;[v-box :gap "10px"
-                                          ; :children (concat [[title :label "Portfolios:" :level :level3]
-                                          ;                    [button :style {:width "100%"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
-                                          ;                    [button :style {:width "100%"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]
-                                          ;                   (into [] (for [line static/portfolio-alignment-groups]
-                                          ;                              [button :style {:width "100%"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups))))])])))]
-                                          ;[selection-list :width dropdown-width :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]
-                                          ;[v-box :gap "20px"
-                                          ; :children []]
+                               [
+                                [h-box :gap "5px" :align :center :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %])  (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
+                                [checkbox :model hide-zero-risk :label "Hide zero lines?"  :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]
+                                [h-box :gap "5px" :align :center :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]
+                                [h-box :gap "5px" :align :center :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]
+                                ;[v-box :gap "20px"
+                                ; :children [
+                                ;             ;:disabled? (= @display-style "Tree")
+                                ;            ]]
+                                ;[v-box :gap "10px"
+                                ; :children (concat [[title :label "Portfolios:" :level :level3]
+                                ;                    [button :style {:width "100%"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
+                                ;                    [button :style {:width "100%"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]
+                                ;                   (into [] (for [line static/portfolio-alignment-groups]
+                                ;                              [button :style {:width "100%"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups))))])])))]
+                                ;[selection-list :width dropdown-width :model selected-portfolios :choices portfolio-map :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]
+                                ;[v-box :gap "20px"
+                                ; :children []]
 
-                                          ]]
-                      ;[multiple-portfolio-risk-display]
-                      ;        [v-box :gap "5px" :children
-                      ;         (into []
-                      ;               (for [line static/portfolio-alignment-groups]
-                      ;                 [h-box :gap "10px" :children
-                      ;                  (into [[button :style {:width "150px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups))))])]]
-                      ;                        (for [portfolio (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
-                      ;                          [radio-button :model nil :value nil :label portfolio]
-                      ;                          ))]))]
+                                ]]
+                              ;[multiple-portfolio-risk-display]
+                              ;        [v-box :gap "5px" :children
+                              ;         (into []
+                              ;               (for [line static/portfolio-alignment-groups]
+                              ;                 [h-box :gap "10px" :children
+                              ;                  (into [[button :style {:width "150px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups))))])]]
+                              ;                        (for [portfolio (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                              ;                          [radio-button :model nil :value nil :label portfolio]
+                              ;                          ))]))]
 
                               [h-box :gap "5px" :children
                                (into [[title :label "Portfolios:" :level :level3]
@@ -440,31 +442,31 @@
                                                                    [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]
                                                                    ]]]
                                      (for [line static/portfolio-alignment-groups]
-                                          (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
-                                            [v-box :gap "2px" :children
-                                             [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
-                                              [selection-list :width dropdown-width :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
-                      (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
-                            width-one 80
-                            risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-                            grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
-                            cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
-                                            {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
-                                             :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
-                        [:div {:id "multiple-portfolio-risk-table"}
-                         [tables/tree-table-risk-table
-                          :multiple-portfolio-risk/table
-                          [{:Header (str "Groups (" @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-                           {:Header (str "Portfolio " (name display-key-one)) :columns cols}
-                           {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
-                          (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
-                          (mapv :accessor grouping-columns)
-                          multiple-portfolio-risk-display-view
-                          :multiple-portfolio-risk/table-filter
-                          :multiple-portfolio-risk/expander
-                          on-click-context-multiple]])
+                                       (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                                         [v-box :gap "2px" :children
+                                          [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                                           [selection-list :width dropdown-width :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
+                              (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
+                                    width-one 80
+                                    risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+                                    grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
+                                    cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
+                                                    {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
+                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
+                                [:div {:id "multiple-portfolio-risk-table"}
+                                 [tables/tree-table-risk-table
+                                  :multiple-portfolio-risk/table
+                                  [{:Header (str "Groups (" @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+                                   {:Header (str "Portfolio " (name display-key-one)) :columns cols}
+                                   {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
+                                  (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
+                                  (mapv :accessor grouping-columns)
+                                  multiple-portfolio-risk-display-view
+                                  :multiple-portfolio-risk/table-filter
+                                  :multiple-portfolio-risk/expander
+                                  on-click-context-multiple]])
 
-                      ])]))
+                              ])]))
 
 (defn portfolio-alignment-risk-controller []
   (let [display-style (rf/subscribe [:portfolio-alignment/display-style])
@@ -538,18 +540,18 @@
         [box :class "subbody rightelement" :child
          (gt/element-box "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
                          [[h-box :gap "5px" :align :center  :children [[title :level :level3 :label "Portfolio:"] [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
-                                                       [gap :size "20px"]
-                                                       [title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]]]
+                                                                       [gap :size "20px"]
+                                                                       [title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]]]
 
                           [h-box :gap "5px" :align :center :children [[title :level :level3 :label "Cut-off type:"] [single-dropdown :width dropdown-width :model spread-or-rating :choices [{:id :rating-score :label "Rating"} {:id :qt-libor-spread :label "Z-spread"}] :on-change #(do (reset! spread-or-rating %) (reset! cut-off (if (= % :rating-score) 10.0 250.0)))]
-                                                       [gap :size "20px"]
-                                                       [title :level :level3 :label "Level:"] [slider
-                                                                                               :model cut-off
-                                                                                               :min (if (= @spread-or-rating :rating-score) 3.0 100.0)
-                                                                                               :max (if (= @spread-or-rating :rating-score) 14.0 600.0)
-                                                                                               :step (if (= @spread-or-rating :rating-score) 1.0 50.0)
-                                                                                               :on-change #(reset! cut-off %)
-                                                                                               :width "200px"]
+                                                                      [gap :size "20px"]
+                                                                      [title :level :level3 :label "Level:"] [slider
+                                                                                                              :model cut-off
+                                                                                                              :min (if (= @spread-or-rating :rating-score) 3.0 100.0)
+                                                                                                              :max (if (= @spread-or-rating :rating-score) 14.0 600.0)
+                                                                                                              :step (if (= @spread-or-rating :rating-score) 1.0 50.0)
+                                                                                                              :on-change #(reset! cut-off %)
+                                                                                                              :width "200px"]
                                                                       [label :label (if (= @spread-or-rating :rating-score) (qstables/get-implied-rating (str @cut-off)) (str @cut-off "bps"))]]]
 
                           [gap :size "20px"]
@@ -598,8 +600,8 @@
             display (reverse
                       (sort-by :weight-multiplier
                                (into [] (for [line exposures-post-cut-off] (assoc line :bucket (str (:f1 line) " " (if (= @breakdown :country-sector) (:f2 line) (if (:f2 line) "HY" "IG")))
-                                                                          :weight-multiplier (/ (:weight line) (:bm-weight line))
-                                                                          :mdur-multiplier (/ (:contrib-mdur line) (:bm-contrib-eir-duration line)))))))]
+                                                                                       :weight-multiplier (/ (:weight line) (:bm-weight line))
+                                                                                       :mdur-multiplier (/ (:contrib-mdur line) (:bm-contrib-eir-duration line)))))))]
         [box :class "subbody rightelement" :child
          (gt/element-box "concentrationrisk" "100%" (str "Concentration risk " @(rf/subscribe [:qt-date])) display
                          [[title :level :level4 :label "Filtering for buckets of risk where the index is above 1% and we hold more than 2x the index size."]
@@ -644,13 +646,13 @@
                                                                           (assoc (tables/risk-table-columns :quant-value-4d) :Header "4D")
                                                                           (assoc (tables/risk-table-columns :quant-value-2d) :Header "2D")])}
                                          {:Header "Beta (Bbg vs CEMBIBD)" :columns (mapv #(assoc % :filterable false)
-                                                                        [(tables/risk-table-columns :contrib-beta)
-                                                                         (tables/risk-table-columns :contrib-BBG_CEMBI_D1Y_BETA)
-                                                                         (tables/risk-table-columns :bm-contrib-BBG_CEMBI_D1Y_BETA)
-                                                                         (tables/risk-table-columns :contrib-delta-BBG_CEMBI_D1Y_BETA)])}
+                                                                                         [(tables/risk-table-columns :contrib-beta)
+                                                                                          (tables/risk-table-columns :contrib-BBG_CEMBI_D1Y_BETA)
+                                                                                          (tables/risk-table-columns :bm-contrib-BBG_CEMBI_D1Y_BETA)
+                                                                                          (tables/risk-table-columns :contrib-delta-BBG_CEMBI_D1Y_BETA)])}
                                          {:Header "ESG" :columns (mapv #(assoc % :filterable false) [(tables/nb-col "Issuance" "ESG" 60 tables/round2pc tables/sum-rows)
                                                                                                      (tables/nb-col "Raw>50" "raw-esg-over-50" 60 tables/round0pc tables/sum-rows)
-                                                                                                       (tables/nb-col "Final>50" "final-esg-over-50" 60 tables/round0pc tables/sum-rows)])}
+                                                                                                     (tables/nb-col "Final>50" "final-esg-over-50" 60 tables/round0pc tables/sum-rows)])}
                                          {:Header "Flags" :columns (mapv #(assoc % :filterable false) [(tables/nb-col "HY" "HY" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/nb-col "Sub" "SUBORDINATED" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/nb-col "CoCos" "COCOS" 70 tables/round2pc tables/sum-rows)
