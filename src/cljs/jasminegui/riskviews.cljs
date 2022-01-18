@@ -712,11 +712,20 @@
                                       [(keyword (str "dt" dt))
                                        (reduce + (map #(get % (keyword (get-in tables/risk-table-columns [(db :position-history/field-one) :accessor])) 0.0)
                                                       (t/chainfilter {:date dt} v)))]
-                                      ))))) ]
+                                      )))))
+          sorted-deltas (into [] (for [line sorted-data]
+                                   (into (assoc line :total (- (get line (keyword (str "dt" (last all-dates)))) (get line (keyword (str "dt" (first all-dates)))))
+                                                     (keyword (str "deltadt" (first all-dates))) 0.0)
+                                         (for [i (range (dec (count all-dates)))]
+                                           [(keyword (str "deltadt" (nth all-dates (inc i))))
+                                            (- (get line (keyword (str "dt" (nth all-dates (inc i))))) (get line (keyword (str "dt" (nth all-dates i)))))]))
+                                   ))
+          ]
+      ;(print sorted-deltas)
       (clj->js
         (if (= (:position-history/display-style db) "Tree")
-          (tables/cljs-text-filter-OR (:position-history/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-          (conj sorted-data [])))                           ;this should be total line
+          (tables/cljs-text-filter-OR (:position-history/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-deltas))
+          (conj sorted-deltas [])))                           ;this should be total line
       )))
 
 (defn position-history []
@@ -741,6 +750,7 @@
                             (let [a (.indexOf static/position-historical-dates start)
                                   b (.indexOf static/position-historical-dates end)]
                               (take (inc (- b a)) (drop a static/position-historical-dates))))
+        all-dates (sort (distinct (map :date @(rf/subscribe [:position-history/data]))))
 
         ]
     ;(println @(rf/subscribe [:position-history/data]))
@@ -778,14 +788,13 @@
                               [:div {:id "position-history-risk-table"}
                                [tables/tree-table-risk-table
                                 :position-history/table
-                                (concat
-                                  [{:Header (str "Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-
-                                   ]
-                                  (into [] (for [dt (map #(keyword (str "dt" %)) (sort (distinct (map :date @(rf/subscribe [:position-history/data])))))]
-                                             {:Header dt :accessor dt :width 100 :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
-                                              :Cell   (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))
-                                  )
+                                (into [{:Header (str "Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}]
+                                      (if (= @absdiff :absolute)
+                                        (for [dt (map #(keyword (str "dt" %)) all-dates)]
+                                          (tables/nb-col (subs (name dt) 2) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
+                                        (for [dt (conj (mapv #(keyword (str "deltadt" %)) all-dates) :total)]
+                                          (tables/nb-col (str (gstring/unescapeEntities "&Delta; ") (subs (name dt) 7)) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
+                                      ))
                                 is-tree
                                 (mapv :accessor grouping-columns)
                                 single-portfolio-risk-display-view
