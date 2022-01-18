@@ -106,7 +106,7 @@
                  :position-history/shortcut                         1
                  :position-history/display-style                    "Table"
                  :position-history/field-one                        :nav
-                 :position-history/breakdown                        "Maximum"
+                 :position-history/breakdown                        "Start/End"
                  :position-history/absdiff                          :absolute
                  :position-history/data                             []
 

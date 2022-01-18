@@ -337,7 +337,12 @@
 (defn filtering-row [key]
   (let [risk-filter (rf/subscribe [key])]
     (into [] (for [i (range 1 4)]
-               [single-dropdown :width dropdown-width :model (r/cursor risk-filter [i]) :choices static/risk-choice-map :on-change #(rf/dispatch [key i %])]))))
+               [single-dropdown
+                :width dropdown-width
+                :model (r/cursor risk-filter [i])
+                :choices static/risk-choice-map
+                :disabled? (and (= i 3) (= key :position-history/filter))
+                :on-change #(rf/dispatch [key i %])]))))
 
 (defn single-portfolio-risk-display []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
@@ -733,7 +738,7 @@
         date-map (into [] (for [k (conj static/position-historical-dates @(rf/subscribe [:qt-date]))] {:id k :label k}))
         start-period (rf/subscribe [:position-history/start-period])
         end-period (rf/subscribe [:position-history/end-period])
-        breakdown-map (into [] (for [k ["Maximum" "Quarterly" "Monthly"]] {:id k :label k}))
+        breakdown-map (into [] (for [k ["Start/End" "All"]] {:id k :label k}))
         field-one (rf/subscribe [:position-history/field-one])
         breakdown (rf/subscribe [:position-history/breakdown])
         absdiff (rf/subscribe [:position-history/absdiff])
@@ -746,16 +751,18 @@
         grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/risk-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
         download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))
-        get-history-dates (fn [start end]
-                            (let [a (.indexOf static/position-historical-dates start)
-                                  b (.indexOf static/position-historical-dates end)]
-                              (take (inc (- b a)) (drop a static/position-historical-dates))))
+        get-history-dates (fn [bd start end]
+                            (if (= bd "Start/End")
+                              [start end]
+                              (let [a (.indexOf static/position-historical-dates start)
+                                    b (.indexOf static/position-historical-dates end)]
+                                (take (inc (- b a)) (drop a static/position-historical-dates)))))
         all-dates (sort (distinct (map :date @(rf/subscribe [:position-history/data]))))
 
         ]
     ;(println @(rf/subscribe [:position-history/data]))
     [box :class "subbody rightelement" :child
-     (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio history " @(rf/subscribe [:qt-date]))
+     (gt/element-box-generic "position-history" max-width (str "Portfolio history " @(rf/subscribe [:qt-date]))
                              {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)}
                              [[h-box :gap "10px" :align :center
                                :children (concat
@@ -770,7 +777,7 @@
                                             [gap :size "30px"]]
                                            (into [] (concat [[title :label "Filtering:" :level :level3]
                                                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:position-history/portfolio %])]]
-                                                            (filtering-row :single-portfolio-risk/filter)
+                                                            (filtering-row :position-history/filter)
                                                             [[gap :size "30px"]]))
                                            (shortcut-row :single-portfolio-risk/shortcut))]
                               [h-box :gap "10px" :align :center
@@ -782,7 +789,7 @@
                                           [single-dropdown :width dropdown-width :model breakdown :choices breakdown-map :on-change #(rf/dispatch [:position-history/breakdown %])]
                                           [title :label "Position/Change:" :level :level3]
                                           [single-dropdown :width dropdown-width :model absdiff :choices [{:id :absolute :label "Position"} {:id :difference :label "Difference"}] :on-change #(rf/dispatch [:position-history/absdiff %])]
-                                          [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-position-history @portfolio (get-history-dates @start-period @end-period)])]
+                                          [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-position-history @portfolio (get-history-dates @breakdown @start-period @end-period)])]
 
                                           ]]
                               [:div {:id "position-history-risk-table"}
