@@ -172,6 +172,7 @@
   (let [t @(rf/subscribe [:rating-to-score])] (<= (t (keyword a)) (t (keyword b)))))
 
 (defn round2*100-if-not0 [this] (if-let [x (aget this "value")] (if (and (number? x) (not (zero? x))) (gstring/format "%.2f" (* 100. x)) "-") "-"))
+(defn round0*100-if-not0 [this] (if-let [x (aget this "value")] (if (and (number? x) (not (zero? x))) (gstring/format "%.0fbps" (* 100. x)) "-") "-"))
 (defn round2-if-not0 [this] (if-let [x (aget this "value")] (if (and (number? x) (not (zero? x))) (gstring/format "%.2f" x) "-") "-"))
 
 (defn roundpc [fmt this]

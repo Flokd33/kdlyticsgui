@@ -481,7 +481,7 @@
 
 (rf/reg-event-db
   :multiple-portfolio-trade-history/data
-  (fn [db [_ data]] (assoc db :multiple-portfolio-trade-history/data (map #(clojure.set/rename-keys % {:JPM_SECTOR :qt-jpm-sector :CNTRY_OF_RISK :qt-risk-country-name}) data))))
+  (fn [db [_ data]] (assoc db :multiple-portfolio-trade-history/data (map #(clojure.set/rename-keys % {:IssueName :description :ISIN :isin :JPM_SECTOR :qt-jpm-sector :CNTRY_OF_RISK :qt-risk-country-name :JPMRegion :jpm-region}) data))))
 
 
 (defn multiple-portfolio-history-table []
@@ -541,8 +541,10 @@
                                     risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
                                     grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
                                     cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
-                                                    {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
-                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
+                                                    {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false :getProps tables/red-negatives
+                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round0*100-if-not0 :contrib-mdur tables/round2-if-not0 ))}))]
+
+                                (println display-key-one)
                                 [:div {:id "multiple-portfolio-risk-table"}
                                  [tables/tree-table-risk-table
                                   :multiple-portfolio-trade-history/data ;:multiple-portfolio-risk/table
