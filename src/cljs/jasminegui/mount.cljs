@@ -95,6 +95,22 @@
                  :var/dates                                          nil
                  :var/chart-period                                   :daily-3y
 
+                 ;position-history
+                 :position-history/portfolio                        "OGEMCORD"
+                 :position-history/start-period                     "31Dec21"
+                 :position-history/end-period                       "31Dec21"
+                 :position-history/filter                           {1 :region 2 :country 3 :issuer}
+                 :position-history/hide-zero-holdings               true
+                 :position-history/table-filter                     []
+                 :position-history/expander                         {0 {}}
+                 :position-history/shortcut                         1
+                 :position-history/display-style                    "Tree"
+                 :position-history/field-one                        :nav
+                 :position-history/breakdown                        "Start/End"
+                 :position-history/absdiff                          :absolute
+                 :position-history/data                             []
+
+
                  ;trade history
                  :trade-history/active-bond                          nil
                  :trade-history/history                              nil
@@ -268,6 +284,19 @@
            ;:portfolio-alignment/shortcut
            :portfolio-alignment/table-filter
            :portfolio-alignment/expander
+
+           :position-history/portfolio
+           :position-history/start-period
+           :position-history/end-period
+           :position-history/hide-zero-holdings
+           :position-history/table-filter
+           :position-history/expander
+           :position-history/shortcut
+           :position-history/display-style
+           :position-history/breakdown
+           :position-history/field-one
+           :position-history/absdiff
+
 
            :single-portfolio-attribution/portfolio
            :single-portfolio-attribution/display-style
@@ -496,12 +525,16 @@
            :multiple-portfolio-risk/filter
            :portfolio-alignment/filter
            :single-portfolio-attribution/filter
-           :multiple-portfolio-attribution/filter]]
+           :multiple-portfolio-attribution/filter
+           :position-history/filter
+           ]]
   (rf/reg-event-db k (fn [db [_ id f]] (assoc-in db [k id] f))))
 
 (rf/reg-event-db
   :qt-date
-  (fn [db [_ qt-date]] (assoc db :qt-date (.replace ^string qt-date "\"" ""))))
+  (fn [db [_ qt-date]] (let [dt (.replace ^string qt-date "\"" "")]
+                         (assoc db :qt-date dt
+                                   :position-history/end-period (str (subs dt 0 (- (count dt) 4)) (subs dt (- (count dt) 2)))))))
 
 (rf/reg-event-db
   :attribution-date
