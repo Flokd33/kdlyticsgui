@@ -117,14 +117,13 @@
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
 (defn get-pivoted-data-with-nominal [instrument-definition table portfolios instruments field]
-  (let [grp (group-by (juxt :id :portfolio) table)]
+  (let [grp (group-by (juxt :id :portfolio) table)
+        kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)]
     (into [] (for [instrument instruments]
-               (into (get instrument-definition instrument)
-                     (for [p portfolios] {(keyword p) (reduce + (map field (get-in grp [[instrument p]])))
-                                          ;(keyword "nominal") (reduce + (map :original-quantity (get-in grp [[instrument p]])))
-                                          (keyword (str p "_totalnominal")) (reduce + (map :original-quantity (get-in grp [[instrument p]])))
-                                          })
-                     )))))
+               (let [line (into (get instrument-definition instrument)
+                                (for [p portfolios] {(keyword p)                       (reduce + (map field (get-in grp [[instrument p]])))
+                                                     (keyword (str p "_totalnominal")) (reduce + (map :original-quantity (get-in grp [[instrument p]])))}))]
+                 (assoc line :original-quantity (reduce + (map line kswn))))))))
 ;(apply merge {:a 1 :b 2} (for [i (range 3)] {(str "p" i) i (str "l" i) (* 2 i)}))
 
 ;(defn get-pivoted-data [instrument-definition table portfolios instruments field]
@@ -135,6 +134,7 @@
 ;                       [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]
 ;                       ;[(keyword p) (if (seq (get-in grp [[instrument p]])) (reduce + (map field (get-in grp [[instrument p]]))) 0.)]
 ;                       ))))))
+
 
 (rf/reg-sub
   :multiple-portfolio-risk/table
@@ -147,10 +147,8 @@
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           pos (t/chainfilter {:portfolio #(some #{%} (:multiple-portfolio-risk/selected-portfolios db))} (:positions db))
           pivoted-data (get-pivoted-data-with-nominal (get db :instruments) pos (:multiple-portfolio-risk/selected-portfolios db) (distinct (map :id pos)) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
-          kselected-portfolios-nominals (map #(keyword (str (name %) "_totalnominal")) kselected-portfolios)
-          pivoted-data-with-nominal (into [] (for [line pivoted-data] (assoc line (keyword "original-quantity") (reduce + (map line kselected-portfolios-nominals)))))
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
-          pivoted-data-hide-zero (if hide-zero-risk (filter thfil pivoted-data-with-nominal) pivoted-data-with-nominal)
+          pivoted-data-hide-zero (if hide-zero-risk (filter thfil pivoted-data) pivoted-data)
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero)]
 
       (if (= (:multiple-portfolio-risk/display-style db) "Tree")
@@ -468,7 +466,7 @@
                                                     {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
                                                      :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
                                 ;(println @(rf/subscribe [:multiple-portfolio-risk/table]))
-                                (println (mapv tables/risk-table-columns [:rating :nominal :isin :description]))
+                                ;(println (mapv tables/risk-table-columns [:rating :nominal :isin :description]))
                                 [:div {:id "multiple-portfolio-risk-table"}
                                  [tables/tree-table-risk-table
                                   :multiple-portfolio-risk/table
