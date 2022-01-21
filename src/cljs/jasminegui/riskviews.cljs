@@ -116,6 +116,17 @@
                (into (get instrument-definition instrument)
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
+(defn get-pivoted-data-with-nominal [instrument-definition table portfolios instruments field]
+  (let [grp (group-by (juxt :id :portfolio) table)]
+    (into [] (for [instrument instruments]
+               (into (get instrument-definition instrument)
+                     (for [p portfolios] {(keyword p) (reduce + (map field (get-in grp [[instrument p]])))
+                                          ;(keyword "nominal") (reduce + (map :original-quantity (get-in grp [[instrument p]])))
+                                          (keyword (str p "_totalnominal")) (reduce + (map :original-quantity (get-in grp [[instrument p]])))
+                                          })
+                     )))))
+;(apply merge {:a 1 :b 2} (for [i (range 3)] {(str "p" i) i (str "l" i) (* 2 i)}))
+
 ;(defn get-pivoted-data [instrument-definition table portfolios instruments field]
 ;  (let [grp (group-by (juxt :id :portfolio) table)]
 ;    (into [] (for [instrument instruments]
@@ -135,10 +146,13 @@
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           pos (t/chainfilter {:portfolio #(some #{%} (:multiple-portfolio-risk/selected-portfolios db))} (:positions db))
-          pivoted-data (get-pivoted-data (get db :instruments) pos (:multiple-portfolio-risk/selected-portfolios db) (distinct (map :id pos)) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
+          pivoted-data (get-pivoted-data-with-nominal (get db :instruments) pos (:multiple-portfolio-risk/selected-portfolios db) (distinct (map :id pos)) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
+          kselected-portfolios-nominals (map #(keyword (str (name %) "_totalnominal")) kselected-portfolios)
+          pivoted-data-with-nominal (into [] (for [line pivoted-data] (assoc line (keyword "original-quantity") (reduce + (map line kselected-portfolios-nominals)))))
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
-          pivoted-data-hide-zero (if hide-zero-risk (filter thfil pivoted-data) pivoted-data)
+          pivoted-data-hide-zero (if hide-zero-risk (filter thfil pivoted-data-with-nominal) pivoted-data-with-nominal)
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero)]
+
       (if (= (:multiple-portfolio-risk/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:multiple-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
         (add-total-line-to-pivot sorted-data kselected-portfolios)))))
@@ -396,7 +410,7 @@
         hide-zero-risk (rf/subscribe [:multiple-portfolio-risk/hide-zero-holdings])
         is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
         ;download-columns-old (concat (map keyword portfolios) (map keyword (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))) [:isin :description])
-        download-columns (concat ["NAME" "isin" "description"] (filter @selected-portfolios portfolios) (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
+        download-columns (concat ["NAME" "isin" "description" "nominal"] (filter @selected-portfolios portfolios) (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ;data  @(rf/subscribe [:multiple-portfolio-risk/field-one])
         ]
@@ -453,12 +467,14 @@
                                     cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
                                                     {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
                                                      :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
+                                ;(println @(rf/subscribe [:multiple-portfolio-risk/table]))
+                                (println (mapv tables/risk-table-columns [:rating :nominal :isin :description]))
                                 [:div {:id "multiple-portfolio-risk-table"}
                                  [tables/tree-table-risk-table
                                   :multiple-portfolio-risk/table
                                   [{:Header (str "Groups (" @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
                                    {:Header (str "Portfolio " (name display-key-one)) :columns cols}
-                                   {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
+                                   {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :nominal :isin :description])}] ;nominal added
                                   (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
                                   (mapv :accessor grouping-columns)
                                   multiple-portfolio-risk-display-view
