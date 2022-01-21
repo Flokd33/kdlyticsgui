@@ -135,6 +135,7 @@
 ;                       ;[(keyword p) (if (seq (get-in grp [[instrument p]])) (reduce + (map field (get-in grp [[instrument p]]))) 0.)]
 ;                       ))))))
 
+
 (rf/reg-sub
   :multiple-portfolio-risk/table
   (fn [db]
