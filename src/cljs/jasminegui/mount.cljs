@@ -97,14 +97,14 @@
 
                  ;position-history
                  :position-history/portfolio                        "OGEMCORD"
-                 :position-history/start-period                     "31Dec20"
+                 :position-history/start-period                     "31Dec21"
                  :position-history/end-period                       "31Dec21"
                  :position-history/filter                           {1 :region 2 :country 3 :issuer}
                  :position-history/hide-zero-holdings               true
                  :position-history/table-filter                     []
                  :position-history/expander                         {0 {}}
                  :position-history/shortcut                         1
-                 :position-history/display-style                    "Table"
+                 :position-history/display-style                    "Tree"
                  :position-history/field-one                        :nav
                  :position-history/breakdown                        "Start/End"
                  :position-history/absdiff                          :absolute
