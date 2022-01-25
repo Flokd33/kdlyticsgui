@@ -113,14 +113,14 @@
 (defn get-pivoted-data [instrument-definition table portfolios instruments field]
   (let [grp (group-by (juxt :id :portfolio) table)]
     (into [] (for [instrument instruments]
-               (into (get instrument-definition instrument)
+               (into (if-let [d (get instrument-definition instrument)] d {}) ;if server has undefined data u still want a map
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
 (defn get-pivoted-data-with-nominal [instrument-definition table portfolios instruments field]
   (let [grp (group-by (juxt :id :portfolio) table)
         kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)]
     (into [] (for [instrument instruments]
-               (let [line (into (get instrument-definition instrument)
+               (let [line (into (if-let [d (get instrument-definition instrument)] d {})
                                 (for [p portfolios] {(keyword p)                       (reduce + (map field (get-in grp [[instrument p]])))
                                                      (keyword (str p "_totalnominal")) (reduce + (map :original-quantity (get-in grp [[instrument p]])))}))]
                  (assoc line :original-quantity (reduce + (map line kswn))))))))
