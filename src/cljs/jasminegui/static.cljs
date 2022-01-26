@@ -26,10 +26,10 @@
    {:code :portfolio-alignment :name "Portfolio alignment"}
    {:code :concentration-risk  :name "Concentration risk"}
    {:code :irrisk              :name "Interest rate risk"}
-   ;{:code :trade-history       :name "Trade history"}
    {:code :large-exposures     :name "Large exposures"}
    {:code :var                 :name "VaR and Beta"}
    {:code :proxies             :name "Bond proxies"}
+   {:code :position-history    :name "Position history"}
    ])
 
 (def trade-history-navigation
@@ -196,3 +196,25 @@
                   {:id "Hedging"                  :label "Hedging"                :group "Other"              :shortcut "Oth hedge"}
                   {:id "Event driven"             :label "Event driven"           :group "Other"              :shortcut "Oth event"}
                   ]] [(line :id) (line :shortcut)])))
+
+(def position-historical-dates ["31Dec18"
+                                "29Mar19"
+                                "28Jun19"
+                                "30Sep19"
+                                "31Dec19"
+                                "31Mar20"
+                                "30Jun20"
+                                "29Sep20"                            ; "30Sep20"
+                                "31Dec20"
+                                "29Jan21"
+                                "26Feb21"
+                                "31Mar21"
+                                "29Apr21"                            ; "30Apr21"
+                                "28May21"
+                                "30Jun21"
+                                "30Jul21"
+                                "31Aug21"
+                                "30Sep21"
+                                "02Nov21"                             ; "29Oct21"
+                                "30Nov21"
+                                "31Dec21"])
