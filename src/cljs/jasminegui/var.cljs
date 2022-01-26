@@ -3,7 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as reagent]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink alert-box
+                         single-dropdown hyperlink alert-box md-circle-icon-button
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -16,6 +16,7 @@
     [jasminegui.static :as static]
     [jasminegui.charting :as charting]
     [jasminegui.guitools :as gt]
+    [jasminegui.tools :as t]
     [oz.core :as oz]))
 
 
@@ -89,7 +90,19 @@
 (def dropdown-width "150px")
 
 (defn var-table-view []
-  (gt/element-box "var-table" standard-box-width "Backtested VaR" @(rf/subscribe [:var/table]) [[var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]]))
+  (let [download-columns [:id :std :beta :beta-up :beta-dw :rsq :var95 :var99	:maxd]]
+    ;(println @(rf/subscribe [:var/table]))
+  [:div {:id "var-table"}
+   [v-box :class "element" :align-self :center :justify :center :gap "20px" :width standard-box-width
+    :children (concat [[h-box :gap "10px" :align :center
+                        :children [[title :label "Backtested VaR" :level :level1]
+                                   [gap :size "1"]
+                                   [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab (if-let [tid (:target-id {:download-table @(rf/subscribe [:var/table])})] tid "var-table"))]
+                                   [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image (if-let [tid (:target-id {:download-table @(rf/subscribe [:var/table])})] tid "var-table"))]
+                                   [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click (if-let [ocl (:on-click-action {:download-table @(rf/subscribe [:var/table])})] ocl #(t/csv-link (:download-table {:download-table @(rf/subscribe [:var/table])}) (str "var-table" "-" (t/gdate-to-yyyymmdd (cljs-time.core/today))) download-columns))]]]]
+                      [[var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]])]]
+  )
+  )
 
 (defn backtest-chart []
   (let [dates @(rf/subscribe [:var/dates])

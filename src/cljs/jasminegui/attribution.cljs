@@ -16,8 +16,7 @@
     [jasminegui.tables :as tables]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    [reagent-contextmenu.menu :as rcm]
-    [jasminegui.tools :as t])
+    [reagent-contextmenu.menu :as rcm])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
@@ -31,6 +30,7 @@
 (def dropdown-width "150px")
 
 (def single-portfolio-attribution-display-view (atom nil))
+(def multiple-portfolio-attribution-display-view (atom nil))
 
 (defn single-portfolio-attribution-display []
   (let [is-tree (= @(rf/subscribe [:single-portfolio-attribution/display-style]) "Tree")
@@ -66,6 +66,8 @@
                          :aggregate tables/sum-rows
                          :Cell (get-in tables/attribution-table-columns [display-key-one :Cell])
                          :filterable false}))]
+
+    ;(println grouping-columns)
     [tables/tree-table-risk-table
      :multiple-portfolio-attribution/clean-table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
@@ -73,7 +75,8 @@
       {:Header "Description" :columns (mapv tables/attribution-table-columns [:code :rating])}]
      is-tree
      (mapv :accessor grouping-columns)
-     single-portfolio-attribution-display-view              ;THIS IS WRONG :)
+     ;single-portfolio-attribution-display-view              ;THIS IS WRONG :)
+     multiple-portfolio-attribution-display-view
      :multiple-portfolio-attribution/table-filter
      :multiple-portfolio-attribution/expander
      (fn [state rowInfo instance] #js {})]))
@@ -99,8 +102,11 @@
 (defn single-portfolio-attribution-controller []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         display-style (rf/subscribe [:single-portfolio-attribution/display-style])
+        is-tree (= @(rf/subscribe [:single-portfolio-attribution/display-style]) "Tree")
         portfolio (rf/subscribe [:single-portfolio-attribution/portfolio])
-        period (rf/subscribe [:single-portfolio-attribution/period])]
+        period (rf/subscribe [:single-portfolio-attribution/period])
+        download-columns ["Security" "Code" "Issuer" "Sector" "Region" "Country" "Duration-Bucket" "Total-Effect" "Fund-Contribution" "Index-Contribution" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"]
+        ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label (str "Attribution drill-down " @(rf/subscribe [:attribution-date])) :level :level1]
@@ -121,9 +127,9 @@
                                                                                                    (shortcut-row :single-portfolio-attribution/shortcut)
                                                                                                    [[gap :size "50px"]
                                                                                                     [title :label "Download:" :level :level3]
-                                                                                                    [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-attribution-display-view @portfolio (map name (keys (last @(rf/subscribe [:single-portfolio-attribution/table]))))) ;#(csv-link @(rf/subscribe [:single-portfolio-attribution/table]) @portfolio)
-                                                                                                     ]]))]]]]]
-                 [single-portfolio-attribution-display]]]]))
+                                                                                                    [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-attribution-display-view @portfolio download-columns is-tree)]
+                                                                                                    ]))]]]]]
+                                                                                                     [single-portfolio-attribution-display]]]]))
 
 
 ;(defn csv-link-multiple-portfolio []
@@ -134,10 +140,14 @@
 (defn multiple-portfolio-attribution-controller []
   (let [portfolio-map (into [] (for [p  @(rf/subscribe [:portfolios])] {:id p :label p}))
         display-style (rf/subscribe [:multiple-portfolio-attribution/display-style])
+        is-tree (= @(rf/subscribe [:multiple-portfolio-attribution/display-style]) "Tree")
         portfolios @(rf/subscribe [:portfolios])
         selected-portfolios (rf/subscribe [:multiple-portfolio-attribution/selected-portfolios])
         field-one (rf/subscribe [:multiple-portfolio-attribution/field-one])
-        period (rf/subscribe [:multiple-portfolio-attribution/period])]
+        period (rf/subscribe [:multiple-portfolio-attribution/period])
+        download-columns (concat ["Security" "Code" "Issuer" "Region" "Country" "Rating" "Duration-Bucket"] (filter @selected-portfolios portfolios))
+        ]
+    ;(println download-columns)
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label (str "Attribution drill-down " @(rf/subscribe [:attribution-date])) :level :level1]
@@ -160,7 +170,7 @@
                     :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-attribution/filter)))]
                                [h-box :gap "10px" :children (shortcut-row :multiple-portfolio-attribution/shortcut)]
                                [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
-                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(t/csv-link @(rf/subscribe [:multiple-portfolio-attribution/table]) "pivot")]]]]]]]
+                                                             [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @multiple-portfolio-attribution-display-view "attribution_multiple_portfolio" download-columns is-tree)]]]]]]]
                  [multiple-portfolio-attribution-display]]]]))
 
 

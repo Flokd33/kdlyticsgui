@@ -67,6 +67,20 @@
      :http-get-dispatch {:url          (str static/server-address "multiple-portfolio-trade-history?date-from=" start-date "&date-to=" end-date)
                          :dispatch-key [:multiple-portfolio-trade-history/data]}}))
 
+(rf/reg-sub
+  :get-multiple-portfolio-trade-history/clean-table
+  (fn [db]
+    (let [data (:multiple-portfolio-trade-history/data db)
+          portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+          res (->> data
+                   (map #(select-keys % (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name] portfolios)))
+                   (filter #(not= 0.0 (reduce + (map % portfolios)))))
+          ;data-clean1 (into []  (for [trade data] (select-keys trade (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name] portfolios))))
+          ;data-clean2 (filter #(not= 0.0 (reduce + (map % portfolios))) data-clean1)
+          ]
+      res
+      )))
+
 (rf/reg-event-fx
   :get-recent-trade-data
   (fn [{:keys [db]} [_ date-from date-to]]
@@ -214,7 +228,6 @@
                    [p (if nominal "" "bps based on latest NAV, not at time of trade")]
                    ]]])))
 
-
 (defn portfolio-history-table []
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
         pivot @(rf/subscribe [:portfolio-trade-history/pivot])]
@@ -293,7 +306,9 @@
 (defn trade-history []
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
         start-date (rf/subscribe [:portfolio-trade-history/start-date])
-        end-date (rf/subscribe [:portfolio-trade-history/end-date])]
+        end-date (rf/subscribe [:portfolio-trade-history/end-date])
+        download-columns [:TradeDate :NEW_ISSUE	:TransactionTypeName :NAME :ISIN :CRNCY :Quantity :PriceLcl :bps	:counterparty_code :CNTRY_OF_RISK :JPMRegion :JPM_SECTOR :Used_Rating_Score :last-price :total-return :tr-vs-cembi :tr-vs-cembiig :tr-vs-embi :tr-vs-embiig]
+        ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Trade history for " @portfolio) :level :level1]
@@ -332,7 +347,9 @@
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
                                                      [gap :size "20px"]
-                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio)]]]]]]]
+                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:portfolio-trade-history/data]) @portfolio download-columns)]
+
+                                                     ]]]]]]
                  [portfolio-history-table]
                  [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]
                  ]]]))
@@ -387,6 +404,7 @@
         countries (concat [{:id "All" :label "All"}] (mapv (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) country-codes)))}) (sort (distinct (map :Country data)))))
         sectors (concat [{:id "All" :label "All"}] (mapv (fn [x] {:id x :label x}) (sort (distinct (map :Sector data)))))
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        download-columns (concat ["TradeDate"] (filter @selected-portfolios portfolios))
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
@@ -429,9 +447,10 @@
                                                                :choices sectors
                                                                :on-change #(do  (rf/dispatch [:recent-trade-data/sector %]))
                                                                :filter-box? true]
-                                                              [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-recent-trade-data @date-from @date-to])]]]
-                 [portfolio-history-table-recent]
-                 ]]]))
+                                                              [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-recent-trade-data @date-from @date-to])]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @portfolio-history-table-recent "recent_trades_multiple_portfolio" download-columns)] ;
+                                                              ]]
+                 [portfolio-history-table-recent]               ]]]))
 
 
 (defn filtering-row [key]
@@ -494,12 +513,12 @@
         field-one (rf/subscribe [:multiple-portfolio-risk/field-one])
         is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
-        download-columns (concat ["NAME" "isin" "description"] (filter @selected-portfolios portfolios) (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
+        download-columns (concat ["NAME" "isin" "description" "TICKER" "jpm-region" "emd-region" "qt-risk-country-name" "qt-iam-int-lt-median-rating-score" "qt-jpm-sector" "qt-final-maturity-band"] (filter @selected-portfolios portfolios))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
-    (println data)
+    ;(println data)
     [box :class "subbody rightelement" :child
-     (gt/element-box-generic "multiple-portfolio-risk" "1675px" (str "Trade History - Portfolio drill-down ") {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view-th "pivot" download-columns is-tree)}
+     (gt/element-box-generic "multiple-portfolio-risk" "1675px" (str "Trade History - Portfolio drill-down ") {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view-th "multiple_portfolio_trade_history" download-columns is-tree)}
                              [[h-box :gap "50px" :align :center
                                :children
                                [[title :label "Start:" :level :level3]
@@ -542,12 +561,13 @@
                                     grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
                                     cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
                                                     {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false :getProps tables/red-negatives
-                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round0*100-if-not0 :contrib-mdur tables/round2-if-not0 ))}))]
-
-                                (println display-key-one)
+                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round0*100-if-not0 :contrib-mdur tables/round2-if-not0 ))}))
+                                    ]
+                                ;(println @(rf/subscribe [:get-multiple-portfolio-trade-history/clean-table]))
                                 [:div {:id "multiple-portfolio-risk-table"}
                                  [tables/tree-table-risk-table
-                                  :multiple-portfolio-trade-history/data ;:multiple-portfolio-risk/table
+                                  ;:multiple-portfolio-trade-history/data
+                                  :get-multiple-portfolio-trade-history/clean-table
                                   [{:Header (str "Groups (" @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
                                    {:Header (str "Portfolio " (name display-key-one)) :columns cols}
                                    {:Header "Description" :columns (mapv tables/risk-table-columns [:rating :isin :description])}]
@@ -563,22 +583,12 @@
   )
 
 
-(defn trade-history-multiple-portfolio []
-  (let [data @(rf/subscribe [:multiple-portfolio-trade-history/data])
-        ]
-    ;(println data)
-    [multiple-portfolio-history-table]
-
-    )
-  )
-
-
 (defn active-home []
   "Create the body with trade-history"
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
   (case @(rf/subscribe [:trade-history/active-home])
     :single-portfolio [trade-history]
-    :multiple-portfolio [trade-history-multiple-portfolio]
+    :multiple-portfolio [multiple-portfolio-history-table]
     :recent-trades [trade-history-recent]
     [:div.output "nothing to display"]))
 

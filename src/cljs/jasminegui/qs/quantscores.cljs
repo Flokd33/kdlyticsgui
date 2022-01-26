@@ -134,6 +134,8 @@
 ;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
 
 (defn qs-table [mytitle data]
+  (let [download-column-old (conj (keys (first data)) :ISIN)]
+    ;(println (conj (keys (first data)) :ISIN))
      [v-box :class "element"  :gap "20px" :width "1690px"
       :children [[title :label mytitle :level :level1]
                  [h-box :align :center :gap "10px"
@@ -157,6 +159,7 @@
                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                     :ref             #(reset! qstables/qs-table-view %)
                     :getTrProps      on-click-context :className "-striped -highlight"}]]]])
+  )
 
 (def index-crawler-filter (r/atom []))
 (def index-crawler-expander (r/atom {}))                    ;0 {}
