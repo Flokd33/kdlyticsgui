@@ -80,11 +80,14 @@
           risk-choices (let [rfil (:single-portfolio-risk/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
-          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) v2)] ;viewable-positions
+          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) v2)
+          sorted-data2 (into [] (for [r sorted-data] (update r :qt-iam-int-lt-median-rating-score #(str "G" %))))
+          ] ;viewable-positions
+      (println sorted-data2)
       (clj->js
         (if (= (:single-portfolio-risk/display-style db) "Tree")
-          (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-          (conj sorted-data portfolio-total-line)))
+          (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data2))
+          (conj sorted-data2 portfolio-total-line)))
       )))
 
 (rf/reg-sub
@@ -149,11 +152,11 @@
           pivoted-data (get-pivoted-data-with-nominal (get db :instruments) pos (:multiple-portfolio-risk/selected-portfolios db) (distinct (map :id pos)) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
           pivoted-data-hide-zero (if hide-zero-risk (filter thfil pivoted-data) pivoted-data)
-          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero)]
-
+          sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero)
+          sorted-data2 (into [] (for [r sorted-data] (update r :qt-iam-int-lt-median-rating-score #(str "G" %))))]
       (if (= (:multiple-portfolio-risk/display-style db) "Tree")
-        (tables/cljs-text-filter-OR (:multiple-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-        (add-total-line-to-pivot sorted-data kselected-portfolios)))))
+        (tables/cljs-text-filter-OR (:multiple-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data2))
+        (add-total-line-to-pivot sorted-data2 kselected-portfolios)))))
 
 (rf/reg-sub
   :multiple-portfolio-attribution/clean-table
@@ -361,7 +364,6 @@
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
         download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
-    ;(println (nth @(rf/subscribe [:single-portfolio-risk/table]) 5))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
                              {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)}
@@ -408,13 +410,11 @@
         hide-zero-risk (rf/subscribe [:multiple-portfolio-risk/hide-zero-holdings])
         is-tree (= @(rf/subscribe [:multiple-portfolio-risk/display-style]) "Tree")
         ;download-columns-old (concat (map keyword portfolios) (map keyword (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))) [:isin :description])
-        download-columns (concat ["NAME" "isin" "description" "nominal"] (filter @selected-portfolios portfolios) (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
+        download-columns (concat ["NAME" "isin" "description" "original-quantity"] (filter @selected-portfolios portfolios) (map name (remove nil? (map #(get-in tables/risk-table-columns [% :accessor]) (map :id static/risk-choice-map)))))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
-        ;data  @(rf/subscribe [:multiple-portfolio-risk/field-one])
         ]
-    ;(println data)
     [box :class "subbody rightelement" :child
-     (gt/element-box-generic "multiple-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "pivot" download-columns is-tree)}
+     (gt/element-box-generic "multiple-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "multiple_portfolio_holdings" download-columns is-tree)}
                              [[h-box :gap "50px" :align :center
                                :children
                                [
@@ -550,9 +550,10 @@
                                                       "ust" ust
                                                       "sensitive" ir-sensitive
                                                       "insensitive" ir-insensitive)))
-            ]
+            download-columns [:maturity-band	:ust	:sensitive	:insensitive	:total]]
+        (println data)
         [box :class "subbody rightelement" :child
-         (gt/element-box "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
+         (gt/element-box-with-cols "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
                          [[h-box :gap "5px" :align :center  :children [[title :level :level3 :label "Portfolio:"] [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
                                                                        [gap :size "20px"]
                                                                        [title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]]]
@@ -597,10 +598,13 @@
                                              {:Header "Fund" :accessor "contrib-mdur" :width 120 :getProps tables/red-negatives :Cell tables/round2}
                                              {:Header "Index" :accessor "bm-contrib-eir-duration" :width 120 :getProps tables/red-negatives :Cell tables/round2}
                                              {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
-                            :showPagination false :pageSize 20 :className "-striped -highlight"}]])]))))
+                            :showPagination false :pageSize 20 :className "-striped -highlight"}]]
+                                           download-columns
+                                           )]))))
 
 (defn concentration-risk []
-  (let [index-cut-off 0.01 overweight-multiplier 2 breakdown (r/atom :country-sector)]
+  (let [index-cut-off 0.01 overweight-multiplier 2 breakdown (r/atom :country-sector)
+        download-columns [:bucket  :weight-multiplier :mdur-multiplier :weight :bm-weight :contrib-mdur  :bm-contrib-eir-duration]]
     (fn []
       (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
             portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
@@ -617,7 +621,7 @@
                                                                                        :weight-multiplier (/ (:weight line) (:bm-weight line))
                                                                                        :mdur-multiplier (/ (:contrib-mdur line) (:bm-contrib-eir-duration line)))))))]
         [box :class "subbody rightelement" :child
-         (gt/element-box "concentrationrisk" "100%" (str "Concentration risk " @(rf/subscribe [:qt-date])) display
+         (gt/element-box-with-cols "concentrationrisk" "100%" (str "Concentration risk " @(rf/subscribe [:qt-date])) display
                          [[title :level :level4 :label "Filtering for buckets of risk where the index is above 1% and we hold more than 2x the index size."]
                           [h-box :gap "20px" :align :center  :children [[title :level :level3 :label "Portfolio:"]
                                                                         [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
@@ -638,7 +642,9 @@
                                              {:Header "Duration" :columns [(assoc (tables/nb-col "Fund" "contrib-mdur" 120 tables/round2 nil) :filterable false)
                                                                            (assoc (tables/nb-col "Index" "bm-contrib-eir-duration" 120 tables/round2 nil) :filterable false)]}]
                             :showPagination false  :pageSize (count display) :className "-striped -highlight"}]
-                          ])]))))
+                          ]
+                                   download-columns
+                                   )]))))
 
 (defn summary-display []
   (let [data @(rf/subscribe [:summary-display/table])]
@@ -686,9 +692,10 @@
 (defn large-exposures
   "another ugly microoptimisation"
   []
+  (let [download-columns [:NAME :isin :TICKER :pct_held :original-quantity :AMT_OUTSTANDING ]]
   (when-not (seq @(rf/subscribe [:large-exposures])) (rf/dispatch [:get-large-exposures]))
   [box :class "subbody rightelement" :child
-   (gt/element-box "large-exposures" "100%" (str "Large exposures (>5%) " @(rf/subscribe [:qt-date])) @(rf/subscribe [:large-exposures])
+   (gt/element-box-with-cols "large-exposures" "100%" (str "Large exposures (>5%) " @(rf/subscribe [:qt-date])) @(rf/subscribe [:large-exposures])
                    [[:> ReactTable
                      {:data           (reverse (sort-by :pct_held @(rf/subscribe [:large-exposures])))
                       :columns        [(tables/risk-table-columns :name)
@@ -697,4 +704,6 @@
                                        {:Header "Held %" :accessor "pct_held" :width 80 :Cell #(tables/nb-cell-format "%.1f%" 100. %) :style {:textAlign "right"}}
                                        (assoc (tables/risk-table-columns :nominal) :filterable false)
                                        {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 100 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
-                      :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize 20 :showPageSizeOptions false :className "-striped -highlight"}]])])
+                      :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize 20 :showPageSizeOptions false :className "-striped -highlight"}]]
+                             download-columns
+                             )]))

@@ -18,12 +18,14 @@
 
 (defn view []
   (let [data @(rf/subscribe [:betas/table])
-        default-beta-line {:width 75 :Cell tables/round2 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}]
+        default-beta-line {:width 75 :Cell tables/round2 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}
+        download-columns [:NAME :isin :qt-risk-country-name :qt-jpm-sector :qt-final-maturity-band :qt-yield :qt-govt-spread :qt-libor-spread :qt-modified-duration :total-return-ytd :jensen-ytd :xsr-6m :xsr-9m :xsr-12m :beta-vs-cembi-duration :beta-vs-cembi-sector  :beta-vs-cembi-country  :beta-vs-cembi-up :beta-vs-cembi-dw  :beta-vs-cembi-rating :beta-vs-embi-country :beta-vs-cembi-ig :beta-vs-ust :beta-vs-embi :beta-vs-ushy :beta-vs-blend333333 :beta-vs-blend502525 :beta-vs-gbiem  :beta-vs-blend5050  :cembi-beta-last-year :beta-vs-spx :cembi-beta-previous-year :beta-vs-usig :beta-vs-cembi-hy ]
+        ]
     [box :padding "80px 25px" :child
      [v-box :class "subbody element"  :gap "20px"
       :children [[h-box :align :center :children [[title :label (str "One year betas vs benchmarks") :level :level1]
                                                   [gap :size "1"]
-                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "betas")]]]
+                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link data "betas_vs_bm" download-columns)]]]
                  [h-box :align :center :gap "20px" :children (into [] (for [k (keys @table-checkboxes)]
                                                             [checkbox :model (r/cursor table-checkboxes [k]) :label (name k) :on-change #(swap! table-checkboxes assoc k %)] ))] ;bit hacky order maintained as small map
                  [:> ReactTable
