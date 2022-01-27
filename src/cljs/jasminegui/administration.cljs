@@ -172,5 +172,5 @@
   [v-box                                                  ;:gap "10px"
    :gap "10px"
    :padding "80px 25px"
-   :children [[modal-success] [time-machine] [debug-operations] [last-updated-logs] [integrity]]]
+   :children [[modal-success] [time-machine] [debug-operations] [integrity] [last-updated-logs]]]
   )
