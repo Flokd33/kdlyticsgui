@@ -14,7 +14,7 @@
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
     [jasminegui.tables :as tables]
-
+    [jasminegui.guitools :as gt]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [reagent-contextmenu.menu :as rcm])
   (:import (goog.i18n NumberFormat)
@@ -182,17 +182,20 @@
   ;note wtd in files is actually weekly!!
   (let [fmt {:width 90 :Cell #(tables/nb-cell-format "%.2f%" 1. %) :getProps tables/red-negatives} ;tables/round2colpct
         timeframes [["Year to date" "ytd"] ["Month to date" "mtd"] ["Weekly" "wtd"] ["Daily" "day"]]
-        targets [["Fund" "-Fund-Contribution"] ["Benchmark" "-Index-Contribution"] ["Relative" "-Total-Effect"]]]
+        targets [["Fund" "-Fund-Contribution"] ["Benchmark" "-Index-Contribution"] ["Relative" "-Total-Effect"]]
+        download-columns [:portfolio :ytd-Fund-Contribution :ytd-Index-Contribution :ytd-Total-Effect :mtd-Fund-Contribution :mtd-Index-Contribution :mtd-Total-Effect :wtd-Index-Contribution :wtd-Fund-Contribution :wtd-Total-Effect :day-Fund-Contribution :day-Index-Contribution :day-Total-Effect]
+        ]
   [box :class "subbody rightelement" :child
-   [v-box :class "element" :gap "20px"
-    :children [[title :label (str "Summary " @(rf/subscribe [:attribution-date])) :level :level1]
-               [:> ReactTable
+   (gt/element-box-with-cols "performance-summary" "100%" (str "Summary " @(rf/subscribe [:attribution-date])) @(rf/subscribe [:attribution/summary])
+      [[:> ReactTable
                 {:data           @(rf/subscribe [:attribution/summary])
                  :columns        (into [{:Header "Portfolio" :accessor "portfolio" :width 120}]
                                        (for [[k1 v1] timeframes]
                                          {:Header k1
                                           :columns (into [] (for [[k2 v2] targets] (merge {:Header k2 :accessor (str v1 v2)} fmt)))}))
-                 :showPagination false :pageSize (count @(rf/subscribe [:attribution/summary])) :getTrProps go-to-attribution-risk :className "-striped -highlight"}]]]]))
+                 :showPagination false :pageSize (count @(rf/subscribe [:attribution/summary])) :getTrProps go-to-attribution-risk :className "-striped -highlight"}]]
+                             download-columns
+                             )]))
 
 (defn index-returns-display []
   (let [original-table (filter (comp pos? :Average-Index-Weight) @(rf/subscribe [:attribution-index-returns/table]))
