@@ -2,7 +2,7 @@
   (:require
     [re-frame.core :as rf]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink md-circle-icon-button selection-list modal-panel typeahead throbber
+                         single-dropdown hyperlink md-circle-icon-button md-icon-button selection-list modal-panel typeahead throbber
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -33,11 +33,15 @@
 (def typeahead-bond-nickname (r/atom nil))
 (def isin-historical-charts (r/atom "ISIN not found"))
 (def bond-historical-charts (r/atom ""))
+(def typeahead-bond-nickname-2 (r/atom nil))
+(def isin-historical-charts-2 (r/atom "ISIN not found"))
+(def bond-historical-charts-2 (r/atom nil))
 (def show-historical-cheapness (r/atom true))
 (def show-historical-spreads (r/atom false))
 (def show-universe-scores (r/atom false))
 (def show-historical-scores (r/atom false))
 (def show-rating-history (r/atom false))
+(def show-one-or-two (r/atom false))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def dropdown-width "100px")
 
@@ -56,6 +60,12 @@
   (fn [{:keys [db]} [_ isin]]
     {:http-get-dispatch {:url          (str static/server-address "quant-model-isin-history?isin=" isin)
                          :dispatch-key [:quant-model/isin-history]}}))
+
+(rf/reg-event-fx
+  :get-historical-quant-scores-2
+  (fn [{:keys [db]} [_ isin2]]
+    {:http-get-dispatch {:url          (str static/server-address "quant-model-isin-history?isin=" isin2)
+                         :dispatch-key [:quant-model/isin-history-2]}}))
 
 (rf/reg-event-fx
   :get-quant-model-saved-charts
@@ -629,7 +639,7 @@
         bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data)))))]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
-                 :children [[title :level :level1 :label "Historical charts"]
+                 :children [[title :level :level1 :label "Bond"]
                             [h-box :gap "100px" :align :start
                              :children [[v-box :gap "10px" :children
                                          [[checkbox :model show-historical-cheapness  :label "Show cheapness?"        :on-change #(reset! show-historical-cheapness %)]
@@ -638,7 +648,7 @@
                                           [checkbox :model show-historical-scores     :label "Show historical score?" :on-change #(reset! show-historical-scores %)]
                                           [checkbox :model show-rating-history        :label "Show rating history?"   :on-change #(reset! show-rating-history %)]
                                           [gap :size "30px"]
-                                          [label :width "200px" :label (str @bond-historical-charts " " @isin-historical-charts)]
+                                          [label :width "200px" :label (str "Choice 1: " @bond-historical-charts " (" @isin-historical-charts ")")]
                                           [typeahead
                                            :width "200px"
                                            :model typeahead-bond-nickname
@@ -650,8 +660,28 @@
                                                              (reset! isin-historical-charts isin)
                                                              (reset! bond-historical-charts (:id %))
                                                              (rf/dispatch [:get-historical-quant-scores isin])))
-                                           :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]]]
-                                        [oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-cheapness @show-historical-spreads @show-universe-scores @show-historical-scores @show-rating-history)]]]]]]]))
+                                           :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]
+
+                                          [label :width "200px" :label (str "Choice 2: " @bond-historical-charts-2 " (" @isin-historical-charts-2 ")")]
+                                          [h-box :gap "10px" :align :start :children
+                                           [[typeahead
+                                           :width "200px"
+                                           :model typeahead-bond-nickname-2
+                                           :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n)))) ;list ticker
+                                           :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
+                                           :suggestion-to-string (fn [_] "")              ;#(:name %)
+                                           :placeholder "Search here"
+                                           :on-change #(do (let [isin2 (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))] ;get isin from ticker
+                                                             (reset! isin-historical-charts-2 isin2) ;isin
+                                                             (reset! bond-historical-charts-2 (:id %)) ;ticker
+                                                             (rf/dispatch [:get-historical-quant-scores-2 isin2])))
+                                           :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]
+                                          [md-icon-button :md-icon-name "zmdi-delete" :size :larger
+                                           :on-click #(do (reset! isin-historical-charts-2 nil)
+                                                            (reset! bond-historical-charts-2 nil )
+                                                            (rf/dispatch [:get-historical-quant-scores-2 nil]))]]]]]
+
+                                        [oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-cheapness @show-historical-spreads @show-universe-scores @show-historical-scores @show-rating-history @bond-historical-charts-2 @bond-historical-charts @bond-historical-charts-2)]]]]]]]))
 
 
 (rf/reg-event-db :quant-model-new-bond/change-isin (fn [db [_ isin]] (assoc db :quant-model/new-bond-entry {:ISIN isin}))) ;cleans the whole thing

@@ -27,6 +27,15 @@
                           :dispatch-key [:has-rebuilt]
                           }}))
 
+(rf/reg-event-fx
+  :rebuild-pos
+  (fn [{:keys [db]} [_]]
+    {:db (assoc db :navigation/success-modal {:show true :on-close :close-rebuild :response nil})
+     :http-post-dispatch {:url          (str static/server-address "rebuild-pos")
+                          :edn-params   {}
+                          :dispatch-key [:has-rebuilt-pos]
+                          }}))
+
 (rf/reg-event-db
   :has-rebuilt
   (fn [db [_ data]]
@@ -39,6 +48,17 @@
     (rf/dispatch [:get-var-proxies])
     (rf/dispatch [:get-var-dates])
     (rf/dispatch [:get-portfolio-var "OGEMCORD"])
+    (assoc-in db [:navigation/success-modal :response] (:text-response data))))
+
+(rf/reg-event-db
+  :has-rebuilt-pos
+  (fn [db [_ data]]
+    (rf/dispatch [:get-portfolios])
+    (rf/dispatch [:get-positions])
+    ;(rf/dispatch [:get-pivoted-positions])
+    (rf/dispatch [:get-total-positions])
+    (rf/dispatch [:get-rating-to-score])
+    (rf/dispatch [:get-qt-date])
     (assoc-in db [:navigation/success-modal :response] (:text-response data))))
 
 (rf/reg-event-db
@@ -61,17 +81,19 @@
 
 
 (defn debug-operations []
-   [v-box
-    :gap "10px"
-    :width "400px"
-    :class "subbody element"
-    :children [[title :label "Debug operations" :level :level1]
-               [h-box  :gap "10px" :align :center
-                :children [[box  :size "1" :child [label :label "Rebuild positions and VaR:"]]
-                           [box  :size "1" :child [button :style {:width "100%"} :label "Do it!" :on-click #(rf/dispatch [:rebuild])]]]]
-               ]]
+  [v-box
+   :gap "10px"
+   :width "400px"
+   :class "subbody element"
+   :children [[title :label "Debug operations" :level :level1]
+              [h-box  :gap "200px" :align :center
+               :children [[box  :size "1" :child [label :label "Rebuild positions and VaR:"]]
+                          [box  :size "1" :child [button :style {:width "100%"} :label "Do it!" :on-click #(rf/dispatch [:rebuild])]]]]
+              [h-box  :gap "200px" :align :center
+               :children [[box  :size "1" :child [label :label "Rebuild positions and integrity report:"]]
+                          [box  :size "1" :child [button :style {:width "100%"} :label "Do it!" :on-click #(rf/dispatch [:rebuild-pos])]]]]
+              ]]
   )
-
 
 ;(rf/reg-event-db
 ;  :rebuild-time-machine
