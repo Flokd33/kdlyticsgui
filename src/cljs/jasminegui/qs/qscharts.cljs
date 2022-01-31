@@ -164,36 +164,37 @@
      :title    nil                                              ;(str @(rf/subscribe [:single-bond-trade-history/bond]) " trading history")
      ;:data    {:values data :format {:parse {:Date "date:'%Y%m%d'" :HRS_svr "quantitative" :REH_svr "quantitative" :HCS "quantitative" :URS_svr "quantitative" :Median_Rating "quantitative"}}}
      :data    {:values data_to-plot :format {:parse {:bond "nominal" :Date "date:'%Y%m%d'" :HRS_svr "quantitative" :REH_svr "quantitative" :HCS "quantitative" :URS_svr "quantitative" :Median_Rating "quantitative"}}}
-
      :vconcat (remove nil? [
                             (if cheapness?
-                                {:mark "line" :width 800 :heght 400
+                                {:mark "line" :width 1000 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y {:field "REH_svr" :type "quantitative" :axis {:title "Cheapness (bps)"}}
                                           :color {:field "bond" :type "nominal" }}
                                           })
                             (if spread?
-                              {:mark "line" :width 800 :height 400
+                              {:mark "line" :width 1000 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y {:field "HCS" :type "quantitative" :axis {:title "Z-spread"}}
                                           :color {:field "bond" :type "nominal" }}
                                           })
                             (if universe?
-                              {:mark "line" :width 800 :height 400
+                              {:mark "line" :width 1000 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y {:field "URS_svr" :type "quantitative" :axis {:title "Universe"}}
                                           :color {:field "bond" :type "nominal" }}
                                               })
                             (if historical?
-                              {:mark "line" :width 800 :height 400
+                              {:mark "line" :width 1000 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y {:field "HRS_svr" :type "quantitative" :axis {:title "Historical"}}
                                           :color {:field "bond" :type "nominal" }}
                                             })
                             (if rating?
-                              {:mark "line" :width 800 :height 400
+                              {:mark "line" :width 1000 :height 400
                                :encoding {:x {:field "Date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                                          :y {:field "Median_Rating" :type "quantitative" :scale {:domain [(dec (apply min (map :Median_Rating data))) (inc (apply max (map :Median_Rating data)))]} :axis {:title "Rating"}}
+                                          :y {:field "Median_Rating" :type "quantitative"
+                                              :scale {:domain [(dec (apply min (map :Median_Rating data_to-plot))) (inc (apply max (map :Median_Rating data_to-plot)))]}
+                                              :axis {:title "Rating"}}
                                           :color {:field "bond" :type "nominal" }}
                                           })
                             ])}))
