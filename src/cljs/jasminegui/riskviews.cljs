@@ -368,7 +368,8 @@
         risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
-        download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
+        download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
+    (println #(get-in tables/tree-table-risk-table [% :accessor]))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
                              {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)}
@@ -652,7 +653,11 @@
                                    )]))))
 
 (defn summary-display []
-  (let [data @(rf/subscribe [:summary-display/table])]
+  (when (nil? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
+  (let [data @(rf/subscribe [:summary-display/table])
+        portfolio-checks-data @(rf/subscribe [:portfolio-checks])
+        ]
+    (println portfolio-checks-data)
     [box :class "subbody rightelement" :child
      (gt/element-box "summary" "100%" (str "Summary " @(rf/subscribe [:qt-date])) data
                      [[:> ReactTable
@@ -687,12 +692,16 @@
                                                                                                        (tables/nb-col "FA risk" "downgrade-candidates" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/text-col "Ad hoc" "ad-hoc" 220)])}
                                          ]
-                        :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]]
+                        :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]
+                      [v-box :gap "5px" :align :start :children (into [[title :label "Portfolio Daily Checks" :level :level1]]
+                                                                       (for [[k v] (sort-by first portfolio-checks-data)]
+                                                                         [h-box :gap "5px" :children [[label :width "350px" :label (str k)]
+                                                                                                      [p (str v)]
+                                                                                                      ]]))]
+                      ]
                      )
-
-     ]))
-
-
+     ]
+    ))
 
 (defn large-exposures
   "another ugly microoptimisation"

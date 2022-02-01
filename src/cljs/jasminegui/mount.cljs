@@ -216,7 +216,7 @@
                  :quant-model/issuer-coverage             []
 
                  :model-portfolios/trades                 {}
-                 :model-portfolios/hide-zeros                false
+                 :model-portfolios/hide-zeros              false
                  :model-portfolios/aggregation            "Region"
 
                  :scorecard/portfolio                   "OGEMCORD"
@@ -232,6 +232,7 @@
 
                  :last-updated-logs nil
                  :integrity nil
+                 :portfolio-checks nil
 
                  :analysts nil
 
@@ -406,6 +407,7 @@
 
            :last-updated-logs
            :integrity
+           :portfolio-checks
 
            :analysts
 
@@ -688,6 +690,7 @@
    {:get-key :get-msci-scores    :url-tail "msci-scores" :dis-key :esg/msci-scores}
    {:get-key :get-last-updated-logs    :url-tail "last-updated" :dis-key :last-updated-logs}
    {:get-key :get-integrity    :url-tail "integrity" :dis-key :integrity}
+   {:get-key :get-portfolio-checks    :url-tail "portfolio-checks" :dis-key :portfolio-checks}
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
    ])
