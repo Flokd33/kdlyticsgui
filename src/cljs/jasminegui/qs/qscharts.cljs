@@ -159,7 +159,6 @@
         data4 (for [d data2] (assoc d :bond bond-historical-charts-2))
         data_to-plot (if (nil? bond2?) data3 (concat data3 data4))
         ]
-    (println data_to-plot)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :title    nil                                              ;(str @(rf/subscribe [:single-bond-trade-history/bond]) " trading history")
      ;:data    {:values data :format {:parse {:Date "date:'%Y%m%d'" :HRS_svr "quantitative" :REH_svr "quantitative" :HCS "quantitative" :URS_svr "quantitative" :Median_Rating "quantitative"}}}
@@ -198,8 +197,6 @@
                                           :color {:field "bond" :type "nominal" }}
                                           })
                             ])}))
-
-
 
 
 (defn stacked-vertical-bars [data colour-universe]
