@@ -23,6 +23,7 @@
   [{:code :summary             :name "Overview"}
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
+   {:code :portfolio-checks    :name "Portfolios checks"}
    {:code :portfolio-alignment :name "Portfolio alignment"}
    {:code :concentration-risk  :name "Concentration risk"}
    {:code :irrisk              :name "Interest rate risk"}
@@ -69,10 +70,11 @@
    ])
 
 (def esg-navigation
-  [{:code :msci          :name "MSCI"}
-   {:code :holdings            :name "Holdings through MSCI"}
-   {:code :esg-scores    :name "ESG summary report"}
+  [{:code :msci                 :name "MSCI"}
+   {:code :holdings             :name "Holdings through MSCI"}
+   {:code :esg-scores           :name "ESG summary report"}
    {:code :refinitiv            :name "Refinitiv"}
+   {:code :esg-calculator       :name "ESG Calculator"}
    ])
 
 (def risk-choice-map

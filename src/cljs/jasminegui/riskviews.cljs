@@ -470,7 +470,7 @@
                                     grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
                                     cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
                                                     {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
-                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v))}))]
+                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-yield tables/round2pc :contrib-mdur tables/round2-if-not0 v))}))]
                                 ;(println @(rf/subscribe [:multiple-portfolio-risk/table]))
                                 ;(println (mapv tables/risk-table-columns [:rating :nominal :isin :description]))
                                 [:div {:id "multiple-portfolio-risk-table"}
@@ -653,11 +653,7 @@
                                    )]))))
 
 (defn summary-display []
-  (when (nil? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
-  (let [data @(rf/subscribe [:summary-display/table])
-        portfolio-checks-data @(rf/subscribe [:portfolio-checks])
-        ]
-    (println portfolio-checks-data)
+  (let [data @(rf/subscribe [:summary-display/table])]
     [box :class "subbody rightelement" :child
      (gt/element-box "summary" "100%" (str "Summary " @(rf/subscribe [:qt-date])) data
                      [[:> ReactTable
@@ -693,15 +689,23 @@
                                                                                                        (tables/text-col "Ad hoc" "ad-hoc" 220)])}
                                          ]
                         :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]
-                      [v-box :gap "5px" :align :start :children (into [[title :label "Portfolio Daily Checks" :level :level1]]
-                                                                       (for [[k v] (sort-by first portfolio-checks-data)]
-                                                                         [h-box :gap "5px" :children [[label :width "350px" :label (str k)]
-                                                                                                      [p (str v)]
-                                                                                                      ]]))]
                       ]
                      )
      ]
     ))
+
+
+(defn portfolio-checks-display []
+  (when (nil? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
+  (let [portfolio-checks-data @(rf/subscribe [:portfolio-checks])]
+    (println portfolio-checks-data)
+    [box :class "subbody rightelement" :child
+     (gt/element-box "checks" "100%" (str "Portfolio Exposure Checks " (portfolio-checks-data :last-updated) ) portfolio-checks-data
+                     [[v-box :gap "5px" :align :start :children (into [] ;into [[title :label "Portfolio Daily Checks" :level :level1]]
+                                                                      (for [[k v] (sort-by first portfolio-checks-data)]
+                                                                        [h-box :gap "5px" :children [[label :width "350px" :label (str k)]
+                                                                                                     [p (str v)]
+                                                                                                     ]]))]])]))
 
 (defn large-exposures
   "another ugly microoptimisation"
