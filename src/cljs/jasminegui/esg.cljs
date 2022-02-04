@@ -24,6 +24,8 @@
 (def standard-box-width "1600px")
 (def dropdown-width "150px")
 
+(def esg-calculator-input (r/atom {}))
+
 
 (rf/reg-event-db
   :esg/add-company
@@ -53,6 +55,67 @@
   (fn [db [_ data]]
     (assoc db :esg/refinitiv-structure data
               :esg/selected-pillars (set (sort (distinct (map :pillar_title data)))))))
+
+(def esg-calculator-questions-choices
+  [{:id :yes        :label "Yes"}
+   {:id :no       :label "No"}])
+
+
+(defn esg-calculator-display []
+ [v-box :width "1500px" :gap "5px" :class "element"
+        :children [
+                   [title :label "ESG Calculator" :level :level1]
+                   [v-box :width "1450px" :gap "5px" :class "element"
+                          :children [
+                                     [title :label "Title 1" :level :level1 ]
+                                     [h-box :width "1350px" :gap "50px" :class "element"
+                                            :children [
+                                                       [title :label "Question 1: 1+1 == 2 ?" :level :level3]
+                                                       ;[radio-button :model esg-calculator-input :label "Yes" :on-change #(reset! esg-calculator-input %)]
+                                                       ;[radio-button :model esg-calculator-input :label "No" :on-change #(reset! esg-calculator-input %)]
+                                                       [single-dropdown :width dropdown-width :choices esg-calculator-questions-choices :model esg-calculator-input :on-change #(reset! esg-calculator-input %)]
+                                                       ]
+                                      ]
+                                     [h-box :width "1350px" :gap "50px" :class "element"
+                                      :children [
+                                                 [title :label "Question 3: 1+2 == 4 ?" :level :level3]
+                                                 [single-dropdown :width dropdown-width :choices esg-calculator-questions-choices :model esg-calculator-input :on-change #(reset! esg-calculator-input %)]
+                                                 ]
+                                      ]
+
+                                    ]
+                    ]
+                   [v-box :width "1450px" :gap "5px" :class "element"
+                    :children [
+                               [title :label "Title 2" :level :level1 ]
+                               [h-box :width "1350px" :gap "50px" :class "element"
+                                :children [
+                                           [title :label "Question 3: 1+1 == 2 ?" :level :level3]
+                                           ;[radio-button :model esg-calculator-input :label "Yes" :on-change #(reset! esg-calculator-input %)]
+                                           ;[radio-button :model esg-calculator-input :label "No" :on-change #(reset! esg-calculator-input %)]
+                                           [single-dropdown :width dropdown-width :choices esg-calculator-questions-choices :model esg-calculator-input :on-change #(reset! esg-calculator-input %)]
+                                           ]
+                                ]
+                               [h-box :width "1350px" :gap "50px" :class "element"
+                                :children [
+                                           [title :label "Question 4: 1+2 == 4 ?" :level :level3]
+                                           [single-dropdown :width dropdown-width :choices esg-calculator-questions-choices :model esg-calculator-input :on-change #(reset! esg-calculator-input %)]
+                                           ]
+                                ]
+
+                               ]
+
+
+                    ]
+
+            ]])
+
+(def esg-score-calculator []
+  ;use reactive atom inputs to calc score ...
+  ;(swap! ....atom)
+  ;(reset! ....atom)
+  )
+
 
 (defn refinitiv-find-issuers []
   (let [choices  @(rf/subscribe [:esg/refinitiv-ids])
@@ -288,11 +351,10 @@
      :child (case active-esg
               :msci [msci-table]
               :refinitiv [v-box :gap "20px" :class "body" :children [[refinitiv-find-issuers] [refinitiv-table-top-view] [refinitiv-table-detailed-view]]]
+              :esg-calculator [esg-calculator-display]
               :holdings [holdings]
               :esg-scores [esg-scores]
               [:div.output "nothing to display"])]))
-
-
 
 (defn esg-view []
   [h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home]]])

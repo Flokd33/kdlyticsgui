@@ -44,6 +44,7 @@
       :single-portfolio               [riskviews/single-portfolio-risk-display]
       :all-portfolios                 [riskviews/multiple-portfolio-risk-controller]
       :portfolio-alignment            [riskviews/portfolio-alignment-risk-controller]
+      :portfolio-checks               [riskviews/portfolio-checks-display]
       :concentration-risk             [riskviews/concentration-risk]
       :irrisk                         [riskviews/irrisk]
       :large-exposures                [riskviews/large-exposures]
