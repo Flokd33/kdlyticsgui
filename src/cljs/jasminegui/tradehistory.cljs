@@ -518,7 +518,7 @@
         ]
     ;(println data)
     [box :class "subbody rightelement" :child
-     (gt/element-box-generic "multiple-portfolio-risk" "1675px" (str "Trade History - Portfolio drill-down ") {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view-th "multiple_portfolio_trade_history" download-columns is-tree)}
+     (gt/element-box-generic "multiple-portfolio-risk" "1675px" (str "Trade history - portfolio drill-down ") {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view-th "multiple_portfolio_trade_history" download-columns is-tree)}
                              [[h-box :gap "50px" :align :center
                                :children
                                [[title :label "Start:" :level :level3]

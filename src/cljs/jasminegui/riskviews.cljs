@@ -696,16 +696,17 @@
 
 
 (defn portfolio-checks-display []
-  (when (nil? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
+  (when (empty? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
   (let [portfolio-checks-data @(rf/subscribe [:portfolio-checks])]
-    (println portfolio-checks-data)
     [box :class "subbody rightelement" :child
-     (gt/element-box "checks" "100%" (str "Portfolio Exposure Checks " (portfolio-checks-data :last-updated) ) portfolio-checks-data
-                     [[v-box :gap "5px" :align :start :children (into [] ;into [[title :label "Portfolio Daily Checks" :level :level1]]
+     (gt/element-box "checks" "100%" (str "Portfolio exposure checks " (portfolio-checks-data :last-updated)) portfolio-checks-data
+                     [[v-box :gap "5px" :align :start :children (into []
                                                                       (for [[k v] (sort-by first portfolio-checks-data)]
                                                                         [h-box :gap "5px" :children [[label :width "350px" :label (str k)]
                                                                                                      [p (str v)]
-                                                                                                     ]]))]])]))
+                                                                                                     ]])
+                                                                      )]]
+                     )]))
 
 (defn large-exposures
   "another ugly microoptimisation"
