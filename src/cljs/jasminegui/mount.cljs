@@ -232,7 +232,7 @@
 
                  :last-updated-logs nil
                  :integrity nil
-                 :portfolio-checks nil
+                 :portfolio-checks {}
 
                  :analysts nil
 
