@@ -695,32 +695,13 @@
     ))
 
 
-;(defn portfolio-checks-display []
-;  (when (empty? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
-;  (let [portfolio-checks-data @(rf/subscribe [:portfolio-checks])]
-;    [box :class "subbody rightelement" :child
-;     (gt/element-box "checks" "100%" (str "Portfolio exposure checks " (portfolio-checks-data :last-updated)) portfolio-checks-data
-;                     [[v-box :gap "5px" :align :start :children (into []
-;                                                                      (for [[k v] (sort-by first portfolio-checks-data)]
-;                                                                        [h-box :gap "5px" :children [[label :width "350px" :label (str k)]
-;                                                                                                     [p (str v)]
-;                                                                                                     ]])
-;                                                                      )]]
-;                     )]))
-
 (defn portfolio-checks-display []
   (when (empty? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
-  (let [portfolio-checks-data @(rf/subscribe [:portfolio-checks])
-        test [{:check-status false :portfolio "ITLXEMD" :check-value 0.19896744 :check-name "HY" :check-threshold 0.1995 :last-updated "2022-02-04"}
-              {:check-status true :portfolio "ITLNXEMD" :check-value 0.19964564 :check-name "HY" :check-threshold 0.1995 :last-updated "2022-02-04"}]
-        ]
-    ;(println portfolio-checks-data)
-    ;(println test)
+  (let [portfolio-checks-data @(rf/subscribe [:portfolio-checks])]
     [box :class "subbody rightelement" :child
-     (gt/element-box "checks" "100%" (str "Portfolio exposure checks " ) test ;(str "Portfolio exposure checks " (portfolio-checks-data :last-updated))
-
+     (gt/element-box "checks" "100%" (str "Portfolio exposure checks " ((first portfolio-checks-data) :last-updated)) portfolio-checks-data
                      [[:> ReactTable
-                       {:data           test
+                       {:data           portfolio-checks-data
                         :columns        [
                                          {:Header "Portfolio" :accessor :portfolio :width 100  :style {:textAlign "left"}}
                                          {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
@@ -729,7 +710,7 @@
                                          {:Header "Value" :accessor :check-value :width 100 :Cell tables/round3pc :style {:textAlign "right"}}
                                          {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}
                                          ]
-                        :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count test) :showPageSizeOptions false :className "-striped -highlight"}]]
+                        :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data) :showPageSizeOptions false :className "-striped -highlight"}]]
                      )]))
 
 (defn large-exposures
