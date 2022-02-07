@@ -44,6 +44,12 @@
     #js {:style #js {:color "red" :textAlign "right"}}
     #js {:style #js {:textAlign "right"}}))
 
+(defn red-positive [state rowInfo column]
+  "right align, with red text if negative"
+  (if (and (some? rowInfo) (pos? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id")))) ;(aget rowInfo "row" (aget column "id"))
+    #js {:style #js {:color "Crimson" :backgroundColor "Crimson" :textAlign "center"}}
+    #js {:style #js {:color "Chartreuse" :backgroundColor "Chartreuse"  :textAlign "center"}}))
+
 (defn red-negatives-bold-if-a-b [row-header row-name col-name state rowInfo column]
   "right align, with red text if negative, bold if is row-name and col-name"
   (let [cid (gobj/get column "id")]
@@ -196,6 +202,7 @@
 (def round0pc #(roundpc "%.0f%" %))
 (def round1pc #(roundpc "%.1f%" %))
 (def round2pc #(roundpc "%.2f%" %))
+(def round3pc #(roundpc "%.3f%" %))
 
 (defn sub-low-level-rating-score-to-string [x]
   (let [i (dec (js/parseInt x))]
