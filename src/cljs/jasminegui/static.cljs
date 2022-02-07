@@ -74,7 +74,7 @@
    {:code :holdings             :name "Holdings through MSCI"}
    {:code :esg-scores           :name "ESG summary report"}
    {:code :refinitiv            :name "Refinitiv"}
-   {:code :esg-calculator       :name "ESG Calculator"}
+   {:code :esg-calculator       :name "Green bond calculator (beta)"}
    ])
 
 (def risk-choice-map
