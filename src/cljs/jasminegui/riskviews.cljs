@@ -696,7 +696,7 @@
 
 
 (defn portfolio-checks-display []
-  (when (empty? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
+  ;(when (empty? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
   (let [portfolio-checks-data @(rf/subscribe [:portfolio-checks])]
     [box :class "subbody rightelement" :child
      (gt/element-box "checks" "100%" (str "Portfolio exposure checks " ((first portfolio-checks-data) :last-updated)) portfolio-checks-data
