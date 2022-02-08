@@ -697,7 +697,7 @@
 
 
                 [v-box :class "element" :gap "20px" :width "1620px"
-                 :children [[title :level :level1 :label "Curves"]
+                 :children [[title :level :level1 :label "Curves BETA DO NOT USE"]
                             [h-box :gap "100px" :align :start
                              :children [[v-box :gap "10px" :children
                                          [[title :label "Curve 1" :level :level3]

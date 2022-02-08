@@ -300,6 +300,8 @@
 
    :BBG_CEMBI_D1Y_BETA                  {:Header "vs CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 60 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
    :totaldummy                          {:Header " " :accessor "totaldummy" :width 30}
+   :NWNAIC                              {:Header "NAIC" :accessor "NWNAIC" :width 60 :style {:textAlign "right"}   :Cell #(tables/nb-cell-format "%.1f%" 100. %)}
+
    })
 
 
@@ -319,7 +321,8 @@
        {:Header "Universe score" :columns (mapv quant-score-table-columns [:URV_legacy_1 :URV_new_1 :URV_svr_1])}
        {:Header "Historical score" :columns (mapv quant-score-table-columns [:HRV_legacy_1 :HRV_new_1 :HRV_svr_1])}]
       "Full"
-      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond-sticky :ISIN :Country :Sector :SENIOR :FIRST_SETTLE_DT])}
+      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond-sticky :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON])}
+       {:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :NWNAIC])}
        {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
        {:Header "Model prediction" :columns (mapv quant-score-table-columns [:predicted_spread_legacy_1 :predicted_spread_new_1 :predicted_spread_svr_1])}
        {:Header "Cheapness (>0)" :columns (mapv quant-score-table-columns [:difference_legacy_1 :difference_new_1 :difference_svr_1])}
