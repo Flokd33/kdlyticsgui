@@ -106,34 +106,28 @@
                :children [[label :width question-width :label "Project description"]
                           [input-textarea  :model (r/cursor esg-calculator-input [:project-selection/description])
                            :on-change #(reset! (r/cursor esg-calculator-input [:project-selection/description]) %)]]]
-
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Project category:"]
                           [single-dropdown :width categories-list-width :choices project-categories :model (r/cursor esg-calculator-input [:project-selection/categories])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-selection/categories]) %)
                                            (if (= "Other" %) (reset! (r/cursor esg-calculator-input [:project-selection/sub-categories]) "Other"))
                                            (if (= "Other" %) (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "Please fill "))
-                                           (if (not (= "Other" %)) (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "NA"))
-                                           )]]]
+                                           (if (not (= "Other" %)) (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "NA")))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Project sub-category:"]
                           [single-dropdown :width categories-list-width-long :choices project-sub-categories :model (r/cursor esg-calculator-input [:project-selection/sub-categories])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-selection/sub-categories]) %)
                                            ;(if (= "Other" %) (reset! (r/cursor esg-calculator-input [:project-selection/categories]) "Other"))
                                            ;(if (= "Other" %) (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "Please fill "))
-                                           (if (not (= "Other" %)) (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "NA"))
-                                           )]]]
-
+                                           (if (not (= "Other" %)) (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "NA")))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "If other:"]
                           [input-textarea  :model (r/cursor esg-calculator-input [:project-selection/categories-other])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) %)
                                                       (if (not (= "" %)) (reset! (r/cursor esg-calculator-input [:project-selection/categories]) "Other"))
-                                                     (if (not (= "" %)) (reset! (r/cursor esg-calculator-input [:project-selection/sub-categories]) "Other"))
-
-                                           )]]] ;!!!
-
+                                                     (if (not (= "" %)) (reset! (r/cursor esg-calculator-input [:project-selection/sub-categories]) "Other")))]]]
               [title :label "Project evaluation" :level :level2 ]
+              [title :label "Independent Verification (one 'Yes' allowed):" :level :level3 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the bond certified by an independent second party opinion?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/certified-opinion])
@@ -152,6 +146,7 @@
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/external-scoring]) %)
                                             (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-framework]) "No"))
                                             (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-opinion]) "No")))]]]
+              [title :label "Other project evaluation questions" :level :level3 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are green projects credible?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/credibility]) :on-change #(reset! (r/cursor esg-calculator-input [:project-evaluation/credibility]) %)]]]
@@ -177,6 +172,7 @@
                :children [[label :width question-width :label "Reference source:"]
                           [input-textarea  :model (r/cursor esg-calculator-input [:project-selection/pathway-source]) :on-change #(reset! (r/cursor esg-calculator-input [:project-selection/pathway-source]) %)]]]
               [title :label "Management of proceeds" :level :level2 ]
+              [title :label "Proceeds ringfencing (one 'Yes' allowed):" :level :level3 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is there a specific sub-account created?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:proceed-management/sub-account])
@@ -205,6 +201,7 @@
                                            (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "No"))
                                            (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "No"))
                                            (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:proceed-management/virtual-green]) "No")))]]]
+              [title :label "Proceeds tracked (one 'Yes' allowed):" :level :level3 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the internal tracking will be verified by an auditor?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:proceed-management/audited])
