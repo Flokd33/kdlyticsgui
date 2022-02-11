@@ -44,11 +44,20 @@
     #js {:style #js {:color "red" :textAlign "right"}}
     #js {:style #js {:textAlign "right"}}))
 
-(defn red-positive [state rowInfo column]
-  "right align, with red text if negative"
-  (if (and (some? rowInfo) (pos? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id")))) ;(aget rowInfo "row" (aget column "id"))
-    #js {:style #js {:color "Crimson" :backgroundColor "Crimson" :textAlign "center"}}
-    #js {:style #js {:color "Chartreuse" :backgroundColor "Chartreuse"  :textAlign "center"}}))
+;(defn red-positive [state rowInfo column]
+;  "right align, with red text if negative"
+;  (if (and (some? rowInfo) (pos? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id")))) ;(aget rowInfo "row" (aget column "id"))
+;    #js {:style #js {:color "Crimson" :backgroundColor "Crimson" :textAlign "center"}}
+;    #js {:style #js {:color "Chartreuse" :backgroundColor "Chartreuse"  :textAlign "center"}}))
+
+(defn breach-status-color [state rowInfo column]
+  "if status = 0 green background, if status = 1 orange (warning) background,if status = 2 (breach) red background,"
+  (case  (gobj/getValueByKeys rowInfo "row" (gobj/get column "id"))
+    0 #js {:style #js {:color "Chartreuse" :backgroundColor "Chartreuse"  :textAlign "center"}}
+    1 #js {:style #js {:color "DarkOrange" :backgroundColor "DarkOrange" :textAlign "center"}}
+    2 #js {:style #js {:color "Crimson" :backgroundColor "Crimson" :textAlign "center"}}
+  )
+  )
 
 (defn red-negatives-bold-if-a-b [row-header row-name col-name state rowInfo column]
   "right align, with red text if negative, bold if is row-name and col-name"
