@@ -697,7 +697,8 @@
 
 (defn portfolio-checks-display []
   ;(when (empty? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
-  (let [portfolio-checks-data @(rf/subscribe [:portfolio-checks])]
+  (let [portfolio-checks-data-raw @(rf/subscribe [:portfolio-checks])
+        portfolio-checks-data (for [e portfolio-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1}(e :check-status-warning)) (get {false 0 true 1}(e :check-status-breach))])))]
     [box :class "subbody rightelement" :child
      (gt/element-box "checks" "100%" (str "Portfolio exposure checks " ((first portfolio-checks-data) :last-updated)) portfolio-checks-data
                      [[:> ReactTable
@@ -705,8 +706,9 @@
                         :columns        [
                                          {:Header "Portfolio" :accessor :portfolio :width 100  :style {:textAlign "left"}}
                                          {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
-                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/red-positive :Cell tables/round0}
-                                         {:Header "Threshold" :accessor :check-threshold :width 100 :Cell tables/round3pc :style {:textAlign "right"}}
+                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                         {:Header "Threshold warning" :accessor :check-threshold-warning :width 100 :Cell tables/round3pc :style {:textAlign "right"}}
+                                         {:Header "Threshold breach" :accessor :check-threshold-breach :width 100 :Cell tables/round3pc :style {:textAlign "right"}}
                                          {:Header "Value" :accessor :check-value :width 100 :Cell tables/round3pc :style {:textAlign "right"}}
                                          {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}
                                          ]

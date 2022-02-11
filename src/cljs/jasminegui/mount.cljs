@@ -215,6 +215,19 @@
                  :quant-model/saved-advanced-charts       {}
                  :quant-model/issuer-coverage             []
 
+                 :quant-model/history-result              []
+                 :quant-model/history-result-prediction   []
+                 :quant-model/history-result-curves-2d    []
+                 :quant-model/history-result-curves-4d    []
+                 :quant-model/history-throbber            false
+                 :quant-model/history-prediction-throbber false
+                 :quant-model/history-curves-2d-throbber  false
+                 :quant-model/history-curves-4d-throbber  false
+                 :quant-model/history-start-date          (tools/int-to-gdate 20150101)
+                 ;:quant-model/history-end-date            (tools/int-to-gdate (today))
+
+
+
                  :model-portfolios/trades                 {}
                  :model-portfolios/hide-zeros              false
                  :model-portfolios/aggregation            "Region"
@@ -237,7 +250,6 @@
                  :analysts nil
 
                  :dummy nil                                 ;can be useful
-
                  })
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
@@ -387,6 +399,9 @@
            :quant-model/saved-advanced-charts
            :quant-model/issuer-coverage
 
+           :quant-model/history-start-date
+           ;:quant-model/history-end-date
+
            :scorecard/attribution-table
            :scorecard/portfolio
            :scorecard/sector
@@ -443,6 +458,31 @@
       (if (< i n)
         (recur (inc i) (conj! records (zipmap ks (mapv #(nth % i) values)))) ;mapv faster than map
         (persistent! records)))))
+
+
+(rf/reg-event-db
+  :quant-model/history-result
+  (fn [db [_ data]] (assoc db :quant-model/history-result (array-of-lists->records data)
+                              :quant-model/history-throbber false
+                              )))
+
+(rf/reg-event-db
+  :quant-model/history-result-prediction
+  (fn [db [_ data]] (assoc db :quant-model/history-result-prediction (array-of-lists->records data)
+                              :quant-model/history-prediction-throbber false
+                              )))
+
+(rf/reg-event-db
+  :quant-model/history-result-curves-2d
+  (fn [db [_ data]] (assoc db :quant-model/history-result-curves-2d  (array-of-lists->records data)
+                              :quant-model/history-curve-2d-throbber false
+                              )))
+
+(rf/reg-event-db
+  :quant-model/history-result-curves-4d
+  (fn [db [_ data]] (assoc db :quant-model/history-result-curves-4d  (array-of-lists->records data)
+                              :quant-model/history-curve-4d-throbber false
+                              )))
 
 ;(rf/reg-event-db
 ;  :positions
