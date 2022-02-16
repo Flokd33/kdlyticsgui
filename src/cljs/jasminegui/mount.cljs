@@ -217,12 +217,11 @@
 
                  :quant-model/history-result              []
                  :quant-model/history-result-prediction   []
-                 :quant-model/history-result-curves-2d    []
-                 :quant-model/history-result-curves-4d    []
+                 :quant-model/history-result-curves-one    []
+                 :quant-model/history-result-curves-two    []
                  :quant-model/history-throbber            false
                  :quant-model/history-prediction-throbber false
-                 :quant-model/history-curves-2d-throbber  false
-                 :quant-model/history-curves-4d-throbber  false
+                 :quant-model/curves-throbber  false
                  :quant-model/history-start-date          (tools/int-to-gdate 20150101)
                  ;:quant-model/history-end-date            (tools/int-to-gdate (today))
 
@@ -473,15 +472,15 @@
                               )))
 
 (rf/reg-event-db
-  :quant-model/history-result-curves-2d
-  (fn [db [_ data]] (assoc db :quant-model/history-result-curves-2d  (array-of-lists->records data)
-                              :quant-model/history-curve-2d-throbber false
+  :quant-model/history-result-curves-one
+  (fn [db [_ data]] (assoc db :quant-model/history-result-curves-one  (array-of-lists->records data)
+                              :quant-model/curves-throbber false
                               )))
 
 (rf/reg-event-db
-  :quant-model/history-result-curves-4d
-  (fn [db [_ data]] (assoc db :quant-model/history-result-curves-4d  (array-of-lists->records data)
-                              :quant-model/history-curve-4d-throbber false
+  :quant-model/history-result-curves-two
+  (fn [db [_ data]] (assoc db :quant-model/history-result-curves-two  (array-of-lists->records data)
+                              :quant-model/curves-throbber false
                               )))
 
 ;(rf/reg-event-db
