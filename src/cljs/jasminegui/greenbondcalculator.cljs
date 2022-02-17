@@ -63,7 +63,6 @@
                                    :project-selection/categories-yes-no "No"
                                    :project-selection/sub-categories ""
                                    :project-selection/categories-other ""
-
                                    :project-evaluation/certified-opinion "No"
                                    :project-evaluation/certified-framework "No"
                                    :project-evaluation/external-scoring "No"
@@ -75,14 +74,11 @@
                                    :project-evaluation/better-than-national "No"
                                    :project-evaluation/country-framework-list []
                                    :project-evaluation/aligned-with-country-sector-pathway "No"
-
                                    :proceed-management/sub-account "No"
                                    :proceed-management/green-account "No"
                                    :proceed-management/virtual-green "No"
-                                   ;:proceed-management/ring-fenced "No"
                                    :proceed-management/audited "No"
                                    :proceed-management/ring-fenced-2 "No"
-
                                    :reporting/project-on-track "No"
                                    :reporting/project-expanded "No"
                                    :reporting/increased-green-funding "No"
@@ -90,7 +86,6 @@
                                    :reporting/project-kpis "No"
                                    :reporting/half-proceeds-green "No"
                                    :reporting/reconciliation "No"
-
                                    :analyst-evaluation/text ""
                                    }))
 
@@ -116,10 +111,15 @@
                          {:id :proceed-management/sub-account :Yes 9 :No 0}
                          {:id :proceed-management/green-account :Yes 9 :No 0}
                          {:id :proceed-management/virtual-green :Yes 9 :No 0}
-                           ;{:id :proceed-management/ring-fenced :Yes 0 :No 0}
                          {:id :proceed-management/audited :Yes 11 :No 0}
                          {:id :proceed-management/ring-fenced-2 :Yes 8 :No 0}])
 
+(defn gb-summary-generator []
+  (let [answers @esg-calculator-input
+        scores-mapping  (concat gb-follow-up-scoring gb-new-issue-scoring)
+        final-scores (into {} [[:new-issue-score @gb-score-new-issue] [:follow-up-score @gb-score-follow-up]])])
+  ;export to txt ?
+  )
 
 (defn gb-score-calculator [answers follow-up-scoring new-issue-scoring]
   (let [follow-up-scores (into [] (for [e follow-up-scoring] {:id (:id e) :score (e (keyword ((:id e) answers))) }))
@@ -137,7 +137,9 @@
    :children [[title :label "Green bond calculator" :level :level1]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width "200px" :model gb-score-new-issue ]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]] [progress-bar :width "200px" :model gb-score-follow-up ]]]
-              [h-box :gap "10px" :align :baseline :children [[button :label "Calculate scores and extract report" :class "btn btn-primary btn-block" :on-click #(gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring)]]]
+              [h-box :gap "10px" :align :baseline :children [[button :label "Calculate scores and extract report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring)
+                                                                                                                                                                    (gb-summary-generator)
+                                                                                                                                                                    )]]]
               [title :label "Project selection" :level :level2]
               [h-box :gap "10px" :align :start
                :children [[label :width question-width :label "Project description"]
@@ -207,11 +209,11 @@
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/controversies])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/controversies]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is national framework best practice?"]
+               :children [[label :width question-width :label "Country has a transition plan with short term targets and longer-term net zero target?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/national-framework-best-practice])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/national-framework-best-practice]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the bond better than national framework?"]
+               :children [[label :width question-width :label "Company framework is better than national frame work?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/better-than-national])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/better-than-national]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
@@ -251,15 +253,7 @@
                                            (if (= "Yes" %) (do (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "No")
                                                                (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "No")
                                                                (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced]) "No")))
-                                           (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring)
-                                           )]]]
-              ;[h-box :gap "10px" :align :center
-              ; :children [[label :width question-width :label "Are the proceeds not ringfenced?"]
-              ;            [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:proceed-management/ring-fenced])
-              ;             :on-change #(do (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced]) %)
-              ;                             (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "No"))
-              ;                             (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "No"))
-              ;                             (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:proceed-management/virtual-green]) "No")))]]]
+                                           (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [title :label "Proceeds tracked (one 'Yes' allowed):" :level :level3 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the internal tracking will be verified by an auditor?"]
