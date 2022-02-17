@@ -2,7 +2,7 @@
   (:require
     [re-frame.core :as rf]
     [reagent.core :as reagent]
-    [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
+    [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button v-split
                          single-dropdown hyperlink typeahead md-circle-icon-button selection-list progress-bar
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
@@ -30,8 +30,8 @@
 (def countries-list-width "150px")
 (def dropdown-width "100px")
 
-(def gb-score-new-issue (r/atom 75))
-(def gb-score-follow-up (r/atom 50))
+(def gb-score-new-issue (r/atom 0))
+(def gb-score-follow-up (r/atom 0))
 
 (def yes-no-choice
   [{:id "Yes" :label "Yes"}
@@ -136,10 +136,6 @@
   [v-box :width standard-box-width :gap "5px" :class "element"
    :children [[title :label "Green bond calculator" :level :level1]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width "200px" :model gb-score-new-issue ]]]
-              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]] [progress-bar :width "200px" :model gb-score-follow-up ]]]
-              [h-box :gap "10px" :align :baseline :children [[button :label "Calculate scores and extract report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring)
-                                                                                                                                                                    (gb-summary-generator)
-                                                                                                                                                                    )]]]
               [title :label "Project selection" :level :level2]
               [h-box :gap "10px" :align :start
                :children [[label :width question-width :label "Project description"]
@@ -272,6 +268,15 @@
                :children [[label :width question-width :label "Summary:"]
                           [input-textarea  :model (r/cursor esg-calculator-input [:analyst-evaluation/text])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:analyst-evaluation/text]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
+              [gap :size "10px"]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label ""]
+                          [button :label "Extract new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring) (gb-summary-generator))]]]
+
+              [gap :size "20px"]
+              [line :size  "2px" :color "black"] ;[gap :size "50px"]
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]]
+                                                             [progress-bar :width "200px" :model gb-score-follow-up ]]]
               [title :label "Reporting" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the project on track?"]
@@ -301,5 +306,11 @@
                :children [[label :width question-width :label "On a ongoing basis, does the company reconciled proceeds with uses?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:reporting/reconciliation])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:reporting/reconciliation]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
+              [gap :size "10px"]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label ""]
+                          [button :label "Extract follow-up report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring)
+                                                                                                                      (gb-summary-generator))]]]
+
               ]]
     ))
