@@ -104,10 +104,10 @@
                          {:id :project-evaluation/credibility :Yes 8 :No 0}
                          {:id :project-evaluation/materiality :Yes 8 :No 0}
                          {:id :project-evaluation/discipline :Yes 8 :No 0}
-                         {:id :project-evaluation/controversies :Yes 8 :No 0}
-                         {:id :project-evaluation/national-framework-best-practice :Yes 8 :No 0}
+                         {:id :project-evaluation/controversies :Yes 0 :No 8}
+                         {:id :project-evaluation/national-framework-best-practice :Yes 6 :No 0}
                          {:id :project-evaluation/better-than-national :Yes 8 :No 0}
-                         {:id :project-evaluation/aligned-with-country-sector-pathway :Yes 8 :No 0}
+                         {:id :project-evaluation/aligned-with-country-sector-pathway :Yes 14 :No 0}
                          {:id :proceed-management/sub-account :Yes 9 :No 0}
                          {:id :proceed-management/green-account :Yes 9 :No 0}
                          {:id :proceed-management/virtual-green :Yes 9 :No 0}
@@ -131,11 +131,21 @@
     )
   )
 
+(defn gb-eligible []
+  (let [answers @esg-calculator-input]
+  (if (and (= (answers :project-evaluation/controversies) "No") (= (answers :project-evaluation/credibility) "Yes") (= (answers :project-evaluation/materiality) "Yes") (= (answers :project-evaluation/discipline) "Yes"))
+    {:color "Chartreuse" :text "YES"}
+    {:color "Red" :text "NO"})))
+
+
 (defn esg-calculator-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
+    (println (gb-eligible))
   [v-box :width standard-box-width :gap "5px" :class "element"
    :children [[title :label "Green bond calculator" :level :level1]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width "200px" :model gb-score-new-issue ]]]
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility" :level :level2]]
+                                                             [button :label (:text (gb-eligible)) :disabled? true :style {:color "black" :backgroundColor (:color (gb-eligible)) :textAlign "center"} ]]]
               [title :label "Project selection" :level :level2]
               [h-box :gap "10px" :align :start
                :children [[label :width question-width :label "Project description"]
