@@ -144,7 +144,7 @@
   [v-box :width standard-box-width :gap "5px" :class "element"
    :children [[title :label "Green bond calculator" :level :level1]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width "200px" :model gb-score-new-issue ]]]
-              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility" :level :level2]]
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility*" :level :level2]]
                                                              [button :label (:text (gb-eligible)) :disabled? true :style {:color "black" :backgroundColor (:color (gb-eligible)) :textAlign "center"} ]]]
               [title :label "Project selection" :level :level2]
               [h-box :gap "10px" :align :start
@@ -199,19 +199,19 @@
                                            (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [title :label "Other project evaluation questions" :level :level3 ]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Are green projects credible?"]
+               :children [[label :width question-width :label "Are green projects credible?*"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/credibility])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/credibility]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Are the related spending material?"]
+               :children [[label :width question-width :label "Are the related spending material?*"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/materiality])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/materiality]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the green bond fits within a disciplined approach to sustainability?"]
+               :children [[label :width question-width :label "Is the green bond fits within a disciplined approach to sustainability?*"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/discipline])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/discipline]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"]
+               :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?*"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/controversies])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/controversies]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
