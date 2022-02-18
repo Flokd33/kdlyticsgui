@@ -794,13 +794,10 @@
                                                                                                                             :on-change #(do (reset! (r/cursor curve-histories [:curve-one/tenor]) %)
                                                                                                                                             ;(rf/dispatch [:post-model-history-curves (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])])
                                                                                                                                             )]]]
-
-
                                           [h-box :gap "10px" :align :center :children
                                            [[title :label "Curve 2" :level :level3] [gap :size "1"]
                                             [md-icon-button :md-icon-name "zmdi-delete" :size :regular :on-click #(do (reset! nb-curve 1))]
                                             ]]
-
                                           [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Type"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/type]) :choices [{:id :two-d-curves :label "Rating (2D)"} {:id :four-d-sovereign-curves :label "Country (4D)"}]
                                                                                                                            :on-change #(do (selection-change-fn "curve-two" %)
                                                                                                                                            (reset! nb-curve 2)

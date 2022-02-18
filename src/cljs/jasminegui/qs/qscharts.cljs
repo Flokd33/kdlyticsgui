@@ -157,14 +157,16 @@
 (defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2]
   (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
         data-pricing @(rf/subscribe [:quant-model/history-result])
-        data-to-plot (for [e data-pricing] (e :ticker (mapping (keyword (e :ISIN)))))
+        data-to-plot (for [e data-pricing] (assoc e :ticker (mapping (keyword (e :ISIN)))))
         start-date-yyyymmdd (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date]))
-        start-date-yyyy-mm-dd (str (subs start-date-yyyymmdd 0 4) "-" (subs start-date-yyyymmdd 4 6) "-" (subs start-date-yyyymmdd 6 8))
+        ;start-date-yyyy-mm-dd (str (subs start-date-yyyymmdd 0 4) "-" (subs start-date-yyyymmdd 4 6) "-" (subs start-date-yyyymmdd 6 8))
         ;start-date-dateformat (datecore/date-time (cljs.reader/read-string (subs start-date-yyyymmdd 0 4)) (cljs.reader/read-string (subs start-date-yyyymmdd 4 6)) (cljs.reader/read-string (subs start-date-yyyymmdd 6 8)))
-        ;data-pricing-filtered (filter #(> (datecore/date-time (cljs.reader/read-string (subs (% :date) 0 4)) (cljs.reader/read-string (subs (% :date) 5 7)) (cljs.reader/read-string (subs (% :date) 7 9))) start-date-dateformat) data-pricing)
-        ;data-pricing-filtered (filter #(> (% :date) start-date-yyyy-mm-dd) data-pricing)
+        ;data-pricing-filtered (filter #(> (int (.replace (:date %) "-" "")) (int start-date-yyyymmdd)) data-pricing)
         ]
-    ;(println (datecore/date-time 2015 1 8))
+    (println start-date-yyyymmdd)
+    ;(println (int start-date-yyyymmdd))
+    ;println (Integer/parseInt start-date-yyyymmdd)) ;how to load ?
+
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
