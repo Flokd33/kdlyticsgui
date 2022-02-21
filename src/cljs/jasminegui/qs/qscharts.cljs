@@ -154,23 +154,26 @@
      :width  1000
      :height 625}))
 
-(defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2]
+(defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond]
   (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
         data-pricing @(rf/subscribe [:quant-model/history-result])
-        data-to-plot (for [e data-pricing] (assoc e :ticker (mapping (keyword (e :ISIN)))))
+        data-pricing-clean (if (= nb-bond 1) (filter #(= (:ISIN %) isin1) data-pricing) data-pricing)
+        data-to-plot (for [e data-pricing-clean] (assoc e :Bond (mapping (keyword (e :ISIN)))))
         start-date-yyyymmdd (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date]))
         ;start-date-yyyy-mm-dd (str (subs start-date-yyyymmdd 0 4) "-" (subs start-date-yyyymmdd 4 6) "-" (subs start-date-yyyymmdd 6 8))
         ;start-date-dateformat (datecore/date-time (cljs.reader/read-string (subs start-date-yyyymmdd 0 4)) (cljs.reader/read-string (subs start-date-yyyymmdd 4 6)) (cljs.reader/read-string (subs start-date-yyyymmdd 6 8)))
         ;data-pricing-filtered (filter #(> (int (.replace (:date %) "-" "")) (int start-date-yyyymmdd)) data-pricing)
         ]
-    (println start-date-yyyymmdd)
+    (println data-pricing-clean)
+    (println nb-bond)
+    (println isin1)
     ;(println (int start-date-yyyymmdd))
     ;println (Integer/parseInt start-date-yyyymmdd)) ;how to load ?
 
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
-     :data    {:values data-to-plot :format {:parse {:ticker "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
+     :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
      :vconcat (remove nil? [
                             (if price?
                               {:mark     "line" :width 1000 :height 400
@@ -178,45 +181,46 @@
                                           :y     {:field "price" :type "quantitative" :axis {:title "Price"}
                                                   :scale {:domain [(dec (apply min (map :price data-to-plot))) (inc (apply max (map :price data-to-plot)))]}
                                                   }
-                                          :color {:field "ticker" :type "nominal"}}})
+                                          :color {:field "Bond" :type "nominal"}}})
                             (if ytw?
                               {:mark     "line" :width 1000 :height 400
                                :encoding {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y     {:field "ytw" :type "quantitative" :axis {:title "YTW"}
                                                   :scale {:domain [(dec (apply min (map :ytw data-to-plot))) (inc (apply max (map :ytw data-to-plot)))]}
                                                   }
-                                          :color {:field "ticker" :type "nominal"}}})
+                                          :color {:field "Bond" :type "nominal"}}})
                             (if ztw?
                               {:mark     "line" :width 1000 :height 400
                                :encoding {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y     {:field "ztw" :type "quantitative" :axis {:title "ZTW"}
                                                   :scale {:domain [(dec (apply min (map :ztw data-to-plot))) (inc (apply max (map :ztw data-to-plot)))]}
                                                   }
-                                          :color {:field "ticker" :type "nominal"}}})
+                                          :color {:field "Bond" :type "nominal"}}})
                             (if duration?
                               {:mark     "line" :width 1000 :height 400
                                :encoding {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y     {:field "duration" :type "quantitative" :axis {:title "Duration"}
                                                   :scale {:domain [(dec (apply min (map :duration data-to-plot))) (inc (apply max (map :duration data-to-plot)))]}
                                                   }
-                                          :color {:field "ticker" :type "nominal"}}})
+                                          :color {:field "Bond" :type "nominal"}}})
                             (if rating?
                               {:mark     "line" :width 1000 :height 400
                                :encoding {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y     {:field "rating_score" :type "quantitative" :axis {:title "Rating"}
                                                   :scale {:domain [(dec (apply min (map :rating_score data-to-plot))) (inc (apply max (map :rating_score data-to-plot)))]}
                                                   }
-                                          :color {:field "ticker" :type "nominal"}}})
+                                          :color {:field "Bond" :type "nominal"}}})
                             ])}))
 
-(defn quant-isin-history-chart-prediction [show-2d? show-4d? isin1 isin2 ticker1 ticker2]
-  (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)} )
+(defn quant-isin-history-chart-prediction [show-2d? show-4d? isin1 isin2 ticker1 ticker2 nb-bond]
+  (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
         data-prediction @(rf/subscribe [:quant-model/history-result-prediction])
-        data-to-plot (for [e data-prediction] (assoc e :ticker (mapping (keyword (e :ISIN)))))]
+        data-pricing-clean (if (= nb-bond 1) (filter #(= (:ISIN %) isin1) data-prediction) data-prediction)
+        data-to-plot (for [e data-pricing-clean] (assoc e :Bond (mapping (keyword (e :ISIN)))))]
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil
-     :data    {:values data-to-plot :format {:parse {:ticker "nominal" :date "date:'%Y-%m-%d'" :pred2d "quantitative" :pred4d "quantitative"}}}
+     :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :pred2d "quantitative" :pred4d "quantitative"}}}
      :vconcat (remove nil? [
                             (if show-2d?
                               {:mark "line" :width 1000 :height 400
@@ -224,7 +228,7 @@
                                           :y {:field "pred2d" :type "quantitative" :axis {:title "2D spread"}
                                               :scale {:domain [(dec (apply min (map :pred2d data-to-plot))) (inc (apply max (map :pred2d data-to-plot)))]}
                                               }
-                                          :color {:field "ticker" :type "nominal" }}
+                                          :color {:field "Bond" :type "nominal" }}
                                })
                             (if show-4d?
                               {:mark "line" :width 1000 :height 400
@@ -232,7 +236,7 @@
                                           :y {:field "pred4d" :type "quantitative" :axis {:title "4D spread"}
                                               :scale {:domain [(dec (apply min (map :pred4d data-to-plot))) (inc (apply max (map :pred4d data-to-plot)))]}
                                               }
-                                          :color {:field "ticker" :type "nominal" }}
+                                          :color {:field "Bond" :type "nominal" }}
                                })])}
     ))
 
@@ -247,27 +251,28 @@
         data-curve-1-raw @(rf/subscribe [:quant-model/history-result-curves-one])
         data-curve-2-raw @(rf/subscribe [:quant-model/history-result-curves-two])
         data-curve-1-enhanced (for [e data-curve-1-raw] (assoc e
-                                                      :T2Y5Y (- (:T2Y e) (:T5Y e))
-                                                      :T2Y10Y (- (:T2Y e) (:T10Y e))
-                                                      :T2Y30Y (- (:T2Y e) (:T30Y e))
-                                                      :T5Y10Y (- (:T5Y e) (:T100Y e))
-                                                      :T5Y30Y (- (:T5Y e) (:T30Y e))
-                                                      :T10Y30Y (- (:T10Y e) (:T30Y e))
+                                                      :T2Y5Y (- (:T5Y e) (:T2Y e))
+                                                      :T2Y10Y (- (:T10Y e) (:T2Y e))
+                                                      :T2Y30Y (- (:T30Y e) (:T2Y e))
+                                                      :T5Y10Y (- (:T100Y e) (:T5Y e))
+                                                      :T5Y30Y (- (:T30Y e) (:T5Y e))
+                                                      :T10Y30Y (- (:T30Y e) (:T10Y e))
                                                       )
                                                     )
         data-curve-2-enhanced (for [e data-curve-2-raw] (assoc e
-                                                      :T2Y5Y (- (:T2Y e) (:T5Y e))
-                                                      :T2Y10Y (- (:T2Y e) (:T10Y e))
-                                                      :T2Y30Y (- (:T2Y e) (:T30Y e))
-                                                      :T5Y10Y (- (:T5Y e) (:T100Y e))
-                                                      :T5Y30Y (- (:T5Y e) (:T30Y e))
-                                                      :T10Y30Y (- (:T10Y e) (:T30Y e))
+                                                      :T2Y5Y (- (:T5Y e) (:T2Y e))
+                                                      :T2Y10Y (- (:T10Y e) (:T2Y e))
+                                                      :T2Y30Y (- (:T30Y e) (:T2Y e))
+                                                      :T5Y10Y (- (:T100Y e) (:T5Y e))
+                                                      :T5Y30Y (- (:T30Y e) (:T5Y e))
+                                                      :T10Y30Y (- (:T30Y e) (:T10Y e))
                                                       )
                                                     )
-        data-curve-1 (for [e data-curve-1-enhanced] (assoc e :curve (str "curve-one:" model-curve-1 "/"  selection-curve-1 "/" tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
-        data-curve-2 (for [e data-curve-2-enhanced] (assoc e :curve (str "curve-two:" model-curve-2 "/"  selection-curve-2 "/" tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
+        data-curve-1 (for [e data-curve-1-enhanced] (assoc e :curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
+        data-curve-2 (for [e data-curve-2-enhanced] (assoc e :curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
         data-to-plot (if (= nb 2)  (concat data-curve-1 data-curve-2) data-curve-1 )
         ]
+    (println param)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil

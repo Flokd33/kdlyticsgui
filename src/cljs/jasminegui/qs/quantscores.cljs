@@ -38,6 +38,7 @@
 (def isin-historical-charts-2 (r/atom "ISIN not found"))
 (def bond-historical-charts-2 (r/atom nil))
 
+(def nb-bond (r/atom 1))
 (def nb-curve (r/atom 1))
 (def show-historical-price (r/atom true))
 (def show-historical-ytw (r/atom false))
@@ -630,14 +631,12 @@
                                                                                         (/ (cljs.reader/read-string @coupon) 100)))) 100)))
                                                    (reset! show-duration-modal false))]]]]))))
 
-(def curve-histories (r/atom {:curve-one/type :two-d-curves
-                              :curve-one/selection 9
-                              :curve-one/tenor "5Y"
-                              :curve-two/type :two-d-curves
-                              :curve-two/selection 9
-                              :curve-two/tenor "5Y"}))
-
-
+(def curve-histories (r/atom {:curve-one/type nil
+                              :curve-one/selection nil
+                              :curve-one/tenor nil
+                              :curve-two/type nil
+                              :curve-two/selection nil
+                              :curve-two/tenor nil}))
 
 ;(rf/reg-event-fx
 ;  :post-model-history-pricing
@@ -714,8 +713,7 @@
                                            :format "dd/MM/yyyy" :show-today? true
                                            :on-change #(do (rf/dispatch [:quant-model/history-start-date %])
                                                            (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                                           (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                                           )]]]
+                                                           (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])]))]]]
                                           ;[h-box :gap "10px"  :align :baseline :children [[title :label "End:" :level :level3]
                                           ;[datepicker-dropdown :model end-date :minimum (t/int-to-gdate 20150101) :maximum (today)
                                           ; :format "dd/MM/yyyy" :show-today? true
@@ -736,10 +734,8 @@
                                                              (reset! isin-historical-charts isin) ;isin
                                                              (reset! bond-historical-charts (:id %)) ;ticker
                                                              (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                                             (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                                             ))
+                                                             (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])])))
                                            :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]
-
                                           [label :width "200px" :label (str "Choice 2: " @bond-historical-charts-2 " (" @isin-historical-charts-2 ")")]
                                           [h-box :gap "10px" :align :center :children
                                            [[typeahead
@@ -754,82 +750,83 @@
                                                              (reset! bond-historical-charts-2 (:id %)) ;ticker
                                                              (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
                                                              (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                                             ))
+                                                             (reset! nb-bond 2)))
                                            :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]
                                           [md-icon-button :md-icon-name "zmdi-delete" :size :regular
                                            :on-click #(do (reset! isin-historical-charts-2 nil)
-                                                            (reset! bond-historical-charts-2 nil)
-                                                            (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                                            (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
+                                                          (reset! bond-historical-charts-2 nil)
+                                                          (reset! nb-bond 1)
                                                           )]]]]]
                                         (if @(rf/subscribe[:quant-model/history-throbber])
                                           [v-box :class "element" :width "1300px" :align :center :children [box [throbber :size :large]]]
-                                          [v-box :class "element" :gap "10px" :width "1300px"
-                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2)]
-                                                      [oz/vega-lite (qscharts/quant-isin-history-chart-prediction @show-cheapness-2d @show-cheapness-4d @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2)]
-                                                      ]])
+                                          (if (or (= @show-cheapness-2d true) (= @show-cheapness-4d true))
+                                            [v-box :class "element" :gap "10px" :width "1300px"
+                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond)]
+                                                      [oz/vega-lite (qscharts/quant-isin-history-chart-prediction @show-cheapness-2d @show-cheapness-4d @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond)]
+                                                      ]]
+                                            [v-box :class "element" :gap "10px" :width "1300px"
+                                             :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond)]
+                                                        ]]
+                                            )
+                                          )
                                         ]]]]
                 [v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Curves BETA DO NOT USE"]
                             [h-box :gap "75px" :align :start
                              :children [[v-box :gap "10px" :children
                                          [[title :label "Curve 1" :level :level3]
-                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Type"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/type]) :choices [{:id :two-d-curves :label "Rating (2D)"} {:id :four-d-sovereign-curves :label "Country (4D)"}]
+                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Type"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/type])
+                                                                                                                           :choices [{:id :two-d-curves :label "Rating (2D)"} {:id :four-d-sovereign-curves :label "Country (4D)"}] ;{:id :none :label "None"}
+                                                                                                                           :placeholder "Select"
                                                                                                                            :on-change #(do (selection-change-fn "curve-one" %)
-                                                                                                                                           (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])])
-                                                                                                                                           ;(rf/dispatch [:post-model-history-curves-4d (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])])
-                                                                                                                                           )]]]
+                                                                                                                                           (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])]))]]]
                                           [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Selection"]
-                                                                                      (if
-                                                                                        (= (get @curve-histories :curve-one/type) :two-d-curves)
-                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/selection]) :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19)))
+                                                                                      (if (= (get @curve-histories :curve-one/type) :two-d-curves)
+                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/selection])
+                                                                                                                        :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19)))
+                                                                                                                        :placeholder "Select"
                                                                                                                         :on-change #(do (reset! (r/cursor curve-histories [:curve-one/selection]) %)
-                                                                                                                                        (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])])
-                                                                                                                                        )]
+                                                                                                                                        (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])]))]
                                                                                         [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/selection]) :choices countries
+                                                                                                                        :placeholder "Select"
                                                                                                                         :on-change #(do (reset! (r/cursor curve-histories [:curve-one/selection]) %)
-                                                                                                                                        (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])])
-                                                                                                                                        )])]]
-                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Tenor"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/tenor]) :choices (into [] (for [k ["2Y" "5Y" "10Y" "30Y" "2Y5Y" "2Y10Y" "2Y30Y" "5Y10Y" "5Y30Y" "10Y30Y"]] {:id k :label k}))
-                                                                                                                            :on-change #(do (reset! (r/cursor curve-histories [:curve-one/tenor]) %)
-                                                                                                                                            ;(rf/dispatch [:post-model-history-curves (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])])
-                                                                                                                                            )]]]
+                                                                                                                                        (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])]))])]]
+                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Tenor"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/tenor])
+                                                                                                                            :choices (into [] (for [k ["2Y" "5Y" "10Y" "30Y" "2Y5Y" "2Y10Y" "2Y30Y" "5Y10Y" "5Y30Y" "10Y30Y"]] {:id k :label k}))
+                                                                                                                            :placeholder "Select"
+                                                                                                                            :on-change #(do (reset! (r/cursor curve-histories [:curve-one/tenor]) %))]]]
                                           [h-box :gap "10px" :align :center :children
                                            [[title :label "Curve 2" :level :level3] [gap :size "1"]
-                                            [md-icon-button :md-icon-name "zmdi-delete" :size :regular :on-click #(do (reset! nb-curve 1))]
-                                            ]]
-                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Type"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/type]) :choices [{:id :two-d-curves :label "Rating (2D)"} {:id :four-d-sovereign-curves :label "Country (4D)"}]
+                                            [md-icon-button :md-icon-name "zmdi-delete" :size :regular :on-click #(do (reset! nb-curve 1))]]]
+                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Type"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/type])
+                                                                                                                           :choices [{:id :two-d-curves :label "Rating (2D)"} {:id :four-d-sovereign-curves :label "Country (4D)"}]
+                                                                                                                           :placeholder "Select"
                                                                                                                            :on-change #(do (selection-change-fn "curve-two" %)
                                                                                                                                            (reset! nb-curve 2)
-                                                                                                                                           (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])])
-                                                                                                                                           ;(rf/dispatch [:post-model-history-curves-4d (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])])
-                                                                                                                                           )]]]
+                                                                                                                                           (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])]))]]]
                                           [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Selection"]
-                                                                                      (if
-                                                                                        (= (get @curve-histories :curve-two/type) :two-d-curves)
-                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/selection]) :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19)))
+                                                                                      (if (= (get @curve-histories :curve-two/type) :two-d-curves)
+                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/selection])
+                                                                                                                        :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19)))
+                                                                                                                        :placeholder "Select"
                                                                                                                           :on-change #(do (reset! (r/cursor curve-histories [:curve-two/selection]) %)
                                                                                                                                           (reset! nb-curve 2)
-                                                                                                                                          (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])])
-                                                                                                                                          )]
-                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/selection]) :choices countries
+                                                                                                                                          (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])]))]
+                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/selection])
+                                                                                                                        :choices countries
+                                                                                                                        :placeholder "Select"
                                                                                                                           :on-change #(do (reset! (r/cursor curve-histories [:curve-two/selection]) %)
                                                                                                                                           (reset! nb-curve 2)
-                                                                                                                                          (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])])
-                                                                                                                                          )])]]
-                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Tenor"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/tenor]) :choices (into [] (for [k ["2Y" "5Y" "10Y" "30Y" "2Y5Y" "2Y10Y" "2Y30Y" "5Y10Y" "5Y30Y" "10Y30Y"]] {:id k :label k}))
+                                                                                                                                          (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])]))])]]
+                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Tenor"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/tenor])
+                                                                                                                            :choices (into [] (for [k ["2Y" "5Y" "10Y" "30Y" "2Y5Y" "2Y10Y" "2Y30Y" "5Y10Y" "5Y30Y" "10Y30Y"]] {:id k :label k}))
+                                                                                                                            :placeholder "Select"
                                                                                                                             :on-change #(do (reset! (r/cursor curve-histories [:curve-two/tenor]) %)
-                                                                                                                                            (reset! nb-curve 2)
-                                                                                                                                            ;(rf/dispatch [:post-model-history-curves (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])])
-                                                                                                                                            )]]]
-                                          ]]
-
+                                                                                                                                            (reset! nb-curve 2))]]]]]
                                         (if @(rf/subscribe[:quant-model/curves-throbber])
                                           [v-box :class "element" :width "1300px" :align :center :children [box [throbber :size :large]]]
                                           [v-box :class "element" :gap "10px" :width "1300px"
-                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve)]
-                                                      ]])
-
+                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve)]]])
                                         ]]]]
                 ]]))
 
