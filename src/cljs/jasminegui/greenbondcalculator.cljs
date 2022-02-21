@@ -107,7 +107,7 @@
                          {:id :project-evaluation/controversies :Yes 0 :No 8}
                          {:id :project-evaluation/national-framework-best-practice :Yes 6 :No 0}
                          {:id :project-evaluation/better-than-national :Yes 8 :No 0}
-                         {:id :project-evaluation/aligned-with-country-sector-pathway :Yes 14 :No 0}
+                         {:id :project-evaluation/aligned-with-country-sector-pathway :Yes 10 :No 0}
                          {:id :proceed-management/sub-account :Yes 9 :No 0}
                          {:id :proceed-management/green-account :Yes 9 :No 0}
                          {:id :proceed-management/virtual-green :Yes 9 :No 0}
