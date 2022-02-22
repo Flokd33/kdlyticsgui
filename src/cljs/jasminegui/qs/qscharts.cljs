@@ -169,6 +169,7 @@
     (println isin1)
     ;(println (int start-date-yyyymmdd))
     ;println (Integer/parseInt start-date-yyyymmdd)) ;how to load ?
+    ;(js/parseInt )
 
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
@@ -254,7 +255,7 @@
                                                       :T2Y5Y (- (:T5Y e) (:T2Y e))
                                                       :T2Y10Y (- (:T10Y e) (:T2Y e))
                                                       :T2Y30Y (- (:T30Y e) (:T2Y e))
-                                                      :T5Y10Y (- (:T100Y e) (:T5Y e))
+                                                      :T5Y10Y (- (:T10Y e) (:T5Y e))
                                                       :T5Y30Y (- (:T30Y e) (:T5Y e))
                                                       :T10Y30Y (- (:T30Y e) (:T10Y e))
                                                       )
@@ -263,27 +264,27 @@
                                                       :T2Y5Y (- (:T5Y e) (:T2Y e))
                                                       :T2Y10Y (- (:T10Y e) (:T2Y e))
                                                       :T2Y30Y (- (:T30Y e) (:T2Y e))
-                                                      :T5Y10Y (- (:T100Y e) (:T5Y e))
+                                                      :T5Y10Y (- (:T10Y e) (:T5Y e))
                                                       :T5Y30Y (- (:T30Y e) (:T5Y e))
                                                       :T10Y30Y (- (:T30Y e) (:T10Y e))
                                                       )
                                                     )
-        data-curve-1 (for [e data-curve-1-enhanced] (assoc e :curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
-        data-curve-2 (for [e data-curve-2-enhanced] (assoc e :curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
+        data-curve-1 (for [e data-curve-1-enhanced] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
+        data-curve-2 (for [e data-curve-2-enhanced] (assoc e :Curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
         data-to-plot (if (= nb 2)  (concat data-curve-1 data-curve-2) data-curve-1 )
         ]
     (println param)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil
-     :data    {:values data-to-plot :format {:parse {:curve "nominal" :date "date:'%Y-%m-%d'" :tenor-choice "quantitative" }}}
+     :data    {:values data-to-plot :format {:parse {:Curve "nominal" :date "date:'%Y-%m-%d'" :tenor-choice "quantitative" }}}
      :vconcat [
                               {:mark "line" :width 1000 :height 400
                                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y {:field "tenor-choice" :type "quantitative" :axis {:title "Spread"}
                                               :scale {:domain [(dec (apply min (map :tenor-choice data-to-plot))) (inc (apply max (map :tenor-choice data-to-plot)))]}
                                               }
-                                          :color {:field "curve" :type "nominal" }}
+                                          :color {:field "Curve" :type "nominal" }}
                                }
                             ]}
     ))
