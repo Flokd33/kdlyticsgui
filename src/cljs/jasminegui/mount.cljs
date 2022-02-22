@@ -245,6 +245,7 @@
                  :last-updated-logs nil
                  :integrity nil
                  :portfolio-checks {}
+                 :talanx-checks {}
 
                  :analysts nil
 
@@ -422,6 +423,7 @@
            :last-updated-logs
            :integrity
            :portfolio-checks
+           :talanx-checks
 
            :analysts
 
@@ -730,6 +732,7 @@
    {:get-key :get-last-updated-logs    :url-tail "last-updated" :dis-key :last-updated-logs}
    {:get-key :get-integrity    :url-tail "integrity" :dis-key :integrity}
    {:get-key :get-portfolio-checks    :url-tail "portfolio-checks" :dis-key :portfolio-checks}
+   {:get-key :get-talanx-checks    :url-tail "talanx-checks" :dis-key :talanx-checks}
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
    ])
