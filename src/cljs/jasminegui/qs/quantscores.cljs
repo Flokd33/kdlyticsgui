@@ -411,10 +411,7 @@
           (into [] (concat
                       (into [[title :label "Model type" :level :level3]]
                             (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
-                      [
-
-
-                       [title :label "Rating curves" :level :level3]
+                      [[title :label "Rating curves" :level :level3]
                         [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)]
                        [gap :size "10px"]
                        [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]
@@ -663,10 +660,6 @@
                           :edn-params {:query query :isinseq isin}
                           :dispatch-key [:quant-model/history-result-prediction]}}))
 
-;(case (:query m)
-;  :two-d-curves (modeldefs/two-d->api-prediction-data @modeldefs/two-d-curves (:ratingseq m))
-;  :four-d-sovereign-curves (modeldefs/four-d-sovereign->api-prediction-data @modeldefs/four-d-sovereigns (:countryseq m)))
-
 (rf/reg-event-fx
   :post-model-history-curves-one
   (fn [{:keys [db]} [_ query selection]]
@@ -685,7 +678,6 @@
                             :edn-params {:query query rating-or-country selection } ;:countryseq countries
                             :dispatch-key [:quant-model/history-result-curves-two]}})))
 
-
 (defn qs-historical-charts []
   (let [source-data @(rf/subscribe [:quant-model/model-output])
         bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data)))))
@@ -694,10 +686,7 @@
         selection-change-fn (fn [id x] (if (= x :two-d-curves)
                                          (do (swap! curve-histories assoc (keyword id "type") :two-d-curves) (swap! curve-histories assoc (keyword id "selection") 9))
                                          (do (swap! curve-histories assoc (keyword id "type") :four-d-sovereign-curves) (swap! curve-histories assoc (keyword id "selection") "BR"))))
-        start-date (rf/subscribe [:quant-model/history-start-date])
-        ;end-date (rf/subscribe [:quant-model/history-end-date])
-        ]
-
+        start-date (rf/subscribe [:quant-model/history-start-date])]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Bonds"]
@@ -717,13 +706,6 @@
                                            :on-change #(do (rf/dispatch [:quant-model/history-start-date %])
                                                            (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
                                                            (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])]))]]]
-                                          ;[h-box :gap "10px"  :align :baseline :children [[title :label "End:" :level :level3]
-                                          ;[datepicker-dropdown :model end-date :minimum (t/int-to-gdate 20150101) :maximum (today)
-                                          ; :format "dd/MM/yyyy" :show-today? true
-                                          ; :on-change #(do (rf/dispatch [:quant-model/history-end-date %])
-                                          ;                 (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                          ;                 (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                          ;                 )]]]
                                           [gap :size "20px"]
                                           [label :width "200px" :label (str "Choice 1: " @bond-historical-charts " (" @isin-historical-charts ")")]
                                           [typeahead
@@ -800,7 +782,10 @@
                                                                                                                             :on-change #(do (reset! (r/cursor curve-histories [:curve-one/tenor]) %))]]]
                                           [h-box :gap "10px" :align :center :children
                                            [[title :label "Curve 2" :level :level3] [gap :size "1"]
-                                            [md-icon-button :md-icon-name "zmdi-delete" :size :regular :on-click #(do (reset! nb-curve 1))]]]
+                                            [md-icon-button :md-icon-name "zmdi-delete" :size :regular :on-click #(do (reset! nb-curve 1)
+                                                                                                                      (reset! (r/cursor curve-histories [:curve-two/type]) nil)
+                                                                                                                      (reset! (r/cursor curve-histories [:curve-two/selection]) nil)
+                                                                                                                      )]]]
                                           [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Type"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/type])
                                                                                                                            :choices [{:id :two-d-curves :label "Rating (2D)"} {:id :four-d-sovereign-curves :label "Country (4D)"}]
                                                                                                                            :placeholder "Select"
