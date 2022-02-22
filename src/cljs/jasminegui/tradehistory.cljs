@@ -73,7 +73,7 @@
     (let [data (:multiple-portfolio-trade-history/data db)
           portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
           res (->> data
-                   (map #(select-keys % (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name] portfolios)))
+                   (map #(select-keys % (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name :TICKER] portfolios)))
                    (filter #(not= 0.0 (reduce + (map % portfolios)))))
           ;data-clean1 (into []  (for [trade data] (select-keys trade (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name] portfolios))))
           ;data-clean2 (filter #(not= 0.0 (reduce + (map % portfolios))) data-clean1)
@@ -555,7 +555,7 @@
                                            [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
 
                               (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
-                                    ;data @(rf/subscribe [:multiple-portfolio-trade-history/data]
+                                    data @(rf/subscribe [:multiple-portfolio-trade-history/data])
                                     width-one 80
                                     risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
                                     grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
@@ -563,7 +563,6 @@
                                                     {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false :getProps tables/red-negatives
                                                      :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round0*100-if-not0 :contrib-mdur tables/round2-if-not0 ))}))
                                     ]
-                                ;(println @(rf/subscribe [:get-multiple-portfolio-trade-history/clean-table]))
                                 [:div {:id "multiple-portfolio-risk-table"}
                                  [tables/tree-table-risk-table
                                   ;:multiple-portfolio-trade-history/data
