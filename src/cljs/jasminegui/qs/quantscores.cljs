@@ -129,7 +129,10 @@
      ["Copy ISIN" (fn [] (t/copy-to-clipboard (aget rowInfo "original" "ISIN")))]
      ["Historical charts" (fn [] ((reset! isin-historical-charts (aget rowInfo "original" "ISIN"))
                                   (reset! bond-historical-charts (aget rowInfo "original" "Bond"))
-                                  (rf/dispatch [:navigation/active-qs :historical-charts]) (rf/dispatch [:get-historical-quant-scores (aget rowInfo "original" "ISIN")])))]         ; <---- the name is a span
+                                  (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [(aget rowInfo "original" "ISIN")])])
+                                  (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [(aget rowInfo "original" "ISIN")])])
+                                  (rf/dispatch [:navigation/active-qs :historical-charts])
+                                  ))]
      ]))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
@@ -633,10 +636,10 @@
 
 (def curve-histories (r/atom {:curve-one/type nil
                               :curve-one/selection nil
-                              :curve-one/tenor nil
+                              :curve-one/tenor "5Y"
                               :curve-two/type nil
                               :curve-two/selection nil
-                              :curve-two/tenor nil}))
+                              :curve-two/tenor "5Y"}))
 
 ;(rf/reg-event-fx
 ;  :post-model-history-pricing
@@ -771,7 +774,7 @@
                                           )
                                         ]]]]
                 [v-box :class "element" :gap "20px" :width "1620px"
-                 :children [[title :level :level1 :label "Curves BETA DO NOT USE"]
+                 :children [[title :level :level1 :label "Curves"]
                             [h-box :gap "75px" :align :start
                              :children [[v-box :gap "10px" :children
                                          [[title :label "Curve 1" :level :level3]

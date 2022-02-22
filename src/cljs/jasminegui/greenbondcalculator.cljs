@@ -33,38 +33,43 @@
 (def gb-score-new-issue (r/atom 0))
 (def gb-score-follow-up (r/atom 0))
 
+
+(def other-disabled? (r/atom true))
+
 (def yes-no-choice
   [{:id "Yes" :label "Yes"}
    {:id "No"  :label "No"}])
 
-(def project-categories
-  [{:id "Climate change adaptation" :label "Climate change adaptation"}
-   {:id "Pollution prevention and control" :label "Pollution prevention and control"}
-   {:id "Biodiversity conservation" :label "Biodiversity conservation"}
-   {:id "Other" :label "Other"}])
+;(def project-categories
+;  [{:id "Climate change adaptation" :label "Climate change adaptation"}
+;   {:id "Pollution prevention and control" :label "Pollution prevention and control"}
+;   {:id "Biodiversity conservation" :label "Biodiversity conservation"}
+;   {:id "Other" :label "Other"}])
 
 (def project-sub-categories
-  [{:id "Climate change adaptation)" :label "Climate change adaptation (including information support systems, such as climate observation and early warning systems)"}
-   {:id "Renewable energy" :label "Renewable energy (including production, transmission, appliances and products)"}
-   {:id "Green buildings" :label "Green buildings which meet regional, national or internationally recognised standards or certifications"}
-   {:id "Energy efficiency" :label "Energy efficiency (such as in new and refurbished buildings, energy storage, district heating, smart grids, appliances and products)"}
-   {:id "Clean transportation" :label "Clean transportation (such as electric, hybrid, public, rail, non-motorised, multi-modal transportation, infrastructure for clean energy vehicles and reduction of harmful emissions)"}
-   {:id "Pollution prevention and control" :label "Pollution prevention and control (including reduction of air emissions, greenhouse gas control, soil remediation, waste prevention, waste reduction, waste recycling and energy/emission-efficient waste to energy)"}
-   {:id "Eco-efficient" :label "Eco-efficient and/or circular economy adapted products, production technologies and processes (such as development and introduction of environmentally"}
-   {:id "Environmentally sustainable management" :label "Environmentally sustainable management of living natural resources and land use (including environmentally sustainable agriculture; environmentally sustainable animal husbandry; climate smart farm inputs such as biological crop protection or drip-irrigation; environmentally sustainable fishery and aquaculture; environmentally-sustainable forestry, including afforestation or reforestation, and preservation or restoration of natural landscapes)"}
-   {:id "Terrestrial and aquatic biodiversity conservation" :label "Terrestrial and aquatic biodiversity conservation (including the protection of coastal, marine and watershed environments)"}
-   {:id "Other" :label "Other"}
+  [{:id "Climate change adaptation)" :label "Climate change adaptation (including information support systems, such as climate observation and early warning systems)", :group "Climate change adaptation"}
+   {:id "Renewable energy" :label "Renewable energy (including production, transmission, appliances and products)", :group "Climate change adaptation"}
+   {:id "Green buildings" :label "Green buildings which meet regional, national or internationally recognised standards or certifications", :group "Climate change adaptation"}
+   {:id "Energy efficiency" :label "Energy efficiency (such as in new and refurbished buildings, energy storage, district heating, smart grids, appliances and products)", :group "Climate change adaptation"}
+   {:id "Clean transportation" :label "Clean transportation (such as electric, hybrid, public, rail, non-motorised, multi-modal transportation, infrastructure for clean energy vehicles and reduction of harmful emissions)", :group "Climate change adaptation"}
+   {:id "Pollution prevention and control" :label "Pollution prevention and control (including reduction of air emissions, greenhouse gas control, soil remediation, waste prevention, waste reduction, waste recycling and energy/emission-efficient waste to energy)", :group "Pollution prevention and control"}
+   {:id "Eco-efficient" :label "Eco-efficient and/or circular economy adapted products, production technologies and processes (such as development and introduction of environmentally", :group "Pollution prevention and control"}
+   {:id "Environmentally sustainable management" :label "Environmentally sustainable management of living natural resources and land use (including environmentally sustainable agriculture; environmentally sustainable animal husbandry; climate smart farm inputs such as biological crop protection or drip-irrigation; environmentally sustainable fishery and aquaculture; environmentally-sustainable forestry, including afforestation or reforestation, and preservation or restoration of natural landscapes)", :group "Biodiversity conservation"}
+   {:id "Terrestrial and aquatic biodiversity conservation" :label "Terrestrial and aquatic biodiversity conservation (including the protection of coastal, marine and watershed environments)", :group "Biodiversity conservation"}
+   {:id "Sustainable water and wastewater management" :label "Sustainable water and wastewater management (including sustainable infrastructure for clean and/or drinking water, wastewater treatment, sustainable urban drainage systems and river training and other forms of flooding mitigation)", :group "Biodiversity conservation"}
+   {:id "Other" :label "Other" , :group "None of the above"}
    ])
 
 
-(def esg-calculator-input (r/atom {
+(def esg-calculator-input (r/atom {:project-selection/identifier ""
                                    :project-selection/description ""
                                    :project-selection/categories ""
                                    :project-selection/categories-yes-no "No"
                                    :project-selection/sub-categories ""
                                    :project-selection/categories-other ""
-                                   :project-evaluation/certified-opinion "No"
+                                   :project-evaluation/independent-verification ""
                                    :project-evaluation/certified-framework "No"
+                                   :project-evaluation/certified-opinion "No"
                                    :project-evaluation/external-scoring "No"
                                    :project-evaluation/credibility "No"
                                    :project-evaluation/materiality "No"
@@ -74,9 +79,11 @@
                                    :project-evaluation/better-than-national "No"
                                    :project-evaluation/country-framework-list []
                                    :project-evaluation/aligned-with-country-sector-pathway "No"
+                                   :proceed-management/ringfencing ""
                                    :proceed-management/sub-account "No"
                                    :proceed-management/green-account "No"
                                    :proceed-management/virtual-green "No"
+                                   :proceed-management/tracked ""
                                    :proceed-management/audited "No"
                                    :proceed-management/ring-fenced-2 "No"
                                    :reporting/project-on-track "No"
@@ -137,12 +144,14 @@
     {:color "Chartreuse" :text "YES"}
     {:color "Red" :text "NO"})))
 
-
 (defn esg-calculator-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
     (println (gb-eligible))
   [v-box :width standard-box-width :gap "5px" :class "element"
    :children [[title :label "Green bond calculator" :level :level1]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "ISIN (or name for new issue):"]
+                          [input-text  :model (r/cursor esg-calculator-input [:project-selection/identifier]) :on-change #(do (reset! (r/cursor esg-calculator-input [:project-selection/identifier]) %))]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width "200px" :model gb-score-new-issue ]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility*" :level :level2]]
                                                              [button :label (:text (gb-eligible)) :disabled? true :style {:color "black" :backgroundColor (:color (gb-eligible)) :textAlign "center"} ]]]
@@ -152,50 +161,27 @@
                           [input-textarea  :model (r/cursor esg-calculator-input [:project-selection/description]) :on-change #(reset! (r/cursor esg-calculator-input [:project-selection/description]) %)]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Project category:"]
-                          [single-dropdown :width categories-list-width :choices project-categories :model (r/cursor esg-calculator-input [:project-selection/categories])
+                          [single-dropdown :width categories-list-width-long :choices project-sub-categories :model (r/cursor esg-calculator-input [:project-selection/categories])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-selection/categories]) %)
-                                           (if (= "Other" %) (do (reset! (r/cursor esg-calculator-input [:project-selection/sub-categories]) "Other")
-                                                                 (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "Please fill ")
-                                                                 (reset! (r/cursor esg-calculator-input [:project-selection/categories-yes-no]) "No"))
-                                                             (do (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "NA")
-                                                                 (reset! (r/cursor esg-calculator-input [:project-selection/categories-yes-no]) "Yes")))
+                                           (if (= "Other" %) (do (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "Please fill ") (reset! (r/cursor esg-calculator-input [:project-selection/categories-yes-no]) "No") (reset! other-disabled? false))
+                                                             (do (reset! other-disabled? true) (reset! (r/cursor esg-calculator-input [:project-selection/categories-yes-no]) "Yes")))
                                            (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Project sub-category:"]
-                          [single-dropdown :width categories-list-width-long :choices project-sub-categories :model (r/cursor esg-calculator-input [:project-selection/sub-categories])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:project-selection/sub-categories]) %)
-                                           (if (not (= "Other" %)) (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) "NA"))
-                                           (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "If other:"]
-                          [input-textarea  :model (r/cursor esg-calculator-input [:project-selection/categories-other])
+               :children [[label :width question-width :label "Other:"]
+                          [input-textarea  :model (r/cursor esg-calculator-input [:project-selection/categories-other]) :disabled? other-disabled?
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-selection/categories-other]) %)
-                                                      (if (not (= "" %)) (do (reset! (r/cursor esg-calculator-input [:project-selection/categories]) "Other")
-                                                                         (reset! (r/cursor esg-calculator-input [:project-selection/categories-yes-no]) "No")
-                                                                         (reset! (r/cursor esg-calculator-input [:project-selection/sub-categories]) "Other")))
+                                                      (if (not (= "" %)) (do (reset! (r/cursor esg-calculator-input [:project-selection/categories]) "Other") (reset! (r/cursor esg-calculator-input [:project-selection/categories-yes-no]) "No") (reset! (r/cursor esg-calculator-input [:project-selection/sub-categories]) "Other")))
                                            (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [title :label "Project evaluation" :level :level2 ]
-              [title :label "Independent Verification (one 'Yes' allowed):" :level :level3 ]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the bond certified by an independent second party opinion?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/certified-opinion])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-opinion]) %)
-                                           (if (= "Yes" %) (do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-framework]) "No")
-                                                            (reset! (r/cursor esg-calculator-input [:project-evaluation/external-scoring]) "No")))
-                                           (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the bond certified by an external green bond framework?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/certified-framework])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-framework]) %)
-                                            (if (= "Yes" %) (do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-opinion]) "No")
-                                                                (reset! (r/cursor esg-calculator-input [:project-evaluation/external-scoring]) "No")))
-                                           (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is there any other external scoring or rating on the sustainability element?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:project-evaluation/external-scoring])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/external-scoring]) %)
-                                            (if (= "Yes" %) (do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-framework]) "No")
-                                                                (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-opinion]) "No")))
+               :children [[label :width question-width :label "Independent verification:"]
+                          [single-dropdown :width categories-list-width-long :choices [{:id "second-party-opinion" :label "The bond is certified by an independent second party opinion"} {:id "green-bond-framework"  :label "The bond is certified by an external green bond framework"} {:id "external scoring"  :label "There is an external scoring or rating on the sustainability element"} {:id "none"  :label "None of the above"}] :model (r/cursor esg-calculator-input [:project-evaluation/independent-verification])
+                           :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/independent-verification]) %)
+                                           (case %
+                                             "second-party-opinion" (do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-opinion]) "Yes") (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-framework]) "No") (reset! (r/cursor esg-calculator-input [:project-evaluation/external-scoring]) "No"))
+                                             "green-bond-framework"  (do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-opinion]) "No") (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-framework]) "Yes") (reset! (r/cursor esg-calculator-input [:project-evaluation/external-scoring]) "No"))
+                                             "external scoring" (do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-opinion]) "No") (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-framework]) "No") (reset! (r/cursor esg-calculator-input [:project-evaluation/external-scoring]) "Yes"))
+                                             "none" (do (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-opinion]) "No") (reset! (r/cursor esg-calculator-input [:project-evaluation/certified-framework]) "No") (reset! (r/cursor esg-calculator-input [:project-evaluation/external-scoring]) "No")))
                                            (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [title :label "Other project evaluation questions" :level :level3 ]
               [h-box :gap "10px" :align :center
@@ -224,7 +210,7 @@
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/better-than-national]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Country framework:"]
-                          [single-dropdown :width countries-list-width :choices country-names-sorted  :model (r/cursor esg-calculator-input [:project-evaluation/country-framework-list])
+                          [single-dropdown :width countries-list-width :choices country-names-sorted :filter-box? true :model (r/cursor esg-calculator-input [:project-evaluation/country-framework-list])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-evaluation/country-framework-list]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the project aligned with country-specific sector pathway?"]
@@ -235,43 +221,25 @@
                           [input-textarea  :model (r/cursor esg-calculator-input [:project-selection/pathway-source])
                            :on-change #(do (reset! (r/cursor esg-calculator-input [:project-selection/pathway-source]) %) (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [title :label "Management of proceeds" :level :level2 ]
-              [title :label "Proceeds ringfencing (one 'Yes' allowed):" :level :level3 ]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is there a specific sub-account created?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:proceed-management/sub-account])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) %)
-                                           (if (= "Yes" %) (do (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "No")
-                                                               (reset! (r/cursor esg-calculator-input [:proceed-management/virtual-green]) "No")
-                                                               (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced]) "No")))
+               :children [[label :width question-width :label "Proceeds ringfencing"]
+                          [single-dropdown :width categories-list-width-long :choices [{:id "sub-account" :label "A specific sub account has been created"} {:id "green-account"  :label "A specific green account has been created"} {:id "virtual-green"  :label "A virtual green account has been created"} {:id "none"  :label "None of the above"}] :model (r/cursor esg-calculator-input [:proceed-management/ringfencing])
+                           :on-change #(do (reset! (r/cursor esg-calculator-input [:proceed-management/ringfencing]) %)
+                                           (case %
+                                             "sub-account" (do (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "Yes") (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "No") (reset! (r/cursor esg-calculator-input [:proceed-management/virtual-green]) "No"))
+                                             "green-account"  (do (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "No") (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "Yes") (reset! (r/cursor esg-calculator-input [:proceed-management-evaluation/virtual-green]) "No"))
+                                             "virtual-green" (do (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "No") (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "No") (reset! (r/cursor esg-calculator-input [:proceed-management/virtual-green]) "Yes"))
+                                             "none" (do (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "No")(reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "No") (reset! (r/cursor esg-calculator-input [:proceed-management/virtual-green]) "No")))
                                            (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is there a separate green account created?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:proceed-management/green-account])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) %)
-                                           (if (= "Yes" %) (do (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "No")
-                                                               (reset! (r/cursor esg-calculator-input [:proceed-management/virtual-green]) "No")
-                                                               (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced]) "No")))
-                                           (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is there a virtual green account created?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:proceed-management/virtual-green])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:proceed-management/virtual-green]) %)
-                                           (if (= "Yes" %) (do (reset! (r/cursor esg-calculator-input [:proceed-management/sub-account]) "No")
-                                                               (reset! (r/cursor esg-calculator-input [:proceed-management/green-account]) "No")
-                                                               (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced]) "No")))
-                                           (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
-              [title :label "Proceeds tracked (one 'Yes' allowed):" :level :level3 ]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Does the internal tracking will be verified by an auditor?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:proceed-management/audited])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:proceed-management/audited]) %)
-                                      (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced-2]) "No"))
-                                           (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Are the proceeds ringfenced or otherwise specifically tracked?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-input [:proceed-management/ring-fenced-2])
-                           :on-change #(do (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced-2]) %)
-                                           (if (= "Yes" %) (reset! (r/cursor esg-calculator-input [:proceed-management/audited]) "No"))
+               :children [[label :width question-width :label "Proceeds tracking"]
+                          [single-dropdown :width categories-list-width-long :choices [{:id "verified" :label "The internal tracking will be verified by an auditor"} {:id "tracked"  :label "The proceeds are ringfenced or otherwise specifically tracked"} {:id "none"  :label "None of the above"}]
+                           :model (r/cursor esg-calculator-input [:proceed-management/tracked])
+                           :on-change #(do (reset! (r/cursor esg-calculator-input [:proceed-management/tracked]) %)
+                                           (case %
+                                             "verified" (do (reset! (r/cursor esg-calculator-input [:proceed-management/audited]) "Yes") (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced-2]) "No"))
+                                             "tracked"  (do (reset! (r/cursor esg-calculator-input [:proceed-management/audited]) "No") (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced-2]) "Yes"))
+                                             "none" (do (reset! (r/cursor esg-calculator-input [:proceed-management/audited]) "No") (reset! (r/cursor esg-calculator-input [:proceed-management/ring-fenced-2]) "No")))
                                            (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring))]]]
               [title :label "Analyst summary" :level :level2 ]
               [h-box :gap "10px" :align :center
@@ -282,7 +250,6 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
                           [button :label "Extract new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator @esg-calculator-input gb-follow-up-scoring gb-new-issue-scoring) (gb-summary-generator))]]]
-
               [gap :size "20px"]
               [line :size  "2px" :color "black"] ;[gap :size "50px"]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]]
