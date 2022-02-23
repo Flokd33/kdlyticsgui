@@ -767,12 +767,12 @@
                                                                                                                                            (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])]))]]]
                                           [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Selection"]
                                                                                       (if (= (get @curve-histories :curve-one/type) :two-d-curves)
-                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/selection])
+                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/selection]) :filter-box? true
                                                                                                                         :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19)))
                                                                                                                         :placeholder "Select"
                                                                                                                         :on-change #(do (reset! (r/cursor curve-histories [:curve-one/selection]) %)
                                                                                                                                         (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])]))]
-                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/selection]) :choices countries
+                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/selection]) :choices countries :filter-box? true
                                                                                                                         :placeholder "Select"
                                                                                                                         :on-change #(do (reset! (r/cursor curve-histories [:curve-one/selection]) %)
                                                                                                                                         (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])]))])]]
@@ -794,13 +794,13 @@
                                                                                                                                            (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])]))]]]
                                           [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Selection"]
                                                                                       (if (= (get @curve-histories :curve-two/type) :two-d-curves)
-                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/selection])
+                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/selection]) :filter-box? true
                                                                                                                         :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19)))
                                                                                                                         :placeholder "Select"
                                                                                                                           :on-change #(do (reset! (r/cursor curve-histories [:curve-two/selection]) %)
                                                                                                                                           (reset! nb-curve 2)
                                                                                                                                           (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])]))]
-                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/selection])
+                                                                                        [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-two/selection]) :filter-box? true
                                                                                                                         :choices countries
                                                                                                                         :placeholder "Select"
                                                                                                                           :on-change #(do (reset! (r/cursor curve-histories [:curve-two/selection]) %)
