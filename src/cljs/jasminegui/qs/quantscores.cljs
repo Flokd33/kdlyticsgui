@@ -38,6 +38,7 @@
 (def isin-historical-charts-2 (r/atom "ISIN not found"))
 (def bond-historical-charts-2 (r/atom nil))
 
+(def choice-historical-graph (r/atom "absolute"))
 (def nb-bond (r/atom 1))
 (def nb-curve (r/atom 1))
 (def show-historical-price (r/atom true))
@@ -692,7 +693,10 @@
                  :children [[title :level :level1 :label "Bonds"]
                             [h-box :gap "50px" :align :start
                              :children [[v-box :gap "10px" :children
-                                         [[checkbox :model show-historical-price  :label "Show price?"        :on-change #(reset! show-historical-price %)]
+                                         [[single-dropdown :width "125px" :model choice-historical-graph
+                                           :choices [{:id "absolute" :label "Absolute"}{:id "relative1" :label "Relative (a-b)"}{:id "relative2" :label "Relative (b-a)"}]
+                                           :on-change #(reset! choice-historical-graph %)]
+                                          [checkbox :model show-historical-price  :label "Show price?"        :on-change #(reset! show-historical-price %)]
                                           [checkbox :model show-historical-ytw    :label "Show YTW?"          :on-change #(reset! show-historical-ytw %)]
                                           [checkbox :model show-historical-ztw       :label "Show ZTW?"   :on-change #(reset! show-historical-ztw %)]
                                           [checkbox :model show-historical-duration     :label "Duration?" :on-change #(reset! show-historical-duration %)]
@@ -747,7 +751,7 @@
                                           (if (or (= @show-cheapness-2d true) (= @show-cheapness-4d true))
                                             [v-box :class "element" :gap "10px" :width "1300px"
                                            :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond)]
-                                                      [oz/vega-lite (qscharts/quant-isin-history-chart-prediction @show-cheapness-2d @show-cheapness-4d @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond)]
+                                                      [oz/vega-lite (qscharts/quant-isin-history-chart-prediction @show-cheapness-2d @show-cheapness-4d @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph)]
                                                       ]]
                                             [v-box :class "element" :gap "10px" :width "1300px"
                                              :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond)]
@@ -817,7 +821,6 @@
                                            :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve)]]])
                                         ]]]]
                 ]]))
-
 
 (rf/reg-event-db :quant-model-new-bond/change-isin (fn [db [_ isin]] (assoc db :quant-model/new-bond-entry {:ISIN isin}))) ;cleans the whole thing
 (rf/reg-event-db :quant-model/new-bond-entry (fn [db [_ k v]] (assoc-in db [:quant-model/new-bond-entry k] v)))
