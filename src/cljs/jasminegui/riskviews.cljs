@@ -694,26 +694,42 @@
      ]
     ))
 
-
 (defn portfolio-checks-display []
-  ;(when (empty? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
+  (when (empty? @(rf/subscribe [:talanx-checks])) (rf/dispatch [:get-talanx-checks]))
   (let [portfolio-checks-data-raw @(rf/subscribe [:portfolio-checks])
-        portfolio-checks-data (for [e portfolio-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1}(e :check-status-warning)) (get {false 0 true 1}(e :check-status-breach))])))]
-    [box :class "subbody rightelement" :child
-     (gt/element-box "checks" "100%" (str "Portfolio exposure checks " ((first portfolio-checks-data) :last-updated)) portfolio-checks-data
+        portfolio-checks-data (for [e portfolio-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1}(e :check-status-warning)) (get {false 0 true 1}(e :check-status-breach))])))
+        talanx-checks-data-raw  @(rf/subscribe [:talanx-checks])
+        talanx-checks-data (for [e talanx-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1}(e :check-warning)) (get {false 0 true 1}(e :check-breach))])))]
+
+    (println talanx-checks-data)
+    [h-box :padding "80px 0px" :class "rightelement" :gap "10px" :children
+       [(gt/element-box "checks" "100%" (str "Portfolio exposure checks " ((first portfolio-checks-data) :last-updated)) portfolio-checks-data
                      [[:> ReactTable
                        {:data           portfolio-checks-data
-                        :columns        [
-                                         {:Header "Portfolio" :accessor :portfolio :width 100  :style {:textAlign "left"}}
+                        :columns        [{:Header "Portfolio" :accessor :portfolio :width 90  :style {:textAlign "left"}}
                                          {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
                                          {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
-                                         {:Header "Threshold warning" :accessor :check-threshold-warning :width 100 :Cell tables/round3pc :style {:textAlign "right"}}
-                                         {:Header "Threshold breach" :accessor :check-threshold-breach :width 100 :Cell tables/round3pc :style {:textAlign "right"}}
-                                         {:Header "Value" :accessor :check-value :width 100 :Cell tables/round3pc :style {:textAlign "right"}}
-                                         {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}
-                                         ]
+                                         {:Header "Threshold warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Threshold breach" :accessor :check-threshold-breach :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data) :showPageSizeOptions false :className "-striped -highlight"}]]
-                     )]))
+                     )
+     (gt/element-box "talanx-checks" "100%" (str "Talanx issuer concentration checks " ((first portfolio-checks-data) :last-updated)) talanx-checks-data
+                     [[:> ReactTable
+                       {:data           talanx-checks-data
+                        :columns        [{:Header "Portfolio" :accessor :portfolio :width 100  :style {:textAlign "left"}}
+                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                         {:Header "Thres. breach corp" :accessor :threshold-corp :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Thres. breach sov" :accessor :threshold-sov :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
+                                         {:Header "Max corp" :accessor :max-corp :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Max sov" :accessor :max-sov :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Max sov name" :accessor :max-sov-name :width 100 :style {:textAlign "left"}}
+                                         {:Header "Mac corp name" :accessor :max-corp-name :width 100 :style {:textAlign "left"}}]
+                        :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data) :showPageSizeOptions false :className "-striped -highlight"}]]
+                     )]]))
+
 
 (defn large-exposures
   "another ugly microoptimisation"

@@ -223,12 +223,9 @@
         data-prediction @(rf/subscribe [:quant-model/history-result-prediction])
         data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
         data-pricing-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-pricing) nil)
-
         first-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
         first-date-isin2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-2)) :date)) "-" "")"-" ""))
         start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
-
-
         data-prediction-1 (filter #(= (:ISIN %) isin1) data-prediction)
         data-prediction-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-prediction) nil)
         ;----------------------------------------------------ISIN1--------------------------------------------
@@ -265,7 +262,6 @@
                                    "relative2" opposite
                                    "absolute" cheapness-all)
                                  (filter #(= (:ISIN %) isin1) cheapness-all))
-
 
         final-start-date (if (= nb-bond 2)
                            (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int)
