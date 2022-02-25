@@ -750,11 +750,11 @@
                                           [v-box :class "element" :width "1300px" :align :center :children [box [throbber :size :large]]]
                                           (if (or (= @show-cheapness-2d true) (= @show-cheapness-4d true))
                                             [v-box :class "element" :gap "10px" :width "1300px"
-                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond)]
+                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph)]
                                                       [oz/vega-lite (qscharts/quant-isin-history-chart-prediction @show-cheapness-2d @show-cheapness-4d @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph)]
                                                       ]]
                                             [v-box :class "element" :gap "10px" :width "1300px"
-                                             :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond)]
+                                             :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph)]
                                                         ]]
                                             )
                                           )

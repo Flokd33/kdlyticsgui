@@ -163,15 +163,50 @@
                                                   :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}}
                                           :color {:field "Bond" :type "nominal"}}})
 
-(defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond]
+(defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
   (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
         data-pricing @(rf/subscribe [:quant-model/history-result])
-        data-pricing-clean (if (= nb-bond 1) (filter #(= (:ISIN %) isin1) data-pricing) data-pricing)
+        data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
+        data-pricing-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-pricing) nil)
+
+        first-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
+        first-date-isin2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-2)) :date)) "-" "")"-" ""))
         start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
-        data-pricing-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) start-date-yyyymmdd-int) data-pricing-clean)
+
+        data-pricing-all (if (= nb-bond 2) (concat data-pricing-1 data-pricing-2) data-pricing-1)
+        by-date (group-by :date data-pricing-all)
+        step1 (into [] (for [[d g] by-date] (let [h (sort-by :ISIN g)] {:date   d
+                                                                        :price (- (:price (first h)) (:price (second h)))
+                                                                        :ytw (- (:ytw (first h)) (:ytw (second h)))
+                                                                        :ztw (- (:ztw (first h)) (:ztw (second h)))
+                                                                        :duration (- (:duration (first h)) (:duration (second h)))
+                                                                        :rating_score (- (:rating_score (first h)) (:rating_score (second h)))
+                                                                        })))
+        data-pricing-clean (sort-by :date step1)
+        opposite (->> data-pricing-clean
+                      (map #(update % :price (fn [x] (* -1 x))))
+                      (map #(update % :ytw (fn [x] (* -1 x))))
+                      (map #(update % :ztw (fn [x] (* -1 x))))
+                      (map #(update % :duration (fn [x] (* -1 x))))
+                      (map #(update % :rating_score (fn [x] (* -1 x)))))
+        data-pricing-clean-final (if (= nb-bond 2)
+                                      (case choice-historical-graph
+                                        "relative1" data-pricing-clean
+                                        "relative2" opposite
+                                        "absolute" data-pricing-all)
+                                      (filter #(= (:ISIN %) isin1) data-pricing-all))
+
+        final-start-date (if (= nb-bond 2)
+                              (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int)
+                              (max first-date-isin1-yyyymmdd-int start-date-yyyymmdd-int))
+
+        data-pricing-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-pricing-clean-final)
         data-to-plot (for [e data-pricing-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
         ]
-
+    (println start-date-yyyymmdd-int)
+    (println first-date-isin1-yyyymmdd-int)
+    (println first-date-isin2-yyyymmdd-int)
+    (println final-start-date)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
@@ -188,6 +223,12 @@
         data-prediction @(rf/subscribe [:quant-model/history-result-prediction])
         data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
         data-pricing-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-pricing) nil)
+
+        first-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
+        first-date-isin2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-2)) :date)) "-" "")"-" ""))
+        start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
+
+
         data-prediction-1 (filter #(= (:ISIN %) isin1) data-prediction)
         data-prediction-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-prediction) nil)
         ;----------------------------------------------------ISIN1--------------------------------------------
@@ -225,11 +266,15 @@
                                    "absolute" cheapness-all)
                                  (filter #(= (:ISIN %) isin1) cheapness-all))
 
-        start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
-        data-prediction-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) start-date-yyyymmdd-int) data-prediction-clean-final)
+
+        final-start-date (if (= nb-bond 2)
+                           (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int)
+                           (max first-date-isin1-yyyymmdd-int start-date-yyyymmdd-int))
+
+        data-prediction-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-prediction-clean-final)
         data-to-plot (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
         ]
-    (println cheapness-all)
+    ;(println cheapness-all)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil

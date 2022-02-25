@@ -699,9 +699,6 @@
   ;(when (empty? @(rf/subscribe [:portfolio-checks])) (rf/dispatch [:get-portfolio-checks]))
   (let [portfolio-checks-data-raw @(rf/subscribe [:portfolio-checks])
         portfolio-checks-data (for [e portfolio-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1}(e :check-status-warning)) (get {false 0 true 1}(e :check-status-breach))])))]
-
-    (println @(rf/subscribe [:talanx-checks]))
-
     [box :class "subbody rightelement" :child
      (gt/element-box "checks" "100%" (str "Portfolio exposure checks " ((first portfolio-checks-data) :last-updated)) portfolio-checks-data
                      [[:> ReactTable
