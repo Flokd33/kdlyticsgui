@@ -154,6 +154,8 @@
      :width  1000
      :height 625}))
 
+(def select-values (comp vals select-keys))
+
 (defn graph [field title key data] {:mark     "line" :width 1000 :height 400
                                :selection {:grid {:type "interval" :bind "scales"}}
                                :encoding {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
@@ -169,6 +171,7 @@
         data-pricing-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) start-date-yyyymmdd-int) data-pricing-clean)
         data-to-plot (for [e data-pricing-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
         ]
+
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
@@ -179,19 +182,60 @@
                             (if duration? (graph "duration" "Duration" :duration data-to-plot))
                             (if rating? (graph "rating_score" "Rating" :rating_score data-to-plot))])}))
 
-(defn quant-isin-history-chart-prediction [show-2d? show-4d? isin1 isin2 ticker1 ticker2 nb-bond]
+(defn quant-isin-history-chart-prediction [show-2d? show-4d? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
   (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
+        data-pricing @(rf/subscribe [:quant-model/history-result])
         data-prediction @(rf/subscribe [:quant-model/history-result-prediction])
-        data-prediction-clean (if (= nb-bond 1) (filter #(= (:ISIN %) isin1) data-prediction) data-prediction)
+        data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
+        data-pricing-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-pricing) nil)
+        data-prediction-1 (filter #(= (:ISIN %) isin1) data-prediction)
+        data-prediction-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-prediction) nil)
+        ;----------------------------------------------------ISIN1--------------------------------------------
+        cheapness-one-2d (map #(- (:ztw %1) (:pred2d %2)) (sort-by :date (filter #(= (:ISIN %) isin1) data-pricing-1)) (sort-by :date (filter #(= (:ISIN %) isin1) data-prediction-1)))
+        data-cheapness-one-2d (map #(assoc %1 :cheapness2D %2) data-prediction-1 cheapness-one-2d)
+        cheapness-one-4d (map #(- (:ztw %1) (:pred4d %2)) (sort-by :date (filter #(= (:ISIN %) isin1) data-pricing-1)) (sort-by :date (filter #(= (:ISIN %) isin1) data-prediction-1)))
+        data-cheapness-one-4d (map #(assoc %1 :cheapness4D %2) data-prediction-1 cheapness-one-4d)
+        ;---------------------------------------------------ISIN2--------------------------------------------
+        cheapness-two-2d (map #(- (:ztw %1) (:pred2d %2)) (sort-by :date (filter #(= (:ISIN %) isin2) data-pricing-2)) (sort-by :date (filter #(= (:ISIN %) isin2) data-prediction-2)))
+        data-cheapness-two-2d (map #(assoc %1 :cheapness2D %2) data-prediction-2 cheapness-two-2d)
+        cheapness-two-4d (map #(- (:ztw %1) (:pred4d %2)) (sort-by :date (filter #(= (:ISIN %) isin2) data-pricing-2)) (sort-by :date (filter #(= (:ISIN %) isin2) data-prediction-2)))
+        data-cheapness-two-4d (map #(assoc %1 :cheapness4D %2) data-prediction-2 cheapness-two-4d)
+        ;---------------------------------------------------AGGREGATE 2D and 4D--------------------------------------------
+        cheapness-one (map #(assoc %1 :cheapness4D (:cheapness4D %2)) data-cheapness-one-2d data-cheapness-one-4d)
+        cheapness-two (map #(assoc %1 :cheapness4D (:cheapness4D %2)) data-cheapness-two-2d data-cheapness-two-4d)
+        ;---------------------------------------------------AGGREGATE ISIN1 and ISIN2 (if one)--------------------------------------------
+        cheapness-all (if (= nb-bond 2) (concat cheapness-one cheapness-two) cheapness-one)
+        ;------------------------------------------------------------------------------------------------
+
+        by-date (group-by :date cheapness-all)
+        step1 (into [] (for [[d g] by-date] (let [h (sort-by :ISIN g)] {:date   d
+                                                                        :cheapness2D (- (:cheapness2D (first h)) (:cheapness2D (second h)))
+                                                                        :cheapness4D (- (:cheapness4D (first h)) (:cheapness4D (second h)))})))
+        ;step1 (into [] (for [[d g] by-date] (let [h (group-by :ISIN g)] {:date   d
+        ;                                                                 :pred2d (- (:pred2d (h isin1)) (:pred2d (h isin2)))
+        ;                                                                 :pred4d (- (:pred4d (h isin1)) (:pred4d (h isin2)))})))
+        data-prediction-clean (sort-by :date step1)
+        opposite (->> data-prediction-clean
+                      (map #(update % :cheapness2D (fn [x] (* -1 x))))
+                      (map #(update % :cheapness4D (fn [x] (* -1 x)))))
+        data-prediction-clean-final (if (= nb-bond 2)
+                                 (case choice-historical-graph
+                                   "relative1" data-prediction-clean
+                                   "relative2" opposite
+                                   "absolute" cheapness-all)
+                                 (filter #(= (:ISIN %) isin1) cheapness-all))
+
         start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
-        data-prediction-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) start-date-yyyymmdd-int) data-prediction-clean)
-        data-to-plot (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))]
+        data-prediction-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) start-date-yyyymmdd-int) data-prediction-clean-final)
+        data-to-plot (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
+        ]
+    (println cheapness-all)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil
-     :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :pred2d "quantitative" :pred4d "quantitative"}}}
-     :vconcat (remove nil? [(if show-2d? (graph "pred2d" "2D spread" :pred2d data-to-plot))
-                            (if show-4d? (graph "pred4d" "4D spread" :pred4d data-to-plot))])}
+     :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :cheapness2D "quantitative" :cheapness4D "quantitative"}}}
+     :vconcat (remove nil? [(if show-2d? (graph "cheapness2D" "2D cheapness" :cheapness2D data-to-plot))
+                            (if show-4d? (graph "cheapness4D" "4D cheapness" :cheapness4D data-to-plot))])}
     ))
 
 (defn quant-isin-history-chart-curves [param nb-curve]
