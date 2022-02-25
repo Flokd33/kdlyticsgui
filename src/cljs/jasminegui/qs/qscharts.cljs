@@ -206,6 +206,7 @@
         ;---------------------------------------------------AGGREGATE ISIN1 and ISIN2 (if one)--------------------------------------------
         cheapness-all (if (= nb-bond 2) (concat cheapness-one cheapness-two) cheapness-one)
         ;------------------------------------------------------------------------------------------------
+
         by-date (group-by :date cheapness-all)
         step1 (into [] (for [[d g] by-date] (let [h (sort-by :ISIN g)] {:date   d
                                                                         :cheapness2D (- (:cheapness2D (first h)) (:cheapness2D (second h)))
