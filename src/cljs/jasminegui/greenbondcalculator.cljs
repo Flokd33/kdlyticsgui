@@ -47,7 +47,7 @@
 ;   {:id "Other" :label "Other"}])
 
 (def project-sub-categories
-  [{:id "Climate change adaptation)" :label "Climate change adaptation (including information support systems, such as climate observation and early warning systems)", :group "Climate change adaptation"}
+  [{:id "Climate change adaptation" :label "Climate change adaptation (including information support systems, such as climate observation and early warning systems)", :group "Climate change adaptation"}
    {:id "Renewable energy" :label "Renewable energy (including production, transmission, appliances and products)", :group "Climate change adaptation"}
    {:id "Green buildings" :label "Green buildings which meet regional, national or internationally recognised standards or certifications", :group "Climate change adaptation"}
    {:id "Energy efficiency" :label "Energy efficiency (such as in new and refurbished buildings, energy storage, district heating, smart grids, appliances and products)", :group "Climate change adaptation"}
