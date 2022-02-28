@@ -195,7 +195,6 @@
                                         "relative2" opposite
                                         "absolute" data-pricing-all)
                                       (filter #(= (:ISIN %) isin1) data-pricing-all))
-
         final-start-date (if (= nb-bond 2)
                               (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int)
                               (max first-date-isin1-yyyymmdd-int start-date-yyyymmdd-int))
@@ -203,10 +202,6 @@
         data-pricing-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-pricing-clean-final)
         data-to-plot (for [e data-pricing-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
         ]
-    (println start-date-yyyymmdd-int)
-    (println first-date-isin1-yyyymmdd-int)
-    (println first-date-isin2-yyyymmdd-int)
-    (println final-start-date)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
@@ -279,8 +274,9 @@
                             (if show-4d? (graph "cheapness4D" "4D cheapness" :cheapness4D data-to-plot))])}
     ))
 
-(defn quant-isin-history-chart-curves [param nb-curve]
+(defn quant-isin-history-chart-curves [param nb-curve start-date]
   (let [ nb nb-curve
+        start (js/parseInt (t/gdate-to-yyyymmdd start-date))
         tenor-curve-1 (param :curve-one/tenor)
         tenor-curve-2 (param :curve-two/tenor)
         selection-curve-1 (param :curve-one/selection)
@@ -289,6 +285,8 @@
         model-curve-2 (if (= (param :curve-two/type) :two-d-curves) "2D" "4D")
         data-curve-1-raw @(rf/subscribe [:quant-model/history-result-curves-one])
         data-curve-2-raw @(rf/subscribe [:quant-model/history-result-curves-two])
+        first-date-curve1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-curve-1-raw)) :date)) "-" "")"-" ""))
+        first-date-curve2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-curve-2-raw)) :date)) "-" "")"-" ""))
         data-curve-1-enhanced (for [e data-curve-1-raw] (assoc e
                                                       :T2Y5Y (- (:T5Y e) (:T2Y e))
                                                       :T2Y10Y (- (:T10Y e) (:T2Y e))
@@ -306,17 +304,26 @@
         data-curve-1 (for [e data-curve-1-enhanced] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
         data-curve-2 (for [e data-curve-2-enhanced] (assoc e :Curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
         data-to-plot (if (= nb 2)  (concat data-curve-1 data-curve-2) data-curve-1 )
+
+        final-start-date (if (= nb 2)
+                           (max first-date-curve1-yyyymmdd-int first-date-curve2-yyyymmdd-int start)
+                           (max first-date-curve1-yyyymmdd-int start))
+
+        data-to-plot-2 (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-to-plot)
         ]
+    (println first-date-curve1-yyyymmdd-int)
+    (println first-date-curve2-yyyymmdd-int)
+    (println final-start-date)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil
-     :data    {:values data-to-plot :format {:parse {:Curve "nominal" :date "date:'%Y-%m-%d'" :tenor-choice "quantitative" }}}
+     :data    {:values data-to-plot-2 :format {:parse {:Curve "nominal" :date "date:'%Y-%m-%d'" :tenor-choice "quantitative" }}}
      :vconcat [
                               {:mark "line" :width 1000 :height 400
                                :selection {:grid {:type "interval" :bind "scales"}}
                                :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                                           :y {:field "tenor-choice" :type "quantitative" :axis {:title "Spread"}
-                                              :scale {:domain [(dec (apply min (map :tenor-choice data-to-plot))) (inc (apply max (map :tenor-choice data-to-plot)))]}
+                                              :scale {:domain [(dec (apply min (map :tenor-choice data-to-plot-2))) (inc (apply max (map :tenor-choice data-to-plot-2)))]}
                                               }
                                           :color {:field "Curve" :type "nominal" }}}
                             ]}
