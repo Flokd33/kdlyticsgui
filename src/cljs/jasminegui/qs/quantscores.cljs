@@ -639,6 +639,8 @@
                               :curve-two/selection nil
                               :curve-two/tenor "5Y"}))
 
+(def start-date-curve (r/atom (t/int-to-gdate 20150101)))   ;(t/int-to-gdate 20150101)
+
 ;(rf/reg-event-fx
 ;  :post-model-history-pricing
 ;  (fn [{:keys [db]} [_ query isin]]
@@ -687,7 +689,8 @@
         selection-change-fn (fn [id x] (if (= x :two-d-curves)
                                          (do (swap! curve-histories assoc (keyword id "type") :two-d-curves) (swap! curve-histories assoc (keyword id "selection") 9))
                                          (do (swap! curve-histories assoc (keyword id "type") :four-d-sovereign-curves) (swap! curve-histories assoc (keyword id "selection") "BR"))))
-        start-date (rf/subscribe [:quant-model/history-start-date])]
+        start-date (rf/subscribe [:quant-model/history-start-date])
+        ]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Bonds"]
@@ -704,7 +707,7 @@
                                           [checkbox :model show-cheapness-2d     :label "Show cheapness (2D)?"   :on-change #(reset! show-cheapness-2d %)]
                                           [checkbox :model show-cheapness-4d        :label "Show cheapness (4D)?"   :on-change #(reset! show-cheapness-4d %)]
                                           [gap :size "20px"]
-                                          [h-box :gap "10px" :align :center :children [[title :label "Start:" :level :level3 ]
+                                          [h-box :gap "10px" :align :center :children [[label :label "Start:" :width "40px" ]
                                           [datepicker-dropdown :model start-date :minimum (t/int-to-gdate 20150101) :maximum (today)
                                            :format "dd/MM/yyyy" :show-today? true
                                            :on-change #(do (rf/dispatch [:quant-model/history-start-date %])
@@ -763,7 +766,14 @@
                  :children [[title :level :level1 :label "Curves"]
                             [h-box :gap "75px" :align :start
                              :children [[v-box :gap "10px" :children
-                                         [[title :label "Curve 1" :level :level3]
+                                         [[h-box :gap "5px" :align :center :children [[label :width "75px" :label "Start"]
+                                                                                       [datepicker-dropdown :model start-date-curve :minimum (t/int-to-gdate 20150101) :maximum (today)
+                                                                                        :format "dd/MM/yyyy" :show-today? true
+                                                                                        :on-change #(do (reset! start-date-curve %)
+                                                                                                        ;(rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
+                                                                                                        )]]]
+                                          [gap :size "10px"]
+                                          [title :label "Curve 1" :level :level3]
                                           [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Type"] [single-dropdown :width "125px" :model (r/cursor curve-histories [:curve-one/type])
                                                                                                                            :choices [{:id :two-d-curves :label "Rating (2D)"} {:id :four-d-sovereign-curves :label "Country (4D)"}] ;{:id :none :label "None"}
                                                                                                                            :placeholder "Select"
@@ -818,7 +828,7 @@
                                         (if @(rf/subscribe[:quant-model/curves-throbber])
                                           [v-box :class "element" :width "1300px" :align :center :children [box [throbber :size :large]]]
                                           [v-box :class "element" :gap "10px" :width "1300px"
-                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve)]]])
+                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve @start-date-curve)]]])
                                         ]]]]
                 ]]))
 
