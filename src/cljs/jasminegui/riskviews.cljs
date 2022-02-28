@@ -709,9 +709,9 @@
                         :columns        [{:Header "Portfolio" :accessor :portfolio :width 90  :style {:textAlign "left"}}
                                          {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
                                          {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
-                                         {:Header "Threshold warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
-                                         {:Header "Threshold breach" :accessor :check-threshold-breach :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
-                                         {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Breach" :accessor :check-threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                         {:Header "Warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                         {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                          {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data) :showPageSizeOptions false :className "-striped -highlight"}]]
                      )
@@ -721,11 +721,11 @@
                         :columns        [{:Header "Portfolio" :accessor :portfolio :width 100  :style {:textAlign "left"}}
                                          {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
                                          {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
-                                         {:Header "Breach corp" :accessor :threshold-corp :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
-                                         {:Header "Max corp %" :accessor :max-corp :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Breach corp" :accessor :threshold-corp :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                         {:Header "Max corp %" :accessor :max-corp :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                          {:Header "Max corp name" :accessor :max-corp-name :width 100 :style {:textAlign "left"}}
-                                         {:Header "Breach sov" :accessor :threshold-sov :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
-                                         {:Header "Max sov %" :accessor :max-sov :width 100 :Cell tables/round2pc :style {:textAlign "right"}}
+                                         {:Header "Breach sov" :accessor :threshold-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                         {:Header "Max sov %" :accessor :max-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                          {:Header "Max sov name" :accessor :max-sov-name :width 100 :style {:textAlign "left"}}]
                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean) :showPageSizeOptions false :className "-striped -highlight"}]]
                      )]]))

@@ -197,6 +197,12 @@
       [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
       "-")))
 
+(defn roundpc-no-color [fmt this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [:div {:style {:color "black"}} (gstring/format fmt (* 100 x))]
+      "-")))
+
 (defn sort-msci-rating [a b]
   (let [ax (.indexOf ["Total" "AAA" "AA" "A" "BBB" "BB" "B" "CCC" "NA"] a )
         bx (.indexOf ["Total" "AAA" "AA" "A" "BBB" "BB" "B" "CCC" "NA"] b)]
@@ -212,7 +218,10 @@
 (def round0pc #(roundpc "%.0f%" %))
 (def round1pc #(roundpc "%.1f%" %))
 (def round2pc #(roundpc "%.2f%" %))
+(def round2pc-no-red #(roundpc-no-color "%.2f%" %))
 (def round3pc #(roundpc "%.3f%" %))
+
+
 
 (defn sub-low-level-rating-score-to-string [x]
   (let [i (dec (js/parseInt x))]
