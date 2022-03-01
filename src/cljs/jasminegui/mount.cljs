@@ -200,6 +200,7 @@
                  :esg/summary-report                      []
 
                  :quant-model/model-output                []
+                 :quant-model/model-js-output             #js []
                  :quant-model/bond-isin-map               {}
                  :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves               []
@@ -545,11 +546,13 @@
 (rf/reg-event-db
   :quant-model/model-output
   (fn [db [_ model]]
-    (assoc db
-      :quant-model/model-output (array-of-lists->records model)
-      :navigation/show-mounting-modal false
-      ;:quant-model/bond-isin-map (merge bond-isin (clojure.set/map-invert bond-isin))
-      )))
+    (let [mo (array-of-lists->records model)]
+      (assoc db
+        :quant-model/model-output mo
+        :quant-model/model-js-output (clj->js mo)           ;we do that once it's fast enough
+        :navigation/show-mounting-modal false
+        ;:quant-model/bond-isin-map (merge bond-isin (clojure.set/map-invert bond-isin))
+        ))))
 
 ;(rf/reg-event-db
 ;  :positions-new

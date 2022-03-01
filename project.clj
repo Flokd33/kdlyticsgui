@@ -1,9 +1,9 @@
 (defproject jasminegui "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.10.3"]
-                 [org.clojure/clojurescript "1.10.866"
+                 [org.clojure/clojurescript "1.11.4"
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library]]
-                 [thheller/shadow-cljs "2.15.8"]
+                 [thheller/shadow-cljs "2.17.0"]
                  [reagent "1.1.0"]
                  [re-frame "1.2.0"]
                  [re-com "2.13.2"]
@@ -11,7 +11,7 @@
                  [re-pressed "0.3.1"]
                  [org.clojars.frozenlock/reagent-contextmenu "0.4.3"]
                  [metasoarous/oz "1.6.0-alpha34"]
-                 [lilactown/helix "0.1.3"]
+                 [lilactown/helix "0.1.5"]
                  ]
 
   :plugins []

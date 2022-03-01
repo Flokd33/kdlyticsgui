@@ -131,7 +131,7 @@
      :http-post-dispatch {:url (str static/server-address "model-portfolios-new-trade") :edn-params m2 :dispatch-key [:dummy]}})))
 
 
-(def agg-order (r/atom "Region / Country" "Sector / Country"))
+;(def agg-order (r/atom "Region / Country" "Sector / Country"))
 
 
 (defn fnevt [state rowInfo instance evt]

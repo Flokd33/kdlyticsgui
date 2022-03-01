@@ -146,7 +146,7 @@
 ;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
 
 (defn qs-table [mytitle data]
-  (let [download-column-old (conj (keys (first data)) :ISIN)]
+  (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
     ;(println (conj (keys (first data)) :ISIN))
      [v-box :class "element"  :gap "20px" :width "1690px"
       :children [[title :label mytitle :level :level1]
@@ -382,7 +382,8 @@
                 [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
 (defn qs-table-container []
-  [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-output])]])
+  ;(println @(rf/subscribe [:quant-model/model-js-output]))
+  [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster
 
 
 
@@ -440,7 +441,7 @@
 (def reagent-chart-filter (atom []))
 (def open-update (r/atom false))
 (defn advanced-spot-chart []
-  (let [data @(rf/subscribe [:quant-model/model-output])]
+  (let [data @(rf/subscribe [:quant-model/model-js-output])]
     [box :padding "80px 10px" :class "rightelement" :child
      [v-box :class "element" :gap "20px" :width "1620px" :children
       [[h-box :align :center :justify :between :children [[title :label "Advanced spot charts" :level :level1]  [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
@@ -485,7 +486,7 @@
 (def histogram-exclude-outliers (atom "10"))
 
 (defn histograms []
-  (let [data @(rf/subscribe [:quant-model/model-output])]
+  (let [data @(rf/subscribe [:quant-model/model-js-output])]
     [box :padding "80px 10px" :class "rightelement" :child
      [v-box :class "element" :gap "20px" :width "1620px" :children
       [[title :label "Histograms" :level :level1]
