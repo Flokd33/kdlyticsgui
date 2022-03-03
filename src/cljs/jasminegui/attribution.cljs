@@ -40,7 +40,7 @@
     [tables/tree-table-risk-table
      :single-portfolio-attribution/clean-table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-      {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
+      {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect]) }
       {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
       {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
       {:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}]
@@ -67,13 +67,13 @@
                          :style {:textAlign "right"}
                          :aggregate tables/sum-rows
                          :Cell (get-in tables/attribution-table-columns [display-key-one :Cell])
-                         :filterable false}))]
+                         :filterable true}))]
 
     ;(println grouping-columns)
     [tables/tree-table-risk-table
      :multiple-portfolio-attribution/clean-table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-      {:Header (str "Portfolio " (name display-key-one)) :columns cols}
+      {:Header (str "Portfolio " (name display-key-one)) :columns cols }
       {:Header "Description" :columns (mapv tables/attribution-table-columns [:code :rating])}]
      is-tree
      (mapv :accessor grouping-columns)
