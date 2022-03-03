@@ -274,7 +274,7 @@
                             (if show-4d? (graph "cheapness4D" "4D cheapness" :cheapness4D data-to-plot))])}
     ))
 
-(defn quant-isin-history-chart-curves [param nb-curve start-date]
+(defn quant-isin-history-chart-curves [param nb-curve start-date choice-curves]
   (let [ nb nb-curve
         start (js/parseInt (t/gdate-to-yyyymmdd start-date))
         tenor-curve-1 (param :curve-one/tenor)
@@ -303,17 +303,22 @@
                                                       :T10Y30Y (- (:T30Y e) (:T10Y e))))
         data-curve-1 (for [e data-curve-1-enhanced] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
         data-curve-2 (for [e data-curve-2-enhanced] (assoc e :Curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
-        data-to-plot (if (= nb 2)  (concat data-curve-1 data-curve-2) data-curve-1 )
+        data-to-plot (if (= nb 2) (concat data-curve-1 data-curve-2) data-curve-1 )
 
+        by-date (group-by :date data-to-plot)
+        step1 (into [] (for [[d g] by-date] (let [h (sort-by :ISIN g)] {:date d :tenor-choice (- (:tenor-choice (first h)) (:tenor-choice (second h)))})))
+        data-curves-clean (sort-by :date step1)
+        opposite (->> data-curves-clean (map #(update % :tenor-choice (fn [x] (* -1 x)))))
+        data-curves-clean-final (if (= nb 2)
+                                      (case choice-curves
+                                        "relative1-curves" data-curves-clean
+                                        "relative2-curves" opposite
+                                        "absolute-curves" data-to-plot))
         final-start-date (if (= nb 2)
                            (max first-date-curve1-yyyymmdd-int first-date-curve2-yyyymmdd-int start)
                            (max first-date-curve1-yyyymmdd-int start))
 
-        data-to-plot-2 (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-to-plot)
-        ]
-    (println first-date-curve1-yyyymmdd-int)
-    (println first-date-curve2-yyyymmdd-int)
-    (println final-start-date)
+        data-to-plot-2 (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-curves-clean-final)]
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil
