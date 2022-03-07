@@ -322,7 +322,9 @@
                                       (case choice-curves
                                         "relative1-curves" data-curves-clean
                                         "relative2-curves" opposite
-                                        "absolute-curves" data-to-plot))
+                                        "absolute-curves" data-to-plot)
+                                      data-to-plot
+                                      )
         final-start-date (if (= nb 2)
                            (max first-date-curve1-yyyymmdd-int first-date-curve2-yyyymmdd-int start)
                            (max first-date-curve1-yyyymmdd-int start))
@@ -333,8 +335,9 @@
                                   (case choice-curves
                                     "relative1-curves" (for [e data-to-plot-2] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 " - " (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2)  ))
                                     "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2 " - "  (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 )  ))
-                                    "absolute-curves" data-to-plot-2))
-
+                                    "absolute-curves" data-to-plot-2)
+                                  data-to-plot-2
+                                  )
         ]
     (println data-to-plot-2)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
