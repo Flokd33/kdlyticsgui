@@ -2,6 +2,7 @@
   (:require
     [re-frame.core :as rf]
     [reagent.core :as r]
+    ;[hiccup.core :as hi]
     [goog.string :as gstring]
     [goog.string.format]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
@@ -104,16 +105,20 @@
 (def download-period (atom "ytd"))
 (def download-portfolio (atom "OGEMCORD"))
 
-(defn download-attribution-file [period port]
-  (let [root "//iamctnfs1.investecam.corp/shared/ATTRIBUTION/FIA/SFI/CREDIT REPORTS (Vic)/"
-        folders-map {:ytd "ytd reports/" :mtd "mtd reports/" :Ddy "daily reports/" :wtd "weekly reports/"}
-        months-map {:Jan "01" :Feb "02" :Mar "03" :Apr "04" :May "05" :Jun "06" :Jul "07" :Aug "08" :Sep "09" :Oct "10" :Nov "11" :Dec "12"}
-        attribution-date @(rf/subscribe [:attribution-date])
-        date-file-format (str (subs attribution-date 0 2) "-" (months-map (keyword (subs attribution-date 2 5))) "-" (subs attribution-date 7 9))
-        path-file (str root (folders-map (keyword period)) port " - Credit Reports - " date-file-format ".xlsx")]
-    (println path-file)
-    )
-  )
+;(defn download-attribution-file [period port]
+;  "cannot download file from drive if not HTTP"
+;  (let [root "file://iamctnfs1.investecam.corp/shared/ATTRIBUTION/FIA/SFI/CREDIT REPORTS (Vic)/"
+;        ;path2 "file://iamctnfs1.investecam.corp/shared/ATTRIBUTION/FIA/SFI/CREDIT REPORTS (Vic)/ytd reports/AIFGLBCD - Credit Report - 20-12-21.xlsx"
+;        folders-map {:ytd "ytd reports/" :mtd "mtd reports/" :Ddy "daily reports/" :wtd "weekly reports/"}
+;        months-map {:Jan "01" :Feb "02" :Mar "03" :Apr "04" :May "05" :Jun "06" :Jul "07" :Aug "08" :Sep "09" :Oct "10" :Nov "11" :Dec "12"}
+;        attribution-date @(rf/subscribe [:attribution-date])
+;        date-file-format (str (subs attribution-date 0 2) "-" (months-map (keyword (subs attribution-date 2 5))) "-" (subs attribution-date 7 9))
+;        path-file (str root (folders-map (keyword period)) port " - Credit Report - " date-file-format ".xlsx")
+;        ;link [:a {:href path-file :download "true"}]
+;        ]
+;    [hyperlink-href :href path :label "Download source XLS"]
+;    )
+;  )
 
 (defn single-portfolio-attribution-controller []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
@@ -151,12 +156,12 @@
                                                                                                    [[gap :size "50px"]
                                                                                                     [title :label "Download:" :level :level3]
                                                                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-attribution-display-view @portfolio download-columns is-tree)]
-                                                                                                    [title :label "Download source file:" :level :level3]
-                                                                                                    [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(download-attribution-file @download-period @download-portfolio) ;@(rf/subscribe [:change-single-attribution-portfolio])
-                                                                                                     ]
+                                                                                                    ;[title :label "Download source file:" :level :level3]
+                                                                                                    ;[download-attribution-file @download-period @download-portfolio]
+                                                                                                    ;[md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(download-attribution-file @download-period @download-portfolio) ;@(rf/subscribe [:change-single-attribution-portfolio])
+                                                                                                    ; ]
                                                                                                     ]))]]]]]
                                                                                                      [single-portfolio-attribution-display]]]]))
-
 
 ;(defn csv-link-multiple-portfolio []
 ;  (tools/download-object-as-csv
