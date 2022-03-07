@@ -304,8 +304,8 @@
 (defn invrtg-to-string [this] (aget this "row" "Rating"))
 
 (def attribution-table-columns
-  (let [performance-attributes {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.2f%" 1. %) :getProps red-negatives :filterable false}
-        performance-attributes-bps {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.0f bps" 100. %) :getProps red-negatives :filterable false}]
+  (let [performance-attributes {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.2f%" 1. %) :getProps red-negatives :filterable true}
+        performance-attributes-bps {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.0f bps" 100. %) :getProps red-negatives :filterable true}]
     {:region          {:Header "Region" :accessor "Region" :width 140}
      :country         {:Header "Country" :accessor "Country" :width 140}
      :issuer          {:Header "Issuer" :accessor "Issuer" :width 140}

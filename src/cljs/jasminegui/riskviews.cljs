@@ -368,8 +368,8 @@
         risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
-        download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
-    (println #(get-in tables/tree-table-risk-table [% :accessor]))
+        download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
+    (println download-columns)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
                              {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)}
@@ -698,14 +698,17 @@
   (when (empty? @(rf/subscribe [:talanx-checks])) (rf/dispatch [:get-talanx-checks]))
   (let [portfolio-checks-data-raw @(rf/subscribe [:portfolio-checks])
         portfolio-checks-data (for [e portfolio-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-status-warning)) (get {false 0 true 1} (e :check-status-breach))])))
+        portfolio-checks-data-nav (filter #(and (not= (:check-name %) "MDUR Delta") (not= (:check-name %) "MDUR") (not= (:check-name %) "MDUR vs BM %")) portfolio-checks-data)
+        portfolio-checks-data-dur (filter #(or (= (:check-name %) "MDUR Delta") (= (:check-name %) "MDUR") (= (:check-name %) "MDUR vs BM %")) portfolio-checks-data)
         talanx-checks-data-raw @(rf/subscribe [:talanx-checks])
         talanx-checks-data (for [e talanx-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-warning)) (get {false 0 true 1} (e :check-breach))])))
         talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)]
     ;(println talanx-checks-data-clean)
-    [h-box :padding "80px 0px" :class "rightelement" :gap "10px" :children
-       [(gt/element-box "checks" "100%" (str "Portfolio exposure checks " ((first portfolio-checks-data) :last-updated)) portfolio-checks-data
+    [h-box :padding "80px 10px" :class "rightelement" :gap "20px" :children
+     [[v-box :class "element" :gap "20px"  :children
+       [(gt/element-box "checks" "100%" (str "Portfolio NAV exposure checks " ((first portfolio-checks-data-nav) :last-updated)) portfolio-checks-data-nav
                      [[:> ReactTable
-                       {:data           portfolio-checks-data
+                       {:data           portfolio-checks-data-nav
                         :columns        [{:Header "Portfolio" :accessor :portfolio :width 90  :style {:textAlign "left"}}
                                          {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
                                          {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
@@ -713,8 +716,21 @@
                                          {:Header "Warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                          {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                          {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
-                        :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data) :showPageSizeOptions false :className "-striped -highlight"}]]
+                        :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-nav) :showPageSizeOptions false :className "-striped -highlight"}]]
                      )
+        (gt/element-box "checks" "100%" (str "Portfolio duration exposure checks " ((first portfolio-checks-data-dur) :last-updated)) portfolio-checks-data-dur
+                        [[:> ReactTable
+                          {:data           portfolio-checks-data-dur
+                           :columns        [{:Header "Portfolio" :accessor :portfolio :width 90  :style {:textAlign "left"}}
+                                            {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
+                                            {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                            {:Header "Breach" :accessor :check-threshold-breach :width 100  :style {:textAlign "right"}}
+                                            {:Header "Warning" :accessor :check-threshold-warning :width 100  :style {:textAlign "right"}}
+                                            {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}
+                                            {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-dur) :showPageSizeOptions false :className "-striped -highlight"}]]
+                        )]]
+
      (gt/element-box "talanx-checks" "100%" (str "Talanx issuer concentration checks " ((first portfolio-checks-data) :last-updated)) talanx-checks-data-clean
                      [[:> ReactTable
                        {:data           talanx-checks-data-clean
@@ -728,7 +744,8 @@
                                          {:Header "Max sov %" :accessor :max-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                          {:Header "Max sov name" :accessor :max-sov-name :width 100 :style {:textAlign "left"}}]
                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean) :showPageSizeOptions false :className "-striped -highlight"}]]
-                     )]]))
+                     )]
+        ]))
 
 
 (defn large-exposures

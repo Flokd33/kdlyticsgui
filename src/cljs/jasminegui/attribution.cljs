@@ -40,7 +40,7 @@
     [tables/tree-table-risk-table
      :single-portfolio-attribution/clean-table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-      {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
+      {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect]) }
       {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
       {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}
       {:Header "Additional information" :columns (mapv tables/attribution-table-columns (concat additional-des-cols [:code :rating]))}]
@@ -67,13 +67,13 @@
                          :style {:textAlign "right"}
                          :aggregate tables/sum-rows
                          :Cell (get-in tables/attribution-table-columns [display-key-one :Cell])
-                         :filterable false}))]
+                         :filterable true}))]
 
     ;(println grouping-columns)
     [tables/tree-table-risk-table
      :multiple-portfolio-attribution/clean-table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-      {:Header (str "Portfolio " (name display-key-one)) :columns cols}
+      {:Header (str "Portfolio " (name display-key-one)) :columns cols }
       {:Header "Description" :columns (mapv tables/attribution-table-columns [:code :rating])}]
      is-tree
      (mapv :accessor grouping-columns)
@@ -101,6 +101,20 @@
 ;(defn csv-link [data filename]
 ;  (tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv")))
 
+(def download-period (atom "ytd"))
+(def download-portfolio (atom "OGEMCORD"))
+
+(defn download-attribution-file [period port]
+  (let [root "//iamctnfs1.investecam.corp/shared/ATTRIBUTION/FIA/SFI/CREDIT REPORTS (Vic)/"
+        folders-map {:ytd "ytd reports/" :mtd "mtd reports/" :Ddy "daily reports/" :wtd "weekly reports/"}
+        months-map {:Jan "01" :Feb "02" :Mar "03" :Apr "04" :May "05" :Jun "06" :Jul "07" :Aug "08" :Sep "09" :Oct "10" :Nov "11" :Dec "12"}
+        attribution-date @(rf/subscribe [:attribution-date])
+        date-file-format (str (subs attribution-date 0 2) "-" (months-map (keyword (subs attribution-date 2 5))) "-" (subs attribution-date 7 9))
+        path-file (str root (folders-map (keyword period)) port " - Credit Reports - " date-file-format ".xlsx")]
+    (println path-file)
+    )
+  )
+
 (defn single-portfolio-attribution-controller []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         display-style (rf/subscribe [:single-portfolio-attribution/display-style])
@@ -108,6 +122,7 @@
         portfolio (rf/subscribe [:single-portfolio-attribution/portfolio])
         period (rf/subscribe [:single-portfolio-attribution/period])
         download-columns ["Security" "Code" "Issuer" "Sector" "Region" "Country" "Duration-Bucket" "Total-Effect" "Fund-Contribution" "Index-Contribution" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"]
+        ;path-download (download-attribution-file @download-period @download-portfolio )
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
@@ -117,19 +132,28 @@
                              [v-box :gap "15px"
                               :children [[h-box :gap "10px"
                                           :children [[title :label "Display type:" :level :level3] [gap :size "1"]
-                                                     [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:single-portfolio-attribution/display-style %])]]]
+                                                     [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices
+                                                      :on-change #(rf/dispatch [:single-portfolio-attribution/display-style %])
+                                                      ]]]
                                          [h-box :gap "10px"
                                           :children [[title :label "Period:" :level :level3] [gap :size "1"]
-                                                     [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-single-attribution-period %])]]]]]
+                                                     [single-dropdown :width dropdown-width :model period :choices (period-choices)
+                                                      :on-change #(do
+                                                                    (rf/dispatch [:change-single-attribution-period %])
+                                                                    (reset! download-period %)
+                                                                      )]]]]]
                              [v-box :gap "10px" :children [[h-box :gap "10px" :children
                                                             (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:change-single-attribution-portfolio %])]]
+                                                                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:change-single-attribution-portfolio %]) (reset! download-portfolio %))]]
                                                                              (filtering-row :single-portfolio-attribution/filter)))]
                                                            [h-box :gap "20px" :children (into [] (concat
                                                                                                    (shortcut-row :single-portfolio-attribution/shortcut)
                                                                                                    [[gap :size "50px"]
                                                                                                     [title :label "Download:" :level :level3]
                                                                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-attribution-display-view @portfolio download-columns is-tree)]
+                                                                                                    [title :label "Download source file:" :level :level3]
+                                                                                                    [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(download-attribution-file @download-period @download-portfolio) ;@(rf/subscribe [:change-single-attribution-portfolio])
+                                                                                                     ]
                                                                                                     ]))]]]]]
                                                                                                      [single-portfolio-attribution-display]]]]))
 

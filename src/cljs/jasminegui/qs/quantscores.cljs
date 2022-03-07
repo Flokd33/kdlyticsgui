@@ -39,6 +39,7 @@
 (def bond-historical-charts-2 (r/atom nil))
 
 (def choice-historical-graph (r/atom "absolute"))
+(def choice-historical-curves-graph (r/atom "absolute-curves"))
 (def nb-bond (r/atom 1))
 (def nb-curve (r/atom 1))
 (def show-historical-price (r/atom true))
@@ -767,7 +768,10 @@
                  :children [[title :level :level1 :label "Curves"]
                             [h-box :gap "75px" :align :start
                              :children [[v-box :gap "10px" :children
-                                         [[h-box :gap "5px" :align :center :children [[label :width "75px" :label "Start"]
+                                         [[single-dropdown :width "125px" :model choice-historical-curves-graph
+                                           :choices [{:id "absolute-curves" :label "Absolute"}{:id "relative1-curves" :label "Relative (a-b)"}{:id "relative2-curves" :label "Relative (b-a)"}]
+                                           :on-change #(reset! choice-historical-curves-graph %)]
+                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Start"]
                                                                                        [datepicker-dropdown :model start-date-curve :minimum (t/int-to-gdate 20150101) :maximum (today)
                                                                                         :format "dd/MM/yyyy" :show-today? true
                                                                                         :on-change #(do (reset! start-date-curve %)
@@ -829,7 +833,7 @@
                                         (if @(rf/subscribe[:quant-model/curves-throbber])
                                           [v-box :class "element" :width "1300px" :align :center :children [box [throbber :size :large]]]
                                           [v-box :class "element" :gap "10px" :width "1300px"
-                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve @start-date-curve)]]])
+                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve @start-date-curve @choice-historical-curves-graph)]]])
                                         ]]]]
                 ]]))
 
