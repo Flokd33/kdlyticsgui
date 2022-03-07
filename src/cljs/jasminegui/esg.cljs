@@ -3,7 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as reagent]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink typeahead md-circle-icon-button selection-list
+                         single-dropdown hyperlink typeahead md-circle-icon-button selection-list throbber
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -21,6 +21,7 @@
     [jasminegui.riskviews :as riskviews]
     [jasminegui.tools :as t]
     [jasminegui.greenbondcalculator :as greenbondcalculator]
+    [cljs-time.core :refer [today]]
     ))
 
 (def standard-box-width "1600px")
@@ -284,6 +285,81 @@
               ]]
     )
 
+(rf/reg-event-fx
+  :esg/get-engagements
+  (fn [{:keys [db]} [_ yyyy-mm-dd-start-date yyyy-mm-dd-end-date]]
+    {:db (assoc db :esg/engagement-throbber true :esg/engagements [])
+     ;:fx [[:dispatch [:get-qdb-securities (qdb-sectors sector)]]]
+     :http-post-dispatch
+     {:url          "https://lddevnexdc1:6400/v1/notes"
+      :json-params   {:filters
+                     {:note_type ["ESG_ENGAGEMENT_NOTE"]
+                      :dates     {:start_date yyyy-mm-dd-start-date, :end_date yyyy-mm-dd-end-date}
+                      :submitter ["Tammy Lloyd"
+                                  "Stacy Xie"
+                                  "Kevan Salisbury"
+                                  "Rahul Bhat"
+                                  "Alan Siow"
+                                  "Alexandre Almosni"
+                                  "Antonio Luiz Gomes"
+                                  "Victoria Harling"
+                                  "Adrian Chan"
+                                  "Matt Christ"
+                                  "Florian Cadet"
+                                  "Tom Peberdy"]
+                      }}
+      :dispatch-key [:esg/receive-engagements]}}))
+
+(rf/reg-event-db
+  :esg/receive-engagements
+  (fn [db [_ data]]
+    (assoc db :esg/engagement-throbber false
+              :esg/engagements data)))
+
+
+(defn esg-engagements []
+  (let [start-date (r/atom (tools/int-to-gdate 20210701)) end-date (r/atom (today))]
+    (fn []
+      [v-box :gap "20px" :class "element" :width standard-box-width
+       :children [
+                  [h-box :align :center :children [[title :label "ESG engagements" :level :level1]
+                                                   [gap :size "1"]
+                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (rf/subscribe [:esg/summary-report]) "esgscores")]]]
+                  [h-box :align :center :gap "10px" :children [[title :label "Start:" :level :level3]
+                                                               [datepicker-dropdown
+                                                                :model start-date
+                                                                :minimum (tools/int-to-gdate 20180101)
+                                                                :maximum (today)
+                                                                :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:esg/engagements []]) (reset! start-date %))]
+                                                               [gap :size "20px"]
+                                                               [title :label "End:" :level :level3]
+                                                               [datepicker-dropdown
+                                                                :model end-date
+                                                                :minimum (tools/int-to-gdate 20180101)
+                                                                :maximum (today)
+                                                                :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:esg/engagements []]) (reset! end-date %))]
+                                                               [gap :size "20px"]
+                                                               [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements "2021-07-01" "2022-03-01"])]]]
+                  (if @(rf/subscribe [:esg/engagement-throbber])
+                    [throbber :size :large]
+                    (do (println (:results @(rf/subscribe [:esg/engagements])))
+                        [:> ReactTable
+                         {:data           (:results @(rf/subscribe [:esg/engagements]))
+                          :columns        [{:Header "Date" :accessor "date" :width 100}
+                                           {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (aget v "original" "entities" 0 "name"))}
+                                           {:Header "Title" :accessor "title" :width 600}
+                                           {:Header "Link" :accessor "body" :width 400 :Cell #(if-let [v %] (aget v "original" "body" "link"))}
+                                           ]
+                          :showPagination true :sortable true :filterable true :pageSize 20
+                          :className      "-striped -highlight"
+                          }])
+
+                    )
+
+
+                  ]]))
+
+  )
 
 
 (defn active-home []
@@ -296,6 +372,7 @@
               :esg-calculator [greenbondcalculator/esg-calculator-display]
               :holdings [holdings]
               :esg-scores [esg-scores]
+              :esg-engagements [esg-engagements]
               [:div.output "nothing to display"])]))
 
 (defn esg-view []

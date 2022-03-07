@@ -198,6 +198,8 @@
                  :esg/selected-pillars                    (set nil)
                  :esg/msci-scores                         []
                  :esg/summary-report                      []
+                 :esg/engagements                         []
+                 :esg/engagement-throbber                 false
 
                  :quant-model/model-output                []
                  :quant-model/model-js-output             #js []
@@ -383,6 +385,7 @@
            :esg/selected-pillars
            :esg/msci-scores
            :esg/summary-report
+           :esg/engagements
 
            :trade-history/active-home
 
