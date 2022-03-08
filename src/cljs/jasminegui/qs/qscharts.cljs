@@ -156,12 +156,13 @@
 
 (def select-values (comp vals select-keys))
 
-(defn graph [field title key data] {:mark     "line" :width 1000 :height 400
-                               :selection {:grid {:type "interval" :bind "scales"}}
-                               :encoding {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                                          :y     {:field field :type "quantitative" :axis {:title title}
-                                                  :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}}
-                                          :color {:field "Bond" :type "nominal"}}})
+(defn graph [field title key data]
+  {:mark      "line" :width 1000 :height 400
+   :selection {:grid {:type "interval" :bind "scales"}}
+   :encoding  {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+               :y     {:field field :type "quantitative" :axis {:title title}
+                       :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}}
+               :color {:field "Bond" :type "nominal" :scale {:range ["#134848" "#FDAA94"]}}}})
 
 (defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
   (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
@@ -351,7 +352,7 @@
                                           :y {:field "tenor-choice" :type "quantitative" :axis {:title "Spread"}
                                               :scale {:domain [(dec (apply min (map :tenor-choice data-to-plot-2))) (inc (apply max (map :tenor-choice data-to-plot-2)))]}
                                               }
-                                          :color {:field "Curve" :type "nominal" }}}
+                                          :color {:field "Curve" :type "nominal"  :scale {:range ["#134848" "#FDAA94"]}}}}
                             ]}
     ))
 

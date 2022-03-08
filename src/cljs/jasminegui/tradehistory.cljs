@@ -582,8 +582,9 @@
   )
 
 
-(defn active-home []
+(defn active-home
   "Create the body with trade-history"
+  []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
   (case @(rf/subscribe [:trade-history/active-home])
     :single-portfolio [trade-history]
@@ -591,6 +592,7 @@
     :recent-trades [trade-history-recent]
     [:div.output "nothing to display"]))
 
-(defn trade-history-view []
+(defn trade-history-view
   "Create the full view with sidebar and body"
+  []
   [h-box :gap "10px" :padding "0px" :children [[nav-trade-history-bar] [active-home]]])

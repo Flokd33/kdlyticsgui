@@ -698,9 +698,19 @@
                  :children [[title :level :level1 :label "Bonds"]
                             [h-box :gap "50px" :align :start
                              :children [[v-box :gap "10px" :children
-                                         [[single-dropdown :width "125px" :model choice-historical-graph
-                                           :choices [{:id "absolute" :label "Absolute"}{:id "relative1" :label "Relative (a-b)"}{:id "relative2" :label "Relative (b-a)"}]
-                                           :on-change #(reset! choice-historical-graph %)]
+                                         [
+                                          [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Style"]
+                                                                                      [single-dropdown :width "125px" :model choice-historical-graph
+                                                                                       :choices [{:id "absolute" :label "Absolute"}{:id "relative1" :label "Relative (a-b)"}{:id "relative2" :label "Relative (b-a)"}]
+                                                                                       :on-change #(reset! choice-historical-graph %)]]]
+                                          [h-box :gap "5px" :align :center :children [[label :label "Start" :width "75px" ]
+                                                                                       [datepicker-dropdown :model start-date :minimum (t/int-to-gdate 20150101) :maximum (today)
+                                                                                        :format "dd/MM/yyyy" :show-today? true
+                                                                                        :on-change #(do (rf/dispatch [:quant-model/history-start-date %])
+                                                                                                        (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
+                                                                                                        (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])]))]]]
+
+
                                           [checkbox :model show-historical-price  :label "Show price?"        :on-change #(reset! show-historical-price %)]
                                           [checkbox :model show-historical-ytw    :label "Show YTW?"          :on-change #(reset! show-historical-ytw %)]
                                           [checkbox :model show-historical-ztw       :label "Show ZTW?"   :on-change #(reset! show-historical-ztw %)]
@@ -709,12 +719,7 @@
                                           [checkbox :model show-cheapness-2d     :label "Show cheapness (2D)?"   :on-change #(reset! show-cheapness-2d %)]
                                           [checkbox :model show-cheapness-4d        :label "Show cheapness (4D)?"   :on-change #(reset! show-cheapness-4d %)]
                                           [gap :size "20px"]
-                                          [h-box :gap "10px" :align :center :children [[label :label "Start:" :width "40px" ]
-                                          [datepicker-dropdown :model start-date :minimum (t/int-to-gdate 20150101) :maximum (today)
-                                           :format "dd/MM/yyyy" :show-today? true
-                                           :on-change #(do (rf/dispatch [:quant-model/history-start-date %])
-                                                           (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
-                                                           (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])]))]]]
+
                                           [gap :size "20px"]
                                           [label :width "200px" :label (str "Choice 1: " @bond-historical-charts " (" @isin-historical-charts ")")]
                                           [typeahead
@@ -768,9 +773,12 @@
                  :children [[title :level :level1 :label "Curves"]
                             [h-box :gap "75px" :align :start
                              :children [[v-box :gap "10px" :children
-                                         [[single-dropdown :width "125px" :model choice-historical-curves-graph
-                                           :choices [{:id "absolute-curves" :label "Absolute"}{:id "relative1-curves" :label "Relative (a-b)"}{:id "relative2-curves" :label "Relative (b-a)"}]
-                                           :on-change #(reset! choice-historical-curves-graph %)]
+                                         [[h-box :gap "5px" :align :center :children [[label :width "75px" :label "Style"]
+                                                                                      [single-dropdown :width "125px" :model choice-historical-curves-graph
+                                                                                       :choices [{:id "absolute-curves" :label "Absolute"}{:id "relative1-curves" :label "Relative (a-b)"}{:id "relative2-curves" :label "Relative (b-a)"}]
+                                                                                       :on-change #(reset! choice-historical-curves-graph %)]]]
+
+
                                           [h-box :gap "5px" :align :center :children [[label :width "75px" :label "Start"]
                                                                                        [datepicker-dropdown :model start-date-curve :minimum (t/int-to-gdate 20150101) :maximum (today)
                                                                                         :format "dd/MM/yyyy" :show-today? true

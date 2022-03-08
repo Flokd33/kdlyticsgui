@@ -6,7 +6,6 @@
     [cljs-http.client :as http]
     [cljs.core.async :refer [<!]]
     [jasminegui.tables :as tables]
-    [jasminegui.tools :as tools]
     [cljs-time.core :refer [today]]
     ;[re-pressed.core :as rp]
     [jasminegui.tools :as t])
@@ -51,7 +50,7 @@
 
                  ;time machine
                  :time-machine/enabled                               false
-                 :time-machine/date                                  (tools/int-to-gdate 20191230)
+                 :time-machine/date                                  (t/int-to-gdate 20191230)
                  :time-machine/model                                 "None"
                  :time-machine/has-rebuilt                           nil
 
@@ -158,19 +157,19 @@
 
                  :portfolio-trade-history/data                       []
                  :portfolio-trade-history/portfolio                  "OGEMCORD"
-                 :portfolio-trade-history/start-date                 (tools/int-to-gdate 20220101)
-                 :portfolio-trade-history/end-date                   (tools/int-to-gdate (today))
+                 :portfolio-trade-history/start-date                 (t/int-to-gdate 20220101)
+                 :portfolio-trade-history/end-date                   (t/int-to-gdate (today))
                  :portfolio-trade-history/performance                "Yes"
                  :portfolio-trade-history/pivot                      "No"
 
                  :multiple-portfolio-trade-history/data               []
-                 :multiple-portfolio-trade-history/start-date         (tools/int-to-gdate 20220101)
-                 :multiple-portfolio-trade-history/end-date           (tools/int-to-gdate (today))
+                 :multiple-portfolio-trade-history/start-date         (t/int-to-gdate 20220101)
+                 :multiple-portfolio-trade-history/end-date           (t/int-to-gdate (today))
                  :multiple-portfolio-trade-history/pivot              "No"
 
                  :recent-trade-data/trades                           []
-                 :recent-trade-data/date-from                         (tools/int-to-gdate 20220101)
-                 :recent-trade-data/date-to                           (tools/int-to-gdate (today))
+                 :recent-trade-data/date-from                         (t/int-to-gdate 20220101)
+                 :recent-trade-data/date-to                           (t/int-to-gdate (today))
                  :recent-trade-data/sector                           "All"
                  :recent-trade-data/country                          "All"
 
@@ -225,8 +224,8 @@
                  :quant-model/history-throbber            false
                  :quant-model/history-prediction-throbber false
                  :quant-model/curves-throbber  false
-                 :quant-model/history-start-date          (tools/int-to-gdate 20150101)
-                 ;:quant-model/history-end-date            (tools/int-to-gdate (today))
+                 :quant-model/history-start-date          (t/int-to-gdate 20150101)
+                 ;:quant-model/history-end-date            (t/int-to-gdate (today))
 
 
 
@@ -760,7 +759,7 @@
     (let [last-position-timestamp (first (get last-updated :jasmine.positions/positions))]
       (println "last-position-timestamp" last-position-timestamp)
       (if (= last-position-timestamp (db :naked-positions-last-timestamp))
-        (let [res (array-of-lists->records (tools/local-storage-get-item "naked-positions"))
+        (let [res (array-of-lists->records (t/local-storage-get-item "naked-positions"))
               positions (mapv #(merge % (get-in db [:instruments (:id %)])) res)]
           {:db (assoc db :naked-positions res
                          :navigation/show-mounting-modal false
