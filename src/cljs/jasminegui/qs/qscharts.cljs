@@ -200,6 +200,7 @@
                               (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int)
                               (max first-date-isin1-yyyymmdd-int start-date-yyyymmdd-int))
 
+        ;data-pricing-test (for [e  data-pricing-clean-final] (assoc e :date-yyyymmdd (int (.replace (.replace (:date e) "-" "") "-" ""))))
         data-pricing-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-pricing-clean-final)
 
         data-to-plot (if (= nb-bond 2)                      ; for legend when a-b or b-a
@@ -208,8 +209,10 @@
                                      "relative2" (for [e data-pricing-filtered] (assoc e :Bond (str ticker2 " - " ticker1) ))
                                      "absolute" (for [e data-pricing-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
                                    (for [e data-pricing-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
-        ;data-to-plot (for [e data-pricing-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
+        ;data-to-plot (for [e data-pricing-filstered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
         ]
+    ;(println data-pricing-filtered)
+    ;(println data-pricing-test)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
@@ -276,6 +279,7 @@
           (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
         ;data-to-plot (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
         ]
+
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil
@@ -284,8 +288,9 @@
                             (if show-4d? (graph "cheapness4D" "4D cheapness" :cheapness4D data-to-plot))])}
     ))
 
-(defn quant-isin-history-chart-curves [param nb-curve start-date choice-curves]
+(defn quant-isin-history-chart-curves [param nb-curve start-date choice-curves serie-2 isin1 ticker1]
   (let [ nb nb-curve
+        serie2 serie-2
         start (js/parseInt (t/gdate-to-yyyymmdd start-date))
         tenor-curve-1 (param :curve-one/tenor)
         tenor-curve-2 (param :curve-two/tenor)
@@ -293,27 +298,32 @@
         selection-curve-2 (param :curve-two/selection)
         model-curve-1 (if (= (param :curve-one/type) :two-d-curves) "2D" "4D")
         model-curve-2 (if (= (param :curve-two/type) :two-d-curves) "2D" "4D")
+
+        data-pricing @(rf/subscribe [:quant-model/history-result])
+        data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
+
+        first-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
+        last-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (last (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
+
+        data-pricing-1 (map #(clojure.set/rename-keys % {:ztw :tenor-choice}) data-pricing-1) ; rename key to match curve data map
+        data-pricing-2 (for [e data-pricing-1] (assoc e :Curve ticker1))  ; add identification key accordingly to curve map...
+
         data-curve-1-raw @(rf/subscribe [:quant-model/history-result-curves-one])
         data-curve-2-raw @(rf/subscribe [:quant-model/history-result-curves-two])
         first-date-curve1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-curve-1-raw)) :date)) "-" "")"-" ""))
+        last-date-curve1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (last (sort-by :date data-curve-1-raw)) :date)) "-" "")"-" ""))
         first-date-curve2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-curve-2-raw)) :date)) "-" "")"-" ""))
-        data-curve-1-enhanced (for [e data-curve-1-raw] (assoc e
-                                                      :T2Y5Y (- (:T5Y e) (:T2Y e))
-                                                      :T2Y10Y (- (:T10Y e) (:T2Y e))
-                                                      :T2Y30Y (- (:T30Y e) (:T2Y e))
-                                                      :T5Y10Y (- (:T10Y e) (:T5Y e))
-                                                      :T5Y30Y (- (:T30Y e) (:T5Y e))
-                                                      :T10Y30Y (- (:T30Y e) (:T10Y e))))
-        data-curve-2-enhanced (for [e data-curve-2-raw] (assoc e
-                                                      :T2Y5Y (- (:T5Y e) (:T2Y e))
-                                                      :T2Y10Y (- (:T10Y e) (:T2Y e))
-                                                      :T2Y30Y (- (:T30Y e) (:T2Y e))
-                                                      :T5Y10Y (- (:T10Y e) (:T5Y e))
-                                                      :T5Y30Y (- (:T30Y e) (:T5Y e))
-                                                      :T10Y30Y (- (:T30Y e) (:T10Y e))))
+        last-date-curve2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (last (sort-by :date data-curve-2-raw)) :date)) "-" "")"-" ""))
+        data-curve-1-enhanced (for [e data-curve-1-raw] (assoc e :T2Y5Y (- (:T5Y e) (:T2Y e)) :T2Y10Y (- (:T10Y e) (:T2Y e)) :T2Y30Y (- (:T30Y e) (:T2Y e)) :T5Y10Y (- (:T10Y e) (:T5Y e)) :T5Y30Y (- (:T30Y e) (:T5Y e)) :T10Y30Y (- (:T30Y e) (:T10Y e))))
+        data-curve-2-enhanced (for [e data-curve-2-raw] (assoc e :T2Y5Y (- (:T5Y e) (:T2Y e)) :T2Y10Y (- (:T10Y e) (:T2Y e)) :T2Y30Y (- (:T30Y e) (:T2Y e)) :T5Y10Y (- (:T10Y e) (:T5Y e)) :T5Y30Y (- (:T30Y e) (:T5Y e)) :T10Y30Y (- (:T30Y e) (:T10Y e))))
         data-curve-1 (for [e data-curve-1-enhanced] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
         data-curve-2 (for [e data-curve-2-enhanced] (assoc e :Curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
-        data-to-plot (if (= nb 2) (concat data-curve-1 data-curve-2) data-curve-1 )
+
+        data-to-plot (if (= nb 2)
+                       (case serie2
+                        "curve" (concat data-curve-1 data-curve-2)
+                       "bond"  (concat data-curve-1 data-pricing-2))
+                       data-curve-1 ) ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
         by-date (group-by :date data-to-plot)
         step1 (into [] (for [[d g] by-date] (let [h (sort-by :ISIN g)] {:date d :tenor-choice (- (:tenor-choice (first h)) (:tenor-choice (second h)))})))
@@ -327,20 +337,35 @@
                                       data-to-plot
                                       )
         final-start-date (if (= nb 2)
-                           (max first-date-curve1-yyyymmdd-int first-date-curve2-yyyymmdd-int start)
-                           (max first-date-curve1-yyyymmdd-int start))
+                           (case serie2
+                             "curve" (max first-date-curve1-yyyymmdd-int first-date-curve2-yyyymmdd-int start)
+                             "bond" (max first-date-curve1-yyyymmdd-int first-date-isin1-yyyymmdd-int start))
+                             (max first-date-curve1-yyyymmdd-int start))
 
-        data-to-plot-2 (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-curves-clean-final)
+        final-end-date (if (= nb 2)
+                           (case serie2
+                             "curve" (min last-date-curve1-yyyymmdd-int last-date-curve2-yyyymmdd-int)
+                             "bond" (min last-date-curve1-yyyymmdd-int last-date-isin1-yyyymmdd-int))
+                           (min last-date-curve1-yyyymmdd-int))
 
-        data-to-plot-2 (if (= nb 2)
-                                  (case choice-curves
+        data-to-plot-2 (filter #(and (> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) (< (int (.replace (.replace (:date %) "-" "") "-" "")) final-end-date)) data-curves-clean-final)
+
+        data-to-plot-2 (if (= nb 2)                         ; for LEGEND
+                         (case serie2
+                                   "curve" (case choice-curves
                                     "relative1-curves" (for [e data-to-plot-2] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 " - " (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2)  ))
                                     "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2 " - "  (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 )  ))
                                     "absolute-curves" data-to-plot-2)
-                                  data-to-plot-2
+                                   "bond" (case choice-curves
+                                           "relative1-curves" (for [e data-to-plot-2] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 " - " ticker1)))
+                                           "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str ticker1 " - "  (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1)))
+                                           "absolute-curves" data-to-plot-2)
                                   )
+                         data-to-plot-2)
         ]
-    (println data-to-plot-2)
+    ;(println last-date-curve1-yyyymmdd-int)
+    ;(println last-date-isin1-yyyymmdd-int)
+    ;(println final-end-date)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil
