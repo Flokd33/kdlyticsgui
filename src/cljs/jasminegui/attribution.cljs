@@ -109,6 +109,8 @@
 ;  "cannot download file from drive if not HTTP"
 ;  (let [root "file://iamctnfs1.investecam.corp/shared/ATTRIBUTION/FIA/SFI/CREDIT REPORTS (Vic)/"
 ;        ;path2 "file://iamctnfs1.investecam.corp/shared/ATTRIBUTION/FIA/SFI/CREDIT REPORTS (Vic)/ytd reports/AIFGLBCD - Credit Report - 20-12-21.xlsx"
+;        ;path3 "//iamlfilive:8192/static/CCY.csv"
+;
 ;        folders-map {:ytd "ytd reports/" :mtd "mtd reports/" :Ddy "daily reports/" :wtd "weekly reports/"}
 ;        months-map {:Jan "01" :Feb "02" :Mar "03" :Apr "04" :May "05" :Jun "06" :Jul "07" :Aug "08" :Sep "09" :Oct "10" :Nov "11" :Dec "12"}
 ;        attribution-date @(rf/subscribe [:attribution-date])
@@ -116,9 +118,11 @@
 ;        path-file (str root (folders-map (keyword period)) port " - Credit Report - " date-file-format ".xlsx")
 ;        ;link [:a {:href path-file :download "true"}]
 ;        ]
-;    [hyperlink-href :href path :label "Download source XLS"]
+;    [hyperlink-href :href path3 :label "Download source XLS"]
 ;    )
 ;  )
+
+
 
 (defn single-portfolio-attribution-controller []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))

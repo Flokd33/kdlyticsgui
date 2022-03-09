@@ -468,6 +468,7 @@
   :quant-model/history-result
   (fn [db [_ data]] (assoc db :quant-model/history-result (array-of-lists->records data)
                               :quant-model/history-throbber false
+                              :quant-model/curves-throbber false
                               )))
 
 (rf/reg-event-db
