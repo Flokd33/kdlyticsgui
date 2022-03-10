@@ -75,7 +75,7 @@
    {:code :esg-scores           :name "ESG summary report"}
    {:code :refinitiv            :name "Refinitiv"}
    {:code :esg-calculator       :name "Green bond calculator (beta)"}
-   {:code :esg-engagements      :name "ESG engagements (beta)"}
+   {:code :esg-engagements      :name "ESG engagements"}
    ])
 
 (def risk-choice-map

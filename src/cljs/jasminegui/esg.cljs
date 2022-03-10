@@ -3,7 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as reagent]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink typeahead md-circle-icon-button selection-list throbber
+                         single-dropdown hyperlink typeahead md-circle-icon-button selection-list throbber modal-panel
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -306,8 +306,8 @@
                                   "Adrian Chan"
                                   "Matt Christ"
                                   "Florian Cadet"
-                                  "Tom Peberdy"]
-                      }}
+                                  "Tom Peberdy"]}
+                      :body_verbose true}
       :dispatch-key [:esg/receive-engagements]}}))
 
 (rf/reg-event-db
@@ -317,14 +317,26 @@
               :esg/engagements data)))
 
 
+(def show-modal-engagement (r/atom nil))
+
+(defn modal-engagements []
+  (if @show-modal-engagement
+    [modal-panel
+     :wrap-nicely? true
+     :backdrop-on-click #(reset! show-modal-engagement nil)
+     :child [v-box :height "800px" :width "1280px"
+             :children [[h-box :align :center :children [[title :label "Full note" :level :level1] [gap :size "1"]  [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(reset! show-modal-engagement nil)]]]
+                        [scroller :v-scroll :on :height "700px" :child [box :child [:div {:dangerouslySetInnerHTML {:__html @show-modal-engagement}}]]]]]]))                                    ;
+
+
 (defn esg-engagements []
   (let [start-date (r/atom (tools/int-to-gdate 20210701)) end-date (r/atom (today))]
     (fn []
       [v-box :gap "20px" :class "element" :width standard-box-width
        :children [
                   [h-box :align :center :children [[title :label "ESG engagements" :level :level1]
-                                                   [gap :size "1"]
-                                                   [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (rf/subscribe [:esg/summary-report]) "esgscores")]]]
+                                                   ;[gap :size "1"]
+                                                   ]]
                   [h-box :align :center :gap "10px" :children [[title :label "Start:" :level :level3]
                                                                [datepicker-dropdown
                                                                 :model start-date
@@ -342,15 +354,15 @@
                                                                [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements "2021-07-01" "2022-03-01"])]]]
                   (if @(rf/subscribe [:esg/engagement-throbber])
                     [throbber :size :large]
-                    (do (println (:results @(rf/subscribe [:esg/engagements])))
+                    (let [data (if-let [data (:results @(rf/subscribe [:esg/engagements]))] data [])]                                     ;(println (:results @(rf/subscribe [:esg/engagements])))
                         [:> ReactTable
-                         {:data           (:results @(rf/subscribe [:esg/engagements]))
+                         {:data           data
                           :columns        [{:Header "Date" :accessor "date" :width 100}
                                            {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (aget v "original" "entities" 0 "name"))}
-                                           {:Header "Title" :accessor "title" :width 600}
-                                           {:Header "Link" :accessor "body" :width 400 :Cell #(if-let [v %] (aget v "original" "body" "link"))}
+                                           {:Header "Title" :accessor "title" :width 800}
+                                           {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (reset! show-modal-engagement (aget v "original" "body")))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
                                            ]
-                          :showPagination true :sortable true :filterable true :pageSize 20
+                          :showPagination false :sortable true :filterable false :pageSize (count data)
                           :className      "-striped -highlight"
                           }])
 
@@ -376,5 +388,5 @@
               [:div.output "nothing to display"])]))
 
 (defn esg-view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home] [modal-engagements]]])
 
