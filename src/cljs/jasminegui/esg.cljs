@@ -289,7 +289,6 @@
   :esg/get-engagements
   (fn [{:keys [db]} [_ yyyy-mm-dd-start-date yyyy-mm-dd-end-date]]
     {:db (assoc db :esg/engagement-throbber true :esg/engagements [])
-     ;:fx [[:dispatch [:get-qdb-securities (qdb-sectors sector)]]]
      :http-post-dispatch
      {:url          "https://lddevnexdc1:6400/v1/notes"
       :json-params   {:filters
@@ -333,25 +332,18 @@
   (let [start-date (r/atom (tools/int-to-gdate 20210701)) end-date (r/atom (today))]
     (fn []
       [v-box :gap "20px" :class "element" :width standard-box-width
-       :children [
-                  [h-box :align :center :children [[title :label "ESG engagements" :level :level1]
-                                                   ;[gap :size "1"]
-                                                   ]]
+       :children [[h-box :align :center :children [[title :label "ESG engagements" :level :level1]]]
                   [h-box :align :center :gap "10px" :children [[title :label "Start:" :level :level3]
                                                                [datepicker-dropdown
-                                                                :model start-date
-                                                                :minimum (tools/int-to-gdate 20180101)
-                                                                :maximum (today)
-                                                                :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:esg/engagements []]) (reset! start-date %))]
+                                                                :model start-date :minimum (tools/int-to-gdate 20180101) :maximum (today) :format "dd/MM/yyyy" :show-today? true
+                                                                :on-change #(do (rf/dispatch [:esg/engagements []]) (reset! start-date %))]
                                                                [gap :size "20px"]
                                                                [title :label "End:" :level :level3]
                                                                [datepicker-dropdown
-                                                                :model end-date
-                                                                :minimum (tools/int-to-gdate 20180101)
-                                                                :maximum (today)
-                                                                :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:esg/engagements []]) (reset! end-date %))]
+                                                                :model end-date :minimum (tools/int-to-gdate 20180101) :maximum (today) :format "dd/MM/yyyy" :show-today? true
+                                                                :on-change #(do (rf/dispatch [:esg/engagements []]) (reset! end-date %))]
                                                                [gap :size "20px"]
-                                                               [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements "2021-07-01" "2022-03-01"])]]]
+                                                               [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements (t/gdate-to-yyyy-mm-dd @start-date) (t/gdate-to-yyyy-mm-dd @end-date)])]]]
                   (if @(rf/subscribe [:esg/engagement-throbber])
                     [throbber :size :large]
                     (let [data (if-let [data (:results @(rf/subscribe [:esg/engagements]))] data [])]                                     ;(println (:results @(rf/subscribe [:esg/engagements])))
@@ -363,15 +355,7 @@
                                            {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (reset! show-modal-engagement (aget v "original" "body")))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
                                            ]
                           :showPagination false :sortable true :filterable false :pageSize (count data)
-                          :className      "-striped -highlight"
-                          }])
-
-                    )
-
-
-                  ]]))
-
-  )
+                          :className      "-striped -highlight"}]))]])))
 
 
 (defn active-home []
