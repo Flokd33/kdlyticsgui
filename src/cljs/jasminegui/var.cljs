@@ -202,7 +202,7 @@
       :overview                       [v-box :width standard-box-width
                                        :gap "20px" :padding "80px 20px"
                                        :class "rightelement"  :children [[h-box :align :start :children [[var-controller]]]
-                                                                         [h-box :align :start :children [[var-table-view] ]]
+                                                                         [h-box :align :start :children [[var-table-view]]]
                                                                          [h-box :align :start :children [[backtest-chart]]]
                                                                          [h-box :align :start :children [[histogram-chart]]]
                                                                          [h-box :align :start :children [[regression-chart]]]]]
