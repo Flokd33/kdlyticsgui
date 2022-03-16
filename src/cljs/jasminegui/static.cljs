@@ -17,7 +17,8 @@
    {:code :scorecard        :name "Scorecard"         :dispatch :scorecard        :subs nil :load-events (concat [:get-attribution-date [:get-scorecard-attribution "OGEMCORD"]] quant-events home-events) :mounting-modal true}
    {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores])}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
-   {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}]))
+   {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}
+   {:code :ta2022           :name "TA2022"            :dispatch :ta2022   :subs nil}]))
 
 (def risk-navigation
   [{:code :summary             :name "Overview"}

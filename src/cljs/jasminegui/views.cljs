@@ -21,7 +21,9 @@
     [jasminegui.qs.quantscores :as quantscores]
     [jasminegui.riskviews :as riskviews]
     [goog.string :as gstring]
-    [jasminegui.tradehistory :as th]))
+    [jasminegui.tradehistory :as th]
+    [jasminegui.ta2022.tradeview :as ta2022.tradeview]
+    ))
 
 
 (defn navigation-event
@@ -106,6 +108,7 @@
       :esg              [esg/esg-view]
       :scorecard        [scorecard/view]
       :administration   [administration/administration-view]
+      :ta2022           [ta2022.tradeview/trade-view]
       [:div.output "nothing to display"])))
 
 

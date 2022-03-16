@@ -164,55 +164,52 @@
                        :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}}
                :color {:field "Bond" :type "nominal" :scale {:range ["#134848" "#FDAA94"]}}}})
 
-(defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
-  (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
-        data-pricing @(rf/subscribe [:quant-model/history-result])
-        data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
-        data-pricing-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-pricing) nil)
+(defn update-keyseq-to-opposite
+  [coll keyseq]
+  (map
+    (fn [line] (reduce
+                 (fn [m k] (update m k (fn [x] (* -1 x))))
+                 line
+                 keyseq))
+    coll))
 
-        first-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
-        first-date-isin2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-2)) :date)) "-" "")"-" ""))
+(defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
+  (let [two-bonds? (= nb-bond 2)
+        mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
+        data-pricing @(rf/subscribe [:quant-model/history-result])
+        grp (group-by :ISIN data-pricing)                   ;faster than 2 filters
+        data-pricing-1 (grp isin1)
+        data-pricing-2 (grp isin2)
+        first-date-isin1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-1)))] x "0") "-" ""))
+        first-date-isin2-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-2)))] x "0") "-" ""))
         start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
 
-        data-pricing-all (if (= nb-bond 2) (concat data-pricing-1 data-pricing-2) data-pricing-1)
-        by-date (group-by :date data-pricing-all)
-        step1 (into [] (for [[d g] by-date] (let [h (sort-by :ISIN g)] {:date   d
-                                                                        :price (- (:price (first h)) (:price (second h)))
-                                                                        :ytw (- (:ytw (first h)) (:ytw (second h)))
-                                                                        :ztw (- (:ztw (first h)) (:ztw (second h)))
-                                                                        :duration (- (:duration (first h)) (:duration (second h)))
-                                                                        :rating_score (- (:rating_score (first h)) (:rating_score (second h)))
-                                                                        })))
-        data-pricing-clean (sort-by :date step1)
-        opposite (->> data-pricing-clean
-                      (map #(update % :price (fn [x] (* -1 x))))
-                      (map #(update % :ytw (fn [x] (* -1 x))))
-                      (map #(update % :ztw (fn [x] (* -1 x))))
-                      (map #(update % :duration (fn [x] (* -1 x))))
-                      (map #(update % :rating_score (fn [x] (* -1 x)))))
-        data-pricing-clean-final (if (= nb-bond 2)
-                                      (case choice-historical-graph
-                                        "relative1" data-pricing-clean
-                                        "relative2" opposite
-                                        "absolute" data-pricing-all)
-                                      (filter #(= (:ISIN %) isin1) data-pricing-all))
-        final-start-date (if (= nb-bond 2)
-                              (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int)
-                              (max first-date-isin1-yyyymmdd-int start-date-yyyymmdd-int))
+        by-date (group-by :date data-pricing)           ;(group-by :date data-pricing-all)
+        final-data (cond
+                     (not two-bonds?) data-pricing-1
+                     (= choice-historical-graph "absolute") data-pricing
+                     :else (let [data-pricing-clean (sort-by :date
+                                                             (into [] (for [[d g] by-date]
+                                                                        (let [h (sort-by :ISIN g)]
+                                                                          (reduce #(assoc %1 %2 (- (%2 (first h)) (%2 (second h)))) {:date d} [:price :ytw :ztw :duration :rating_score])))))]
+                             (if (= choice-historical-graph "relative1")
+                               data-pricing-clean
+                               (update-keyseq-to-opposite data-pricing-clean [:price :ytw :ztw :duration :rating_score]))))
+        final-start-date (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int) ;0 by default
 
-        ;data-pricing-test (for [e  data-pricing-clean-final] (assoc e :date-yyyymmdd (int (.replace (.replace (:date e) "-" "") "-" ""))))
-        data-pricing-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-pricing-clean-final)
-
-        data-to-plot (if (= nb-bond 2)                      ; for legend when a-b or b-a
-                                   (case choice-historical-graph
-                                     "relative1" (for [e data-pricing-filtered] (assoc e :Bond (str ticker1 " - " ticker2) ))
-                                     "relative2" (for [e data-pricing-filtered] (assoc e :Bond (str ticker2 " - " ticker1) ))
-                                     "absolute" (for [e data-pricing-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
-                                   (for [e data-pricing-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
-        ;data-to-plot (for [e data-pricing-filstered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
+        data-pricing-filtered (filter #(> (js/parseInt (clojure.string/replace (:date %) "-" "")) final-start-date) final-data)
+        lbl (if two-bonds?                      ; for legend when a-b or b-a
+              (case choice-historical-graph
+                "relative1" (str ticker1 " - " ticker2)
+                "relative2" (str ticker2 " - " ticker1)
+                "absolute" "nthg")
+              (mapping (keyword (get (first data-pricing-filtered) :ISIN "nthg"))))
+        data-to-plot (map (if
+                            (and two-bonds? (= choice-historical-graph "absolute"))
+                            #(assoc % :Bond (mapping (keyword (% :ISIN))))
+                            #(assoc % :Bond lbl))
+                          data-pricing-filtered)
         ]
-    ;(println data-pricing-filtered)
-    ;(println data-pricing-test)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
@@ -255,13 +252,13 @@
                                                                         :cheapness2D (- (:cheapness2D (first h)) (:cheapness2D (second h)))
                                                                         :cheapness4D (- (:cheapness4D (first h)) (:cheapness4D (second h)))})))
         data-prediction-clean (sort-by :date step1)
-        opposite (->> data-prediction-clean
-                      (map #(update % :cheapness2D (fn [x] (* -1 x))))
-                      (map #(update % :cheapness4D (fn [x] (* -1 x)))))
+        ;opposite (->> data-prediction-clean
+        ;              (map #(update % :cheapness2D (fn [x] (* -1 x))))
+        ;              (map #(update % :cheapness4D (fn [x] (* -1 x)))))
         data-prediction-clean-final (if (= nb-bond 2)
                                  (case choice-historical-graph
                                    "relative1" data-prediction-clean
-                                   "relative2" opposite
+                                   "relative2" (update-keyseq-to-opposite data-prediction-clean [:cheapness2D :cheapness4D]) ; opposite
                                    "absolute" cheapness-all)
                                  (filter #(= (:ISIN %) isin1) cheapness-all))
 

@@ -16,48 +16,64 @@
     [jasminegui.static :as static]
     [jasminegui.charting :as charting]
     [jasminegui.guitools :as gt]
+    [jasminegui.qs.qstables :as qstables]
     [jasminegui.tools :as t]
     [oz.core :as oz])
 
   )
 
+(def element-box-width "1280px")
+
 (defn trade-static-and-pricing
   [isin]
+  (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
+                          [[:> ReactTable
+                            {:data           (t/chainfilter {:ISIN "USU1065PAA94"} @(rf/subscribe [:quant-model/model-output]))
+                             :columns (qstables/table-style->qs-table-col "TA2022" nil)
+                             :showPagination false
+                             :pageSize 1
+                             :filterable     false}]])
+
   )
 
 (defn historical-chart
   [isin]
+  (gt/element-box-generic "history-chart" element-box-width "Trade history" nil [])
   )
 
 (defn positions-and-performance-table
   [isin]
-  {:Header "Trade" :columns
-   [{:accessor "portfolio"}
-    {:accessor "nav"}
-    {:accessor "notional"}
-    {:accessor "avg-entry-price"}
-    {:accessor "avg-entry-date"}
-    {:accessor "TR"}]}
-  {:Header "YTD performance" :columns
-   [{:accessor "rawytd"}
-    {:accessor "indexytd"}
-    {:accessor "ighyytd"}
-    {:accessor "cntryytd"}
-    {:accessor "sectorytd"}]}
-  {:Header "LTD performance" :columns
-   [{:accessor "rawltd"}
-    {:accessor "indexltd"}
-    {:accessor "ighyltd"}
-    {:accessor "cntryltd"}
-    {:accessor "sectorltd"}]}
+  (gt/element-box-generic "position-table" element-box-width "Positions and performance" nil [])
+  ;{:Header "Trade" :columns
+  ; [{:accessor "portfolio"}
+  ;  {:accessor "nav"}
+  ;  {:accessor "notional"}
+  ;  {:accessor "avg-entry-price"}
+  ;  {:accessor "avg-entry-date"}
+  ;  {:accessor "TR"}]}
+  ;{:Header "YTD performance" :columns
+  ; [{:accessor "rawytd"}
+  ;  {:accessor "indexytd"}
+  ;  {:accessor "ighyytd"}
+  ;  {:accessor "cntryytd"}
+  ;  {:accessor "sectorytd"}]}
+  ;{:Header "LTD performance" :columns
+  ; [{:accessor "rawltd"}
+  ;  {:accessor "indexltd"}
+  ;  {:accessor "ighyltd"}
+  ;  {:accessor "cntryltd"}
+  ;  {:accessor "sectorltd"}]}
   )
 
-(defn current-target-and-trigger
+(defn current-targets-and-triggers
   [isin]
+  (gt/element-box-generic "current-target" element-box-width "Current targets and triggers" nil [])
   )
 
 (defn attachments
   [isin]
+  (gt/element-box-generic "attachments" element-box-width "Attachments" nil [])
+  ;[h-box :width dw :gap "10px" :children [[box :size "1" :child [label :label "Attachments"]] [box :size "3" :child [v-box :children (let [c (into [] (for [k @(rf/subscribe [:active-trade-attachments])] [hyperlink-href :href (str static/cms-address (:tradeanalyser.trade/ISIN trade) "/" k) :label k :target "_blank"]))] (if (pos? (count c)) c [[p "No attachments"]]))]]]]
   )
 
 (defn trade-rationale-history
@@ -67,11 +83,11 @@
 
 (defn trade-view
   [isin]
-  [v-box :width "1024px" :padding "80px 20px" :class "subbody"
+  [v-box :gap "10px" :padding "80px 20px" :class "subbody"
    :children [[trade-static-and-pricing isin]
               [historical-chart isin]
               [positions-and-performance-table isin]
-              [current-target-and-trigger isin]
+              [current-targets-and-triggers isin]
               [attachments isin]
               [trade-rationale-history isin]
               ]

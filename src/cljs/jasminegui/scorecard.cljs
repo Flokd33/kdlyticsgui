@@ -12,9 +12,8 @@
     ["react-table-v6" :as rt :default ReactTable]
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
-    [jasminegui.tools :as tools]
+    ;[jasminegui.tools :as tools]
     [jasminegui.tables :as tables]
-    [reagent.core :as r]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.tools :as t]
