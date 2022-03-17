@@ -184,12 +184,15 @@
         first-date-isin2-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-2)))] x "0") "-" ""))
         start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
 
-        by-date (group-by :date data-pricing)           ;(group-by :date data-pricing-all)
+        by-date (group-by :date data-pricing)
+        clean-by-date (if two-bonds? (into {} (for [[d v] by-date :when (= (count v) 2)] [d v])) by-date)
+
         final-data (cond
                      (not two-bonds?) data-pricing-1
                      (= choice-historical-graph "absolute") data-pricing
-                     :else (let [data-pricing-clean (sort-by :date
-                                                             (into [] (for [[d g] by-date]
+                     :else (let [                           ;by-date-clean (t/chainfilter {: } by-date)                           ;clean
+                                 data-pricing-clean (sort-by :date
+                                                             (into [] (for [[d g] clean-by-date]
                                                                         (let [h (sort-by :ISIN g)]
                                                                           (reduce #(assoc %1 %2 (- (%2 (first h)) (%2 (second h)))) {:date d} [:price :ytw :ztw :duration :rating_score])))))]
                              (if (= choice-historical-graph "relative1")
@@ -210,6 +213,7 @@
                             #(assoc % :Bond lbl))
                           data-pricing-filtered)
         ]
+    (println by-date)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
