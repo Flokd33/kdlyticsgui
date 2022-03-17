@@ -25,45 +25,68 @@
 (def element-box-width "1280px")
 
 (defn trade-static-and-pricing
-  [isin]
+  [isin qdata]
   (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
-                          [[:> ReactTable
-                            {:data           (t/chainfilter {:ISIN "USU1065PAA94"} @(rf/subscribe [:quant-model/model-output]))
-                             :columns (qstables/table-style->qs-table-col "TA2022" nil)
-                             :showPagination false
-                             :pageSize 1
-                             :filterable     false}]])
+                          [(if qdata [:> ReactTable
+                                      {:data           [qdata]
+                                       :columns        (qstables/table-style->qs-table-col "TA2022" nil)
+                                       :showPagination false
+                                       :pageSize       1
+                                       :filterable     false}]
+                                     [p "loading..."])])
 
   )
+
 
 (defn historical-chart
-  [isin]
-  (gt/element-box-generic "history-chart" element-box-width "Trade history" nil [])
+  [isin qdata]
+  (rf/dispatch [:post-model-history-pricing :pricing [isin]])
+  (gt/element-box-generic "history-chart" element-box-width "Trade history" nil [(if qdata
+                                                                                   [oz/vega-lite (jasminegui.qs.qscharts/quant-isin-history-chart true false true false false isin nil (qdata :Bond) nil 0 "Absolute")]
+                                                                                   [p "loading..."])])
   )
+
+(rf/reg-event-fx
+  :get-ta2022-trade-view-position-and-performance-table
+  (fn [{:keys [db]} [_ isin]]
+    {:db db
+     :http-get-dispatch {:url          (str static/server-address "ta2022-positions?isin=" isin)
+                         :dispatch-key [:ta2022/trade-view-position-and-performance-table]}}))
 
 (defn positions-and-performance-table
   [isin]
-  (gt/element-box-generic "position-table" element-box-width "Positions and performance" nil [])
-  ;{:Header "Trade" :columns
-  ; [{:accessor "portfolio"}
-  ;  {:accessor "nav"}
-  ;  {:accessor "notional"}
-  ;  {:accessor "avg-entry-price"}
-  ;  {:accessor "avg-entry-date"}
-  ;  {:accessor "TR"}]}
-  ;{:Header "YTD performance" :columns
-  ; [{:accessor "rawytd"}
-  ;  {:accessor "indexytd"}
-  ;  {:accessor "ighyytd"}
-  ;  {:accessor "cntryytd"}
-  ;  {:accessor "sectorytd"}]}
-  ;{:Header "LTD performance" :columns
-  ; [{:accessor "rawltd"}
-  ;  {:accessor "indexltd"}
-  ;  {:accessor "ighyltd"}
-  ;  {:accessor "cntryltd"}
-  ;  {:accessor "sectorltd"}]}
+  (when (= @(rf/subscribe [:ta2022/trade-view-position-and-performance-table]) [])
+    (rf/dispatch [:get-ta2022-trade-view-position-and-performance-table isin]))
+  (let [data @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])]
+    (gt/element-box-generic "position-table" element-box-width "Positions and performance" nil
+
+
+                            [
+                             [:> ReactTable
+                              {:data           data
+                               :columns        [{:Header "Portfolio" :accessor :portfolio :width 100  :style {:textAlign "left"}}
+                                                {:Header "NAV" :accessor :nav :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
+                                                {:Header "Nominal" :accessor :position :width 100 :style {:textAlign "right"} :Cell tables/nb-thousand-cell-format}
+                                                {:Header "Entry date" :accessor :avg-entry-date :width 100  :style {:textAlign "right"}}
+                                                {:Header "Entry price" :accessor :avg-entry-price :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                                {:Header "LTD TR" :accessor :tr-ltd :width 100 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                {:Header "YTD TR" :accessor :tr-ytd :width 100  :style {:textAlign "right"} :Cell tables/round1pc}
+
+                                                ]
+                               :filterable false  :showPagination false :pageSize (count data) :showPageSizeOptions false :className "-striped -highlight"}]
+
+                             ])
+    )
+
+
   )
+
+(rf/reg-event-fx
+  :get-ta2022-trade-view-history
+  (fn [{:keys [db]} [_ isin]]
+    {:db db
+     :http-get-dispatch {:url          (str static/server-address "ta2022-history?isin=" isin)
+                         :dispatch-key [:ta2022/trade-history]}}))
 
 (defn current-targets-and-triggers
   [isin]
@@ -78,20 +101,48 @@
 
 (defn trade-rationale-history
   [isin]
+  (when (nil? @(rf/subscribe [:ta2022/trade-history]))
+    (rf/dispatch [:get-ta2022-trade-view-history isin]))
+  (let [[trades alerts] @(rf/subscribe [:ta2022/trade-history])]
+    (gt/element-box-generic "trade-history" element-box-width "Trade history" nil [
+                                                                                   [p (str (keys (first alerts)))]
+                                                                                   [:> ReactTable
+                                                                                    {:data       (reverse alerts)
+                                                                                     :columns    [{:Header "UUID" :accessor :uuid :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (str x) "-")) :show false}
+                                                                                                  {:Header "Start date" :accessor :start-date :width 100 :style {:textAlign "left"}}
+                                                                                                  {:Header "Type" :accessor :alert-type :width 100 :style {:textAlign "left"}}
+                                                                                                  {:Header "Description" :accessor :description :width 400 :style {:textAlign "left"}}
+                                                                                                  {:Header "Query" :accessor :description :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")]
+
+                                                                                                                                                                                                   (str (aget this "original" "bloomberg-request")
+                                                                                                                                                                                                        " "
+                                                                                                                                                                                                        (aget this "original" "comparison")
+                                                                                                                                                                                                        " "
+                                                                                                                                                                                                        (aget this "original" "comparison-value")
+                                                                                                                                                                                                        ) "-"))}
+
+                                                                                                  ]
+                                                                                     :filterable false :showPagination false :pageSize (count alerts) :showPageSizeOptions false :className "-striped -highlight"}]
+
+                                                                                   ]))
+
   )
 
 
 (defn trade-view
-  [isin]
-  [v-box :gap "10px" :padding "80px 20px" :class "subbody"
-   :children [[trade-static-and-pricing isin]
-              [historical-chart isin]
-              [positions-and-performance-table isin]
-              [current-targets-and-triggers isin]
-              [attachments isin]
-              [trade-rationale-history isin]
-              ]
+  []
+  (let [isin @(rf/subscribe [:ta2022/trade-isin])
+        qdata (first (t/chainfilter {:ISIN isin} @(rf/subscribe [:quant-model/model-output])))
+        ]
+    [v-box :gap "10px" :padding "80px 20px" :class "subbody"
+     :children [[trade-static-and-pricing isin qdata]
+                [historical-chart isin qdata]
+                [positions-and-performance-table isin]
+                [current-targets-and-triggers isin]
+                [attachments isin]
+                [trade-rationale-history isin]
+                ]
 
-   ]
+     ])
 
   )

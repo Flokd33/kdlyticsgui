@@ -251,6 +251,12 @@
 
                  :analysts nil
 
+                 :ta2022/trade-view-position-and-performance-table []
+                 :ta2022/trade-isin "USU1065PAA94"
+                 :ta2022/trade-attachments nil
+                 :ta2022/trade-latest-targets-and-triggers nil
+                 :ta2022/trade-history nil
+
                  :dummy nil                                 ;can be useful
                  })
 
@@ -429,6 +435,13 @@
            :talanx-checks
 
            :analysts
+
+           :ta2022/trade-isin
+           :ta2022/trade-attachments
+           :ta2022/trade-view-position-and-performance-table
+           :ta2022/trade-latest-targets-and-triggers
+           :ta2022/trade-history
+
 
            :dummy
 
