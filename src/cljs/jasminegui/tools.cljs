@@ -6,6 +6,10 @@
 (defn gdate-to-yyyymmdd [x] (subs (.toString x) 0 8))
 (defn gdate-to-yyyy-mm-dd [x] (let [a (subs (.toString x) 0 8)] (str (subs a 0 4) "-" (subs a 4 6) "-" (subs a 6 8))))
 
+(defn format-date-from-int [x]
+  (let [sx (str x)]
+    (str (subs sx 6 8) "-" (subs sx 4 6) "-" (subs sx 0 4))))
+
 (defn chainfilter
   "Chain filter (boolean AND). Defaults to equality if predicate is not a function.
   example: (chainfilter {:portfolio #(= % \"OGEMCORD\") :weight pos?} @positions)
