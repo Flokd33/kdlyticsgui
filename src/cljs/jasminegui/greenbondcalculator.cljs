@@ -145,8 +145,8 @@
         answers_clean  (if (= is-reporting true)
                          (into {} (for [[k v] answers :when (= (:question_category v) "reporting")] [k v]))
                          (into {} (for [[k v] answers :when (not= (:question_category v) "reporting")] [k v])))
-        summary (for [k (keys answers_clean)] {:unique_id 1 :question_id (get-in answers_clean [k :question_id]) :analyst_id @analyst-name :date today-date :security_identifier @identifier :analyst_answer (get-in answers_clean [k :analyst_answer]) :analyst_score (get-in answers_clean [k :analyst_score])})]
-    ;(rf/dispatch [:post-greenbondcalculator-upload summary])
+        summary (for [k (keys answers_clean)] {:question_id (get-in answers_clean [k :question_id]) :analyst_code @analyst-name :date today-date :security_identifier @identifier :analyst_answer (get-in answers_clean [k :analyst_answer]) :analyst_score (get-in answers_clean [k :analyst_score])})]
+    (rf/dispatch [:post-greenbondcalculator-upload summary])
     (println summary)
     ))
 
