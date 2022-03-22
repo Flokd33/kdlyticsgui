@@ -1,7 +1,7 @@
 (ns jasminegui.ta2022.tradeview
   (:require
     [re-frame.core :as rf]
-    [reagent.core :as reagent]
+    [reagent.core :as r]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                          single-dropdown hyperlink alert-box md-circle-icon-button
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
@@ -194,6 +194,18 @@
                                                                   [h-box :width dw :gap "10px" :children [[box :size "1" :child [title :level :level3 :label "Alerts"]] [box :size "3" :child (let [latest-alerts (filter #(= (:ta2022.alert/start-date %) (:ta2022.trade/entry-date tl)) alerts)] [alert-table latest-alerts])]]]
                                                                   ]])))))
 
+(defn isin-picker []
+  (let [isin (r/atom nil)]
+    (fn []
+      (gt/element-box-generic "isin-picker" element-box-width "ISIN chooser" nil
+                              [[h-box :gap "10px" :align :center :children [[label :label "Pick an ISIN"]
+                                                                            [input-text :model isin :on-change #(reset! isin %)]
+                                                                            [button :label "Fetch data" :class "btn btn-primary btn-block" :on-click #(do (rf/dispatch [:ta2022/trade-isin @isin])
+                                                                                                                                                          (rf/dispatch [:get-ta2022-trade-view-history @isin])
+                                                                                                                                                          (rf/dispatch [:get-ta2022-trade-view-position-and-performance-table @isin]))]]]]
+
+                              )))
+  )
 
 (defn trade-view
   []
@@ -201,9 +213,13 @@
         qdata (first (t/chainfilter {:ISIN isin} @(rf/subscribe [:quant-model/model-output])))]
     (when (nil? @(rf/subscribe [:ta2022/trade-history]))
       (rf/dispatch [:get-ta2022-trade-view-history isin]))
+    (when (zero? (count @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])))
+      (rf/dispatch [:get-ta2022-trade-view-position-and-performance-table isin]))
+    (println "c " (count @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])))
     (let [[trades alerts] @(rf/subscribe [:ta2022/trade-history])]
       [v-box :gap "10px" :padding "80px 20px" :class "subbody"
-       :children [[trade-static-and-pricing isin qdata]
+       :children [[isin-picker]
+                  [trade-static-and-pricing isin qdata]
                   [historical-chart isin qdata (:ta2022.trade/entry-date (first trades))]
                   [trade-description trades alerts]
                   [attachments isin]
