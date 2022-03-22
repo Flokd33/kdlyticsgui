@@ -54,16 +54,16 @@
 
 
 (def analyst-names-list
-  [{:id "hvic" :label "Vic"}
-   {:id "ltammy" :label "Tammy"}
-   {:id "xstacy" :label "Stacy"}
-   {:id "aalex" :label "Alex"}
-   {:id "brahul" :label "Rahul"}
-   {:id "salan" :label "Alan"}
-   {:id "lantonio" :label "Antonio"}
-   {:id "lchris" :label "Chris"}
-   {:id "cadrian" :label "Adrian"}
-   {:id "skevan" :label  "Kevan"}
+  [{:id "vharling" :label "Vic"}
+   {:id "tlloyd" :label "Tammy"}
+   {:id "sxie" :label "Stacy"}
+   {:id "aalmosni" :label "Alex"}
+   {:id "rbhat" :label "Rahul"}
+   {:id "asiow" :label "Alan"}
+   {:id "aluizgomes" :label "Antonio"}
+   {:id "cliang" :label "Chris"}
+   {:id "achan" :label "Adrian"}
+   {:id "ksalisbury" :label  "Kevan"}
    ])
 
 (def project-sub-categories
@@ -140,16 +140,19 @@
     {:color "Chartreuse" :text "YES"}
     {:color "Red" :text "NO"})))
 
-(defn gb-summary-generator []
+(defn gb-summary-generator [is-reporting]
   (let [answers @esg-calculator-summary
-        summary (for [k (keys answers)] {:question_id (get-in answers [k :question_id]) :analyst_answer (get-in answers [k :analyst_answer]) :analyst_score (get-in answers [k :analyst_score]) :date today-date :analyst_id @analyst-name :security_identifier @identifier})]
-    ;(println summary)
-    (rf/dispatch [:post-greenbondcalculator-upload summary])
+        answers_clean  (if (= is-reporting true)
+                         (into {} (for [[k v] answers :when (= (:question_category v) "reporting")] [k v]))
+                         (into {} (for [[k v] answers :when (not= (:question_category v) "reporting")] [k v])))
+        summary (for [k (keys answers_clean)] {:unique_id 1 :question_id (get-in answers_clean [k :question_id]) :analyst_id @analyst-name :date today-date :security_identifier @identifier :analyst_answer (get-in answers_clean [k :analyst_answer]) :analyst_score (get-in answers_clean [k :analyst_score])})]
+    ;(rf/dispatch [:post-greenbondcalculator-upload summary])
+    (println summary)
     ))
 
 (defn esg-calculator-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
-    (println @esg-calculator-summary)
+    ;(println @esg-calculator-summary)
   [v-box :width "1280px" :gap "5px" :class "element"
    :children [[title :label "Green bond calculator" :level :level1]
               [h-box :gap "10px" :align :center
@@ -255,7 +258,7 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
                           [button :label "Save new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator)
-                                                                                                                 (gb-summary-generator)
+                                                                                                                 (gb-summary-generator false)
                                                                                                                  )]]]
               [gap :size "20px"]
               [line :size  "2px" :color "black"] ;[gap :size "50px"]
@@ -301,7 +304,7 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
                           [button :label "Extract follow-up report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator)
-                                                                                                                      (gb-summary-generator)
+                                                                                                                      (gb-summary-generator true)
                                                                                                                       )]]]
 
               ]]
