@@ -39,10 +39,10 @@
 
 
 (defn historical-chart
-  [isin qdata]
+  [isin qdata int-start-date]
   (rf/dispatch [:post-model-history-pricing :pricing [isin]])
   (gt/element-box-generic "history-chart" element-box-width "Trade history" nil [(if qdata
-                                                                                   [oz/vega-lite (jasminegui.qs.qscharts/quant-isin-history-chart true false true false false isin nil (qdata :Bond) nil 0 "Absolute")]
+                                                                                   [oz/vega-lite (jasminegui.qs.qscharts/quant-isin-history-chart @(rf/subscribe [:quant-model/history-result]) int-start-date true false true false false isin nil (qdata :Bond) nil 0 "Absolute")]
                                                                                    [p "loading..."])])
   )
 
@@ -94,13 +94,16 @@
 
 (defn attachments
   [isin]
-  (gt/element-box-generic "attachments" element-box-width "Attachments" nil [])
+  (gt/element-box-generic "attachments" element-box-width "Attachments" nil [[p "No attachments found."]])
   ;[h-box :width dw :gap "10px" :children [[box :size "1" :child [label :label "Attachments"]] [box :size "3" :child [v-box :children (let [c (into [] (for [k @(rf/subscribe [:active-trade-attachments])] [hyperlink-href :href (str static/cms-address (:tradeanalyser.trade/ISIN trade) "/" k) :label k :target "_blank"]))] (if (pos? (count c)) c [[p "No attachments"]]))]]]]
   )
 
+(defn alert-sort [data]
+  (sort-by #(.indexOf ["relval" "target" "review" "other"] (:alert-scope %)) data))
+
 (defn alert-table [data]
   [:> ReactTable
-   {:data       data
+   {:data       (alert-sort data)
     :columns    [{:Header "UUID" :accessor :uuid :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (str x) "-")) :show false}
                  ;{:Header "Start date" :accessor :start-date :width 100 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (t/format-date-from-int x)))}
                  {:Header "Type" :accessor :alert-type :width 100 :style {:textAlign "left"} :show false}
@@ -114,7 +117,7 @@
                                                                                                                        " "
                                                                                                                        (aget this "original" "comparison-value")
                                                                                                                        ) "-"))
-                  :show false}
+                  :show   false}
 
                  {:Header "Start level" :accessor :start-level :width 100 :Cell tables/round2 :style {:textAlign "right"}}
                  {:Header "Triggered?" :accessor :triggered :width 100 :style {:textAlign "left"} :Cell (fn [this] (if (aget this "value")
@@ -201,7 +204,7 @@
     (let [[trades alerts] @(rf/subscribe [:ta2022/trade-history])]
       [v-box :gap "10px" :padding "80px 20px" :class "subbody"
        :children [[trade-static-and-pricing isin qdata]
-                  [historical-chart isin qdata]
+                  [historical-chart isin qdata (:ta2022.trade/entry-date (first trades))]
                   [trade-description trades alerts]
                   [attachments isin]
                   [positions-and-performance-table isin]

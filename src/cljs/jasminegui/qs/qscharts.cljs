@@ -173,16 +173,16 @@
                  keyseq))
     coll))
 
-(defn quant-isin-history-chart [price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
+(defn quant-isin-history-chart [data-pricing start-date-yyyymmdd-int price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
   (let [two-bonds? (= nb-bond 2)
         mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
-        data-pricing @(rf/subscribe [:quant-model/history-result])
+        ;data-pricing @(rf/subscribe [:quant-model/history-result])
         grp (group-by :ISIN data-pricing)                   ;faster than 2 filters
         data-pricing-1 (grp isin1)
         data-pricing-2 (grp isin2)
         first-date-isin1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-1)))] x "0") "-" ""))
         first-date-isin2-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-2)))] x "0") "-" ""))
-        start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
+        ;start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
 
         by-date (group-by :date data-pricing)
         clean-by-date (if two-bonds? (into {} (for [[d v] by-date :when (= (count v) 2)] [d v])) by-date)
