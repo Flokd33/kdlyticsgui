@@ -203,8 +203,8 @@
         data-pricing-filtered (filter #(> (js/parseInt (clojure.string/replace (:date %) "-" "")) final-start-date) final-data)
         lbl (if two-bonds?                      ; for legend when a-b or b-a
               (case choice-historical-graph
-                "relative1" (str ticker1 " - " ticker2)
-                "relative2" (str ticker2 " - " ticker1)
+                "relative1" (let [r (vals (sort-by key mapping))] (str (first r) " - " (second r)))
+                "relative2" (let [r (vals (sort-by key mapping))] (str (second r) " - " (first r)))
                 "absolute" "nthg")
               (mapping (keyword (get (first data-pricing-filtered) :ISIN "nthg"))))
         data-to-plot (map (if
@@ -213,7 +213,7 @@
                             #(assoc % :Bond lbl))
                           data-pricing-filtered)
         ]
-    (println by-date)
+    ;(println data-to-plot)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
@@ -274,8 +274,8 @@
 
         data-to-plot (if (= nb-bond 2)                      ; for legend when a-b or b-a
           (case choice-historical-graph
-            "relative1" (for [e data-prediction-filtered] (assoc e :Bond (str ticker1 " - " ticker2) ))
-            "relative2" (for [e data-prediction-filtered] (assoc e :Bond (str ticker2 " - " ticker1) ))
+            "relative1" (for [e data-prediction-filtered] (assoc e :Bond (let [r (vals (sort-by key mapping))] (str (first r) " - " (second r))) ))
+            "relative2" (for [e data-prediction-filtered] (assoc e :Bond (let [r (vals (sort-by key mapping))] (str (second r) " - " (first r))) ))
             "absolute" (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
           (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
         ;data-to-plot (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
