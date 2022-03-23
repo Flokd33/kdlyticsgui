@@ -48,9 +48,12 @@
 (rf/reg-event-fx
   :post-greenbondcalculator-upload
   (fn [{:keys [db]} [_ answers]]
-    ({:http-post-dispatch {:url (str static/server-address "greenbondcalculator-upload")
-                            :edn-params answers
-                           }})))
+    (println "hi")
+    {:db db
+     :http-post-dispatch {:url (str static/server-address "greenbondcalculator-upload")
+                          :edn-params answers
+                          :dispatch-key [:dummy]
+                          }}))
 
 
 (def analyst-names-list
@@ -102,7 +105,7 @@
                                    :reporting/project-kpis {:question_id 20 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
                                    :reporting/half-proceeds-green {:question_id 21 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
                                    :reporting/reconciliation {:question_id 22 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
-                                   :analyst-evaluation/text {:question_id 23 :question_category "reporting" :analyst_answer "" :analyst_score 0}
+                                   :analyst-evaluation/text {:question_id 23 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0}
                                    }))
 
 (def gb-scoring {:project-selection/categories {:climate 14 :renewable 14 :green 14 :energy 14 :clean 14 :pollution 14 :eco 14 :environmentally 14 :terrestrial 14 :sustainable 14 :other 7}
@@ -125,7 +128,10 @@
                  :reporting/reconciliation {:Yes 10 :No 0}})
 
 (defn gb-score-calculator []
-  (doseq [a (keys @esg-calculator-summary)] (reset! (r/cursor esg-calculator-summary [a :analyst_score]) (get-in gb-scoring [a (keyword (get-in @esg-calculator-summary [a :analyst_answer]))])))
+  (doseq [a (keys @esg-calculator-summary)] (reset! (r/cursor esg-calculator-summary [a :analyst_score]) (case (get-in gb-scoring [a (keyword (get-in @esg-calculator-summary [a :analyst_answer]))])
+                                                                                                           nil 0
+                                                                                                           (get-in gb-scoring [a (keyword (get-in @esg-calculator-summary [a :analyst_answer]))])
+                                                                                                           )))
   (let [summary @esg-calculator-summary
         new_issue-total-score (reduce + (into [] (for [e (keys summary)] (if (not= (get-in summary [e :question_category]) "reporting") (get-in summary [e :analyst_score]) 0))))
         reporting-total-score (reduce + (into [] (for [e (keys summary)] (if (= (get-in summary [e :question_category]) "reporting") (get-in summary [e :analyst_score]) 0))))]
@@ -148,7 +154,6 @@
         summary (for [k (keys answers_clean)] {:question_id (get-in answers_clean [k :question_id]) :analyst_code @analyst-name :date today-date :security_identifier @identifier :analyst_answer (get-in answers_clean [k :analyst_answer]) :analyst_score (get-in answers_clean [k :analyst_score])})]
     (rf/dispatch [:post-greenbondcalculator-upload summary])
     (println summary)
-
     ))
 
 (defn esg-calculator-display []
@@ -259,7 +264,7 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
                           [button :label "Save new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator)
-                                                                                                                 (gb-summary-generator false)
+                                                                                                                   (gb-summary-generator false)
                                                                                                                  )]]]
               [gap :size "20px"]
               [line :size  "2px" :color "black"] ;[gap :size "50px"]
