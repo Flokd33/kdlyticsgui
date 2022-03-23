@@ -130,14 +130,12 @@
 (defn gb-score-calculator []
   (doseq [a (keys @esg-calculator-summary)] (reset! (r/cursor esg-calculator-summary [a :analyst_score]) (case (get-in gb-scoring [a (keyword (get-in @esg-calculator-summary [a :analyst_answer]))])
                                                                                                            nil 0
-                                                                                                           (get-in gb-scoring [a (keyword (get-in @esg-calculator-summary [a :analyst_answer]))])
-                                                                                                           )))
+                                                                                                           (get-in gb-scoring [a (keyword (get-in @esg-calculator-summary [a :analyst_answer]))]))))
   (let [summary @esg-calculator-summary
         new_issue-total-score (reduce + (into [] (for [e (keys summary)] (if (not= (get-in summary [e :question_category]) "reporting") (get-in summary [e :analyst_score]) 0))))
         reporting-total-score (reduce + (into [] (for [e (keys summary)] (if (= (get-in summary [e :question_category]) "reporting") (get-in summary [e :analyst_score]) 0))))]
     (reset! gb-score-new-issue new_issue-total-score)
-    (reset! gb-score-follow-up reporting-total-score)
-    )
+    (reset! gb-score-follow-up reporting-total-score))
   )
 
 (defn gb-eligible []
@@ -153,7 +151,6 @@
                          (into {} (for [[k v] answers :when (not= (:question_category v) "reporting")] [k v])))
         summary (for [k (keys answers_clean)] {:question_id (get-in answers_clean [k :question_id]) :analyst_code @analyst-name :date today-date :security_identifier @identifier :analyst_answer (get-in answers_clean [k :analyst_answer]) :analyst_score (get-in answers_clean [k :analyst_score])})]
     (rf/dispatch [:post-greenbondcalculator-upload summary])
-    (println summary)
     ))
 
 (defn esg-calculator-display []
@@ -170,7 +167,6 @@
                           [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name
                            :on-change #(reset! analyst-name %)]
                           ]]
-
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model gb-score-new-issue ]]]
               [title :label "Project description" :level :level2]
 
@@ -178,8 +174,7 @@
                :children [[label :width question-width :label "Category:"]
                           [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor esg-calculator-summary [:project-selection/categories :analyst_answer])
                            :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-selection/categories :analyst_answer])%)
-                                           (if (= "other" %) (reset! other-disabled? false)
-                                                             (reset! other-disabled? true))
+                                           (if (= "other" %) (reset! other-disabled? false) (reset! other-disabled? true))
                                            (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Other:"]
@@ -193,69 +188,57 @@
                :children [[label :width question-width :label "Independent verification:"]
                           [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices [{:id "second-party-opinion" :label "The bond is certified by an independent second party opinion"} {:id "green-bond-framework"  :label "The bond is certified by an external green bond framework"} {:id "external-scoring"  :label "There is an external scoring or rating on the sustainability element"} {:id "none"  :label "None of the above"}]
                            :model (r/cursor esg-calculator-summary [:project-evaluation/independent-verification :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/independent-verification :analyst_answer ]) %)
-                                           (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/independent-verification :analyst_answer ]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility" :level :level2]]
                                                              [box :width dropdown-width :child [button :label (:text (gb-eligible)) :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (:color (gb-eligible)) :textAlign "center"}]]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are green projects credible?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/credibility :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/credibility :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/credibility :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is related spending material?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/materiality :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/materiality :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/materiality :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the green bond fit within a disciplined approach to sustainability?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/discipline :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/discipline :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/discipline :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/controversies :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/controversies :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/controversies :analyst_answer]) %) (gb-score-calculator))]]]
               [title :label "Management of proceeds" :level :level2 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Ringfencing:"]
                           [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices [{:id "sub-account" :label "A specific sub account has been created"} {:id "green-account"  :label "A specific green account has been created"} {:id "virtual-green"  :label "A virtual green account has been created"} {:id "none"  :label "None of the above"}]
                            :model (r/cursor esg-calculator-summary [:proceed-management/ringfencing :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:proceed-management/ringfencing :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:proceed-management/ringfencing :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Tracking:"]
                           [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices [{:id "verified" :label "The internal tracking will be verified by an auditor"} {:id "tracked"  :label "The proceeds are ringfenced or otherwise specifically tracked"} {:id "none"  :label "None of the above"}]
                            :model (r/cursor esg-calculator-summary [:proceed-management/tracked :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:proceed-management/tracked :analyst_answer]) %)
-                                           (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:proceed-management/tracked :analyst_answer]) %) (gb-score-calculator))]]]
               [title :label "Country framework" :level :level2 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Country:"]
                           [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices country-names-sorted :filter-box? true :model (r/cursor esg-calculator-summary [:project-evaluation/country-framework-list :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/country-framework-list :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/country-framework-list :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the country have a transition plan with ST targets and LT net zero target?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/national-framework-best-practice :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/national-framework-best-practice :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/national-framework-best-practice :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the company framework better than the national framework?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/better-than-national :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/better-than-national :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/better-than-national :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the project aligned with the country-specific sector pathway?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Reference sources:"]
                           [input-textarea  :width categories-list-width-long :model (r/cursor esg-calculator-summary [:project-evaluation/pathway-source :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/pathway-source :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/pathway-source :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "Analyst summary" :level :level2 ]]
                           [input-textarea :width categories-list-width-long :model (r/cursor esg-calculator-summary [:analyst-evaluation/text :analyst_answer ])
@@ -263,9 +246,7 @@
               [gap :size "10px"]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
-                          [button :label "Save new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator)
-                                                                                                                   (gb-summary-generator false)
-                                                                                                                 )]]]
+                          [button :label "Save new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator) (gb-summary-generator false))]]]
               [gap :size "20px"]
               [line :size  "2px" :color "black"] ;[gap :size "50px"]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]]
@@ -274,44 +255,35 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the project on track?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:reporting/project-on-track :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/project-on-track :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/project-on-track :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the green project expanded?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:reporting/project-expanded :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/project-expanded :analyst_answer]) %)
-                                           (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/project-expanded :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Has the company increased green funding as % of spending?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:reporting/increased-green-funding :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/increased-green-funding :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/increased-green-funding :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the company undertakes to produce an annual report?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:reporting/annual-report :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/annual-report :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/annual-report :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the company reports detailed projects KPIs?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:reporting/project-kpis :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/project-kpis :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/project-kpis :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are more than 50% of the proceeds spent on green projects?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:reporting/half-proceeds-green :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/half-proceeds-green :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/half-proceeds-green :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "On a ongoing basis, does the company reconciled proceeds with uses?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:reporting/reconciliation :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/reconciliation :analyst_answer]) %)
-                                         (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:reporting/reconciliation :analyst_answer]) %) (gb-score-calculator))]]]
               [gap :size "10px"]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
-                          [button :label "Extract follow-up report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator)
-                                                                                                                      (gb-summary-generator true)
-                                                                                                                      )]]]
+                          [button :label "Extract follow-up report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator) (gb-summary-generator true))]]]
 
               ]]
     ))
