@@ -48,11 +48,10 @@
 (rf/reg-event-fx
   :post-greenbondcalculator-upload
   (fn [{:keys [db]} [_ answers]]
-    (println "hi")
     {:db db
      :http-post-dispatch {:url (str static/server-address "greenbondcalculator-upload")
                           :edn-params answers
-                          :dispatch-key [:dummy]
+                          :dispatch-key [:dummy]            ;instead of dummy event that show pop up
                           }}))
 
 
