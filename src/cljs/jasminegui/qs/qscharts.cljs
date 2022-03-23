@@ -289,6 +289,8 @@
                             (if show-4d? (graph "cheapness4D" "4D cheapness" :cheapness4D data-to-plot))])}
     ))
 
+(def curve-type-mapping {:two-d-curves "2D" :four-d-sovereign-curves "4D" :two-d-curves-sovs "2DSov" :two-d-curves-corps "2DCorp"})
+
 (defn quant-isin-history-chart-curves [param nb-curve start-date choice-curves serie-2 isin1 ticker1]
   (let [ nb nb-curve
         serie2 serie-2
@@ -297,8 +299,8 @@
         tenor-curve-2 (param :curve-two/tenor)
         selection-curve-1 (param :curve-one/selection)
         selection-curve-2 (param :curve-two/selection)
-        model-curve-1 (if (= (param :curve-one/type) :two-d-curves) "2D" "4D")
-        model-curve-2 (if (= (param :curve-two/type) :two-d-curves) "2D" "4D")
+        model-curve-1 (curve-type-mapping (param :curve-one/type)) ; (if (= (param :curve-one/type) :two-d-curves) "2D" "4D")
+        model-curve-2 (curve-type-mapping (param :curve-two/type))
 
         data-pricing @(rf/subscribe [:quant-model/history-result])
         data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
@@ -317,8 +319,8 @@
         last-date-curve2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (last (sort-by :date data-curve-2-raw)) :date)) "-" "")"-" ""))
         data-curve-1-enhanced (for [e data-curve-1-raw] (assoc e :T2Y5Y (- (:T5Y e) (:T2Y e)) :T2Y10Y (- (:T10Y e) (:T2Y e)) :T2Y30Y (- (:T30Y e) (:T2Y e)) :T5Y10Y (- (:T10Y e) (:T5Y e)) :T5Y30Y (- (:T30Y e) (:T5Y e)) :T10Y30Y (- (:T30Y e) (:T10Y e))))
         data-curve-2-enhanced (for [e data-curve-2-raw] (assoc e :T2Y5Y (- (:T5Y e) (:T2Y e)) :T2Y10Y (- (:T10Y e) (:T2Y e)) :T2Y30Y (- (:T30Y e) (:T2Y e)) :T5Y10Y (- (:T10Y e) (:T5Y e)) :T5Y30Y (- (:T30Y e) (:T5Y e)) :T10Y30Y (- (:T30Y e) (:T10Y e))))
-        data-curve-1 (for [e data-curve-1-enhanced] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
-        data-curve-2 (for [e data-curve-2-enhanced] (assoc e :Curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
+        data-curve-1 (for [e data-curve-1-enhanced] (assoc e :Curve (str model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
+        data-curve-2 (for [e data-curve-2-enhanced] (assoc e :Curve (str model-curve-2 " " (if (not= model-curve-2 "4D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
 
         data-to-plot (if (= nb 2)
                        (case serie2
@@ -354,12 +356,12 @@
         data-to-plot-2 (if (= nb 2)                         ; for LEGEND
                          (case serie2
                                    "curve" (case choice-curves
-                                    "relative1-curves" (for [e data-to-plot-2] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 " - " (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2)  ))
-                                    "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str (if (= model-curve-2 "2D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2 " - "  (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 )  ))
+                                    "relative1-curves" (for [e data-to-plot-2] (assoc e :Curve (str model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 " - " model-curve-2 " " (if (not= model-curve-2 "4D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2)  ))
+                                    "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str model-curve-2 " " (if (not= model-curve-2 "4D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2 " - "  model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 )  ))
                                     "absolute-curves" data-to-plot-2)
                                    "bond" (case choice-curves
-                                           "relative1-curves" (for [e data-to-plot-2] (assoc e :Curve (str (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 " - " ticker1)))
-                                           "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str ticker1 " - "  (if (= model-curve-1 "2D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1)))
+                                           "relative1-curves" (for [e data-to-plot-2] (assoc e :Curve (str model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 " - " ticker1)))
+                                           "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str ticker1 " - "  model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1)))
                                            "absolute-curves" data-to-plot-2)
                                   )
                          data-to-plot-2)
@@ -367,6 +369,7 @@
     ;(println last-date-curve1-yyyymmdd-int)
     ;(println last-date-isin1-yyyymmdd-int)
     ;(println final-end-date)
+    ;(println selection-curve-1 selection-curve-2)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil
