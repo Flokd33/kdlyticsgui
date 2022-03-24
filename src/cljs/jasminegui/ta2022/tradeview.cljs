@@ -39,11 +39,13 @@
 
 
 (defn historical-chart
-  [isin qdata int-start-date]
+  [isin qdata int-start-date rectangle-dates]
   (rf/dispatch [:post-model-history-pricing :pricing [isin]])
-  (gt/element-box-generic "history-chart" element-box-width "Trade history" nil [(if qdata
-                                                                                   [oz/vega-lite (jasminegui.qs.qscharts/quant-isin-history-chart @(rf/subscribe [:quant-model/history-result]) int-start-date true false true false false isin nil (qdata :Bond) nil 0 "Absolute")]
-                                                                                   [p "loading..."])])
+  (gt/element-box-generic "history-chart" element-box-width "Trade history" nil
+                          [(if qdata
+                             [oz/vega-lite
+                              (jasminegui.qs.qscharts/quant-isin-history-chart @(rf/subscribe [:quant-model/history-result]) int-start-date true false true false false isin nil (qdata :Bond) nil 0 "Absolute" rectangle-dates)]
+                             [p "loading..."])])
   )
 
 (rf/reg-event-fx
@@ -194,7 +196,7 @@
       [v-box :gap "10px" :padding "80px 20px" :class "subbody"
        :children [[isin-picker]
                   [trade-static-and-pricing isin qdata]
-                  [historical-chart isin qdata (:ta2022.trade/entry-date (first trades))]
+                  [historical-chart isin qdata (:ta2022.trade/entry-date (first trades)) (map :ta2022.trade/entry-date trades)]
                   [trade-description trades alerts]
                   [attachments isin]
                   [positions-and-performance-table isin]

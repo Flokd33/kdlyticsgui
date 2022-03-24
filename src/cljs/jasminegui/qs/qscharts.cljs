@@ -156,13 +156,28 @@
 
 (def select-values (comp vals select-keys))
 
-(defn graph [field title key data]
-  {:mark      "line" :width 1000 :height 400
-   :selection {:grid {:type "interval" :bind "scales"}}
-   :encoding  {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-               :y     {:field field :type "quantitative" :axis {:title title}
-                       :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}}
-               :color {:field "Bond" :type "nominal" :scale {:range ["#134848" "#FDAA94"]}}}})
+(defn graph
+  ([field title key data]
+   {:mark      "line" :width 1000 :height 400
+    :selection {:grid {:type "interval" :bind "scales"}}
+    :encoding  {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                :y     {:field field :type "quantitative" :axis {:title title}
+                        :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}}
+                :color {:field "Bond" :type "nominal" :scale {:range ["#134848" "#FDAA94"]}}}})
+  ([field title key data rectangle-dates]
+   (if (nil? rectangle-dates)
+     (graph field title key data)
+     {:layer
+      (let [rectangle-bins (partition 2 1 rectangle-dates)
+            nb-rectangles (count rectangle-bins)]
+        (into [(graph field title key data)]
+              (for [[i [d1 d2]] (map-indexed vector rectangle-bins)]
+                {:mark     "rect"
+                 :data     {:values {:x d1 :x2 d2}
+                            :format {:parse {:x "date:'%Y%m%d'" :x2 "date:'%Y%m%d'"}}}
+                 :encoding {:x       {:field "x" :type "temporal"} :x2 {:field "x2" :type "temporal"}
+                            :opacity {:value (- 0.5 (/ (* i 0.5) nb-rectangles))}}}
+                )))})))
 
 (defn update-keyseq-to-opposite
   [coll keyseq]
@@ -173,7 +188,7 @@
                  keyseq))
     coll))
 
-(defn quant-isin-history-chart [data-pricing start-date-yyyymmdd-int price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
+(defn quant-isin-history-chart [data-pricing start-date-yyyymmdd-int price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph rectangle-dates]
   (let [two-bonds? (= nb-bond 2)
         mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
         ;data-pricing @(rf/subscribe [:quant-model/history-result])
@@ -218,11 +233,11 @@
      :resolve {:scale {:color "independent"}}
      :title   nil
      :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
-     :vconcat (remove nil? [(if price? (graph "price" "Price" :price data-to-plot))
-                            (if ytw?(graph "ytw" "YTW" :ytw data-to-plot))
-                            (if ztw? (graph "ztw" "ZTW" :ztw data-to-plot))
-                            (if duration? (graph "duration" "Duration" :duration data-to-plot))
-                            (if rating? (graph "rating_score" "Rating" :rating_score data-to-plot))])}))
+     :vconcat (remove nil? [(if price? (graph "price" "Price" :price data-to-plot rectangle-dates))
+                            (if ytw? (graph "ytw" "YTW" :ytw data-to-plot rectangle-dates))
+                            (if ztw? (graph "ztw" "ZTW" :ztw data-to-plot rectangle-dates))
+                            (if duration? (graph "duration" "Duration" :duration data-to-plot rectangle-dates))
+                            (if rating? (graph "rating_score" "Rating" :rating_score data-to-plot rectangle-dates))])}))
 
 (defn quant-isin-history-chart-prediction [show-2d? show-4d? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
   (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
