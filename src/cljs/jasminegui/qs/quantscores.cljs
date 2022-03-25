@@ -42,13 +42,14 @@
 (def choice-historical-curves-graph (r/atom "absolute-curves"))
 (def nb-bond (r/atom 1))
 (def nb-curve (r/atom 1))
-(def show-historical-price (r/atom true))
-(def show-historical-ytw (r/atom false))
-(def show-historical-ztw (r/atom false))
-(def show-historical-duration (r/atom false))
-(def show-historical-rating (r/atom false))
-(def show-cheapness-4d (r/atom false))
-(def show-cheapness-2d (r/atom false))
+(def which-charts? (r/atom {:price true :ytw false :ztw false :duration false :rating_score false :cheapness2D false :cheapness4D false}))
+;(def show-historical-price (r/atom true))
+;(def show-historical-ytw (r/atom false))
+;(def show-historical-ztw (r/atom false))
+;(def show-historical-duration (r/atom false))
+;(def show-historical-rating (r/atom false))
+;(def show-cheapness-4d (r/atom false))
+;(def show-cheapness-2d (r/atom false))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def dropdown-width "100px")
 
@@ -684,6 +685,14 @@
                             :edn-params {:query query rating-or-country selection } ;:countryseq countries
                             :dispatch-key [:quant-model/history-result-curves-two]}})))
 
+(defn merge-pricing-with-prediction
+  "Note that if it can't merge the line just drops, which is actually helpful for charting"
+  [pricing predictions]
+  (->> (clojure.set/join pricing predictions)
+       (vec)
+       (map #(assoc % :cheapness2D (- (% :ztw) (% :pred2d))))
+       (map #(assoc % :cheapness4D (- (% :ztw) (% :pred4d))))))
+
 (defn qs-historical-charts []
   (let [source-data @(rf/subscribe [:quant-model/model-output])
         bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data)))))
@@ -698,6 +707,7 @@
                               ;           :four-d-sovereign-curves (do (swap! curve-histories assoc (keyword id "type") :four-d-sovereign-curves) (swap! curve-histories assoc (keyword id "selection") "BR")))
                               )
         start-date (rf/subscribe [:quant-model/history-start-date])
+        all-data (merge-pricing-with-prediction @(rf/subscribe [:quant-model/history-result]) @(rf/subscribe [:quant-model/history-result-prediction]))
         ]
     [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
@@ -712,13 +722,13 @@
                                                                                       [datepicker-dropdown :model start-date :minimum (t/int-to-gdate 20150101) :maximum (today)
                                                                                        :format "dd/MM/yyyy" :show-today? true
                                                                                        :on-change #(do (rf/dispatch [:quant-model/history-start-date %]))]]]
-                                          [checkbox :model show-historical-price    :label "Show price?"          :on-change #(reset! show-historical-price %)]
-                                          [checkbox :model show-historical-ytw      :label "Show YTW?"            :on-change #(reset! show-historical-ytw %)]
-                                          [checkbox :model show-historical-ztw      :label "Show ZTW?"            :on-change #(reset! show-historical-ztw %)]
-                                          [checkbox :model show-historical-duration :label "Duration?"            :on-change #(reset! show-historical-duration %)]
-                                          [checkbox :model show-historical-rating   :label "Show rating?"         :on-change #(reset! show-historical-rating %)]
-                                          [checkbox :model show-cheapness-2d        :label "Show cheapness (2D)?" :on-change #(reset! show-cheapness-2d %)]
-                                          [checkbox :model show-cheapness-4d        :label "Show cheapness (4D)?" :on-change #(reset! show-cheapness-4d %)]
+                                          [checkbox :model (r/cursor which-charts? [:price])        :label "Show price?"          :on-change #(swap! which-charts? assoc :price %)]
+                                          [checkbox :model (r/cursor which-charts? [:ytw])          :label "Show YTW?"            :on-change #(swap! which-charts? assoc :ytw %)]
+                                          [checkbox :model (r/cursor which-charts? [:ztw])          :label "Show ZTW?"            :on-change #(swap! which-charts? assoc :ztw %)]
+                                          [checkbox :model (r/cursor which-charts? [:duration])     :label "Duration?"            :on-change #(swap! which-charts? assoc :duration %)]
+                                          [checkbox :model (r/cursor which-charts? [:rating_score])       :label "Show rating?"         :on-change #(swap! which-charts? assoc :rating_score %)]
+                                          [checkbox :model (r/cursor which-charts? [:cheapness2D])  :label "Show cheapness (2D)?" :on-change #(swap! which-charts? assoc :cheapness2D %)]
+                                          [checkbox :model (r/cursor which-charts? [:cheapness4D])  :label "Show cheapness (4D)?" :on-change #(swap! which-charts? assoc :cheapness4D %)]
                                           [gap :size "20px"]
                                           [label :width "200px" :label (str "Choice 1: " @bond-historical-charts " (" @isin-historical-charts ")")]
                                           [typeahead
@@ -756,20 +766,17 @@
                                              :on-click #(do (reset! isin-historical-charts-2 nil)
                                                             (reset! bond-historical-charts-2 nil)
                                                             (reset! nb-bond 1))]]]]]
-                                        (if @(rf/subscribe[:quant-model/history-throbber])
-                                          [v-box :class "element" :width "1300px" :align :center :children [box [throbber :size :large]]]
-                                          [v-box :class "element" :gap "10px" :width "1300px"
-                                           :children (conj [[oz/vega-lite (qscharts/quant-isin-history-chart @(rf/subscribe [:quant-model/history-result]) (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date]))) @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph nil)]]
-                                                           (if (or show-cheapness-2d show-cheapness-4d)
-                                                             [oz/vega-lite (qscharts/quant-isin-history-chart-prediction @show-cheapness-2d @show-cheapness-4d @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph)]))]
-                                          ;(if (or show-cheapness-2d show-cheapness-4d)
-                                          ;  [v-box :class "element" :gap "10px" :width "1300px"
-                                          ;   :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph)]
-                                          ;              [oz/vega-lite (qscharts/quant-isin-history-chart-prediction @show-cheapness-2d @show-cheapness-4d @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph)]]]
-                                          ;  [v-box :class "element" :gap "10px" :width "1300px"
-                                          ;   :children [[oz/vega-lite (qscharts/quant-isin-history-chart @show-historical-price @show-historical-ytw @show-historical-ztw @show-historical-duration @show-historical-rating @isin-historical-charts @isin-historical-charts-2 @bond-historical-charts @bond-historical-charts-2 @nb-bond @choice-historical-graph)]]])
-
-                                          )]]]]
+                                        [box :class "element" :width "1300px" :child
+                                         (if @(rf/subscribe[:quant-model/history-throbber])
+                                           [throbber :size :large]
+                                           [oz/vega-lite (qscharts/quant-isin-history-chart-map
+                                                           all-data
+                                                           (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
+                                                           @which-charts?
+                                                           [{:ISIN @isin-historical-charts :bond @bond-historical-charts} {:ISIN @isin-historical-charts-2 :bond @bond-historical-charts-2}]
+                                                           @choice-historical-graph
+                                                           {})])]
+                                          ]]]]
                 ;(println @(rf/subscribe [:quant-model/history-result-curves-one]))
                 [v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Curves"]

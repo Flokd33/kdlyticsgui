@@ -17,12 +17,14 @@
     [jasminegui.charting :as charting]
     [jasminegui.guitools :as gt]
     [jasminegui.qs.qstables :as qstables]
+    [jasminegui.qs.qscharts :as qscharts]
     [jasminegui.tools :as t]
     [oz.core :as oz])
 
   )
 
 (def element-box-width "1280px")
+
 
 (defn trade-static-and-pricing
   [isin qdata]
@@ -40,12 +42,28 @@
 
 (defn historical-chart
   [isin qdata int-start-date rectangle-dates]
-  (rf/dispatch [:post-model-history-pricing :pricing [isin]])
-  (gt/element-box-generic "history-chart" element-box-width "Trade history" nil
-                          [(if qdata
-                             [oz/vega-lite
-                              (jasminegui.qs.qscharts/quant-isin-history-chart @(rf/subscribe [:quant-model/history-result]) int-start-date true false true false false isin nil (qdata :Bond) nil 0 "Absolute" rectangle-dates)]
-                             [p "loading..."])])
+  (let [rectangle-bins (partition 2 1 rectangle-dates)
+        nb-rectangles (count rectangle-bins)
+        vega-rectangles (for [[i [d1 d2]] (map-indexed vector rectangle-bins)]
+                          {:mark     "rect"
+                           :data     {:values {:x d1 :x2 d2}
+                                      :format {:parse {:x "date:'%Y%m%d'" :x2 "date:'%Y%m%d'"}}}
+                           :encoding {:x       {:field "x" :type "temporal"} :x2 {:field "x2" :type "temporal"}
+                                      :opacity {:value (- 0.5 (/ (* i 0.5) nb-rectangles))}}})]
+
+    (rf/dispatch [:post-model-history-pricing :pricing [isin]])
+    (gt/element-box-generic "history-chart" element-box-width "Trade history" nil
+                            [(if qdata
+                               [oz/vega-lite
+                                (qscharts/quant-isin-history-chart-map
+                                  @(rf/subscribe [:quant-model/history-result])
+                                  int-start-date
+                                  {:price true :ztw true}
+                                  [{:ISIN isin :bond (qdata :Bond)}]
+                                  "Absolute"
+                                  {:price vega-rectangles :ztw vega-rectangles}
+                                  )]
+                               [p "loading..."])]))
   )
 
 (rf/reg-event-fx
