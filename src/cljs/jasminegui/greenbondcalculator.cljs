@@ -236,8 +236,8 @@
                            :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Reference sources:"]
-                          [input-textarea  :width categories-list-width-long :model (r/cursor esg-calculator-summary [:project-evaluation/pathway-source :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/pathway-source :analyst_answer]) %) (gb-score-calculator))]]]
+                          [input-textarea  :width categories-list-width-long :model (r/cursor esg-calculator-summary [:project-evaluation/reference-sources :analyst_answer])
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/reference-sources :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "Analyst summary" :level :level2 ]]
                           [input-textarea :width categories-list-width-long :model (r/cursor esg-calculator-summary [:analyst-evaluation/text :analyst_answer ])
