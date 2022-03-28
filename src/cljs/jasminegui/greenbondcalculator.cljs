@@ -159,7 +159,7 @@
    :children [[title :label "Green bond calculator" :level :level1]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
-                          [input-text :width categories-list-width-long :model identifier
+                          [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12}
                                                                       :on-change #(reset! identifier %)]]]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
