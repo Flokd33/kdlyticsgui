@@ -46,6 +46,7 @@
                                                                       :attribution :summary
                                                                       :scorecard :filter}
                  :navigation/success-modal                           {:show false :on-close nil :response nil}
+                 :esg/success-modal                                  {:show false :on-close nil :response nil}
                  :navigation/show-mounting-modal                     false ;
 
                  ;time machine
