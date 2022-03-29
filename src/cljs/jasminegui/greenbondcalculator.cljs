@@ -4,7 +4,7 @@
     [reagent.core :as reagent]
     [cljs-time.core :refer [today]]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button v-split
-                         single-dropdown hyperlink typeahead md-circle-icon-button selection-list progress-bar
+                         single-dropdown hyperlink typeahead md-circle-icon-button selection-list progress-bar modal-panel alert-box throbber
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -48,12 +48,31 @@
 (rf/reg-event-fx
   :post-greenbondcalculator-upload
   (fn [{:keys [db]} [_ answers]]
-    {:db db
+    {:db (assoc db :esg/success-modal {:show true :on-close :close-rebuild-esg :response nil})
      :http-post-dispatch {:url (str static/server-address "greenbondcalculator-upload")
                           :edn-params answers
-                          :dispatch-key [:dummy]            ;instead of dummy event that show pop up
+                          :dispatch-key [:has-loaded]
                           }}))
+(rf/reg-event-db
+  :has-loaded
+  (fn [db [_ data]]
+    (assoc-in db [:esg/success-modal :response] (:text-response data))
+    ))
 
+(rf/reg-event-db
+  :close-rebuild-esg
+  (fn [db [_]]
+    (assoc db :esg/success-modal {:show false :on-close nil :response nil})))
+
+(defn modal-success []
+  (let [modal-data @(rf/subscribe [:esg/success-modal])]
+    (if (:show modal-data)
+      [modal-panel
+       :wrap-nicely? false
+       :backdrop-on-click #(rf/dispatch [(:on-close modal-data)])
+       :child [alert-box :padding "15px" :style {:width "450px"} :heading (if-let [x (:response modal-data)] x ) :closeable? true :on-close #(rf/dispatch [(:on-close modal-data)])]])
+    )
+  )
 
 (def analyst-names-list
   [{:id "vharling" :label "Vic"}
@@ -156,7 +175,8 @@
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
     ;(println @esg-calculator-summary)
   [v-box :width "1280px" :gap "5px" :class "element"
-   :children [[title :label "Green bond calculator" :level :level1]
+   :children [[modal-success]
+              [title :label "Green bond calculator" :level :level1]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
                           [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12}
