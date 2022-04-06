@@ -87,13 +87,26 @@
                             [
                              [:> ReactTable
                               {:data       cdata
-                               :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
-                                            {:Header "NAV" :accessor :nav :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
-                                            {:Header "Nominal" :accessor :position :width 100 :style {:textAlign "right"} :Cell tables/nb-thousand-cell-format}
-                                            {:Header "Entry date" :accessor :avg-entry-date :width 100 :style {:textAlign "right"}}
-                                            {:Header "Entry price" :accessor :avg-entry-price :width 100 :style {:textAlign "right"} :Cell tables/round2}
-                                            {:Header "LTD TR" :accessor :tr-ltd :width 100 :style {:textAlign "right"} :Cell tables/round1pc}
-                                            {:Header "YTD TR" :accessor :tr-ytd :width 100 :style {:textAlign "right"} :Cell tables/round1pc}
+                               :columns    [
+                                            {:Header "Description" :columns [
+                                                                             {:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
+                                                                             {:Header "NAV" :accessor :nav :width 100 :style {:textAlign "right"} :Cell tables/round2pc}
+                                                                             {:Header "Nominal" :accessor :position :width 100 :style {:textAlign "right"} :Cell tables/nb-thousand-cell-format}
+                                                                             {:Header "Entry date" :accessor :avg-entry-date :width 100 :style {:textAlign "right"}}
+                                                                             {:Header "Entry price" :accessor :avg-entry-price :width 100 :style {:textAlign "right"} :Cell tables/round2}]}
+                                            {:Header "Life to date TR" :columns [
+                                                                                 {:Header "Gross" :accessor :tr-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Index" :accessor :tr-vs-index-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Rating" :accessor :tr-vs-index-rating-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Country" :accessor :tr-vs-index-country-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Sector" :accessor :tr-vs-index-sector-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]}
+                                            {:Header "Year to date TR" :columns [
+                                                                                 {:Header "Gross" :accessor :tr-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Index" :accessor :tr-vs-index-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Rating" :accessor :tr-vs-index-rating-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Country" :accessor :tr-vs-index-country-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Sector" :accessor :tr-vs-index-sector-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]}
+
 
                                             ]
                                :filterable false :showPagination false :pageSize (count cdata) :showPageSizeOptions false :className "-striped -highlight"}]
@@ -119,7 +132,7 @@
   )
 
 (defn alert-sort [data]
-  (sort-by #(.indexOf ["relval" "target" "review" "other"] (:alert-scope %)) data))
+  (sort-by #(.indexOf ["relval" "target" "price" "review" "other"] (:ta2022.alert/alert-scope %)) data))
 
 (defn alert-table [data]
   [:> ReactTable

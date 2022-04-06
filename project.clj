@@ -12,6 +12,9 @@
                  [org.clojars.frozenlock/reagent-contextmenu "0.4.3"]
                  [metasoarous/oz "1.6.0-alpha34"]
                  [lilactown/helix "0.1.5"]
+                 [binaryage/devtools "1.0.5"]
+                 [day8.re-frame/tracing      "0.6.2"]
+                 [day8.re-frame/re-frame-10x "1.2.3"]
                  ]
 
   :plugins []
@@ -30,7 +33,7 @@
   {:dev
    {:dependencies [                                         ;[binaryage/devtools "1.0.3"]
                    ;[day8.re-frame/tracing      "0.6.2"]
-                   ;[day8.re-frame/re-frame-10x "1.0.2"]
+                   ;[day8.re-frame/re-frame-10x "1.2.2"]
                    ]}
 
    :prod { }
