@@ -20,7 +20,9 @@
     [jasminegui.tools :as tools]
     [jasminegui.guitools :as gt]
     [reagent-contextmenu.menu :as rcm]
-    [oz.core :as oz])
+    [oz.core :as oz]
+    [jasminegui.tools :as t]
+    )
   )
 
 ;;;;;;;;;;;;
@@ -230,14 +232,18 @@
 
 (defn portfolio-history-table []
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
-        pivot @(rf/subscribe [:portfolio-trade-history/pivot])]
+        pivot @(rf/subscribe [:portfolio-trade-history/pivot])
+        qs @(rf/subscribe [:quant-model/model-output])
+        data-with_ud (for [e data] (assoc e :svr4d1yrtn (:svr4d1yrtn (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs))) :svr2d1yrtn  (:svr2d1yrtn (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs)))    ))
+        ]
+    (println (keys (first qs)))
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
        :child
        (if (= pivot "No")
          [:> ReactTable
-          {:data                data
+          {:data                data-with_ud
            :columns             (concat [{:Header  "Trade"
                                           :columns [{:Header "Date" :accessor "TradeDate" :width 75 :Cell subs10}
                                                     {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
@@ -254,6 +260,11 @@
                                                     {:Header "Region" :accessor "JPMRegion" :width 85}
                                                     {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
                                                     {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :Cell tables/low-level-rating-score-to-string}
+                                                    ]
+                                          }]
+                                        [{:Header "1Y fwd return"
+                                          :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 75 :Cell tables/round2}
+                                                    {:Header "2D" :accessor "svr2d1yrtn" :width 60 :Cell tables/round2}
                                                     ]
                                           }]
                                         (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
@@ -382,6 +393,8 @@
                         (filter empty-filter)
                         )
         ]
+    (println final-data)
+    (println data)
     [box :align :center
      :child
      [:> ReactTable
