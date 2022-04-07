@@ -876,7 +876,7 @@
                                         (if @(rf/subscribe[:quant-model/curves-throbber])
                                           [v-box :class "element" :width "1300px" :align :center :children [box [throbber :size :large]]]
                                           [v-box :class "element" :gap "10px" :width "1300px"
-                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve @start-date-curve @choice-historical-curves-graph @serie-2 @isin-historical-charts @bond-historical-charts)]]])
+                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve (js/parseInt (t/gdate-to-yyyymmdd @start-date-curve)) @choice-historical-curves-graph @serie-2 @isin-historical-charts @bond-historical-charts)]]])
                                         ]]]]
                 ]]))
 
