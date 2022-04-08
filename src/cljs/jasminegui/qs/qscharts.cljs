@@ -179,47 +179,7 @@
                  keyseq))
     coll))
 
-(defn quant-isin-history-chart-map [data start-date-yyyymmdd-int which? bond-isin-names choice extras]
-  (let [two-bonds? (= (count (remove (comp nil? :bond) bond-isin-names)) 2)
-        grp (group-by :ISIN data)                   ;faster than 2 filters
-        data-pricing-1 (grp (:ISIN (first bond-isin-names)))
-        data-pricing-2 (grp (:ISIN (second bond-isin-names)))
-        first-date-isin1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-1)))] x "0") "-" ""))
-        first-date-isin2-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-2)))] x "0") "-" ""))
-        by-date (group-by :date data)
-        clean-by-date (if two-bonds? (into {} (for [[d v] by-date :when (= (count v) 2)] [d v])) by-date)
-        final-data (cond
-                     (not two-bonds?) data-pricing-1
-                     (= choice "absolute") data
-                     :else (let [data-pricing-clean (sort-by :date
-                                                             (into [] (for [[d g] clean-by-date]
-                                                                        (let [h (sort-by #(.indexOf (map :ISIN bond-isin-names) (:ISIN %)) g)]
-                                                                          (reduce #(assoc %1 %2 (- (%2 (first h)) (%2 (second h)))) {:date d} (keys which?))))))]
-                             (if(= choice "relative1")
-                               data-pricing-clean
-                               (update-keyseq-to-opposite data-pricing-clean (keys which?)))))
-        final-start-date (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int) ;0 by default
 
-        data-pricing-filtered (filter #(> (js/parseInt (clojure.string/replace (:date %) "-" "")) final-start-date) final-data)
-        lbl (if two-bonds?                      ; for legend when a-b or b-a
-              (case choice
-                "relative1" (str (:bond (first bond-isin-names)) " - " (:bond (second bond-isin-names)))
-                "relative2" (str (:bond (second bond-isin-names)) " - " (:bond (first bond-isin-names)))
-                "absolute" "nthg")
-              (:bond (first bond-isin-names)))
-        mapping (into {} (for [line bond-isin-names] [(:ISIN line) (:bond line)]))
-        data-to-plot (map (if
-                            (and two-bonds? (= choice "absolute"))
-                            #(assoc % :Bond (mapping (% :ISIN)))
-                            #(assoc % :Bond lbl))
-                          data-pricing-filtered)]
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
-     :resolve {:scale {:color "independent"}}
-     :title   nil
-     :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
-     :vconcat (->> [[:price "Price"] [:ytw "YTW"] [:ztw "ZTW"] [:duration "Duration"] [:rating_score "Rating"] [:cheapness2D "2D cheapness"] [:cheapness4D "4D cheapness"]]
-                   (mapv #(if ((first %) which?) (graph (name (first %)) (second %) (first %) data-to-plot ((first %) extras))))
-                   (remove nil?))}))
 
 ;(defn quant-isin-history-chart [data-pricing start-date-yyyymmdd-int price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph rectangle-dates]
 ;  (let [two-bonds? (= nb-bond 2)
@@ -339,72 +299,111 @@
 ;                            (if show-4d? (graph "cheapness4D" "4D cheapness" :cheapness4D data-to-plot))])}
 ;    ))
 
+(defn quant-isin-history-chart-map [data start-date-yyyymmdd-int which? bond-isin-names choice extras]
+  (let [two-bonds? (= (count (remove (comp nil? :bond) bond-isin-names)) 2)
+        grp (group-by :ISIN data)                   ;faster than 2 filters
+        data-pricing-1 (grp (:ISIN (first bond-isin-names)))
+        data-pricing-2 (grp (:ISIN (second bond-isin-names)))
+        first-date-isin1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-1)))] x "0") "-" ""))
+        first-date-isin2-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-2)))] x "0") "-" ""))
+        by-date (group-by :date data)
+        clean-by-date (if two-bonds? (into {} (for [[d v] by-date :when (= (count v) 2)] [d v])) by-date)
+        final-data (cond
+                     (not two-bonds?) data-pricing-1
+                     (= choice "absolute") data
+                     :else (let [data-pricing-clean (sort-by :date
+                                                             (into [] (for [[d g] clean-by-date]
+                                                                        (let [h (sort-by #(.indexOf (map :ISIN bond-isin-names) (:ISIN %)) g)]
+                                                                          (reduce #(assoc %1 %2 (- (%2 (first h)) (%2 (second h)))) {:date d} (keys which?))))))]
+                             (if(= choice "relative1")
+                               data-pricing-clean
+                               (update-keyseq-to-opposite data-pricing-clean (keys which?)))))
+        final-start-date (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int) ;0 by default
+
+        data-pricing-filtered (filter #(> (js/parseInt (clojure.string/replace (:date %) "-" "")) final-start-date) final-data)
+        lbl (if two-bonds?                      ; for legend when a-b or b-a
+              (case choice
+                "relative1" (str (:bond (first bond-isin-names)) " - " (:bond (second bond-isin-names)))
+                "relative2" (str (:bond (second bond-isin-names)) " - " (:bond (first bond-isin-names)))
+                "absolute" "nthg")
+              (:bond (first bond-isin-names)))
+        mapping (into {} (for [line bond-isin-names] [(:ISIN line) (:bond line)]))
+        data-to-plot (map (if
+                            (and two-bonds? (= choice "absolute"))
+                            #(assoc % :Bond (mapping (% :ISIN)))
+                            #(assoc % :Bond lbl))
+                          data-pricing-filtered)]
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+     :resolve {:scale {:color "independent"}}
+     :title   nil
+     :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
+     :vconcat (->> [[:price "Price"] [:ytw "YTW"] [:ztw "ZTW"] [:duration "Duration"] [:rating_score "Rating"] [:cheapness2D "2D cheapness"] [:cheapness4D "4D cheapness"]]
+                   (mapv #(if ((first %) which?) (graph (name (first %)) (second %) (first %) data-to-plot ((first %) extras))))
+                   (remove nil?))}))
+
 (def curve-type-mapping {:two-d-curves "2D" :four-d-sovereign-curves "4D" :two-d-curves-sovs "2DSov" :two-d-curves-corps "2DCorp"})
 
 (defn quant-isin-history-chart-curves [param nb-curve start-date choice-curves serie-2 isin1 ticker1]
-  (let [ nb nb-curve
-        serie2 serie-2
-        start (js/parseInt (t/gdate-to-yyyymmdd start-date))
-        tenor-curve-1 (param :curve-one/tenor)
+  (let [tenor-curve-1 (param :curve-one/tenor)
         tenor-curve-2 (param :curve-two/tenor)
         selection-curve-1 (param :curve-one/selection)
         selection-curve-2 (param :curve-two/selection)
-        model-curve-1 (curve-type-mapping (param :curve-one/type)) ; (if (= (param :curve-one/type) :two-d-curves) "2D" "4D")
+        model-curve-1 (curve-type-mapping (param :curve-one/type))
         model-curve-2 (curve-type-mapping (param :curve-two/type))
 
-        data-pricing @(rf/subscribe [:quant-model/history-result])
-        data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
+        data-pricing (filter #(= (:ISIN %) isin1) @(rf/subscribe [:quant-model/history-result]))
+        first-date-isin1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing)))] x "0") "-" ""))
+        last-date-isin1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (last (sort (map :date data-pricing)))] x "0") "-" ""))
 
-        first-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
-        last-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (last (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
-
-        data-pricing-1 (map #(clojure.set/rename-keys % {:ztw :tenor-choice}) data-pricing-1) ; rename key to match curve data map
+        data-pricing-1 (map #(clojure.set/rename-keys % {:ztw :tenor-choice}) data-pricing) ; rename key to match curve data map
         data-pricing-2 (for [e data-pricing-1] (assoc e :Curve ticker1))  ; add identification key accordingly to curve map...
 
         data-curve-1-raw @(rf/subscribe [:quant-model/history-result-curves-one])
         data-curve-2-raw @(rf/subscribe [:quant-model/history-result-curves-two])
-        first-date-curve1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-curve-1-raw)) :date)) "-" "")"-" ""))
-        last-date-curve1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (last (sort-by :date data-curve-1-raw)) :date)) "-" "")"-" ""))
-        first-date-curve2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-curve-2-raw)) :date)) "-" "")"-" ""))
-        last-date-curve2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (last (sort-by :date data-curve-2-raw)) :date)) "-" "")"-" ""))
+        first-date-curve1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-curve-1-raw)))] x "0") "-" ""))
+        last-date-curve1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (last (sort (map :date data-curve-1-raw)))] x "0") "-" ""))
+        first-date-curve2-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-curve-2-raw)))] x "0") "-" ""))
+        last-date-curve2-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (last (sort (map :date data-curve-2-raw)))] x "0") "-" ""))
+
         data-curve-1-enhanced (for [e data-curve-1-raw] (assoc e :T2Y5Y (- (:T5Y e) (:T2Y e)) :T2Y10Y (- (:T10Y e) (:T2Y e)) :T2Y30Y (- (:T30Y e) (:T2Y e)) :T5Y10Y (- (:T10Y e) (:T5Y e)) :T5Y30Y (- (:T30Y e) (:T5Y e)) :T10Y30Y (- (:T30Y e) (:T10Y e))))
         data-curve-2-enhanced (for [e data-curve-2-raw] (assoc e :T2Y5Y (- (:T5Y e) (:T2Y e)) :T2Y10Y (- (:T10Y e) (:T2Y e)) :T2Y30Y (- (:T30Y e) (:T2Y e)) :T5Y10Y (- (:T10Y e) (:T5Y e)) :T5Y30Y (- (:T30Y e) (:T5Y e)) :T10Y30Y (- (:T30Y e) (:T10Y e))))
         data-curve-1 (for [e data-curve-1-enhanced] (assoc e :Curve (str model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1) :model-type model-curve-1 :tenor-choice (e  (keyword (str "T" tenor-curve-1)))))
         data-curve-2 (for [e data-curve-2-enhanced] (assoc e :Curve (str model-curve-2 " " (if (not= model-curve-2 "4D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2) :model-type model-curve-2 :tenor-choice (e  (keyword (str "T" tenor-curve-2)))))
 
-        data-to-plot (if (= nb 2)
-                       (case serie2
+        data-to-plot (if (= nb-curve 2)
+                       (case serie-2
                         "curve" (concat data-curve-1 data-curve-2)
                        "bond"  (concat data-curve-1 data-pricing-2))
-                       data-curve-1 ) ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                       data-curve-1 )
 
         by-date (group-by :date data-to-plot)
         step1 (into [] (for [[d g] by-date] (let [h (sort-by :ISIN g)] {:date d :tenor-choice (- (:tenor-choice (first h)) (:tenor-choice (second h)))})))
+
         data-curves-clean (sort-by :date step1)
         opposite (->> data-curves-clean (map #(update % :tenor-choice (fn [x] (* -1 x)))))
-        data-curves-clean-final (if (= nb 2)
+        data-curves-clean-final (if (= nb-curve 2)
                                       (case choice-curves
                                         "relative1-curves" data-curves-clean
                                         "relative2-curves" opposite
                                         "absolute-curves" data-to-plot)
                                       data-to-plot
                                       )
-        final-start-date (if (= nb 2)
-                           (case serie2
-                             "curve" (max first-date-curve1-yyyymmdd-int first-date-curve2-yyyymmdd-int start)
-                             "bond" (max first-date-curve1-yyyymmdd-int first-date-isin1-yyyymmdd-int start))
-                             (max first-date-curve1-yyyymmdd-int start))
+        final-start-date (if (= nb-curve 2)
+                           (case serie-2
+                             "curve" (max first-date-curve1-yyyymmdd-int first-date-curve2-yyyymmdd-int start-date)
+                             "bond" (max first-date-curve1-yyyymmdd-int first-date-isin1-yyyymmdd-int start-date))
+                             (max first-date-curve1-yyyymmdd-int start-date))
 
-        final-end-date (if (= nb 2)
-                           (case serie2
+        final-end-date (if (= nb-curve 2)
+                           (case serie-2
                              "curve" (min last-date-curve1-yyyymmdd-int last-date-curve2-yyyymmdd-int)
                              "bond" (min last-date-curve1-yyyymmdd-int last-date-isin1-yyyymmdd-int))
                            (min last-date-curve1-yyyymmdd-int))
 
-        data-to-plot-2 (filter #(and (> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) (< (int (.replace (.replace (:date %) "-" "") "-" "")) final-end-date)) data-curves-clean-final)
+        data-to-plot-2 (filter #(and (> (int (js/parseInt (clojure.string/replace (:date %) "-" "" ))) final-start-date) (< (int (js/parseInt (clojure.string/replace (:date %) "-" "" ))) final-end-date)) data-curves-clean-final)
 
-        data-to-plot-2 (if (= nb 2)                         ; for LEGEND
-                         (case serie2
+        data-to-plot-2 (if (= nb-curve 2)                         ; for LEGEND
+                         (case serie-2
                                    "curve" (case choice-curves
                                     "relative1-curves" (for [e data-to-plot-2] (assoc e :Curve (str model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 " - " model-curve-2 " " (if (not= model-curve-2 "4D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2)  ))
                                     "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str model-curve-2 " " (if (not= model-curve-2 "4D") (qstables/get-implied-rating (str selection-curve-2)) selection-curve-2) " " tenor-curve-2 " - "  model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1 )  ))
@@ -416,10 +415,7 @@
                                   )
                          data-to-plot-2)
         ]
-    ;(println last-date-curve1-yyyymmdd-int)
-    ;(println last-date-isin1-yyyymmdd-int)
-    ;(println final-end-date)
-    ;(println selection-curve-1 selection-curve-2)
+
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title    nil

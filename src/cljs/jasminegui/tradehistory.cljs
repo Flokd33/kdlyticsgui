@@ -20,7 +20,9 @@
     [jasminegui.tools :as tools]
     [jasminegui.guitools :as gt]
     [reagent-contextmenu.menu :as rcm]
-    [oz.core :as oz])
+    [oz.core :as oz]
+    [jasminegui.tools :as t]
+    )
   )
 
 ;;;;;;;;;;;;
@@ -230,14 +232,17 @@
 
 (defn portfolio-history-table []
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
-        pivot @(rf/subscribe [:portfolio-trade-history/pivot])]
+        pivot @(rf/subscribe [:portfolio-trade-history/pivot])
+        qs @(rf/subscribe [:quant-model/model-output])
+        data-with_ud (for [e data] (assoc e :svr4d1yrtn (:svr4d1yrtn (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs))) :svr2d1yrtn  (:svr2d1yrtn (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs)))    ))
+        ]
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
        :child
        (if (= pivot "No")
          [:> ReactTable
-          {:data                data
+          {:data                data-with_ud
            :columns             (concat [{:Header  "Trade"
                                           :columns [{:Header "Date" :accessor "TradeDate" :width 75 :Cell subs10}
                                                     {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
@@ -256,6 +261,12 @@
                                                     {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :Cell tables/low-level-rating-score-to-string}
                                                     ]
                                           }]
+                                        (if (= @(rf/subscribe [:portfolio-trade-history/fwd-return]) "Yes")
+                                        [{:Header "1Y fwd return"
+                                          :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 75 :Cell tables/round2}
+                                                    {:Header "2D" :accessor "svr2d1yrtn" :width 60 :Cell tables/round2}
+                                                    ]
+                                          }])
                                         (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
                                           [{:Header "Total return" :columns
                                                     (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
@@ -315,7 +326,7 @@
                  [h-box :gap "50px"
                   :children [[v-box :gap "15px"
                               :children [[h-box
-                                          :width "1200px"
+                                          :width "1700px"
                                           :gap "10px"
                                           :children [[title :label "Portfolio:" :level :level3]
                                                      [single-dropdown
@@ -341,6 +352,9 @@
                                                      [gap :size "20px"]
                                                      [title :label "Get performance?" :level :level3]
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/performance]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/performance %])]
+                                                     [gap :size "20px"]
+                                                     [title :label "Get forward return?" :level :level3]
+                                                     [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/fwd-return]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/fwd-return %])]
                                                      [gap :size "20px"]
                                                      [title :label "Pivot?" :level :level3]
                                                      [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Region" "Sector" "Rating"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
