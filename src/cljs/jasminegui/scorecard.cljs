@@ -20,7 +20,7 @@
     [jasminegui.riskviews :as riskviews]
     [jasminegui.qs.quantscores :as quantscores]
     [jasminegui.qs.qstables :as qstables]
-    [cljs-time.core :refer [today plus]]
+    [cljs-time.core :refer [today plus days]]
     [cljs-time.format :as ctf]
     [oz.core :as oz]
     [goog.object :as gobj]
@@ -222,6 +222,41 @@
                                                                                               )))}))
                        :pageSize (count data) :showPagination false :sortable true :showPageSizeOptions false}]])))
 
+(defn recent-trades-display-date [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [p (str (subs x 0 10))]))
+  )
+
+(defn recent-trades-display [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [v-box :children (into [] (for [t x]
+                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next t)) )) "bps")]
+                                  ))]
+      "-"))
+  )
+
+(defn trade-history-sc []
+  (let [ports (remove #(some #{%} ["OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]) @(rf/subscribe [:portfolios]))
+        data (map #(select-keys % (conj ports :date)) @(rf/subscribe [:recent-trade-data/trades]))
+        sector @(rf/subscribe [:scorecard/sector])
+        empty-filter (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
+        sector-filter (fn [row] (if (= sector "Sector") true (= (last row) sector)))
+        final-data (->> data
+                        (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter sector-filter v))])))
+                        (filter empty-filter)
+                        )
+        ]
+    (println @(rf/subscribe [:recent-trade-data/trades]))
+    (gt/element-box "scorecard-scores" "100%" (str "2 weeks trade history for " sector) final-data
+                    [[:> ReactTable
+                      {:data      (reverse final-data)
+                       :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                                        (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+                                                 (for [p ports]
+                                                   {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                       :className "-striped -highlight"}]])))
 
 (defn compress-data [table sector]
   (let [res (filter #(= (:Sector %) sector) table)
@@ -387,7 +422,8 @@
      :children [[h-box :class "element" :gap "20px" :align :center
                  :children [[box :child [title :level :level1 :label "Portfolio and sector selection"]]
                             [box :child [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution %]) (rf/dispatch [:scorecard/change-portfolio %]))]]
-                            [box :child [single-dropdown :width "250px" :placeholder "Sector" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:scorecard/change-sector %])]]]]
+                            [box :child [single-dropdown :width "250px" :placeholder "Sector" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true
+                                         :on-change #(do (rf/dispatch [:scorecard/change-sector %]) (rf/dispatch [:get-recent-trade-data (t/int-to-gdate(plus (today) (days -10))) (t/int-to-gdate (today))]))]]]]
                 (gt/element-box "scorecard-risk" "100%" (str portfolio " " sector " risk") vdisplay
                              [[:> ReactTable
                                {:data           vdisplay
@@ -479,6 +515,7 @@
                                      :showPagination      false :sortable true :filterable false :pageSize (count (distinct (map :TICKER @(rf/subscribe [:scorecard-risk/multiple-tree]))))
                                      :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:TICKER] :defaultSorted [{:id :OGEMCORD :desc true}]}])])
                 [scorecard-table]
+                [trade-history-sc]
                 ]]))
 
 (defn view []
