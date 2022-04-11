@@ -252,7 +252,7 @@
                         (filter empty-filter)
                         )
         ]
-    (gt/element-box "scorecard-scores" "100%" (str "2 weeks trade history for " sector) final-data
+    (gt/element-box "scorecard-scores" "100%" (str "14days trade history" sector) final-data
                     (concat
                       [[title :label "Main" :level :level2]]
                       [[:> ReactTable
