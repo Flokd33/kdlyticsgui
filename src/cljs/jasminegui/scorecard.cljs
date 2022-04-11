@@ -239,6 +239,10 @@
 
 (defn trade-history-sc []
   (let [ports (remove #(some #{%} ["OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]) @(rf/subscribe [:portfolios]))
+        port-cembi (mapcat :portfolios (t/chainfilter {:label "CEMBI"} static/portfolio-alignment-groups))
+        port-ig (mapcat :portfolios (t/chainfilter {:label "IG"} static/portfolio-alignment-groups))
+        port-seg (mapcat :portfolios (t/chainfilter {:label #(or (= % "Allianz") (= % "Munich Re") (= % "Talanx USD"))} static/portfolio-alignment-groups))
+        port-other (mapcat :portfolios (t/chainfilter {:label #(or (= % "Other EMCD") (= % "HCD") (= % "TR"))} static/portfolio-alignment-groups))
         data (map #(select-keys % (conj ports :date)) @(rf/subscribe [:recent-trade-data/trades]))
         sector @(rf/subscribe [:scorecard/sector])
         empty-filter (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
@@ -248,15 +252,41 @@
                         (filter empty-filter)
                         )
         ]
-    (println @(rf/subscribe [:recent-trade-data/trades]))
     (gt/element-box "scorecard-scores" "100%" (str "2 weeks trade history for " sector) final-data
+                    (concat
+                      [[title :label "Main" :level :level2]]
+                      [[:> ReactTable
+                      {:data      (reverse final-data)
+                       :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                                        (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+                                                 (for [p port-cembi]
+                                                   {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                       :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
+                      [[title :label "IG" :level :level2]]
                     [[:> ReactTable
                       {:data      (reverse final-data)
                        :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
                                         (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
-                                                 (for [p ports]
+                                                 (for [p port-ig]
                                                    {:Header p :accessor p :Cell recent-trades-display :width 200})))
-                       :className "-striped -highlight"}]])))
+                       :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
+                      [[title :label "Allianz/Munich/Talanx" :level :level2]]
+                    [[:> ReactTable
+                      {:data      (reverse final-data)
+                       :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                                        (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+                                                 (for [p port-seg]
+                                                   {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                       :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
+                      [[title :label "Other" :level :level2]]
+                    [[:> ReactTable
+                      {:data      (reverse final-data)
+                       :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                                        (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+                                                 (for [p port-other]
+                                                   {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                       :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
+                            ))))
 
 (defn compress-data [table sector]
   (let [res (filter #(= (:Sector %) sector) table)
