@@ -200,6 +200,8 @@
                  :esg/msci-scores                         []
                  :esg/summary-report                      []
                  :esg/engagements                         []
+                 :esg/security-notes                      []
+                 :esg/tamale-body                         ""
                  :esg/engagement-throbber                 false
 
                  :quant-model/model-output                []
@@ -394,6 +396,8 @@
            :esg/msci-scores
            :esg/summary-report
            :esg/engagements
+           :esg/security-notes
+           :esg/tamale-body
 
            :trade-history/active-home
 

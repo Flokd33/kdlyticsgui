@@ -22,6 +22,7 @@
     [jasminegui.tools :as t]
     [jasminegui.greenbondcalculator :as greenbondcalculator]
     [cljs-time.core :refer [today]]
+    [goog.object :as gobj]
     ))
 
 (def standard-box-width "1600px")
@@ -286,35 +287,71 @@
     )
 
 (rf/reg-event-fx
+  :esg/get-tamale-body
+  (fn [{:keys [db]} [_ note-id]]
+    {:db (assoc db :esg/tamale-body "")
+     :http-get-dispatch
+     {:url          (str "https://ldprdnexdc1:6400/v1/notes/" note-id "/body")
+      :dispatch-key [:esg/tamale-body]}
+     }))
+
+(rf/reg-event-fx
   :esg/get-engagements
   (fn [{:keys [db]} [_ yyyy-mm-dd-start-date yyyy-mm-dd-end-date]]
     {:db (assoc db :esg/engagement-throbber true :esg/engagements [])
      :http-post-dispatch
-     {:url          "https://ldprdnexdc1:6400/v1/notes"
-      :json-params   {:filters
-                     {:note_type ["ESG_ENGAGEMENT_NOTE"]
-                      :dates     {:start_date yyyy-mm-dd-start-date, :end_date yyyy-mm-dd-end-date}
-                      :submitter ["Tammy Lloyd"
-                                  "Stacy Xie"
-                                  "Kevan Salisbury"
-                                  "Rahul Bhat"
-                                  "Alan Siow"
-                                  "Alexandre Almosni"
-                                  "Antonio Luiz Gomes"
-                                  "Victoria Harling"
-                                  "Adrian Chan"
-                                  "Matt Christ"
-                                  "Florian Cadet"
-                                  "Tom Peberdy"]}
-                      :body_verbose true}
-      :dispatch-key [:esg/receive-engagements]}}))
+     [{:url          "https://ldprdnexdc1:6400/v1/notes"
+       :json-params  {:filters
+                      {:note_type ["ESG_ENGAGEMENT_NOTE"]
+                       :dates     {:start_date yyyy-mm-dd-start-date, :end_date yyyy-mm-dd-end-date}
+                       :submitter ["Tammy Lloyd"
+                                   "Stacy Xie"
+                                   "Kevan Salisbury"
+                                   "Rahul Bhat"
+                                   "Alan Siow"
+                                   "Alexandre Almosni"
+                                   "Antonio Luiz Gomes"
+                                   "Victoria Harling"
+                                   "Adrian Chan"
+                                   "Matt Christ"
+                                   "Florian Cadet"
+                                   "Tom Peberdy"]}
+                      :body_verbose false}
+       :dispatch-key [:esg/receive-engagements]}
+      {:url          "https://ldprdnexdc1:6400/v1/notes"
+       :json-params  {:filters
+                      {:note_type ["SECURITY_RESEARCH_INVESTMENT_REPORT"]
+                       :tags ["All ESG Categories"
+                              "Governance (ESG Category)"
+                              "Social (ESG Category)"
+                              "Environmental (ESG Category)"]
+                       :dates     {:start_date yyyy-mm-dd-start-date, :end_date yyyy-mm-dd-end-date}
+                       :submitter ["Tammy Lloyd"
+                                   "Stacy Xie"
+                                   "Kevan Salisbury"
+                                   "Rahul Bhat"
+                                   "Alan Siow"
+                                   "Alexandre Almosni"
+                                   "Antonio Luiz Gomes"
+                                   "Victoria Harling"
+                                   "Adrian Chan"
+                                   "Matt Christ"
+                                   "Florian Cadet"
+                                   "Tom Peberdy"]}
+                      :body_verbose false}
+       :dispatch-key [:esg/receive-security-notes]}]}))
+
+(rf/reg-event-db
+  :esg/receive-security-notes
+  (fn [db [_ data]]
+    (assoc db :esg/engagement-throbber false
+              :esg/security-notes data)))
 
 (rf/reg-event-db
   :esg/receive-engagements
   (fn [db [_ data]]
-    (assoc db :esg/engagement-throbber false
+    (assoc db                                               ;:esg/engagement-throbber false NO POINT TOO QUICK
               :esg/engagements data)))
-
 
 (def show-modal-engagement (r/atom nil))
 
@@ -325,14 +362,14 @@
      :backdrop-on-click #(reset! show-modal-engagement nil)
      :child [v-box :height "800px" :width "1280px"
              :children [[h-box :align :center :children [[title :label "Full note" :level :level1] [gap :size "1"]  [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(reset! show-modal-engagement nil)]]]
-                        [scroller :v-scroll :on :height "700px" :child [box :child [:div {:dangerouslySetInnerHTML {:__html @show-modal-engagement}}]]]]]]))                                    ;
+                        [scroller :v-scroll :on :height "700px" :child [box :child [:div {:dangerouslySetInnerHTML {:__html @(rf/subscribe [:esg/tamale-body])}}]]]]]]))                                    ;
 
 
 (defn esg-engagements []
-  (let [start-date (r/atom (tools/int-to-gdate 20210701)) end-date (r/atom (today))]
+  (let [start-date (r/atom (tools/int-to-gdate 20220101)) end-date (r/atom (today))]
     (fn []
       [v-box :gap "20px" :class "element" :width standard-box-width
-       :children [[h-box :align :center :children [[title :label "ESG engagements" :level :level1]]]
+       :children [[h-box :align :center :children [[title :label "ESG interactions" :level :level1]]]
                   [h-box :align :center :gap "10px" :children [[title :label "Start:" :level :level3]
                                                                [datepicker-dropdown
                                                                 :model start-date :minimum (tools/int-to-gdate 20180101) :maximum (today) :format "dd/MM/yyyy" :show-today? true
@@ -346,16 +383,34 @@
                                                                [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements (t/gdate-to-yyyy-mm-dd @start-date) (t/gdate-to-yyyy-mm-dd @end-date)])]]]
                   (if @(rf/subscribe [:esg/engagement-throbber])
                     [throbber :size :large]
-                    (let [data (if-let [data (:results @(rf/subscribe [:esg/engagements]))] data [])]                                     ;(println (:results @(rf/subscribe [:esg/engagements])))
-                        [:> ReactTable
-                         {:data           data
-                          :columns        [{:Header "Date" :accessor "date" :width 100}
-                                           {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (aget v "original" "entities" 0 "name"))}
-                                           {:Header "Title" :accessor "title" :width 800}
-                                           {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (reset! show-modal-engagement (aget v "original" "body")))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
-                                           ]
-                          :showPagination false :sortable true :filterable false :pageSize (count data)
-                          :className      "-striped -highlight"}]))]])))
+
+                    [v-box :gap "10px" :children [
+                                                  [title :label "Engagements" :level :level2]
+                                      (let [data (if-let [data (:results @(rf/subscribe [:esg/engagements]))] data [])] ;(println (:results @(rf/subscribe [:esg/engagements])))
+                                        [:> ReactTable
+                                         {:data           data
+                                          :columns        [
+                                                           {:Header "Date" :accessor "date" :width 100}
+                                                           {:Header "note_id" :accessor "note_id" :width 100 :show false}
+                                                           {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (aget v "original" "entities" 0 "name"))}
+                                                           {:Header "Title" :accessor "title" :width 800}
+                                                           {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
+                                                           ]
+                                          :showPagination false :sortable true :filterable false :pageSize (count data)
+                                          :className      "-striped -highlight"}])
+                                                  [title :label "Investment notes with ESG content" :level :level2]
+                                      (let [data (if-let [data (:results @(rf/subscribe [:esg/security-notes]))] data [])] ;(println (:results @(rf/subscribe [:esg/engagements])))
+                                        [:> ReactTable
+                                         {:data           data
+                                          :columns        [{:Header "Date" :accessor "date" :width 100}
+                                                           {:Header "note_id" :accessor "note_id" :width 100 :show false}
+                                                           {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))} ;(aget v "original" "entities" 0 "name")
+                                                           {:Header "Title" :accessor "title" :width 800}
+                                                           {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
+                                                           ]
+                                          :showPagination true :sortable true :filterable false :pageSize 20
+                                          :className      "-striped -highlight"}])]]
+                    )]])))
 
 
 (defn active-home []
