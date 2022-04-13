@@ -236,6 +236,7 @@
         qs @(rf/subscribe [:quant-model/model-output])
         data-with_ud (for [e data] (assoc e :svr4d1yrtn (/ (:svr4d1yrtn (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs))) 100) :svr2d1yrtn  (/ (:svr2d1yrtn (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs))) 100)))
         ]
+    (println (first data))
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
@@ -270,7 +271,7 @@
                                         (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
                                           [{:Header "Total return" :columns
                                                     (into [{:Header "Last price" :accessor "last-price" :width 65 :style {:textAlign "right"} :Cell tables/round2}]
-                                                          (for [[h a] [["Gross" "total-return"] ["CEMBI" "tr-vs-cembi"] ["CEMBIIG" "tr-vs-cembiig"] ["EMBI" "tr-vs-embi"] ["EMBIIG" "tr-vs-embiig"]]]
+                                                          (for [[h a] [["Gross" "total-return"] ["CEMBI" "tr-vs-cembi"] ["CEMBIHY" "tr-vs-cembihy"] ["CEMBIIG" "tr-vs-cembiig"] ["EMBI" "tr-vs-embi"] ["EMBIIG" "tr-vs-embiig"]]]
                                                             {:Header h :accessor a :width 70 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))}])
                                         )
            :showPagination      (> (count data) 50)
