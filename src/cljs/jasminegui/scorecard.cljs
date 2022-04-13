@@ -241,8 +241,9 @@
   (let [ports (remove #(some #{%} ["OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]) @(rf/subscribe [:portfolios]))
         port-cembi (mapcat :portfolios (t/chainfilter {:label "CEMBI"} static/portfolio-alignment-groups))
         port-ig (mapcat :portfolios (t/chainfilter {:label "IG"} static/portfolio-alignment-groups))
-        port-seg (mapcat :portfolios (t/chainfilter {:label #(or (= % "Allianz") (= % "Munich Re") (= % "Talanx USD"))} static/portfolio-alignment-groups))
-        port-other (mapcat :portfolios (t/chainfilter {:label #(or (= % "Other EMCD") (= % "HCD") (= % "TR"))} static/portfolio-alignment-groups))
+        port-seg (mapcat :portfolios (t/chainfilter {:label #(or  (= % "Munich Re") (= % "Talanx USD"))} static/portfolio-alignment-groups))
+        port-allianz (mapcat :portfolios (t/chainfilter {:label #(= % "Allianz")} static/portfolio-alignment-groups))
+        port-other (mapcat :portfolios (t/chainfilter {:label #(or (= % "Other EMCD") (= % "TR"))} static/portfolio-alignment-groups))
         data (map #(select-keys % (conj ports :date)) @(rf/subscribe [:recent-trade-data/trades]))
         sector @(rf/subscribe [:scorecard/sector])
         empty-filter (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
@@ -262,15 +263,23 @@
                                                  (for [p port-cembi]
                                                    {:Header p :accessor p :Cell recent-trades-display :width 200})))
                        :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
+                      [[title :label "Allianz" :level :level2]]
+                      [[:> ReactTable
+                        {:data      (reverse final-data)
+                         :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                                          (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+                                                   (for [p port-allianz]
+                                                     {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                         :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
                       [[title :label "IG" :level :level2]]
-                    [[:> ReactTable
+                      [[:> ReactTable
                       {:data      (reverse final-data)
                        :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
                                         (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
                                                  (for [p port-ig]
                                                    {:Header p :accessor p :Cell recent-trades-display :width 200})))
                        :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
-                      [[title :label "Allianz/Munich/Talanx" :level :level2]]
+                      [[title :label "Munich/Talanx" :level :level2]]
                     [[:> ReactTable
                       {:data      (reverse final-data)
                        :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
