@@ -212,7 +212,7 @@
                            :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/independent-verification :analyst_answer ]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Who provides second opinion?"]
-                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices [{:id "spo" :label "SPO"} {:id "sustainalytics"  :label "Susatainalitics"} {:id "cicero"  :label "CICERO"} {:id "svn-gl"  :label "DVN GL"} {:id "moodys-vigeo"  :label "Moody/Vigeo"} {:id "iss-esg"  :label "ISS ESG"} {:id "none"  :label "None of the above"}]
+                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices [{:id "spo" :label "SPO"} {:id "sustainalytics"  :label "Sustainalytics"} {:id "cicero"  :label "CICERO"} {:id "svn-gl"  :label "DVN GL"} {:id "moodys-vigeo"  :label "Moody/Vigeo"} {:id "iss-esg"  :label "ISS ESG"} {:id "none"  :label "None of the above"}]
                            :model (r/cursor esg-calculator-summary [:project-evaluation/second-opinion :analyst_answer ])
                            :on-change #(reset! (r/cursor esg-calculator-summary [:project-evaluation/second-opinion :analyst_answer ]) %)]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility" :level :level2]]
