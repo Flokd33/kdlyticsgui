@@ -3,7 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as r]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink alert-box md-circle-icon-button
+                         single-dropdown hyperlink alert-box md-circle-icon-button modal-panel
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -19,6 +19,7 @@
     [jasminegui.qs.qstables :as qstables]
     [jasminegui.qs.qscharts :as qscharts]
     [jasminegui.tools :as t]
+    [jasminegui.ta2022.tables :as tatables]
     [oz.core :as oz])
 
   )
@@ -32,6 +33,13 @@
                           [(if qdata [:> ReactTable
                                       {:data           [qdata]
                                        :columns        (qstables/table-style->qs-table-col "TA2022" nil)
+                                       :showPagination false
+                                       :pageSize       1
+                                       :filterable     false}]
+                                     [p "loading..."])
+                           (if qdata [:> ReactTable
+                                      {:data           [qdata]
+                                       :columns        [{:Header "Target returns with 1y coupon (%)" :columns (mapv #(assoc % :filterable false) (mapv qstables/quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y]))}]
                                        :showPagination false
                                        :pageSize       1
                                        :filterable     false}]
@@ -214,6 +222,17 @@
                               )))
   )
 
+(defn actions []
+  (gt/element-box-generic "actions" element-box-width "Actions" nil
+                          [[h-box  :gap "10px" :children [
+                                                            [button :label "Amend latest entry" :class "btn btn-primary btn-block" :on-click #(do)]
+                                                            [button :label "Morph trade" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
+                                                            [button :label "Close trade" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
+                                                            [button :label "Add attachment" :class "btn btn-primary btn-block" :on-click #(do)]]]]
+
+                          )
+  )
+
 (defn trade-view
   []
   (let [isin @(rf/subscribe [:ta2022/trade-isin])
@@ -222,9 +241,9 @@
       (rf/dispatch [:get-ta2022-trade-view-history isin]))
     (when (zero? (count @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])))
       (rf/dispatch [:get-ta2022-trade-view-position-and-performance-table isin]))
-    (println "c " (count @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])))
+    ;(println "c " (count @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])))
     (let [[trades alerts] @(rf/subscribe [:ta2022/trade-history])]
-      [v-box :gap "10px" :padding "80px 20px" :class "subbody"
+      [v-box :gap "10px"
        :children [[isin-picker]
                   [trade-static-and-pricing isin qdata]
                   [historical-chart isin qdata (:ta2022.trade/entry-date (first trades)) (map :ta2022.trade/entry-date trades)]
@@ -232,8 +251,200 @@
                   [attachments isin]
                   [positions-and-performance-table isin]
                   [trade-history trades alerts]
+                  [actions]
                   ]
 
        ]))
 
   )
+
+
+(rf/reg-event-fx
+  :ta2022/get-main-table-data
+  (fn [{:keys [db]} [_ analyst sector country portfolio]]
+    {:db db
+     :http-get-dispatch {:url          (str static/server-address "ta2022-main-table-data?analyst=" analyst "&sector=" sector "&country=" country "&portfolio=" portfolio)
+                         :dispatch-key [:ta2022/main-table-data]}}))
+
+
+(def table-columns
+  {:id                          {:Header "ID" :accessor "id" :show false}
+   :id-show                     {:Header "ID" :accessor "id" :width 60}
+   ;:strategy-shortcut           {:Header "Strategy"       :accessor "strategy-shortcut"           :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR :Cell tables/strategy-pop-up}
+   :strategy                    {:Header "Strategy" :accessor "strategy" :Cell #(if-let [x (aget % "value")] (tatables/strategy->shortcut x) "-")  :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR} ;we need to have it in the table for the props
+   ;:entry-date                  {:Header "Entry date"     :accessor "entry-date"                  :width 80 :style {:textAlign "center"} :Cell tables/format-date-from-int-rt}
+   ;:exit-date                   {:Header "Exit date"      :accessor "exit-date"                   :width 70 :style {:textAlign "center"} :Cell tables/exit-date-props :filterMethod tables/exit-date-filter}
+   ;:analyst                     {:Header "Analyst"        :accessor "analyst"                     :width 50 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
+   :NAME                        {:Header "Name" :accessor "Bond" :width 120 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
+   :portfolio                   {:Header "Portfolio" :accessor "portfolio" :width 135 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
+   :ISIN                        {:Header "ISIN" :accessor "ISIN" :width 125 :style {:textAlign "center"}}
+   :status                      {:Header "Status" :accessor "status" :show false} ;we need to have it in the table for the props
+   :status-show                 {:Header "Status" :accessor "status" :width 60 :style {:textAlign "center"}} ;we need to have it in the table for the props
+   :thisyear                    {:Header "thisyear" :accessor "thisyear" :show false} ;we need to have it in the table for the props
+   :position                    {:Header "Model" :accessor "position" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
+   :live-position               {:Header "Actual" :accessor "live-position" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
+   :entry-price                 {:Header "Entry" :accessor "entry-price" :width 60 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND}
+   :price                       {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND}
+   :yield                       {:Header "Yield" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :Cell tables/yield-format :filterMethod tables/nb-filter-OR-AND}
+   :z-spread                    {:Header "Z-Sprd" :accessor "Used_ZTW" :width 55 :style {:textAlign "right"} :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND}
+   :g-spread                    {:Header "G-Sprd" :accessor "G_SPREAD_MID_CALC" :width 55 :style {:textAlign "right"} :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND}
+   :duration                    {:Header "Dur." :accessor "Used_Duration" :width 45 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :filterMethod tables/nb-filter-OR-AND}
+   :rating-string               {:Header "Rating" :accessor "Rating_String" :width 110 :style {:textAlign "center"}}
+   :difference_svr              {:Header "4D" :accessor "difference_svr" :width 35 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.0f" 1. %) :filterMethod tables/nb-filter-OR-AND}
+   :difference_svr_2d           {:Header "2D" :accessor "difference_svr_2d" :width 35 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.0f" 1. %) :filterMethod tables/nb-filter-OR-AND}
+
+   ;:d-target                    {:Header "Price"          :accessor "d-target"                    :width 50 :style {:textAlign "right"} :Cell tables/round0pc-trigger :filterMethod tables/nb-filter-OR-AND}
+   ;:d-review                    {:Header "Review"         :accessor "d-review"                    :width 50 :style {:textAlign "right"} :Cell tables/round0pc-trigger :filterMethod tables/nb-filter-OR-AND}
+   ;:max-d-others                {:Header "Others"         :accessor "max-d-others"                :width 50 :style {:textAlign "right"} :Cell tables/round0pc-trigger :filterMethod tables/nb-filter-OR-AND}
+   ;:ytd-return                  {:Header "Raw"            :accessor "ytd-return"                  :width 50 :style {:textAlign "right"} :Cell tables/round1pcytd :filterMethod tables/nb-filter-OR-AND} ;:getProps fp4
+   ;:ytd-return-vs-cembi         {:Header "CEMBI"       :accessor "ytd-return-vs-cembi"         :width 50 :style {:textAlign "right"} :Cell tables/round1pcytd :filterMethod tables/nb-filter-OR-AND} ;:getProps fp4
+   ;:ytd-return-vs-cembi-rating  {:Header "IGHY"        :accessor "ytd-return-vs-cembi-rating"  :width 50 :style {:textAlign "right"} :Cell tables/round1pcytd :filterMethod tables/nb-filter-OR-AND}
+   ;:ytd-return-vs-cembi-country {:Header "Cntry"       :accessor "ytd-return-vs-cembi-country" :width 50 :style {:textAlign "right"} :Cell tables/round1pcytd :filterMethod tables/nb-filter-OR-AND}
+   ;:ytd-return-vs-cembi-sector  {:Header "Sctr"      :accessor "ytd-return-vs-cembi-sector"  :width 50 :style {:textAlign "right"} :Cell tables/round1pcytd :filterMethod tables/nb-filter-OR-AND}
+   :ltd-return                  {:Header "Raw" :accessor "ltd-return" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND} ;:getProps fp4
+   :ltd-return-vs-cembi         {:Header "CEMBI" :accessor "ltd-return-vs-cembi" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND} ;:getProps fp4
+   :ltd-return-vs-cembi-rating  {:Header "IGHY" :accessor "ltd-return-vs-cembi-rating" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
+   :ltd-return-vs-cembi-country {:Header "Cntry" :accessor "ltd-return-vs-cembi-country" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
+   :ltd-return-vs-cembi-sector  {:Header "Sctr" :accessor "ltd-return-vs-cembi-sector" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
+   :price-target                {:Header "Target" :accessor "price-target" :width 55 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :filterMethod tables/nb-filter-OR-AND}
+   :review-target               {:Header "Target" :accessor "implied-price-review" :width 55 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :filterMethod tables/nb-filter-OR-AND}
+   :relval-target-description   {:Header "Description" :accessor "relval-target-description" :width 170} ;:getProps fp4 ; :headerClassName "wordwrap"
+   :relval-target-latest        {:Header "Latest" :accessor "relval-target-value" :width 50 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND} ;:getProps fp4 ; :headerClassName "wordwrap"
+   :relval-target-distance                    {:Header "Relval"         :accessor "relval-target-distance"                    :width 50 :style {:textAlign "right"} :Cell tables/round0pc :filterMethod tables/nb-filter-OR-AND}
+
+   ;:implied-total-return-1y-review {:Header "Review"         :accessor "implied-total-return-1y-review"        :width 60 :style {:textAlign "right"} :Cell tables/round1pcsign :filterMethod tables/nb-filter-OR-AND}
+   ;:implied-total-return-1y-target {:Header "Price"         :accessor "implied-total-return-1y-target"        :width 60 :style {:textAlign "right"} :Cell tables/round1pcsign :filterMethod tables/nb-filter-OR-AND}
+   ;:implied-total-return-1y-relval {:Header "Relval"         :accessor "implied-total-return-1y-relval"        :width 60 :style {:textAlign "right"} :Cell tables/round1pcsign :filterMethod tables/nb-filter-OR-AND}
+   ;:svr4d1yrtn {:Header "4D"         :accessor "svr4d1yrtn"        :width 60 :style {:textAlign "right"} :Cell tables/round1pcsign :filterMethod tables/nb-filter-OR-AND}
+   ;:svr2d1yrtn {:Header "2D"         :accessor "svr2d1yrtn"        :width 60 :style {:textAlign "right"} :Cell tables/round1pcsign :filterMethod tables/nb-filter-OR-AND}
+   ;:upside1y {:Header "Tight"         :accessor "upside1y"        :width 60 :style {:textAlign "right"} :Cell tables/round1pcsign  :filterMethod tables/nb-filter-OR-AND}
+   ;:expected1y {:Header "Median"         :accessor "expected1y"        :width 60 :style {:textAlign "right"} :Cell tables/round1pcsign  :filterMethod tables/nb-filter-OR-AND}
+   ;:downside1y {:Header "Wide"         :accessor "downside1y"        :width 60 :style {:textAlign "right"} :Cell tables/round1pcsign :filterMethod tables/nb-filter-OR-AND}
+
+   })
+
+(defn main-table []
+  (let [analyst (r/atom nil)
+        sector (r/atom nil)
+        country (r/atom nil)
+        portfolio (r/atom nil)
+        qsdata @(rf/subscribe [:quant-model/model-output])
+        data @(rf/subscribe [:ta2022/main-table-data])
+        ]
+
+    [v-box :gap "10px"
+     :children [
+                (gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
+                                        [[h-box :gap "10px" :align :center
+                                          :children [[single-dropdown :model analyst :choices (conj (for [k @(rf/subscribe [:analysts])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(reset! analyst %) :placeholder "Analyst" :filter-box? true]
+                                                     [single-dropdown :model sector :choices (conj (map (fn [x] {:id x :label x}) (sort (distinct (map :Sector qsdata)))) {:id "All" :label "All"}) :on-change #(reset! sector %) :placeholder "Sector" :filter-box? true]
+                                                                                      [single-dropdown :model country :choices (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"}) :on-change #(reset! country %) :placeholder "Country" :filter-box? true]
+                                                                                      [single-dropdown :model portfolio :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(reset! portfolio %) :placeholder "Portfolio" :filter-box? true]
+                                                                                      [button :label "Fetch data" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:ta2022/get-main-table-data @analyst @sector @country @portfolio])]
+
+                                                                                      ]]
+
+
+                                         ]
+
+                                        )
+
+                (gt/element-box-generic "isin-picker" element-box-width "Table" nil
+                                        [[:> ReactTable
+                                          {:data           data
+                                           :columns        [{:Header "Trade description" :columns (mapv table-columns [:strategy :NAME])} ;:id :strategy-shortcut
+                                                            {:Header "Pricing" :columns (mapv table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
+                                                            {:Header "Relative value target" :columns (mapv table-columns [:relval-target-description :relval-target-latest :relval-target-distance])}
+                                                            ;{:Header "Price target" :columns (mapv table-columns [:price-target :d-target])}
+                                                            ;{:Header "Review target" :columns (mapv table-columns [:review-target :d-review])}
+                                                            ;{:Header "Performance since inception" :columns (mapv table-columns [:ltd-return :ltd-return-vs-cembi :ltd-return-vs-cembi-rating :ltd-return-vs-cembi-country :ltd-return-vs-cembi-sector])}
+                                                            ;{:Header "Performance year to date" :columns (mapv table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector])}
+                                                            ]
+                                           :pageSize       10
+                                           :showPagination false
+                                           :className      "-striped -highlight"}]
+
+
+                                         ]
+
+                                        )
+                ]
+
+     ])
+
+  )
+
+(defn active-home []
+  (let [active-ta2022 @(rf/subscribe [:ta2022/active-home])]
+    (.scrollTo js/window 0 0)                             ;on view change we go back to top
+    [box :padding "80px 20px" :class "rightelement"
+     :child (case active-ta2022
+              :main [main-table]
+              :trade-view [trade-view]
+              [:div.output "nothing to display"])]))
+
+(defn nav-ta2022-bar []
+  (let [active-esg @(rf/subscribe [:ta2022/active-home])]
+    [h-box
+     :children [[v-box
+                 :gap "20px" :class "leftnavbar"
+                 :children (into []
+                                 (for [item static/ta2022-navigation]
+                                   [button
+                                    :class (str "btn btn-primary btn-block" (if (and (= active-esg (:code item))) " active"))
+                                    :label (:name item)
+                                    :on-click #(rf/dispatch [:ta2022/active-home (:code item)])]))]]]))
+
+(defn close-trade-modal []
+  (let [closing-text (r/atom nil)]
+    [[title :label "Close trade" :level :level1]
+     [label :label "Exit rationale"]
+     [input-textarea :model closing-text :on-change #(reset! closing-text %) :width "600px" :rows 5]
+     [h-box :gap "10px" :children [[button :style {:width "100%"} :label "Close" :on-click #()]
+                       [button :style {:width "100%"} :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+     ])
+  )
+
+(defn morph-trade-modal []
+  (let [closing-text (r/atom nil)
+        entry-text (r/atom nil)
+        strategy (r/atom nil)
+        analyst (r/atom nil)
+        ]
+    [[title :label "Morph trade" :level :level1]
+     [label :label "Exit rationale"]
+     [input-textarea :model closing-text :on-change #(reset! closing-text %) :width "600px" :rows 5]
+     [label :label "New analyst"]
+     [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]
+     [label :label "New strategy"]
+     [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]
+     [label :label "New trade rationale"]
+     [input-textarea :model entry-text :on-change #(reset! entry-text %) :width "600px" :rows 10]
+
+
+     [h-box :gap "10px" :children [[button :style {:width "100%"} :label "Close" :on-click #()]
+                                   [button :style {:width "100%"} :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+     ])
+  )
+
+
+(defn modal-ta2022 []
+  (if-let [modal-data @(rf/subscribe [:ta2022/show-modal])]
+    [modal-panel :backdrop-on-click #(rf/dispatch [:ta2022/show-modal nil])
+     :child [v-box :width "800px" :height "800px" :gap "10px" :padding "20px"
+             :children
+             (case (modal-data :type)
+               :amend-latest-trade nil
+               :close-trade (close-trade-modal)
+               :morph-trade (morph-trade-modal)
+               :add-attachment nil
+               nil
+
+               )
+
+             ]])
+
+  )
+
+(defn ta2022-view []
+  [h-box :gap "10px" :padding "0px" :children [[nav-ta2022-bar] [active-home] [modal-ta2022]]])

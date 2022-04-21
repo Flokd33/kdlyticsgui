@@ -260,6 +260,9 @@
                  :ta2022/trade-attachments nil
                  :ta2022/trade-latest-targets-and-triggers nil
                  :ta2022/trade-history nil
+                 :ta2022/active-home :main
+                 :ta2022/main-table-data []
+                 :ta2022/show-modal nil
 
                  :dummy nil                                 ;can be useful
                  })
@@ -448,6 +451,9 @@
            :ta2022/trade-view-position-and-performance-table
            :ta2022/trade-latest-targets-and-triggers
            :ta2022/trade-history
+           :ta2022/active-home
+           :ta2022/main-table-data
+           :ta2022/show-modal
 
 
            :dummy

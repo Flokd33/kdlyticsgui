@@ -79,6 +79,12 @@
    {:code :esg-engagements      :name "ESG interactions"}
    ])
 
+(def ta2022-navigation
+  [{:code :main                 :name "Table"}
+   {:code :trade-view           :name "Trade view"}
+   {:code :trade-entry          :name "Trade entry"}
+   ])
+
 (def risk-choice-map
   [{:id "None"         :label "None"}
    {:id :region        :label "Region"}
