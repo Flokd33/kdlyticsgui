@@ -232,27 +232,30 @@
   (r/as-element
     (if-let [x (aget this "value")]
       [v-box :children (into [] (for [t x]
-                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next t)) )) "bps")]
+                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next t)) )) "bps") " @" (last t)]
                                   ))]
       "-"))
   )
 
 (defn trade-history-sc []
+  ;(rf/dispatch [:get-recent-trade-data (t/int-to-gdate(plus (today) (days -10))) (t/int-to-gdate (today))])
   (let [ports (remove #(some #{%} ["OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]) @(rf/subscribe [:portfolios]))
         port-cembi (mapcat :portfolios (t/chainfilter {:label "CEMBI"} static/portfolio-alignment-groups))
         port-ig (mapcat :portfolios (t/chainfilter {:label "IG"} static/portfolio-alignment-groups))
-        port-seg (mapcat :portfolios (t/chainfilter {:label #(or (= % "Allianz") (= % "Munich Re") (= % "Talanx USD"))} static/portfolio-alignment-groups))
-        port-other (mapcat :portfolios (t/chainfilter {:label #(or (= % "Other EMCD") (= % "HCD") (= % "TR"))} static/portfolio-alignment-groups))
+        port-munich (mapcat :portfolios (t/chainfilter {:label #(= % "Munich Re")} static/portfolio-alignment-groups))
+        port-talanx (mapcat :portfolios (t/chainfilter {:label #(= % "Talanx USD")} static/portfolio-alignment-groups))
+        port-allianz (mapcat :portfolios (t/chainfilter {:label #(= % "Allianz")} static/portfolio-alignment-groups))
+        port-other (mapcat :portfolios (t/chainfilter {:label #(or (= % "Other EMCD") (= % "TR"))} static/portfolio-alignment-groups))
         data (map #(select-keys % (conj ports :date)) @(rf/subscribe [:recent-trade-data/trades]))
         sector @(rf/subscribe [:scorecard/sector])
         empty-filter (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
-        sector-filter (fn [row] (if (= sector "Sector") true (= (last row) sector)))
+        sector-filter (fn [row] (if (= sector "Sector") true (= (second (next (next (next row)))) sector)))
         final-data (->> data
                         (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter sector-filter v))])))
                         (filter empty-filter)
                         )
         ]
-    (gt/element-box "scorecard-scores" "100%" (str "14days trade history" sector) final-data
+    (gt/element-box "scorecard-scores" "100%" (str "14 day trade history " sector) final-data
                     (concat
                       [[title :label "Main" :level :level2]]
                       [[:> ReactTable
@@ -260,31 +263,47 @@
                        :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
                                         (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
                                                  (for [p port-cembi]
-                                                   {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                                                   {:Header p :accessor p :Cell recent-trades-display :width 250})))
                        :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
+                      [[title :label "Allianz" :level :level2]]
+                      [[:> ReactTable
+                        {:data      (reverse final-data)
+                         :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                                          (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+                                                   (for [p port-allianz]
+                                                     {:Header p :accessor p :Cell recent-trades-display :width 250})))
+                         :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
                       [[title :label "IG" :level :level2]]
-                    [[:> ReactTable
+                      [[:> ReactTable
                       {:data      (reverse final-data)
                        :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
                                         (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
                                                  (for [p port-ig]
-                                                   {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                                                   {:Header p :accessor p :Cell recent-trades-display :width 250})))
                        :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
-                      [[title :label "Allianz/Munich/Talanx" :level :level2]]
+                      [[title :label "Munich" :level :level2]]
                     [[:> ReactTable
                       {:data      (reverse final-data)
                        :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
                                         (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
-                                                 (for [p port-seg]
-                                                   {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                                                 (for [p port-munich]
+                                                   {:Header p :accessor p :Cell recent-trades-display :width 250})))
                        :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
+                      [[title :label "Talanx" :level :level2]]
+                      [[:> ReactTable
+                        {:data      (reverse final-data)
+                         :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
+                                          (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
+                                                   (for [p port-talanx]
+                                                     {:Header p :accessor p :Cell recent-trades-display :width 250})))
+                         :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
                       [[title :label "Other" :level :level2]]
                     [[:> ReactTable
                       {:data      (reverse final-data)
                        :columns   (into [{:Header "Date" :accessor "date" :Cell recent-trades-display-date :width 100 :style {:textAlign "center" :justifyContent "center"}}]
                                         (sort-by #(.indexOf (mapcat :portfolios static/portfolio-alignment-groups) (:accessor %))
                                                  (for [p port-other]
-                                                   {:Header p :accessor p :Cell recent-trades-display :width 200})))
+                                                   {:Header p :accessor p :Cell recent-trades-display :width 250})))
                        :className "-striped -highlight" :pageSize (count (reverse final-data))}]]
                             ))))
 

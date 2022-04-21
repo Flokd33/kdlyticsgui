@@ -31,7 +31,9 @@
                                ;:Allianz-model "Allianz model"
                                :IG-model      "IG"
                                ;:BNP-model     "BNP model"
-                               :TR-model      "TR"})
+                               :TR-model      "TR"
+                               :Transition-model     "Transition"
+                               })
 
 ;;;;;;;;;;;;
 

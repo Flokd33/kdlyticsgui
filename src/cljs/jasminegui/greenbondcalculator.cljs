@@ -105,14 +105,16 @@
                                    :project-selection/categories {:question_id 2 :question_category "project-selection" :analyst_answer "other" :analyst_score 7},
                                    :project-selection/categories-other {:question_id 3 :question_category "project-selection" :analyst_answer "" :analyst_score 0},
                                    :project-evaluation/independent-verification {:question_id 4 :question_category "project-evaluation" :analyst_answer "none" :analyst_score 0},
+                                   :project-evaluation/second-opinion {:question_id 25 :question_category "project-evaluation" :analyst_answer "none" :analyst_score 0}
                                    :project-evaluation/credibility {:question_id 5 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
                                    :project-evaluation/materiality {:question_id 6 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
                                    :project-evaluation/discipline {:question_id 7 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
                                    :project-evaluation/controversies {:question_id 8 :question_category "project-evaluation" :analyst_answer "Yes" :analyst_score 0},
+                                   :project-evaluation/notes {:question_id 24 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0},
                                    :project-evaluation/country-framework-list {:question_id 9 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0},
                                    :project-evaluation/national-framework-best-practice {:question_id 10 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
                                    :project-evaluation/better-than-national {:question_id 11 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
-                                   :project-evaluation/aligned-with-country-sector-pathway {:question_id 12 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
+                                   ;:project-evaluation/aligned-with-country-sector-pathway {:question_id 12 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
                                    :project-evaluation/reference-sources {:question_id 13 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0},
                                    :proceed-management/ringfencing {:question_id 14 :question_category "project-management" :analyst_answer "none" :analyst_score 0},
                                    :proceed-management/tracked {:question_id 15 :question_category "project-management" :analyst_answer "none" :analyst_score 0},
@@ -126,17 +128,17 @@
                                    :analyst-evaluation/text {:question_id 23 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0}
                                    }))
 
-(def gb-scoring {:project-selection/categories {:climate 14 :renewable 14 :green 14 :energy 14 :clean 14 :pollution 14 :eco 14 :environmentally 14 :terrestrial 14 :sustainable 14 :other 7}
-                 :project-evaluation/independent-verification {:second-party-opinion 10 :green-bond-framework 8 :external-scoring 6 :none 0} ;;;;
-                 :project-evaluation/credibility {:Yes 8 :No 0}
-                 :project-evaluation/materiality {:Yes 8 :No 0}
-                 :project-evaluation/discipline {:Yes 8 :No 0}
-                 :project-evaluation/controversies {:Yes 0 :No 8}
-                 :project-evaluation/national-framework-best-practice {:Yes 6 :No 0}
-                 :project-evaluation/better-than-national {:Yes 8 :No 0}
-                 :project-evaluation/aligned-with-country-sector-pathway {:Yes 10 :No 0}
-                 :proceed-management/ringfencing {:sub-account 9 :green-account 9 :virtual-account 9 :none 0}
-                 :proceed-management/tracked {:verified 11 :tracked 8 :none 0}
+(def gb-scoring {:project-selection/categories {:climate 14 :renewable 14 :green 14 :energy 14 :clean 14 :pollution 14 :eco 14 :environmentally 14 :terrestrial 14 :sustainable 14 :other 7};1
+                 :project-evaluation/independent-verification {:second-party-opinion 10 :green-bond-framework 8 :external-scoring 6 :none 0} ;;;;;1
+                 :project-evaluation/credibility {:Yes 10 :No 0} ;1
+                 :project-evaluation/materiality {:Yes 10 :No 0};1
+                 :project-evaluation/discipline {:Yes 10 :No 0};1
+                 :project-evaluation/controversies {:Yes 0 :No 10};1
+                 :project-evaluation/national-framework-best-practice {:Yes 6 :No 0};1
+                 :project-evaluation/better-than-national {:Yes 8 :No 0};1
+                 ;:project-evaluation/aligned-with-country-sector-pathway {:Yes 10 :No 0}
+                 :proceed-management/ringfencing {:sub-account 10 :green-account 10 :virtual-account 10 :none 0};1
+                 :proceed-management/tracked {:verified 12 :tracked 9 :none 0};1
                  :reporting/project-on-track {:Yes 20 :No 0}
                  :reporting/project-expanded {:Yes 15 :No 0}
                  :reporting/increased-green-funding {:Yes 15 :No 0}
@@ -208,6 +210,11 @@
                           [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices [{:id "second-party-opinion" :label "The bond is certified by an independent second party opinion"} {:id "green-bond-framework"  :label "The bond is certified by an external green bond framework"} {:id "external-scoring"  :label "There is an external scoring or rating on the sustainability element"} {:id "none"  :label "None of the above"}]
                            :model (r/cursor esg-calculator-summary [:project-evaluation/independent-verification :analyst_answer ])
                            :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/independent-verification :analyst_answer ]) %) (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Who provides second opinion?"]
+                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices [{:id "spo" :label "SPO"} {:id "sustainalytics"  :label "Sustainalytics"} {:id "cicero"  :label "CICERO"} {:id "svn-gl"  :label "DVN GL"} {:id "moodys-vigeo"  :label "Moody/Vigeo"} {:id "iss-esg"  :label "ISS ESG"} {:id "none"  :label "None of the above"}]
+                           :model (r/cursor esg-calculator-summary [:project-evaluation/second-opinion :analyst_answer ])
+                           :on-change #(reset! (r/cursor esg-calculator-summary [:project-evaluation/second-opinion :analyst_answer ]) %)]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility" :level :level2]]
                                                              [box :width dropdown-width :child [button :label (:text (gb-eligible)) :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (:color (gb-eligible)) :textAlign "center"}]]]]
               [h-box :gap "10px" :align :center
@@ -226,6 +233,10 @@
                :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/controversies :analyst_answer])
                            :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/controversies :analyst_answer]) %) (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :start
+               :children [[label :width question-width :label "Notes:"]
+                          [input-textarea :width categories-list-width-long :rows 5 :model (r/cursor esg-calculator-summary [:project-evaluation/notes :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/notes :analyst_answer ]) %))]]]
               [title :label "Management of proceeds" :level :level2 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Ringfencing:"]
@@ -250,10 +261,10 @@
                :children [[label :width question-width :label "Is the company framework better than the national framework?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/better-than-national :analyst_answer])
                            :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/better-than-national :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the project aligned with the country-specific sector pathway?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer])
-                           :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer]) %) (gb-score-calculator))]]]
+              ;[h-box :gap "10px" :align :center
+              ; :children [[label :width question-width :label "Is the project aligned with the country-specific sector pathway?"]
+              ;            [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor esg-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer])
+              ;             :on-change #(do (reset! (r/cursor esg-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Reference sources:"]
                           [input-textarea  :width categories-list-width-long :model (r/cursor esg-calculator-summary [:project-evaluation/reference-sources :analyst_answer])
