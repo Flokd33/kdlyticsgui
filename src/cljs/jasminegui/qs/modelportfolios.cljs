@@ -32,6 +32,7 @@
                                :IG-model      "IG"
                                ;:BNP-model     "BNP model"
                                :TR-model      "TR"
+                               :Transition-model-rebased     "Transition-rebased"
                                :Transition-model     "Transition"
                                })
 
@@ -69,14 +70,26 @@
                  :IG-model-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]))
                  :IG-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]) (:Used_ZTW %))
                  :TR-model-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]))
-                 :TR-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]) (:Used_ZTW %)))
+                 :TR-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]) (:Used_ZTW %))
+                 :Transition-model-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model]))
+                 :Transition-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model]) (:Used_ZTW %))
+                 :Transition-model-rebased-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model-rebased]))
+                 :Transition-model-rebased-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model-rebased]) (:Used_ZTW %))
+
+                 )
                (assoc %
                  :CEMBI-model-dur       0
                  :CEMBI-model-dur-x-sp  0
                  :IG-model-dur          0
                  :IG-model-dur-x-sp     0
                  :TR-model-dur          0
-                 :TR-model-dur-x-sp     0))
+                 :TR-model-dur-x-sp     0
+                 :Transition-model-dur          0
+                 :Transition-model-dur-x-sp     0
+                 :Transition-model-rebased-dur 0
+                 :Transition-model-rebased-dur-x-sp 0
+                 )
+               )
             data))))
 
 
@@ -286,7 +299,7 @@
                       )]]))))
 
 (defn trade-history []
-  (let [portfolio (r/atom (ffirst model-portfolio-universe))]
+  (let [portfolio (r/atom (first model-portfolio-universe))]
     (fn []
       (let [data @(rf/subscribe [:model-portfolios/trades])]
         [v-box :class "element" :gap "20px" :width "1690px"
