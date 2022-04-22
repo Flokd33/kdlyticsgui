@@ -69,14 +69,20 @@
                  :IG-model-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]))
                  :IG-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :IG-model]) (:Used_ZTW %))
                  :TR-model-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]))
-                 :TR-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]) (:Used_ZTW %)))
+                 :TR-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :TR-model]) (:Used_ZTW %))
+                 :Transition-model-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model]))
+                 :Transition-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model]) (:Used_ZTW %))
+                 )
                (assoc %
                  :CEMBI-model-dur       0
                  :CEMBI-model-dur-x-sp  0
                  :IG-model-dur          0
                  :IG-model-dur-x-sp     0
                  :TR-model-dur          0
-                 :TR-model-dur-x-sp     0))
+                 :TR-model-dur-x-sp     0
+                 :Transition-model-dur          0
+                 :Transition-model-dur-x-sp     0)
+               )
             data))))
 
 
