@@ -276,6 +276,7 @@
    :BNP-model                           {:Header "BNP" :accessor "BNP-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
    :TR-model                            {:Header "TR" :accessor "TR-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
    :Transition-model                    {:Header "Transition" :accessor "Transition-model" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
+   :Transition-model-rebased            {:Header "Transition-rebased" :accessor "Transition-model-rebased" :width 65 :Cell tables/round2-if-not0 :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND :getProps model-portfolio-weights-props}
 
    :CEMBI-model-objective               {:Header "Main" :accessor "CEMBI-model-objective" :width 65 :show false}
    :Allianz-model-objective             {:Header "Allianz" :accessor "Allianz-model-objective" :width 65 :show false}
@@ -283,6 +284,7 @@
    :BNP-model-objective                 {:Header "BNP" :accessor "BNP-model-objective" :width 65 :show false}
    :TR-model-objective                  {:Header "TR" :accessor "TR-model-objective" :width 65 :show false}
    :Transition-model-objective          {:Header "Transition" :accessor "Transition-model-objective" :width 65 :show false}
+   :Transition-model-rebased-objective  {:Header "Transition-rebased" :accessor "Transition-model-rebased-objective" :width 65 :show false}
 
    :CEMBI-model-dur                     {:Header "Main" :accessor "CEMBI-model-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :CEMBI-model-dur-x-sp                {:Header "Main" :accessor "CEMBI-model-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
@@ -390,7 +392,7 @@
               [{:Header "Outlook" :columns (mapv quant-score-table-columns [:RTG_SP_OUTLOOK :RTG_FITCH_OUTLOOK :RTG_MDY_OUTLOOK])}])
       "Model portfolios"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Ticker :Country :Sector :SENIOR-WIDE :HYBRID-WIDE :INTERNATIONAL_SUKUK  :ESG :AMT_OUTSTANDING_3 :COUPON])}]
-              [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :IG-model :Transition-model :TR-model :Transition-model-objective :CEMBI-model-objective :IG-model-objective :TR-model-objective])}]
+              [{:Header "Model weights" :columns (mapv quant-score-table-columns [:CEMBI-model :IG-model :Transition-model :Transition-model-rebased :TR-model :Transition-model-objective :Transition-model-rebased-objective :CEMBI-model-objective :IG-model-objective :TR-model-objective])}]
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
