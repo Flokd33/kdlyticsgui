@@ -20,6 +20,7 @@
     [jasminegui.qs.qscharts :as qscharts]
     [jasminegui.tools :as t]
     [jasminegui.ta2022.tables :as tatables]
+    [jasminegui.ta2022.alerts :as taalerts]
     [oz.core :as oz])
 
   )
@@ -167,11 +168,18 @@
     :filterable false :showPagination false :pageSize (count data) :showPageSizeOptions false :className "-striped -highlight"}]
   )
 
+(defn trade->alerts [trade alerts]
+  (let [all-alert-uuids (remove nil? (conj (:ta2022.trade/other-alert-uuids trade)
+                                           (:ta2022.trade/relval-alert-uuid trade)
+                                           (:ta2022.trade/price-alert-uuid trade)
+                                           (:ta2022.trade/target-alert-uuid trade)))]
+    (filter #(some #{(:ta2022.alert/uuid %)} all-alert-uuids) alerts)))
+
 (defn trade-description
-  [trades alerts]
+  [sorted-trades alerts]
   (let [dw "850px"
-        t0 (first trades)
-        tl (last trades)]
+        t0 (first sorted-trades)
+        tl (last  sorted-trades)]
     (gt/element-box-generic "trade-description" element-box-width "Trade description" nil
                             (concat [[v-box :gap "5px" :children [[title :label "Original trade" :level :level2]
                                                                   [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Internal ID"]] [box :size "3" :child [label :label (str (:ta2022.trade/uuid t0))]]]]
@@ -179,8 +187,8 @@
                                                                   [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Strategy"]] [box :size "3" :child [label :label (:ta2022.trade/strategy t0)]]]]
                                                                   [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Entry date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/entry-date t0))]]]]
                                                                   [h-box :width dw :gap "10px" :children [[box :size "1" :child [title :level :level3 :label "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale t0)) (catch js/Error e (:ta2022.trade/entry-rationale t0)))]]]]]]]
-                                    (if (> (count trades) 1)
-                                      [[v-box :gap "5px" :children [[title :label (str "Latest update (no." (count trades) ")") :level :level2]
+                                    (if (> (count sorted-trades) 1)
+                                      [[v-box :gap "5px" :children [[title :label (str "Latest update (no." (count sorted-trades) ")") :level :level2]
                                                                     [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Internal ID"]] [box :size "3" :child [label :label (str (:ta2022.trade/uuid tl))]]]]
                                                                     [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Analyst"]] [box :size "3" :child [label :label (:ta2022.trade/analyst tl)]]]]
                                                                     [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Strategy"]] [box :size "3" :child [label :label (:ta2022.trade/strategy tl)]]]]
@@ -188,17 +196,15 @@
                                                                     [h-box :width dw :gap "10px" :children [[box :size "1" :child [title :level :level3 :label "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale tl)) (catch js/Error e (:ta2022.trade/entry-rationale tl)))]]]]
                                                                     [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Exit date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/exit-date tl))]]]]
                                                                     [h-box :width dw :gap "10px" :children [[box :size "1" :child [title :level :level3 :label "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]]]])
-                                       [[title :label "Current triggers" :level :level2]
-                                        (let [latest-alerts (filter #(= (:ta2022.alert/start-date %) (apply max (map :ta2022.alert/start-date alerts))) alerts)]
-                                          [alert-table latest-alerts])])))
+                                       [[title :label "Current triggers" :level :level2] [alert-table (trade->alerts tl alerts)]])))
   )
 
 (defn trade-history
-  [trades alerts]
+  [sorted-trades alerts]
   (let [dw "1200px"]
   (gt/element-box-generic "trade-history" element-box-width "Trade history" nil
-                          (into [] (for [[n tl] (map-indexed list trades)]
-                                     [v-box :gap "5px" :children [[title :label (str "Trade " (inc n) "/" (count trades)) :level :level2]
+                          (into [] (for [[n tl] (map-indexed list sorted-trades)]
+                                     [v-box :gap "5px" :children [[title :label (str "Trade " (inc n) "/" (count sorted-trades)) :level :level2]
                                                                   [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Internal ID"]] [box :size "3" :child [label :label (str (:ta2022.trade/uuid tl))]]]]
                                                                   [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Analyst"]] [box :size "3" :child [label :label (:ta2022.trade/analyst tl)]]]]
                                                                   [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Strategy"]] [box :size "3" :child [label :label (:ta2022.trade/strategy tl)]]]]
@@ -206,7 +212,7 @@
                                                                   [h-box :width dw :gap "10px" :children [[box :size "1" :child [title :level :level3 :label "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale tl)) (catch js/Error e (:ta2022.trade/entry-rationale tl)))]]]]
                                                                   [h-box :width dw :gap "10px" :align :center :children [[box :size "1" :child [title :level :level3 :label "Exit date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/exit-date tl))]]]]
                                                                   [h-box :width dw :gap "10px" :children [[box :size "1" :child [title :level :level3 :label "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]
-                                                                  [h-box :width dw :gap "10px" :children [[box :size "1" :child [title :level :level3 :label "Alerts"]] [box :size "3" :child (let [latest-alerts (filter #(= (:ta2022.alert/start-date %) (:ta2022.trade/entry-date tl)) alerts)] [alert-table latest-alerts])]]]
+                                                                  [h-box :width dw :gap "10px" :children [[box :size "1" :child [title :level :level3 :label "Alerts"]] [box :size "3" :child [alert-table (trade->alerts tl alerts)]]]]
                                                                   ]])))))
 
 (defn isin-picker []
@@ -242,15 +248,16 @@
     (when (zero? (count @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])))
       (rf/dispatch [:get-ta2022-trade-view-position-and-performance-table isin]))
     ;(println "c " (count @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])))
-    (let [[trades alerts] @(rf/subscribe [:ta2022/trade-history])]
+    (let [[trades alerts] @(rf/subscribe [:ta2022/trade-history])
+          sorted-trades (sort-by :ta2022.trade/entry-date trades)]
       [v-box :gap "10px"
        :children [[isin-picker]
                   [trade-static-and-pricing isin qdata]
-                  [historical-chart isin qdata (:ta2022.trade/entry-date (first trades)) (map :ta2022.trade/entry-date trades)]
-                  [trade-description trades alerts]
+                  [historical-chart isin qdata (:ta2022.trade/entry-date (first sorted-trades)) (map :ta2022.trade/entry-date sorted-trades)]
+                  [trade-description sorted-trades alerts]
                   [attachments isin]
                   [positions-and-performance-table isin]
-                  [trade-history trades alerts]
+                  [trade-history sorted-trades alerts]
                   [actions]
                   ]
 
@@ -266,6 +273,25 @@
      :http-get-dispatch {:url          (str static/server-address "ta2022-main-table-data?analyst=" analyst "&sector=" sector "&country=" country "&portfolio=" portfolio)
                          :dispatch-key [:ta2022/main-table-data]}}))
 
+(rf/reg-event-fx
+  :ta2022/send-trade-to-test
+  (fn [{:keys [db]} [_ trade-entry]]
+    {:db db
+     :http-post-dispatch {:url          (str static/server-address "ta2022-post-data")
+                          :edn-params {:action :test-trade
+                                       :trade-entry trade-entry}
+                         :dispatch-key [:ta2022/test-result]}}))
+
+(rf/reg-event-fx
+  :ta2022/save-new-trade
+  (fn [{:keys [db]} [_ last-leg-uuid closing-text trade-entry]]
+    {:db db
+     :http-post-dispatch {:url          (str static/server-address "ta2022-post-data")
+                          :edn-params {:action :save-trade
+                                       :last-leg-uuid last-leg-uuid
+                                       :closing-text closing-text
+                                       :trade-entry trade-entry}
+                         :dispatch-key [:ta2022/save-result]}}))
 
 (def table-columns
   {:id                          {:Header "ID" :accessor "id" :show false}
@@ -407,42 +433,52 @@
 
 (defn morph-trade-modal []
   (let [closing-text (r/atom nil)
-        entry-text (r/atom nil)
-        strategy (r/atom nil)
-        analyst (r/atom nil)
-        ]
+        trade-entry (r/atom {:analyst nil
+                             :strategy nil
+                             :entry-text nil
+                             :ISIN @(rf/subscribe [:ta2022/trade-isin])
+                             :relval-alert taalerts/single-alert-template
+                             :target-alert taalerts/single-alert-template
+                             :review-alert taalerts/single-alert-template
+                             :other-alerts {}})
+        entry-text (r/cursor trade-entry [:entry-text])
+        strategy (r/cursor trade-entry [:strategy])
+        analyst (r/cursor trade-entry [:analyst])
+        last-leg-uuid (:ta2022.trade/uuid (last (first @(rf/subscribe [:ta2022/trade-history]))))]
     [[title :label "Morph trade" :level :level1]
      [label :label "Exit rationale"]
      [input-textarea :model closing-text :on-change #(reset! closing-text %) :width "600px" :rows 5]
-     [label :label "New analyst"]
-     [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]
-     [label :label "New strategy"]
-     [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]
+     [h-box :align :center :children [[label :width "125px" :label "New analyst"]
+                                      [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]]]
+     [h-box :align :center :children [[label :width "125px" :label "New strategy"]
+                                      [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
      [label :label "New trade rationale"]
      [input-textarea :model entry-text :on-change #(reset! entry-text %) :width "600px" :rows 10]
+     [taalerts/trade-alert-input trade-entry]
 
-
-     [h-box :gap "10px" :children [[button :style {:width "100%"} :label "Close" :on-click #()]
-                                   [button :style {:width "100%"} :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+     [line]
+     [h-box :gap "10px" :children [[button :class "btn btn-primary btn-block" :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
+                                   [button :class "btn btn-primary btn-block" :label "Morph trade" :on-click #(rf/dispatch [:ta2022/save-new-trade last-leg-uuid @closing-text @trade-entry])]
+                                   [button :class "btn btn-primary btn-block" :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
      ])
   )
 
 
 (defn modal-ta2022 []
   (if-let [modal-data @(rf/subscribe [:ta2022/show-modal])]
-    [modal-panel :backdrop-on-click #(rf/dispatch [:ta2022/show-modal nil])
-     :child [v-box :width "800px" :height "800px" :gap "10px" :padding "20px"
-             :children
-             (case (modal-data :type)
-               :amend-latest-trade nil
-               :close-trade (close-trade-modal)
-               :morph-trade (morph-trade-modal)
-               :add-attachment nil
-               nil
+    [modal-panel                                            ;:backdrop-on-click #(rf/dispatch [:ta2022/show-modal nil])
+     :child [scroller :h-scroll :off :v-scroll :on :child [v-box :width "1024px" :height "800px" :gap "10px" :padding "20px"
+                              :children
+                              (case (modal-data :type)
+                                :amend-latest-trade nil
+                                :close-trade (close-trade-modal)
+                                :morph-trade (morph-trade-modal)
+                                :add-attachment nil
+                                nil
 
-               )
+                                )
 
-             ]])
+                              ]]])
 
   )
 
