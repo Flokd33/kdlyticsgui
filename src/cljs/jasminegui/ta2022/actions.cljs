@@ -30,6 +30,7 @@
                      price-alert
                      review-alert
                      other-alerts]]
+    (println "here")
     {:db (assoc db :show-morph-trade-modal false :success-modal {:show true :on-close :trade-morphed :response nil})
      :http-post-dispatch {:url         (str static/server-address "ta2022-morph-trade")
                           :edn-params  {:id             (keyword id)

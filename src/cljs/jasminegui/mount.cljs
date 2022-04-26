@@ -263,6 +263,8 @@
                  :ta2022/active-home :main
                  :ta2022/main-table-data []
                  :ta2022/show-modal nil
+                 :ta2022/test-result nil
+                 :ta2022/can-morph false
 
                  :dummy nil                                 ;can be useful
                  })
@@ -454,6 +456,8 @@
            :ta2022/active-home
            :ta2022/main-table-data
            :ta2022/show-modal
+           :ta2022/test-result
+           :ta2022/can-morph
 
 
            :dummy

@@ -1,6 +1,6 @@
 (ns jasminegui.static)
 
-(def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
+(def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod)) ;WARNING
 (def ta-server-address "http://iamlfilive:3500/")
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;

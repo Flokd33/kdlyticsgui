@@ -14,7 +14,7 @@
                  [lilactown/helix "0.1.5"]
                  [binaryage/devtools "1.0.5"]
                  [day8.re-frame/tracing      "0.6.2"]
-                 [day8.re-frame/re-frame-10x "1.2.3"]
+                 [day8.re-frame/re-frame-10x "1.2.6"]
                  ]
 
   :plugins []

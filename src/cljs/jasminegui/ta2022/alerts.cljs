@@ -75,14 +75,48 @@
         (update-in [:trade-entry :tradeanalyser.trade/other-alerts] dissoc (dec (count (get-in db [:trade-entry :tradeanalyser.trade/other-alerts]))))
         (assoc :can-allocate false))))
 
+(rf/reg-event-db
+  :ta2022/post-test-result
+  (fn [db [_ data]]
+    (if data
+      (let [oth (vals (get-in data [:other-alerts]))
+            main-check-fn (fn [res] (and (some? (:implied-price res)) (number? (:implied-price res)) (some? (:latest-market-price res)) (number? (:latest-market-price res)) (not (get res :triggered))))
+            other-check-fn (fn [res] (and (some? (:latest-market-price res)) (number? (:latest-market-price res)) (not (get res :triggered))))]
+        (-> db
+            (assoc :ta2022/test-result data
+                   :ta2022/can-morph (every? identity
+                                             (apply concat
+                                                    [(main-check-fn (:relval-alert data))
+                                                     (main-check-fn (:target-alert data))
+                                                     (main-check-fn (:review-alert data))]
+                                                    (map other-check-fn oth))))))
+      (assoc db :ta2022/test-result nil :ta2022/can-morph false))))
+
+
+(defn test-result
+  [alert-key alert-number]
+  (if-let [data @(rf/subscribe [:ta2022/test-result])]
+    (let [res (if (= alert-key :other-alerts) (get-in data [:other-alerts (keyword (str "k" alert-number))]) (get-in data [alert-key]))
+          implied-price? (and (some? (:implied-price res)) (number? (:implied-price res)))
+          market-price? (and (some? (:latest-market-price res)) (number? (:latest-market-price res)))
+          other-alert-ok? (and (not (get res :triggered)) market-price?)
+          main-alert-ok? (and other-alert-ok? implied-price?)
+          txt (str
+                (if (:triggered res) "Already triggered!" "Not triggered.")
+                (if market-price? (str " Latest market price " (:latest-market-price res)) " No market price!")
+                (if implied-price? (str " Implied price: " (:implied-price res)) " No implied bond price!"))]
+      (if (= alert-key :other-alerts)
+        [alert-box :padding "6px" :alert-type (if other-alert-ok? :info :danger) :body txt :style {:width "595px"}]
+        [alert-box :padding "6px" :alert-type (if main-alert-ok? :info :danger) :body txt :style {:width "595px"}]))
+    [alert-box :padding "6px" :alert-type :warning :body "Not tested" :style {:width "595px"}]))
 
 (defn single-alert [trade-entry alert-key alert-number]
-  (let [                                                    ;trade-entry (rf/subscribe [:trade-entry])
-        bloomberg-request-security-1 (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number :bloomberg-request-security-1] [alert-key :bloomberg-request-security-1]))
-        bloomberg-request-field-1    (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number :bloomberg-request-field-1] [alert-key :bloomberg-request-field-1]))
-        description                  (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number :description] [alert-key :description]))
-        comparison                   (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number :comparison] [alert-key :comparison]))
-        comparison-value             (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number :comparison-value] [alert-key :comparison-value]))
+  (let [o? (= alert-key :other-alerts)
+        bloomberg-request-security-1 (r/cursor trade-entry (if o? [alert-key alert-number :bloomberg-request-security-1] [alert-key :bloomberg-request-security-1]))
+        bloomberg-request-field-1    (r/cursor trade-entry (if o? [alert-key alert-number :bloomberg-request-field-1] [alert-key :bloomberg-request-field-1]))
+        description                  (r/cursor trade-entry (if o? [alert-key alert-number :description] [alert-key :description]))
+        comparison                   (r/cursor trade-entry (if o? [alert-key alert-number :comparison] [alert-key :comparison]))
+        comparison-value             (r/cursor trade-entry (if o? [alert-key alert-number :comparison-value] [alert-key :comparison-value]))
         guess-description            (if (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp"))
                                        (cond
                                          (and (= @bloomberg-request-field-1 "PX_LAST")) (str "price " @comparison " " @comparison-value)
@@ -96,20 +130,19 @@
         ]
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Condition"]
-                     [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp"))]
-                     [input-text :width "165px" :placeholder "BRL Curncy" :model bloomberg-request-security-1 :status (bbg-security-status @bloomberg-request-security-1) :on-change #(reset! bloomberg-request-security-1 %)]
-                     [typeahead :width "200px" :data-source bbg-field-finder :change-on-blur? true :placeholder "PX_LAST" :rigid? false :model bloomberg-request-field-1 :on-change #(reset! bloomberg-request-field-1 %)]
-                     [single-dropdown :width "100px" :choices [{:id ">" :label "above"} {:id "<" :label "below"}] :model comparison :title? false :on-change #(reset! comparison %)]
-                     [input-text :width "75px" :model comparison-value :status (not-number-error-status @comparison-value) :on-change #(reset! comparison-value %)]]]
+                     [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")))]
+                     [input-text :width "165px" :placeholder "BRL Curncy" :model bloomberg-request-security-1 :status (bbg-security-status @bloomberg-request-security-1) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 %))]
+                     [typeahead :width "200px" :data-source bbg-field-finder :change-on-blur? true :placeholder "PX_LAST" :rigid? false :model bloomberg-request-field-1 :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-field-1 %))]
+                     [single-dropdown :width "100px" :choices [{:id ">" :label "above"} {:id "<" :label "below"}] :model comparison :title? false :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison %))]
+                     [input-text :width "75px" :model comparison-value :status (not-number-error-status @comparison-value) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison-value %))]]]
                 [hb [[label :width lw :label "Description"]
-                     [md-icon-button :md-icon-name "zmdi zmdi-flare" :size :smaller :on-click #(reset! description guess-description)]
-                     [input-text :width "570px"  :model description :on-change #(reset! description %)]]]
-                [hb [[label :width lw :label "Test?"] [label :label "Not tested"]]]
+                     [md-icon-button :md-icon-name "zmdi zmdi-flare" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description guess-description))]
+                     [input-text :width "570px"  :model description :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description %))]]]
+                [hb [[label :width lw :label "Test"] [test-result alert-key alert-number]]]
                 ]]))
 
 (defn spread-alert [trade-entry alert-key alert-number]
-  (let [                                                    ;trade-entry                  (rf/subscribe [:trade-entry])
-        trade-entry-alert            (r/cursor trade-entry (if (= alert-key :tradeanalyser.trade/other-alerts) [alert-key alert-number] [alert-key]))
+  (let [trade-entry-alert            (r/cursor trade-entry (if (= alert-key :tradeanalyser.trade/other-alerts) [alert-key alert-number] [alert-key]))
         bloomberg-request-security-1 (r/cursor trade-entry-alert [:bloomberg-request-security-1])
         bloomberg-request-field-1    (r/cursor trade-entry-alert [:bloomberg-request-field-1] )
         bloomberg-request-security-2 (r/cursor trade-entry-alert [:bloomberg-request-security-2])
@@ -120,19 +153,19 @@
         comparison-value             (r/cursor trade-entry-alert [:comparison-value])]
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Security 1"]
-                     [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp"))]
-                     [input-text :width "165px" :placeholder "BRL Curncy" :model bloomberg-request-security-1 :status (bbg-security-status @bloomberg-request-security-1) :on-change #(reset! bloomberg-request-security-1 %)]
-                     [typeahead :width "200px" :data-source bbg-field-finder :change-on-blur? true :placeholder "PX_LAST" :rigid? false :model bloomberg-request-field-1 :on-change #(reset! bloomberg-request-field-1 %)]]]
-                [hb [[label :width lw :label "Operator"] [single-dropdown :width "120px" :max-height "200px" :placeholder "operator" :model operator :title? false :choices [{:id "-" :label "minus"} {:id "/" :label "divided by"}] :on-change #(reset! operator %)]]]
+                     [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")))]
+                     [input-text :width "165px" :placeholder "BRL Curncy" :model bloomberg-request-security-1 :status (bbg-security-status @bloomberg-request-security-1) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 %))]
+                     [typeahead :width "200px" :data-source bbg-field-finder :change-on-blur? true :placeholder "PX_LAST" :rigid? false :model bloomberg-request-field-1 :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-field-1 %))]]]
+                [hb [[label :width lw :label "Operator"] [single-dropdown :width "120px" :max-height "200px" :placeholder "operator" :model operator :title? false :choices [{:id "-" :label "minus"} {:id "/" :label "divided by"}] :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! operator %))]]]
                 [hb [[label :width lw :label "Security 2"]
-                     [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(reset! bloomberg-request-security-2 (str (:ISIN @trade-entry) " Corp"))]
-                     [input-text :width "165px" :placeholder "SPX Index" :model bloomberg-request-security-2 :status (bbg-security-status @bloomberg-request-security-2) :on-change #(reset! bloomberg-request-security-2 %)]
-                     [typeahead :width "200px" :data-source bbg-field-finder :change-on-blur? true :placeholder "PX_LAST" :rigid? false :model bloomberg-request-field-2 :on-change #(reset! bloomberg-request-field-2 %)]]]
+                     [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-2 (str (:ISIN @trade-entry) " Corp")))]
+                     [input-text :width "165px" :placeholder "SPX Index" :model bloomberg-request-security-2 :status (bbg-security-status @bloomberg-request-security-2) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-2 %))]
+                     [typeahead :width "200px" :data-source bbg-field-finder :change-on-blur? true :placeholder "PX_LAST" :rigid? false :model bloomberg-request-field-2 :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-field-2 %))]]]
                 [hb [[label :width lw :label "Comparison"]
-                     [single-dropdown :width "100px" :choices [{:id ">" :label "above"} {:id "<" :label "below"}] :model comparison :title? false :on-change   #(reset! comparison %)]
-                     [input-text :width "75px" :model comparison-value :status (not-number-error-status @comparison-value) :on-change #(reset! comparison-value %)]]]
-                [hb [[label :width lw :label "Description"] [input-text :width "570px" :model description :on-change #(reset! description %)]]]
-                [hb [[label :width lw :label "Test?"] [label :label "Not tested"]]]
+                     [single-dropdown :width "100px" :choices [{:id ">" :label "above"} {:id "<" :label "below"}] :model comparison :title? false :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison %))]
+                     [input-text :width "75px" :model comparison-value :status (not-number-error-status @comparison-value) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison-value %))]]]
+                [hb [[label :width lw :label "Description"] [input-text :width "570px" :model description :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description %))]]]
+                [hb [[label :width lw :label "Test?"] [test-result alert-key alert-number]]]
                 ]]))
 
 (defn fundamental-alert [trade-entry alert-key alert-number]
@@ -143,8 +176,7 @@
                 [input-textarea :width "570px" :rows "5" :model description :on-change #(reset! description %)]]]))
 
 (defn trade-alert [trade-entry title-header alert-key alert-number]
-  (let [                                                    ;trade-entry (rf/subscribe [:trade-entry])
-        alert-type (if (= alert-key :other-alerts) (r/cursor trade-entry [:other-alerts alert-number :alert-type]) (r/cursor trade-entry [alert-key :alert-type]))
+  (let [alert-type (if (= alert-key :other-alerts) (r/cursor trade-entry [:other-alerts alert-number :alert-type]) (r/cursor trade-entry [alert-key :alert-type]))
         alert-details (fn [] (case @alert-type
                                "single" [single-alert trade-entry alert-key alert-number]
                                "spread" [spread-alert trade-entry alert-key alert-number]
@@ -154,9 +186,9 @@
                 [h-box :gap "10px" :align :center
                  :children [[label :width lw :label "Alert type"]
                             [h-box :gap "10px"
-                             :children [[radio-button :label "Market data (single)" :value "single"       :model alert-type :on-change #(reset! alert-type %)]
-                                        [radio-button :label "Market data (spread)" :value "spread"       :model alert-type :on-change #(reset! alert-type %)]
-                                        [radio-button :label "Fundamental data"     :value "fundamental"  :model alert-type :on-change #(reset! alert-type %)]]]]]
+                             :children [[radio-button :label "Market data (single)" :value "single"       :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]
+                                        [radio-button :label "Market data (spread)" :value "spread"       :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]
+                                        [radio-button :label "Fundamental data"     :value "fundamental"  :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]]]]]
                 [alert-details]]]))
 
 (defn custom-alerts [nbalerts]
@@ -170,6 +202,6 @@
                               [trade-alert trade-entry "Price alert" :target-alert 0]
                               [trade-alert trade-entry "Review alert" :review-alert 0]]
                              (for [i (range (count @other-alerts))] [trade-alert trade-entry (str "Custom alert " (inc i)) :other-alerts i]))
-                       [h-box :gap "10px" :children [[button :style {:width "100%"} :label "Add alert" :on-click #(swap! other-alerts assoc (count @other-alerts) single-alert-template)]
-                                                     [button :style {:width "100%"} :label "Remove alert" :on-click #(swap! other-alerts dissoc (dec (count @other-alerts)))]]])
+                       [h-box :gap "10px" :children [[button :style {:width "100%"} :label "Add alert" :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (swap! other-alerts assoc (count @other-alerts) single-alert-template))]
+                                                     [button :style {:width "100%"} :label "Remove alert" :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (swap! other-alerts dissoc (dec (count @other-alerts))))]]])
        ])))

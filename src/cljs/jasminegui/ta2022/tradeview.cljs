@@ -276,11 +276,12 @@
 (rf/reg-event-fx
   :ta2022/send-trade-to-test
   (fn [{:keys [db]} [_ trade-entry]]
+    (println trade-entry)
     {:db db
      :http-post-dispatch {:url          (str static/server-address "ta2022-post-data")
                           :edn-params {:action :test-trade
                                        :trade-entry trade-entry}
-                         :dispatch-key [:ta2022/test-result]}}))
+                         :dispatch-key [:ta2022/post-test-result]}}))
 
 (rf/reg-event-fx
   :ta2022/save-new-trade
@@ -433,10 +434,10 @@
 
 (defn morph-trade-modal []
   (let [closing-text (r/atom nil)
-        trade-entry (r/atom {:analyst nil
-                             :strategy nil
-                             :entry-text nil
-                             :ISIN @(rf/subscribe [:ta2022/trade-isin])
+        trade-entry (r/atom {:analyst      (:ta2022.trade/analyst (last (first @(rf/subscribe [:ta2022/trade-history]))))
+                             :strategy     nil
+                             :entry-text   nil
+                             :ISIN         @(rf/subscribe [:ta2022/trade-isin])
                              :relval-alert taalerts/single-alert-template
                              :target-alert taalerts/single-alert-template
                              :review-alert taalerts/single-alert-template
@@ -458,7 +459,7 @@
 
      [line]
      [h-box :gap "10px" :children [[button :class "btn btn-primary btn-block" :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
-                                   [button :class "btn btn-primary btn-block" :label "Morph trade" :on-click #(rf/dispatch [:ta2022/save-new-trade last-leg-uuid @closing-text @trade-entry])]
+                                   [button :class "btn btn-primary btn-block" :label "Morph trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/save-new-trade last-leg-uuid @closing-text @trade-entry])]
                                    [button :class "btn btn-primary btn-block" :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
      ])
   )
