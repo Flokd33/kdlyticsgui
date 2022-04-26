@@ -231,7 +231,7 @@
 (defn actions []
   (gt/element-box-generic "actions" element-box-width "Actions" nil
                           [[h-box  :gap "10px" :children [
-                                                            [button :label "Amend latest entry" :class "btn btn-primary btn-block" :on-click #(do)]
+                                                            [button :label "Amend latest entry" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:ta2022/show-modal {:type :amend-latest-trade}])]
                                                             [button :label "Morph trade" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
                                                             [button :label "Close trade" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
                                                             [button :label "Add attachment" :class "btn btn-primary btn-block" :on-click #(do)]]]]
@@ -285,14 +285,15 @@
 
 (rf/reg-event-fx
   :ta2022/save-new-trade
-  (fn [{:keys [db]} [_ last-leg-uuid closing-text trade-entry]]
-    {:db db
+  (fn [{:keys [db]} [_ last-leg-uuid exit-rationale trade-entry]]
+    {:db                 db
      :http-post-dispatch {:url          (str static/server-address "ta2022-post-data")
-                          :edn-params {:action :save-trade
-                                       :last-leg-uuid last-leg-uuid
-                                       :closing-text closing-text
-                                       :trade-entry trade-entry}
-                         :dispatch-key [:ta2022/save-result]}}))
+                          :edn-params   {:action        :save-trade
+                                         :last-leg-uuid last-leg-uuid
+                                         :exit-rationale  exit-rationale
+                                         :trade-entry   trade-entry
+                                         :test-result   (:test-result db)}
+                          :dispatch-key [:ta2022/save-result]}}))
 
 (def table-columns
   {:id                          {:Header "ID" :accessor "id" :show false}
@@ -423,63 +424,93 @@
                                     :on-click #(rf/dispatch [:ta2022/active-home (:code item)])]))]]]))
 
 (defn close-trade-modal []
-  (let [closing-text (r/atom nil)]
-    [[title :label "Close trade" :level :level1]
-     [label :label "Exit rationale"]
-     [input-textarea :model closing-text :on-change #(reset! closing-text %) :width "600px" :rows 5]
-     [h-box :gap "10px" :children [[button :style {:width "100%"} :label "Close" :on-click #()]
-                       [button :style {:width "100%"} :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
-     ])
-  )
+  (let [exit-rationale (r/atom nil)
+        last-leg-uuid (:ta2022.trade/uuid (last (sort-by :ta2022.trade/entry-date (first @(rf/subscribe [:ta2022/trade-history])))))]
+    (fn []
+      [v-box :width "1024px" :height "300px" :gap "10px" :padding "20px"
+       :children [[title :label "Close trade" :level :level1]
+                  [label :label "Exit rationale"] [input-textarea :model exit-rationale :on-change #(reset! exit-rationale %) :width "600px" :rows 5]
+                  [line]
+                  [h-box :gap "10px" :children [[button :class "btn btn-primary btn-block" :label "Close trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/close-trade last-leg-uuid @exit-rationale])]
+                                                [button :class "btn btn-primary btn-block" :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+                  ]])))
 
 (defn morph-trade-modal []
-  (let [closing-text (r/atom nil)
-        trade-entry (r/atom {:analyst      (:ta2022.trade/analyst (last (first @(rf/subscribe [:ta2022/trade-history]))))
-                             :strategy     nil
-                             :entry-text   nil
-                             :ISIN         @(rf/subscribe [:ta2022/trade-isin])
-                             :relval-alert taalerts/single-alert-template
-                             :target-alert taalerts/single-alert-template
-                             :review-alert taalerts/single-alert-template
-                             :other-alerts {}})
-        entry-text (r/cursor trade-entry [:entry-text])
+  (let [last-trade (last (sort-by :ta2022.trade/entry-date (first @(rf/subscribe [:ta2022/trade-history]))))
+        exit-rationale (r/atom nil)
+        trade-entry (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
+                             :strategy        nil
+                             :entry-rationale nil
+                             :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                             :relval-alert    taalerts/single-alert-template
+                             :target-alert    taalerts/single-alert-template
+                             :review-alert    taalerts/single-alert-template
+                             :other-alerts    {}})
+        entry-rationale (r/cursor trade-entry [:entry-rationale])
+        strategy (r/cursor trade-entry [:strategy])
+        analyst (r/cursor trade-entry [:analyst])
+        last-leg-uuid (:ta2022.trade/uuid last-trade)]
+    (fn []
+      [v-box :width "1024px" :height "800px" :gap "10px" :padding "20px"
+       :children [[title :label "Morph trade" :level :level1]
+                  [label :label "Exit rationale"] [input-textarea :model exit-rationale :on-change #(reset! exit-rationale %) :width "600px" :rows 5]
+                  [h-box :align :center :children [[label :width "125px" :label "New analyst"]
+                                                   [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]]]
+                  [h-box :align :center :children [[label :width "125px" :label "New strategy"]
+                                                   [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
+                  [label :label "New trade rationale"] [input-textarea :model entry-rationale :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
+                  [taalerts/trade-alert-input trade-entry]
+                  [line]
+                  [h-box :gap "10px" :children [[button :class "btn btn-primary btn-block" :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
+                                                [button :class "btn btn-primary btn-block" :label "Morph trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/save-new-trade last-leg-uuid @exit-rationale @trade-entry])]
+                                                [button :class "btn btn-primary btn-block" :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+                  ]])))
+
+(defn amend-latest-trade-modal []
+  (let [last-trade (last (sort-by :ta2022.trade/entry-date (first @(rf/subscribe [:ta2022/trade-history]))))
+        all-alerts (let [x (trade->alerts last-trade (second @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map :ta2022.alert/uuid x) x))
+        trade-entry (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
+                             :strategy        (:ta2022.trade/strategy last-trade)
+                             :entry-rationale (:ta2022.trade/entry-rationale last-trade)
+                             :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                             :relval-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/relval-alert-uuid last-trade)))
+                             :target-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/target-alert-uuid last-trade)))
+                             :review-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/price-alert-uuid last-trade))) ;TODO IS IT PRICE OR REVIEW!!!
+                             :other-alerts    {}})          ;TODO
+        entry-rationale (r/cursor trade-entry [:entry-rationale])
         strategy (r/cursor trade-entry [:strategy])
         analyst (r/cursor trade-entry [:analyst])
         last-leg-uuid (:ta2022.trade/uuid (last (first @(rf/subscribe [:ta2022/trade-history]))))]
-    [[title :label "Morph trade" :level :level1]
-     [label :label "Exit rationale"]
-     [input-textarea :model closing-text :on-change #(reset! closing-text %) :width "600px" :rows 5]
-     [h-box :align :center :children [[label :width "125px" :label "New analyst"]
-                                      [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]]]
-     [h-box :align :center :children [[label :width "125px" :label "New strategy"]
-                                      [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
-     [label :label "New trade rationale"]
-     [input-textarea :model entry-text :on-change #(reset! entry-text %) :width "600px" :rows 10]
-     [taalerts/trade-alert-input trade-entry]
-
-     [line]
-     [h-box :gap "10px" :children [[button :class "btn btn-primary btn-block" :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
-                                   [button :class "btn btn-primary btn-block" :label "Morph trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/save-new-trade last-leg-uuid @closing-text @trade-entry])]
-                                   [button :class "btn btn-primary btn-block" :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
-     ])
-  )
-
+    (println last-trade)
+    (fn []
+      [v-box :width "1024px" :height "800px" :gap "10px" :padding "20px"
+       :children [[title :label "Amend latest trade" :level :level1]
+                  [h-box :align :center :children [[label :width "125px" :label "New analyst"]
+                                                   [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]]]
+                  [h-box :align :center :children [[label :width "125px" :label "New strategy"]
+                                                   [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
+                  [label :label "New trade rationale"] [input-textarea :model entry-rationale :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
+                  [taalerts/trade-alert-input trade-entry]
+                  [line]
+                  [h-box :gap "10px" :children [[button :class "btn btn-primary btn-block" :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
+                                                [button :class "btn btn-primary btn-block" :label "Morph trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/amend-latest-trade last-leg-uuid @trade-entry])]
+                                                [button :class "btn btn-primary btn-block" :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+                  ]])))
 
 (defn modal-ta2022 []
   (if-let [modal-data @(rf/subscribe [:ta2022/show-modal])]
-    [modal-panel                                            ;:backdrop-on-click #(rf/dispatch [:ta2022/show-modal nil])
-     :child [scroller :h-scroll :off :v-scroll :on :child [v-box :width "1024px" :height "800px" :gap "10px" :padding "20px"
-                              :children
-                              (case (modal-data :type)
-                                :amend-latest-trade nil
-                                :close-trade (close-trade-modal)
-                                :morph-trade (morph-trade-modal)
-                                :add-attachment nil
-                                nil
+    [modal-panel
+     :child [scroller :h-scroll :off :v-scroll :on
+             :child
+             (case (modal-data :type)
+               :amend-latest-trade [amend-latest-trade-modal]
+               :close-trade [close-trade-modal]
+               :morph-trade [morph-trade-modal]
+               :add-attachment nil
+               nil
 
-                                )
-
-                              ]]])
+               )
+             ]])
 
   )
 

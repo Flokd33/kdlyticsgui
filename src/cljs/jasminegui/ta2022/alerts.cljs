@@ -11,16 +11,7 @@
     ["react-table-v6" :as rt :default ReactTable]
     [goog.string :as gstring]
     [goog.string.format]
-    [jasminegui.mount :as mount]
-    [jasminegui.tables :as tables]
-    [jasminegui.static :as static]
-    [jasminegui.charting :as charting]
-    [jasminegui.guitools :as gt]
-    [jasminegui.qs.qstables :as qstables]
-    [jasminegui.qs.qscharts :as qscharts]
-    [jasminegui.tools :as t]
-    [jasminegui.ta2022.tables :as tatables]
-    [oz.core :as oz])
+)
   )
 
 (def default-width "800px")
@@ -44,36 +35,30 @@
                             :comparison "<"
                             :comparison-value "100"})
 
-(def fundamental-alert-template {:alert-type "fundamental"
-                                 :description nil})
+(def fundamental-alert-template {:alert-type "fundamental" :description nil})
+
+(defn alert-from-backend [alert]
+  (-> (clojure.set/rename-keys alert
+                               {:ta2022.alert/alert-type :alert-type
+                                :ta2022.alert/description :description
+                                :ta2022.alert/comparison :comparison
+                                :ta2022.alert/comparison-value :comparison-value ;make string
+                                :ta2022.alert/operator :operator})
+      (update :comparison-value str)
+      (assoc :bloomberg-request-security-1 (first ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-1) alert)))
+      (assoc :bloomberg-request-field-1 (second ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-1) alert)))
+      (assoc :bloomberg-request-security-2 (first ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-2) alert)))
+      (assoc :bloomberg-request-field-2 (second ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-2) alert)))
+      )
+
+  )
 
 (def bloomberg-asset-keys #{"Govt" "Corp" "Mtge" "M-Mkt" "Muni" "Pfd" "Equity" "Comdty" "Index" "Curncy" "Client"})
-
 (def bloomberg-field-suggestions ["PX_LAST" "YLD_YTM_MID" "Z_SPRD_MID" "YAS_BOND_YLD" "YAS_ZSPREAD" "BLOOMBERG_MID_G_SPREAD" "NET_DEBT_TO_EBITDA" "TOT_DEBT_TO_EBITDA" "SHORT_AND_LONG_TERM_DEBT" "NET_DEBT" "EBITDA"])
-
 (defn bbg-field-finder [s] (take 3 (for [field bloomberg-field-suggestions :when (re-find (re-pattern (str "(?i)" s)) field)] field)))
-
 (defn clean-case [t] (+ (.toUpperCase (.charAt t 0)) (.toLowerCase (.slice t 1))))
-
 (defn bbg-security-status [s] (try (if-not (some #{(clean-case (last (.split s " ")))} bloomberg-asset-keys) :error nil) (catch js/Error e :error)))
-
 (defn not-number-error-status [s] (if-not (number? (cljs.reader/read-string s)) :error nil))
-
-
-
-(rf/reg-event-db
-  :trade-entry/add-alert
-  (fn [db [_ ]]
-    (-> db
-        (assoc-in [:trade-entry :tradeanalyser.trade/other-alerts (count (get-in db [:trade-entry :tradeanalyser.trade/other-alerts]))] single-alert-template)
-        (assoc :can-allocate false))))
-
-(rf/reg-event-db
-  :trade-entry/remove-alert
-  (fn [db [_ ]]
-    (-> db
-        (update-in [:trade-entry :tradeanalyser.trade/other-alerts] dissoc (dec (count (get-in db [:trade-entry :tradeanalyser.trade/other-alerts]))))
-        (assoc :can-allocate false))))
 
 (rf/reg-event-db
   :ta2022/post-test-result
@@ -126,8 +111,7 @@
                                          (and (= @bloomberg-request-field-1 "YAS_ZSPREAD")) (str "zspread " @comparison " " @comparison-value)
                                          (and (= @bloomberg-request-field-1 "BLOOMBERG_MID_G_SPREAD")) (str "gspread " @comparison " " @comparison-value)
                                          :else "Failed to guess")
-                                       "Failed to guess")
-        ]
+                                       "Failed to guess")]
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Condition"]
                      [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")))]
@@ -142,7 +126,7 @@
                 ]]))
 
 (defn spread-alert [trade-entry alert-key alert-number]
-  (let [trade-entry-alert            (r/cursor trade-entry (if (= alert-key :tradeanalyser.trade/other-alerts) [alert-key alert-number] [alert-key]))
+  (let [trade-entry-alert            (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number] [alert-key]))
         bloomberg-request-security-1 (r/cursor trade-entry-alert [:bloomberg-request-security-1])
         bloomberg-request-field-1    (r/cursor trade-entry-alert [:bloomberg-request-field-1] )
         bloomberg-request-security-2 (r/cursor trade-entry-alert [:bloomberg-request-security-2])
@@ -169,8 +153,7 @@
                 ]]))
 
 (defn fundamental-alert [trade-entry alert-key alert-number]
-  (let [                                                    ;trade-entry (rf/subscribe [:trade-entry])
-        description (r/cursor trade-entry (if (= alert-key :tradeanalyser.trade/other-alerts) [alert-key alert-number :description] [alert-key :description]))]
+  (let [description (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number :description] [alert-key :description]))]
     [h-box :padding "0px 30px 0px 0px" :gap "10px" :align :center
      :children [[label :width lw :label "Description"]
                 [input-textarea :width "570px" :rows "5" :model description :on-change #(reset! description %)]]]))
@@ -203,5 +186,4 @@
                               [trade-alert trade-entry "Review alert" :review-alert 0]]
                              (for [i (range (count @other-alerts))] [trade-alert trade-entry (str "Custom alert " (inc i)) :other-alerts i]))
                        [h-box :gap "10px" :children [[button :style {:width "100%"} :label "Add alert" :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (swap! other-alerts assoc (count @other-alerts) single-alert-template))]
-                                                     [button :style {:width "100%"} :label "Remove alert" :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (swap! other-alerts dissoc (dec (count @other-alerts))))]]])
-       ])))
+                                                     [button :style {:width "100%"} :label "Remove alert" :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (swap! other-alerts dissoc (dec (count @other-alerts))))]]])])))
