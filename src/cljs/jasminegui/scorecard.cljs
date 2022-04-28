@@ -232,7 +232,7 @@
   (r/as-element
     (if-let [x (aget this "value")]
       [v-box :children (into [] (for [t x]
-                                  [p (first t) " " (second t) " " (str (/ (int (second (next t))) 1000000) "mils ") (str (gstring/format "%.0f" (js/parseFloat (second (next (next t))) )) "bps") " @" (last t)]
+                                  [p (first t) " " (second t) " " (str (/ (int (second (next t))) 1000) "k ") (str (gstring/format "%.0f" (js/parseFloat (second (next (next t))) )) "bps") " @" (last t)]
                                   ))]
       "-"))
   )
