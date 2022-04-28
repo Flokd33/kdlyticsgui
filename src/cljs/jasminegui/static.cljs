@@ -82,7 +82,7 @@
 (def ta2022-navigation
   [{:code :main                 :name "Table"}
    {:code :trade-view           :name "Trade view"}
-   {:code :trade-entry          :name "Trade entry"}
+   {:code :journal              :name "Journal"}
    ])
 
 (def risk-choice-map

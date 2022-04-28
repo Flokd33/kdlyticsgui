@@ -284,7 +284,7 @@
     {:db (assoc db :esg/tamale-body "")
      :http-get-dispatch {:url (str "https://ldprdnexdc1:6400/v1/notes/" note-id "/body") :dispatch-key [:esg/tamale-body]}}))
 
-(def tamale-analysts ["Tammy Lloyd"
+(def tamale-analysts ["Tammy LLoyd"                         ;two capital L
                       "Stacy Xie"
                       "Kevan Salisbury"
                       "Rahul Bhat"

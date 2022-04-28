@@ -8,9 +8,7 @@
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    ["react-table-v6" :as rt :default ReactTable]
-    [goog.string :as gstring]
-    [goog.string.format]
+    [jasminegui.ta2022.actions :as taactions :refer [checknb]]
 )
   )
 
@@ -42,16 +40,14 @@
                                {:ta2022.alert/alert-type :alert-type
                                 :ta2022.alert/description :description
                                 :ta2022.alert/comparison :comparison
-                                :ta2022.alert/comparison-value :comparison-value ;make string
+                                :ta2022.alert/comparison-value :comparison-value
                                 :ta2022.alert/operator :operator})
       (update :comparison-value str)
       (assoc :bloomberg-request-security-1 (first ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-1) alert)))
       (assoc :bloomberg-request-field-1 (second ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-1) alert)))
       (assoc :bloomberg-request-security-2 (first ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-2) alert)))
       (assoc :bloomberg-request-field-2 (second ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-2) alert)))
-      )
-
-  )
+      ))
 
 (def bloomberg-asset-keys #{"Govt" "Corp" "Mtge" "M-Mkt" "Muni" "Pfd" "Equity" "Comdty" "Index" "Curncy" "Client"})
 (def bloomberg-field-suggestions ["PX_LAST" "YLD_YTM_MID" "Z_SPRD_MID" "YAS_BOND_YLD" "YAS_ZSPREAD" "BLOOMBERG_MID_G_SPREAD" "NET_DEBT_TO_EBITDA" "TOT_DEBT_TO_EBITDA" "SHORT_AND_LONG_TERM_DEBT" "NET_DEBT" "EBITDA"])
@@ -60,35 +56,21 @@
 (defn bbg-security-status [s] (try (if-not (some #{(clean-case (last (.split s " ")))} bloomberg-asset-keys) :error nil) (catch js/Error e :error)))
 (defn not-number-error-status [s] (if-not (number? (cljs.reader/read-string s)) :error nil))
 
-(rf/reg-event-db
-  :ta2022/post-test-result
-  (fn [db [_ data]]
-    (if data
-      (let [oth (vals (get-in data [:other-alerts]))
-            main-check-fn (fn [res] (and (some? (:implied-price res)) (number? (:implied-price res)) (some? (:latest-market-price res)) (number? (:latest-market-price res)) (not (get res :triggered))))
-            other-check-fn (fn [res] (and (some? (:latest-market-price res)) (number? (:latest-market-price res)) (not (get res :triggered))))]
-        (-> db
-            (assoc :ta2022/test-result data
-                   :ta2022/can-morph (every? identity
-                                             (apply concat
-                                                    [(main-check-fn (:relval-alert data))
-                                                     (main-check-fn (:target-alert data))
-                                                     (main-check-fn (:review-alert data))]
-                                                    (map other-check-fn oth))))))
-      (assoc db :ta2022/test-result nil :ta2022/can-morph false))))
-
-
 (defn test-result
   [alert-key alert-number]
   (if-let [data @(rf/subscribe [:ta2022/test-result])]
     (let [res (if (= alert-key :other-alerts) (get-in data [:other-alerts (keyword (str "k" alert-number))]) (get-in data [alert-key]))
-          implied-price? (and (some? (:implied-price res)) (number? (:implied-price res)))
-          market-price? (and (some? (:latest-market-price res)) (number? (:latest-market-price res)))
+          implied-price? (checknb res :implied-price)
+          market-price? (or
+                          (checknb res :latest-market-price)
+                          (and (checknb res :latest-market-price-1) (checknb res :latest-market-price-2) (checknb res :latest-market-spread)))
           other-alert-ok? (and (not (get res :triggered)) market-price?)
           main-alert-ok? (and other-alert-ok? implied-price?)
           txt (str
                 (if (:triggered res) "Already triggered!" "Not triggered.")
-                (if market-price? (str " Latest market price " (:latest-market-price res)) " No market price!")
+                (if market-price? (if (res :latest-market-spread)
+                                    (str " Latest market prices and spread " (:latest-market-price-1 res) " / " (:latest-market-price-2 res) " / " (:latest-market-spread res))
+                                    (str " Latest market price " (:latest-market-price res))) " No market price!")
                 (if implied-price? (str " Implied price: " (:implied-price res)) " No implied bond price!"))]
       (if (= alert-key :other-alerts)
         [alert-box :padding "6px" :alert-type (if other-alert-ok? :info :danger) :body txt :style {:width "595px"}]
@@ -103,14 +85,14 @@
         comparison                   (r/cursor trade-entry (if o? [alert-key alert-number :comparison] [alert-key :comparison]))
         comparison-value             (r/cursor trade-entry (if o? [alert-key alert-number :comparison-value] [alert-key :comparison-value]))
         guess-description            (if (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp"))
-                                       (cond
-                                         (and (= @bloomberg-request-field-1 "PX_LAST")) (str "price " @comparison " " @comparison-value)
-                                         (and (= @bloomberg-request-field-1 "YLD_YTM_MID")) (str "yield " @comparison " " @comparison-value)
-                                         (and (= @bloomberg-request-field-1 "YAS_BOND_YLD")) (str "yield " @comparison " " @comparison-value)
-                                         (and (= @bloomberg-request-field-1 "Z_SPRD_MID")) (str "zspread " @comparison " " @comparison-value)
-                                         (and (= @bloomberg-request-field-1 "YAS_ZSPREAD")) (str "zspread " @comparison " " @comparison-value)
-                                         (and (= @bloomberg-request-field-1 "BLOOMBERG_MID_G_SPREAD")) (str "gspread " @comparison " " @comparison-value)
-                                         :else "Failed to guess")
+                                       (case @bloomberg-request-field-1
+                                         "PX_LAST" (str "price " @comparison " " @comparison-value)
+                                         "YLD_YTM_MID" (str "yield " @comparison " " @comparison-value)
+                                         "YAS_BOND_YLD" (str "yield " @comparison " " @comparison-value)
+                                         "Z_SPRD_MID" (str "zspread " @comparison " " @comparison-value)
+                                         "YAS_ZSPREAD" (str "zspread " @comparison " " @comparison-value)
+                                         "BLOOMBERG_MID_G_SPREAD" (str "gspread " @comparison " " @comparison-value)
+                                         "Failed to guess")
                                        "Failed to guess")]
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Condition"]
@@ -174,10 +156,12 @@
                                         [radio-button :label "Fundamental data"     :value "fundamental"  :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]]]]]
                 [alert-details]]]))
 
-(defn custom-alerts [nbalerts]
+(defn custom-alerts
+  [nbalerts]
   [v-box :children (into [] (for [i (range nbalerts)] [trade-alert (str "Custom alert " (inc i))]))])
 
-(defn trade-alert-input [trade-entry]
+(defn trade-alert-input
+  [trade-entry]
   (let [other-alerts (r/cursor trade-entry [:other-alerts])]
     (fn []
       [v-box :gap "10px" :width default-width

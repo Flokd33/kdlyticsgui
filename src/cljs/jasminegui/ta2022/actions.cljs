@@ -6,34 +6,56 @@
 
 
 (rf/reg-event-fx
-  :close-trade
-  (fn [{:keys [db]} [_ id exit-rationale]]
-    {:db (assoc db :show-morph-trade-modal false :success-modal {:show true :on-close :trade-morphed :response nil})
-     :http-post-dispatch {:url         (str static/server-address "ta2022-close-trade")
-                          :edn-params  {:id             (keyword id)
-                                        ;:exit-date      (tools/gdate-to-yyyymmdd (today)) ;this will be assumed to be today
-                                        :exit-rationale exit-rationale}
-                          :dispatch-key [:close-response]}}))
+  :ta2022/send-trade-to-test
+  (fn [{:keys [db]} [_ trade-entry]]
+    (println trade-entry)
+    {:db db
+     :http-post-dispatch {:url          (str static/server-address "ta2022-post-data")
+                          :edn-params {:action :test-trade
+                                       :trade-entry trade-entry}
+                          :dispatch-key [:ta2022/post-test-result]}}))
 
+(defn checknb [res k] (and (some? (res k)) (number? (res k))))
+
+(rf/reg-event-db
+  :ta2022/post-test-result
+  (fn [db [_ data]]
+    (if data
+      (let [oth (vals (get-in data [:other-alerts]))
+            main-check-fn (fn [res] (and (not (get res :triggered))
+                                         (checknb res :implied-price)
+                                         (or
+                                           (checknb res :latest-market-price)
+                                           (and (checknb res :latest-market-price-1) (checknb res :latest-market-price-2) (checknb res :latest-market-spread)))))
+            other-check-fn (fn [res] (and (some? (:latest-market-price res)) (number? (:latest-market-price res)) (not (get res :triggered))))]
+        (-> db
+            (assoc :ta2022/test-result data
+                   :ta2022/can-morph (every? identity
+                                             (apply concat
+                                                    [(main-check-fn (:relval-alert data))
+                                                     (main-check-fn (:target-alert data))
+                                                     (main-check-fn (:review-alert data))]
+                                                    (map other-check-fn oth))))))
+      (assoc db :ta2022/test-result nil :ta2022/can-morph false))))
 
 (rf/reg-event-fx
-  :morph-trade
-  (fn [{:keys [db]} [_
-                     id
-                     amend?
-                     exit-rationale
-                     new-entry-rationale
-                     new-analyst
-                     new-strategy
-                     relval-alert
-                     target-alert
-                     price-alert
-                     review-alert
-                     other-alerts]]
-    (println "here")
-    {:db (assoc db :show-morph-trade-modal false :success-modal {:show true :on-close :trade-morphed :response nil})
-     :http-post-dispatch {:url         (str static/server-address "ta2022-morph-trade")
-                          :edn-params  {:id             (keyword id)
-                                        ;:exit-date      (tools/gdate-to-yyyymmdd (today)) ;this will be assumed to be today
-                                        :exit-rationale exit-rationale}
-                          :dispatch-key [:close-response]}}))
+  :ta2022/save-new-trade
+  (fn [{:keys [db]} [_ last-leg-uuid exit-rationale trade-entry]]
+    {:db                 db
+     :http-post-dispatch {:url          (str static/server-address "ta2022-post-data")
+                          :edn-params   {:action        :save-trade
+                                         :last-leg-uuid last-leg-uuid
+                                         :exit-rationale exit-rationale
+                                         :trade-entry   trade-entry
+                                         :test-result   (:test-result db)}
+                          :dispatch-key [:ta2022/post-save-result]}}))
+
+(rf/reg-event-fx
+  :ta2022/amend-trade
+  (fn [{:keys [db]} [_ trade-entry]]
+    {:db                 db
+     :http-post-dispatch {:url          (str static/server-address "ta2022-post-data")
+                          :edn-params   {:action        :amend-trade
+                                         :trade-entry   trade-entry
+                                         :test-result   (:test-result db)}
+                          :dispatch-key [:ta2022/post-amended-result]}}))
