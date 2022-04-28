@@ -240,7 +240,6 @@
                                    )
 
         ]
-    (println (first qs))
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
@@ -398,7 +397,7 @@
         sector (rf/subscribe [:recent-trade-data/sector])
         country (rf/subscribe [:recent-trade-data/country])
         empty-filter (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
-        sector-filter (fn [row] (if (= @sector "All") true (= (last row) @sector)))
+        sector-filter (fn [row] (if (= @sector "All") true (= (first (drop 4 row)) @sector)))
         country-filter (fn [row] (if (= @country "All") true (= (first (drop 3 row)) @country)))
         final-data (->> data
                         (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter sector-filter v))])))
@@ -406,6 +405,7 @@
                         (filter empty-filter)
                         )
         ]
+    (println (first data))
     [box :align :center
      :child
      [:> ReactTable
