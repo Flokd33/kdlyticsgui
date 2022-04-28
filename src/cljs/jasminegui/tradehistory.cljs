@@ -381,7 +381,7 @@
   (r/as-element
     (if-let [x (aget this "value")]
       [v-box :children (into [] (for [t x]
-                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next t)) )) "bps")]
+                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next (next t))) )) "bps")]
                                   ))]
       "-"))
   )
@@ -397,8 +397,8 @@
         sector (rf/subscribe [:recent-trade-data/sector])
         country (rf/subscribe [:recent-trade-data/country])
         empty-filter (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
-        sector-filter (fn [row] (if (= @sector "All") true (= (first (drop 4 row)) @sector)))
-        country-filter (fn [row] (if (= @country "All") true (= (first (drop 3 row)) @country)))
+        sector-filter (fn [row] (if (= @sector "All") true (= (first (drop 5 row)) @sector)))
+        country-filter (fn [row] (if (= @country "All") true (= (first (drop 4 row)) @country)))
         final-data (->> data
                         (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter sector-filter v))])))
                         (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter country-filter v))])))
