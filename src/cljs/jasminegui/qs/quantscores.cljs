@@ -670,7 +670,7 @@
   :post-model-history-curves-one
   (fn [{:keys [db]} [_ query selection]]
     (let [rating-or-country (if (= (get @curve-histories :curve-one/type) :four-d-sovereign-curves) :countryseq :ratingseq)]
-      (println query selection)
+      ;(println query selection)
       {:db (assoc db :quant-model/curves-throbber true)
      :http-post-dispatch {:url (str static/server-address "model-history")
                           :edn-params {:query query rating-or-country selection} ;:countryseq countries

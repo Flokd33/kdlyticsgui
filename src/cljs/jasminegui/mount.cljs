@@ -788,7 +788,7 @@
   :check-naked-positions-timestamp
   (fn [{:keys [db]} [_ last-updated]]
     (let [last-position-timestamp (first (get last-updated :jasmine.positions/positions))]
-      (println "last-position-timestamp" last-position-timestamp)
+      ;(println "last-position-timestamp" last-position-timestamp)
       (if (= last-position-timestamp (db :naked-positions-last-timestamp))
         (let [res (array-of-lists->records (t/local-storage-get-item "naked-positions"))
               positions (mapv #(merge % (get-in db [:instruments (:id %)])) res)]

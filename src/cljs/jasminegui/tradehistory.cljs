@@ -240,7 +240,7 @@
                                    )
 
         ]
-    (println (first qs))
+    ;(println (first qs))
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center

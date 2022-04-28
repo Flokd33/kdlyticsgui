@@ -30,6 +30,11 @@
 (defn hb [x] [h-box :gap "10px" :width "1024px" :align :center :children x])
 (def btc "btn btn-primary btn-block")
 
+(defn rt-int->date
+  [accessor this]
+  (if (aget this "value")
+    (t/format-date-from-int (aget this "original" accessor)) "No"))
+
 (defn trade-static-and-pricing
   [isin qdata]
   (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
@@ -85,15 +90,25 @@
                          :dispatch-key [:ta2022/trade-view-position-and-performance-table]}}))
 
 (defn positions-and-performance-table
-  [isin]
+  [trades performances]
   (let [data @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])
         cdata (->> data
                    (filter #(not (some #{(:portfolio %)} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"])))
                    (map #(update % :nav (fn [x] (if (zero? x) nil x))))
-                   (map #(update % :position (fn [x] (if (zero? x) nil x))))
-                   )]
+                   (map #(update % :position (fn [x] (if (zero? x) nil x)))))
+        leg-by-leg-data (conj (mapv #(merge % (get performances (:ta2022.trade/uuid %))) trades)
+                              {:strategy                "Sum"
+                               :entry-date              (:ta2022.trade/entry-date (first trades))
+                               :exit-date               (:ta2022.trade/exit-date (last trades))
+                               :tr                  (reduce + (remove nil? (map :tr (vals performances))))
+                               :tr-vs-index         (reduce + (remove nil? (map :tr-vs-index (vals performances))))
+                               :tr-vs-index-rating  (reduce + (remove nil? (map :tr-vs-index-rating (vals performances))))
+                               :tr-vs-index-country (reduce + (remove nil? (map :tr-vs-index-country (vals performances))))
+                               :tr-vs-index-sector  (reduce + (remove nil? (map :tr-vs-index-sector (vals performances))))})]
+    
     (gt/element-box-generic "position-table" element-box-width "Positions and performance" nil
                             [
+                             [title :label "Actual performance" :level :level2]
                              [:> ReactTable
                               {:data       cdata
                                :columns    [
@@ -105,6 +120,7 @@
                                                                              {:Header "Entry price" :accessor :avg-entry-price :width 100 :style {:textAlign "right"} :Cell tables/round2}]}
                                             {:Header "Life to date TR" :columns [
                                                                                  {:Header "Gross" :accessor :tr-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                                                                 {:Header "Index" :accessor :tr-vs-index-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Index" :accessor :tr-vs-index-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Rating" :accessor :tr-vs-index-rating-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Country" :accessor :tr-vs-index-country-ltd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
@@ -119,7 +135,19 @@
 
                                             ]
                                :filterable false :showPagination false :pageSize (count cdata) :showPageSizeOptions false :className "-striped -highlight"}]
-
+                             [title :label "Leg by leg performance" :level :level2]
+                             [:> ReactTable
+                              {:data       leg-by-leg-data
+                               :columns    [
+                                            {:Header "Strategy" :accessor :strategy :width 150 :style {:textAlign "left"}} ; :Cell tables/nb-thousand-cell-format
+                                            {:Header "Entry date" :accessor :entry-date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "entry-date" %)}
+                                            {:Header "Exit date" :accessor :exit-date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "exit-date" %)}
+                                            {:Header "Gross" :accessor :tr :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                            {:Header "Index" :accessor :tr-vs-index :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                            {:Header "Rating" :accessor :tr-vs-index-rating :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                            {:Header "Country" :accessor :tr-vs-index-country :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
+                                            {:Header "Sector" :accessor :tr-vs-index-sector :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]
+                               :filterable false :showPagination false :pageSize (count leg-by-leg-data) :showPageSizeOptions false :className "-striped -highlight"}]
                              ])
     )
 
@@ -162,18 +190,19 @@
                   :show   false}
 
                  {:Header "Start level" :accessor :start-level :width 100 :Cell tables/round2 :style {:textAlign "right"}}
-                 {:Header "Triggered?" :accessor :triggered :width 100 :style {:textAlign "left"} :Cell (fn [this] (if (aget this "value")
-                                                                                                                     (t/format-date-from-int (aget this "original" "triggered-date")) "No"))}
+                 {:Header "Triggered?" :accessor :triggered :width 100 :style {:textAlign "left"} :Cell #(rt-int->date "triggered-date" %)}
                  ]
     :filterable false :showPagination false :pageSize (count data) :showPageSizeOptions false :className "-striped -highlight"}]
   )
 
 (defn trade->alerts [trade alerts]
-  (let [all-alert-uuids (remove nil? (conj (:ta2022.trade/other-alert-uuids trade)
-                                           (:ta2022.trade/relval-alert-uuid trade)
-                                           (:ta2022.trade/price-alert-uuid trade)
-                                           (:ta2022.trade/target-alert-uuid trade)))]
-    (filter #(some #{(:ta2022.alert/uuid %)} all-alert-uuids) alerts)))
+  (remove nil? (concat [(if-let [a (:ta2022.trade/relval-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "relval"))
+                        (if-let [a (:ta2022.trade/target-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "target"))
+                        (if-let [a (:ta2022.trade/review-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "review"))
+                        (if-let [a (:ta2022.trade/price-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "price"))]
+                       (if (and (:ta2022.trade/other-alert-uuids trade) (pos? (count (:ta2022.trade/other-alert-uuids trade))))
+                         (mapv #(assoc (alerts %) :ta2022.alert/alert-scope "other") (:ta2022.trade/other-alert-uuids trade)))
+                       )))
 
 (defn trade-description
   [sorted-trades alerts]
@@ -248,14 +277,14 @@
     (let [th @(rf/subscribe [:ta2022/trade-history])
           sorted-trades (:trades th)
           alerts (:alerts th)
-          trade-performance (:performance th)]
+          performances (:performances th)]
       [v-box :gap "10px"
        :children [[isin-picker]
                   [trade-static-and-pricing isin qdata]
                   [historical-chart isin qdata (:ta2022.trade/entry-date (first sorted-trades)) (map :ta2022.trade/entry-date sorted-trades)]
                   [trade-description sorted-trades alerts]
                   [attachments isin]
-                  [positions-and-performance-table isin]
+                  [positions-and-performance-table sorted-trades performances]
                   [trade-history sorted-trades alerts]
                   [actions]
                   ]
