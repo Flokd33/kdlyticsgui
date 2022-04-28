@@ -232,7 +232,7 @@
   (r/as-element
     (if-let [x (aget this "value")]
       [v-box :children (into [] (for [t x]
-                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next t)) )) "bps") " @" (last t)]
+                                  [p (first t) " " (second t) " " (str (/ (int (second (next t))) 1000) "k ") (str (gstring/format "%.0f" (js/parseFloat (second (next (next t))) )) "bps") " @" (last t)]
                                   ))]
       "-"))
   )
@@ -249,12 +249,13 @@
         data (map #(select-keys % (conj ports :date)) @(rf/subscribe [:recent-trade-data/trades]))
         sector @(rf/subscribe [:scorecard/sector])
         empty-filter (fn [line] (pos? (reduce + (map count (vals (dissoc line :date))))))
-        sector-filter (fn [row] (if (= sector "Sector") true (= (second (next (next (next row)))) sector)))
+        sector-filter (fn [row] (if (= sector "Sector") true (= (second (next (next (next (next row))))) sector)))
         final-data (->> data
                         (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter sector-filter v))])))
                         (filter empty-filter)
                         )
         ]
+    (println final-data)
     (gt/element-box "scorecard-scores" "100%" (str "14 day trade history " sector) final-data
                     (concat
                       [[title :label "Main" :level :level2]]
