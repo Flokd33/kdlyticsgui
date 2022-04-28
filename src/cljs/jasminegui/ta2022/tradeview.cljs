@@ -36,37 +36,82 @@
     (t/format-date-from-int (aget this "original" accessor)) "No"))
 
 (defn trade-static-and-pricing
-  [isin qdata]
-  (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
-                          [(if qdata [:> ReactTable
-                                      {:data           [qdata]
-                                       :columns        (qstables/table-style->qs-table-col "TA2022" nil)
-                                       :showPagination false
-                                       :pageSize       1
-                                       :filterable     false}]
-                                     [p "loading..."])
-                           (if qdata [:> ReactTable
-                                      {:data           [qdata]
-                                       :columns        [{:Header "Target returns with 1y coupon (%)" :columns (mapv #(assoc % :filterable false) (mapv qstables/quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y]))}]
-                                       :showPagination false
-                                       :pageSize       1
-                                       :filterable     false}]
-                                     [p "loading..."])])
+  [isin qdata last-trade triggers]
+  (let [fmt-rtn (fn [this] (if-let [x (aget this "value")] (gstring/format "%.2f" (* 100. x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
+        fmt-rtn-1 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.2f" x) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
+        ]
+    (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
+                            [(if qdata [:> ReactTable
+                                        {:data           [qdata]
+                                         :columns        (qstables/table-style->qs-table-col "TA2022" nil)
+                                         :showPagination false
+                                         :pageSize       1
+                                         :filterable     false}]
+                                       [p "loading..."])
+                             (if qdata [:> ReactTable
+                                        {:data           [(assoc qdata
+                                                            :relval (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-tr-1y])
+                                                            :target (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-tr-1y])
+                                                            :price (get-in triggers [(last-trade :ta2022.trade/price-alert-uuid) :implied-tr-1y])
+                                                            :relval-price (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-price])
+                                                            :target-price (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-price])
+                                                            :price-price (get-in triggers [(last-trade :ta2022.trade/price-alert-uuid) :implied-price])
+
+                                                            )]
+                                         :columns        [{:Header  "Current alert implied prices"
+                                                           :columns [{:Header "Relval" :accessor "relval-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}
+                                                                     {:Header "Target" :accessor "target-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}
+                                                                     {:Header "Review" :accessor "price-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}]}
+                                                          {:Header  "Target returns with 1y coupon (%)"
+                                                           :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 70 :style {:textAlign "right"} :Cell tables/round2}
+                                                                     {:Header "2D" :accessor "svr2d1yrtn" :width 70 :style {:textAlign "right"} :Cell tables/round2}
+                                                                     {:Header "Tight" :accessor "upside1y" :width 70 :style {:textAlign "right"} :Cell tables/round2}
+                                                                     {:Header "Median" :accessor "expected1y" :width 70 :style {:textAlign "right"} :Cell tables/round2}
+                                                                     {:Header "Wide" :accessor "downside1y" :width 70 :style {:textAlign "right"} :Cell tables/round2}
+                                                                     {:Header "Relval" :accessor "relval" :width 70 :style {:textAlign "right"} :Cell fmt-rtn}
+                                                                     {:Header "Target" :accessor "target" :width 70 :style {:textAlign "right"} :Cell fmt-rtn}
+                                                                     {:Header "Review" :accessor "price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn}]}]
+                                         :showPagination false
+                                         :pageSize       1
+                                         :filterable     false}]
+                                       [p "loading..."])]))
 
   )
 
 
 (defn historical-chart
-  [isin qdata int-start-date rectangle-dates]
-  (let [rectangle-bins (partition 2 1 rectangle-dates)
+  [isin qdata sorted-trades triggers]
+  (let [int-start-date (:ta2022.trade/entry-date (first sorted-trades))
+        rectangle-dates (map :ta2022.trade/entry-date sorted-trades)
+        rectangle-bins (partition 2 1 rectangle-dates)
         nb-rectangles (count rectangle-bins)
         vega-rectangles (for [[i [d1 d2]] (map-indexed vector rectangle-bins)]
                           {:mark     "rect"
                            :data     {:values {:x d1 :x2 d2}
                                       :format {:parse {:x "date:'%Y%m%d'" :x2 "date:'%Y%m%d'"}}}
                            :encoding {:x       {:field "x" :type "temporal"} :x2 {:field "x2" :type "temporal"}
-                                      :opacity {:value (- 0.5 (/ (* i 0.5) nb-rectangles))}}})]
+                                      :opacity {:value (- 0.5 (/ (* i 0.5) nb-rectangles))}}})
 
+        last-trade (last sorted-trades)
+        relval-price (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-price])
+        target-price (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-price])
+        review-price (get-in triggers [(last-trade :ta2022.trade/review-alert-uuid) :implied-price])
+        last-entry-date (last rectangle-dates)
+        last-date (.replaceAll (:date (last @(rf/subscribe [:quant-model/history-result]))) "-" "")
+        range (remove nil? (conj (map :price @(rf/subscribe [:quant-model/history-result])) relval-price target-price review-price))
+        ymin (- (apply min range) 2)
+        ymax (+ (apply max range) 2)
+        target-lines [
+                      {:mark {:type "rule" :color "red"} :data {:values {:y review-price :x last-entry-date :x2 last-date} :format {:parse {:x "date:'%Y%m%d'" :x2 "date:'%Y%m%d'"}}} :encoding {:y {:field "y" :type "quantitative"} :x {:field "x" :type "temporal"} :x2 {:field "x2" :type "temporal"}}}
+                      {:mark {:type "rule" :color "green"} :data {:values {:y relval-price :x last-entry-date :x2 last-date} :format {:parse {:x "date:'%Y%m%d'" :x2 "date:'%Y%m%d'"}}} :encoding {:y {:field "y" :type "quantitative"} :x {:field "x" :type "temporal"} :x2 {:field "x2" :type "temporal"}}}
+                      {:mark {:type "rule" :color "yellow"} :data {:values {:y target-price :x last-entry-date :x2 last-date} :format {:parse {:x "date:'%Y%m%d'" :x2 "date:'%Y%m%d'"}}} :encoding {:y {:field "y" :type "quantitative"} :x {:field "x" :type "temporal"} :x2 {:field "x2" :type "temporal"}}}
+                      {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "review" :price review-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}
+                      {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "relval" :price relval-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}
+                      {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "price" :price target-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}]
+
+        ]
+
+    (println last-entry-date last-date )
     (rf/dispatch [:post-model-history-pricing :pricing [isin]])
     (gt/element-box-generic "history-chart" element-box-width "Trade history" nil
                             [(if qdata
@@ -77,7 +122,7 @@
                                   {:price true :ztw true}
                                   [{:ISIN isin :bond (qdata :Bond)}]
                                   "Absolute"
-                                  {:price vega-rectangles :ztw vega-rectangles}
+                                  {:price (concat vega-rectangles []) :ztw vega-rectangles} ;(concat vega-rectangles target-lines)
                                   )]
                                [p "loading..."])]))
   )
@@ -277,11 +322,12 @@
     (let [th @(rf/subscribe [:ta2022/trade-history])
           sorted-trades (:trades th)
           alerts (:alerts th)
-          performances (:performances th)]
+          performances (:performances th)
+          triggers (:triggers th)]
       [v-box :gap "10px"
        :children [[isin-picker]
-                  [trade-static-and-pricing isin qdata]
-                  [historical-chart isin qdata (:ta2022.trade/entry-date (first sorted-trades)) (map :ta2022.trade/entry-date sorted-trades)]
+                  [trade-static-and-pricing isin qdata (last sorted-trades) triggers]
+                  [historical-chart isin qdata sorted-trades triggers]
                   [trade-description sorted-trades alerts]
                   [attachments isin]
                   [positions-and-performance-table sorted-trades performances]
