@@ -624,8 +624,14 @@
                   :single-portfolio-risk/display-style "Tree"
                   :single-portfolio-risk/hide-zero-holdings true
                   :single-portfolio-risk/filter {1 :country 2 :issuer 3 "None"})
-      3 (assoc db :single-portfolio-risk/shortcut snapshot)
-      4 (assoc db :single-portfolio-risk/shortcut snapshot))))
+      3 (assoc db :single-portfolio-risk/shortcut snapshot
+                  :single-portfolio-risk/display-style "Tree"
+                  :single-portfolio-risk/hide-zero-holdings true
+                  :single-portfolio-risk/filter {1 :sector 2 :country 3 "None"})
+      4 (assoc db :single-portfolio-risk/shortcut snapshot
+                  :single-portfolio-risk/display-style "Tree"
+                  :single-portfolio-risk/hide-zero-holdings true
+                  :single-portfolio-risk/filter {1 :sector 2 :country 3 :issuer}))))
 
 (rf/reg-event-db
   :multiple-portfolio-risk/shortcut
