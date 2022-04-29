@@ -87,7 +87,7 @@
           review-price (get-in triggers [(last-trade :ta2022.trade/review-alert-uuid) :implied-price])
           last-entry-date (last rectangle-dates)
           last-date (.replaceAll (:date (last @(rf/subscribe [:quant-model/history-result]))) "-" "")
-          range (remove nil? (conj (map :price @(rf/subscribe [:quant-model/history-result])) relval-price target-price review-price))
+          range (remove nil? (conj (map :price (filter #(>= (int (.replaceAll (:date %) "-" "")) int-start-date) @(rf/subscribe [:quant-model/history-result]))) relval-price target-price review-price))
           ymin (- (apply min range) 2)
           ymax (+ (apply max range) 2)
           target-lines [
@@ -99,18 +99,25 @@
                         {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "price" :price target-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}]
           ]
 
-      (rf/dispatch [:post-model-history-pricing :pricing [isin]])
+
       (gt/element-box-generic "history-chart" element-box-width "Trade history" nil
                               [(if qdata
-                                 [oz/vega-lite
-                                  (qscharts/quant-isin-history-chart-map
-                                    @(rf/subscribe [:quant-model/history-result])
-                                    int-start-date
-                                    {:price true :ztw true}
-                                    [{:ISIN isin :bond (qdata :Bond)}]
-                                    "Absolute"
-                                    {:price (concat vega-rectangles []) :ztw vega-rectangles} ;(concat vega-rectangles target-lines)
-                                    )]
+                                 (let [vega-spec (qscharts/quant-isin-history-chart-map
+                                                   @(rf/subscribe [:quant-model/history-result])
+                                                   int-start-date
+                                                   {:price true :ztw true}
+                                                   [{:ISIN isin :bond (qdata :Bond)}]
+                                                   "Absolute"
+                                                   {:price (concat vega-rectangles target-lines) :ztw vega-rectangles} ;(concat vega-rectangles target-lines)
+                                                   )
+                                       ]
+                                   (println ymin ymax)
+                                   [oz/vega-lite
+
+                                    ;super hacky
+                                    (assoc-in vega-spec [:vconcat 0 :layer 0 :encoding :y :scale :domain] [ymin ymax])
+
+                                    ])
                                  [p "loading..."])]))
     [p "loading..."]))
 
@@ -199,29 +206,36 @@
 (defn alert-sort [data]
   (sort-by #(.indexOf ["relval" "target" "price" "review" "other"] (:ta2022.alert/alert-scope %)) data))
 
-(defn alert-table [data]
+
+(defn alert-table [data with-triggers]
   [:> ReactTable
    {:data       (alert-sort data)
-    :columns    [{:Header "UUID" :accessor :uuid :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (str x) "-")) :show false}
-                 ;{:Header "Start date" :accessor :start-date :width 100 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (t/format-date-from-int x)))}
-                 {:Header "Type" :accessor :alert-type :width 100 :style {:textAlign "left"} :show false}
-                 {:Header "Scope" :accessor :alert-scope :width 100 :style {:textAlign "left"}}
-                 {:Header "Description" :accessor :description :width 400 :style {:textAlign "left"}}
-                 {:Header "Query" :accessor :description :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")]
+    :columns    (remove nil? [{:Header "UUID" :accessor :uuid :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (str x) "-")) :show false}
+                              ;{:Header "Start date" :accessor :start-date :width 100 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (t/format-date-from-int x)))}
+                              {:Header "Type" :accessor :alert-type :width 100 :style {:textAlign "left"} :show false}
+                              {:Header "Scope" :accessor :alert-scope :width 100 :style {:textAlign "left"}}
+                              {:Header "Description" :accessor :description :width 400 :style {:textAlign "left"}}
+                              {:Header "Query" :accessor :description :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")]
 
-                                                                                                                  (str (aget this "original" "bloomberg-request")
-                                                                                                                       " "
-                                                                                                                       (aget this "original" "comparison")
-                                                                                                                       " "
-                                                                                                                       (aget this "original" "comparison-value")
-                                                                                                                       ) "-"))
-                  :show   false}
-
-                 {:Header "Start level" :accessor :start-level :width 100 :Cell tables/round2 :style {:textAlign "right"}}
-                 {:Header "Triggered?" :accessor :triggered :width 100 :style {:textAlign "left"} :Cell #(rt-int->date "triggered-date" %)}
-                 ]
+                                                                                                                               (str (aget this "original" "bloomberg-request")
+                                                                                                                                    " "
+                                                                                                                                    (aget this "original" "comparison")
+                                                                                                                                    " "
+                                                                                                                                    (aget this "original" "comparison-value")
+                                                                                                                                    ) "-"))
+                               :show   false}
+                              {:Header "Start level" :accessor :start-level :width 100 :Cell tables/round2 :style {:textAlign "right"}}
+                              (if with-triggers {:Header "Latest" :accessor :latest-market-price :width 100 :Cell tables/round2 :style {:textAlign "right"}})
+                              (if with-triggers {:Header "Distance" :accessor :distance-to-trigger :width 100 :Cell tables/round0pc :style {:textAlign "right"}})
+                              {:Header "Triggered?" :accessor :triggered :width 100 :style {:textAlign "left"} :Cell #(rt-int->date "triggered-date" %)}
+                              ])
     :filterable false :showPagination false :pageSize (count data) :showPageSizeOptions false :className "-striped -highlight"}]
   )
+
+(defn alert->alert-with-triggers [triggers a]
+  (clojure.set/rename-keys (merge a (triggers (:ta2022.alert/uuid a)))
+                           {:latest-market-spread :latest-market-price}
+                           ))
 
 (defn trade->alerts [trade alerts]
   (remove nil? (concat [(if-let [a (:ta2022.trade/relval-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "relval"))
@@ -232,7 +246,7 @@
                          (mapv #(assoc (alerts %) :ta2022.alert/alert-scope "other") (:ta2022.trade/other-alert-uuids trade))))))
 
 (defn trade-description
-  [sorted-trades alerts]
+  [sorted-trades alerts triggers]
   (let [t0 (first sorted-trades) tl (last sorted-trades)]
     (gt/element-box-generic "trade-description" element-box-width "Trade description" nil
                             (concat [[v-box :gap "5px" :children [[title :label "Original trade" :level :level2]
@@ -250,7 +264,8 @@
                                                                     [hb [[box :size "1" :child [title :level :level3 :label "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale tl)) (catch js/Error e (:ta2022.trade/entry-rationale tl)))]]]]
                                                                     [hb [[box :size "1" :child [title :level :level3 :label "Exit date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/exit-date tl))]]]]
                                                                     [hb [[box :size "1" :child [title :level :level3 :label "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]]]])
-                                       [[title :label "Current triggers" :level :level2] [alert-table (trade->alerts tl alerts)]]))))
+                                       [[title :label "Current triggers" :level :level2] [alert-table (map #(alert->alert-with-triggers triggers %)
+                                                                                                           (trade->alerts tl alerts)) true]]))))
 
 (defn trade-history
   [sorted-trades alerts]
@@ -264,7 +279,7 @@
                                                                   [hb [[box :size "1" :child [title :level :level3 :label "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale tl)) (catch js/Error e (:ta2022.trade/entry-rationale tl)))]]]]
                                                                   [hb [[box :size "1" :child [title :level :level3 :label "Exit date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/exit-date tl))]]]]
                                                                   [hb [[box :size "1" :child [title :level :level3 :label "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]
-                                                                  [hb [[box :size "1" :child [title :level :level3 :label "Alerts"]] [box :size "3" :child [alert-table (trade->alerts tl alerts)]]]]
+                                                                  [hb [[box :size "1" :child [title :level :level3 :label "Alerts"]] [box :size "3" :child [alert-table (trade->alerts tl alerts) false]]]]
                                                                   ]]))))
 
 (defn isin-picker []
@@ -291,31 +306,31 @@
   (let [isin @(rf/subscribe [:ta2022/trade-isin])
         qdata (first (t/chainfilter {:ISIN isin} @(rf/subscribe [:quant-model/model-output])))]
     (when (nil? @(rf/subscribe [:ta2022/trade-history]))
-      (rf/dispatch [:get-ta2022-trade-view-history isin]))
+      (rf/dispatch [:get-ta2022-trade-view-history isin])
+      (rf/dispatch [:post-model-history-pricing :pricing [isin]]))
     (when (zero? (count @(rf/subscribe [:ta2022/trade-view-position-and-performance-table])))
       (rf/dispatch [:get-ta2022-trade-view-position-and-performance-table isin]))
     (let [th @(rf/subscribe [:ta2022/trade-history])
-          sorted-trades (:trades th)
-          alerts (:alerts th)
-          performances (:performances th)
-          triggers (:triggers th)]
+          {:keys [trades alerts performances triggers]} th]
       [v-box :gap "10px"
        :children [[isin-picker]
-                  [trade-static-and-pricing isin qdata (last sorted-trades) triggers]
-                  [historical-chart isin qdata sorted-trades triggers]
-                  [trade-description sorted-trades alerts]
+                  [trade-static-and-pricing isin qdata (last trades) triggers]
+                  [trade-description trades alerts triggers]
+                  [historical-chart isin qdata trades triggers]
                   [attachments isin]
-                  [positions-and-performance-table sorted-trades performances]
-                  [trade-history sorted-trades alerts]
+                  [positions-and-performance-table trades performances]
+                  [trade-history trades alerts]
                   [actions]]])))
 
 
 (rf/reg-event-fx
-  :ta2022/get-main-table-data
+  :ta2022/post-main-table-data
   (fn [{:keys [db]} [_ analyst sector country portfolio]]
-    {:db db
-     :http-get-dispatch {:url          (str static/server-address "ta2022-main-table-data?analyst=" analyst "&sector=" sector "&country=" country "&portfolio=" portfolio)
-                         :dispatch-key [:ta2022/main-table-data]}}))
+    (println analyst sector country portfolio)
+    {:db                db
+     :http-post-dispatch {:url          (str static/server-address "ta2022-main-table-data")
+                         :edn-params {:analyst (if analyst analyst "All") :sector (if sector sector "All") :country (if country country "All") :portfolio (if portfolio portfolio "All")}
+                          :dispatch-key [:ta2022/main-table-data]}}))
 
 (def table-columns
   {:id                          {:Header "ID" :accessor "id" :show false}
@@ -327,12 +342,12 @@
    ;:analyst                     {:Header "Analyst"        :accessor "analyst"                     :width 50 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
    :NAME                        {:Header "Name" :accessor "Bond" :width 120 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
    :portfolio                   {:Header "Portfolio" :accessor "portfolio" :width 135 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
-   :ISIN                        {:Header "ISIN" :accessor "ISIN" :width 125 :style {:textAlign "center"}}
+   :ISIN                        {:Header "ISIN" :accessor "ISIN" :width 125 :style {:textAlign "center"} :show false}
    :status                      {:Header "Status" :accessor "status" :show false} ;we need to have it in the table for the props
    :status-show                 {:Header "Status" :accessor "status" :width 60 :style {:textAlign "center"}} ;we need to have it in the table for the props
    :thisyear                    {:Header "thisyear" :accessor "thisyear" :show false} ;we need to have it in the table for the props
    :position                    {:Header "Model" :accessor "position" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
-   :live-position               {:Header "Actual" :accessor "live-position" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
+   :weight               {:Header "Actual" :accessor "weight" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
    :entry-price                 {:Header "Entry" :accessor "entry-price" :width 60 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND}
    :price                       {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND}
    :yield                       {:Header "Yield" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :Cell tables/yield-format :filterMethod tables/nb-filter-OR-AND}
@@ -373,54 +388,56 @@
 
    })
 
+
+(defn row-action [action rowInfo] (clj->js {:onClick #(rf/dispatch [action (aget rowInfo "row" "_original" "isin")]) :style {:cursor "pointer"}}))
+(defn go-to-active-trade! [state rowInfo instance] (row-action :ta2022/go-to-active-trade rowInfo))
+
 (defn main-table []
   (let [analyst (r/atom nil)
         sector (r/atom nil)
         country (r/atom nil)
         portfolio (r/atom nil)
-        qsdata @(rf/subscribe [:quant-model/model-output])
-        data @(rf/subscribe [:ta2022/main-table-data])
-        ]
+        qsdata @(rf/subscribe [:quant-model/model-output])]
+    (fn []
+      (let [data @(rf/subscribe [:ta2022/main-table-data])]
+        [v-box :gap "10px"
+         :children [
+                    (gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
+                                            [[h-box :gap "10px" :align :center
+                                              :children [[single-dropdown :model analyst :choices (conj (for [k @(rf/subscribe [:analysts])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! analyst %)) :placeholder "Analyst" :filter-box? true]
+                                                         [single-dropdown :model sector :choices (conj (map (fn [x] {:id x :label x}) (sort (distinct (map :Sector qsdata)))) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! sector %)) :placeholder "Sector" :filter-box? true]
+                                                         [single-dropdown :model country :choices (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! country %)) :placeholder "Country" :filter-box? true]
+                                                         [single-dropdown :model portfolio :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! portfolio %)) :placeholder "Portfolio" :filter-box? true]
+                                                         [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/post-main-table-data @analyst @sector @country @portfolio])]
 
-    [v-box :gap "10px"
-     :children [
-                (gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
-                                        [[h-box :gap "10px" :align :center
-                                          :children [[single-dropdown :model analyst :choices (conj (for [k @(rf/subscribe [:analysts])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(reset! analyst %) :placeholder "Analyst" :filter-box? true]
-                                                     [single-dropdown :model sector :choices (conj (map (fn [x] {:id x :label x}) (sort (distinct (map :Sector qsdata)))) {:id "All" :label "All"}) :on-change #(reset! sector %) :placeholder "Sector" :filter-box? true]
-                                                                                      [single-dropdown :model country :choices (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"}) :on-change #(reset! country %) :placeholder "Country" :filter-box? true]
-                                                                                      [single-dropdown :model portfolio :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(reset! portfolio %) :placeholder "Portfolio" :filter-box? true]
-                                                                                      [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/get-main-table-data @analyst @sector @country @portfolio])]
+                                                         ]]
 
-                                                                                      ]]
+                                             ]
 
+                                            )
 
-                                         ]
+                    (gt/element-box-generic "isin-picker" element-box-width "Results" nil
+                                            [[:> ReactTable
+                                              {:data           (tatables/strategy-sort data)
+                                               :columns        [{:Header "Trade description" :columns (mapv table-columns (remove nil? (conj [:ISIN :strategy :NAME] (if (and @portfolio (not= @portfolio "All")) :weight))))} ;:id :strategy-shortcut
+                                                                {:Header "Pricing" :columns (mapv table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
+                                                                {:Header "Relative value target" :columns (mapv table-columns [:relval-target-description :relval-target-latest :relval-target-distance])}
+                                                                ;{:Header "Price target" :columns (mapv table-columns [:price-target :d-target])}
+                                                                ;{:Header "Review target" :columns (mapv table-columns [:review-target :d-review])}
+                                                                ;{:Header "Performance since inception" :columns (mapv table-columns [:ltd-return :ltd-return-vs-cembi :ltd-return-vs-cembi-rating :ltd-return-vs-cembi-country :ltd-return-vs-cembi-sector])}
+                                                                ;{:Header "Performance year to date" :columns (mapv table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector])}
+                                                                ]
+                                               :pageSize       20
+                                               :showPagination true
+                                               :getTrProps       go-to-active-trade!
+                                               :className      "-striped -highlight"}]
 
-                                        )
+                                             ]
 
-                (gt/element-box-generic "isin-picker" element-box-width "Table" nil
-                                        [[:> ReactTable
-                                          {:data           data
-                                           :columns        [{:Header "Trade description" :columns (mapv table-columns [:strategy :NAME])} ;:id :strategy-shortcut
-                                                            {:Header "Pricing" :columns (mapv table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
-                                                            {:Header "Relative value target" :columns (mapv table-columns [:relval-target-description :relval-target-latest :relval-target-distance])}
-                                                            ;{:Header "Price target" :columns (mapv table-columns [:price-target :d-target])}
-                                                            ;{:Header "Review target" :columns (mapv table-columns [:review-target :d-review])}
-                                                            ;{:Header "Performance since inception" :columns (mapv table-columns [:ltd-return :ltd-return-vs-cembi :ltd-return-vs-cembi-rating :ltd-return-vs-cembi-country :ltd-return-vs-cembi-sector])}
-                                                            ;{:Header "Performance year to date" :columns (mapv table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector])}
-                                                            ]
-                                           :pageSize       10
-                                           :showPagination false
-                                           :className      "-striped -highlight"}]
+                                            )
+                    ]
 
-
-                                         ]
-
-                                        )
-                ]
-
-     ])
+         ])))
 
   )
 

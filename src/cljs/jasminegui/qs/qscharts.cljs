@@ -163,7 +163,8 @@
     :selection {:grid {:type "interval" :bind "scales"}}
     :encoding  {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                 :y     {:field field :type "quantitative" :axis {:title title}
-                        :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}}
+                        :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}
+                        }
                 :color {:field "Bond" :type "nominal" :scale {:range ["#134848" "#FDAA94"]}}}})
   ([field title key data extras]
    {:layer (vec (remove nil? (concat [(graph field title key data)] extras)))}))
@@ -337,9 +338,9 @@
      :resolve {:scale {:color "independent"}}
      :title   nil
      :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
-     :vconcat (->> [[:price "Price"] [:ytw "YTW"] [:ztw "ZTW"] [:duration "Duration"] [:rating_score "Rating"] [:cheapness2D "2D cheapness"] [:cheapness4D "4D cheapness"]]
-                   (mapv #(if ((first %) which?) (graph (name (first %)) (second %) (first %) data-to-plot ((first %) extras))))
-                   (remove nil?))}))
+     :vconcat (vec (->> [[:price "Price"] [:ytw "YTW"] [:ztw "ZTW"] [:duration "Duration"] [:rating_score "Rating"] [:cheapness2D "2D cheapness"] [:cheapness4D "4D cheapness"]]
+                        (mapv #(if ((first %) which?) (graph (name (first %)) (second %) (first %) data-to-plot ((first %) extras))))
+                        (remove nil?)))}))                  ;vec so it's not lazy
 
 (def curve-type-mapping {:two-d-curves "2D" :four-d-sovereign-curves "4D" :two-d-curves-sovs "2DSov" :two-d-curves-corps "2DCorp"})
 

@@ -59,3 +59,14 @@
                                          :trade-entry   trade-entry
                                          :test-result   (:test-result db)}
                           :dispatch-key [:ta2022/post-amended-result]}}))
+
+
+(rf/reg-event-fx
+  :ta2022/go-to-active-trade
+  (fn [{:keys [db]} [_ isin]]
+    {:db                 (assoc db :ta2022/active-home :trade-view
+                                   :ta2022/trade-isin isin
+                                   :ta2022/trade-history nil)
+     :fx       [[:dispatch [:get-ta2022-trade-view-history isin]]
+                [:dispatch [:post-model-history-pricing :pricing [isin]]]
+                [:dispatch [:get-ta2022-trade-view-position-and-performance-table isin]]]}))
