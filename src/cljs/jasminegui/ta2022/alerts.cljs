@@ -165,9 +165,9 @@
   (let [other-alerts (r/cursor trade-entry [:other-alerts])]
     (fn []
       [v-box :gap "10px" :width default-width
-       :children (conj (into [[trade-alert trade-entry "Relval alert" :relval-alert 0]
-                              [trade-alert trade-entry "Price alert" :target-alert 0]
-                              [trade-alert trade-entry "Review alert" :review-alert 0]]
+       :children (conj (into [[trade-alert trade-entry "Upside alert" :target-alert 0]
+                              [trade-alert trade-entry "Upside relval alert" :relval-alert 0]
+                              [trade-alert trade-entry "Downside alert" :review-alert 0]]
                              (for [i (range (count @other-alerts))] [trade-alert trade-entry (str "Custom alert " (inc i)) :other-alerts i]))
                        [h-box :gap "10px" :children [[button :style {:width "100%"} :label "Add alert" :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (swap! other-alerts assoc (count @other-alerts) single-alert-template))]
                                                      [button :style {:width "100%"} :label "Remove alert" :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (swap! other-alerts dissoc (dec (count @other-alerts))))]]])])))

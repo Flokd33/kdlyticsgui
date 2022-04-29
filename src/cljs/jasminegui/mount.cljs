@@ -265,6 +265,7 @@
                  :ta2022/show-modal nil
                  :ta2022/test-result nil
                  :ta2022/can-morph false
+                 :ta2022/implied-price-difference nil
 
                  :dummy nil                                 ;can be useful
                  })
@@ -458,6 +459,7 @@
            :ta2022/show-modal
            :ta2022/test-result
            :ta2022/can-morph
+           :ta2022/implied-price-difference
 
 
            :dummy

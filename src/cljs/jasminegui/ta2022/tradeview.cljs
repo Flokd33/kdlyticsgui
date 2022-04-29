@@ -99,7 +99,6 @@
                         {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "price" :price target-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}]
           ]
 
-
       (gt/element-box-generic "history-chart" element-box-width "Trade history" nil
                               [(if qdata
                                  (let [vega-spec (qscharts/quant-isin-history-chart-map
@@ -108,25 +107,12 @@
                                                    {:price true :ztw true}
                                                    [{:ISIN isin :bond (qdata :Bond)}]
                                                    "Absolute"
-                                                   {:price (concat vega-rectangles target-lines) :ztw vega-rectangles} ;(concat vega-rectangles target-lines)
-                                                   )
-                                       ]
-                                   (println ymin ymax)
-                                   [oz/vega-lite
-
-                                    ;super hacky
-                                    (assoc-in vega-spec [:vconcat 0 :layer 0 :encoding :y :scale :domain] [ymin ymax])
-
-                                    ])
+                                                   {:price (concat vega-rectangles target-lines) :ztw vega-rectangles})] ;(concat vega-rectangles target-lines)
+                                   [oz/vega-lite (assoc-in vega-spec [:vconcat 0 :layer 0 :encoding :y :scale :domain] [ymin ymax])]);super hacky
                                  [p "loading..."])]))
     [p "loading..."]))
 
-(rf/reg-event-fx
-  :get-ta2022-trade-view-position-and-performance-table
-  (fn [{:keys [db]} [_ isin]]
-    {:db db
-     :http-get-dispatch {:url          (str static/server-address "ta2022-positions?isin=" isin)
-                         :dispatch-key [:ta2022/trade-view-position-and-performance-table]}}))
+
 
 (defn positions-and-performance-table
   [trades performances]
@@ -169,10 +155,7 @@
                                                                                  {:Header "Index" :accessor :tr-vs-index-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Rating" :accessor :tr-vs-index-rating-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Country" :accessor :tr-vs-index-country-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
-                                                                                 {:Header "Sector" :accessor :tr-vs-index-sector-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]}
-
-
-                                            ]
+                                                                                 {:Header "Sector" :accessor :tr-vs-index-sector-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]}]
                                :filterable false :showPagination false :pageSize (count cdata) :showPageSizeOptions false :className "-striped -highlight"}]
                              [title :label "Leg by leg performance" :level :level2]
                              [:> ReactTable
@@ -189,12 +172,6 @@
                                :filterable false :showPagination false :pageSize (count leg-by-leg-data) :showPageSizeOptions false :className "-striped -highlight"}]
                              ])))
 
-(rf/reg-event-fx
-  :get-ta2022-trade-view-history
-  (fn [{:keys [db]} [_ isin]]
-    {:db db
-     :http-get-dispatch {:url          (str static/server-address "ta2022-history?isin=" isin)
-                         :dispatch-key [:ta2022/trade-history]}}))
 
 
 (defn attachments
@@ -205,7 +182,6 @@
 
 (defn alert-sort [data]
   (sort-by #(.indexOf ["relval" "target" "price" "review" "other"] (:ta2022.alert/alert-scope %)) data))
-
 
 (defn alert-table [data with-triggers]
   [:> ReactTable
@@ -233,9 +209,7 @@
   )
 
 (defn alert->alert-with-triggers [triggers a]
-  (clojure.set/rename-keys (merge a (triggers (:ta2022.alert/uuid a)))
-                           {:latest-market-spread :latest-market-price}
-                           ))
+  (clojure.set/rename-keys (merge a (triggers (:ta2022.alert/uuid a))) {:latest-market-spread :latest-market-price}))
 
 (defn trade->alerts [trade alerts]
   (remove nil? (concat [(if-let [a (:ta2022.trade/relval-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "relval"))
@@ -323,14 +297,7 @@
                   [actions]]])))
 
 
-(rf/reg-event-fx
-  :ta2022/post-main-table-data
-  (fn [{:keys [db]} [_ analyst sector country portfolio]]
-    (println analyst sector country portfolio)
-    {:db                db
-     :http-post-dispatch {:url          (str static/server-address "ta2022-main-table-data")
-                         :edn-params {:analyst (if analyst analyst "All") :sector (if sector sector "All") :country (if country country "All") :portfolio (if portfolio portfolio "All")}
-                          :dispatch-key [:ta2022/main-table-data]}}))
+
 
 (def table-columns
   {:id                          {:Header "ID" :accessor "id" :show false}
@@ -409,12 +376,7 @@
                                                          [single-dropdown :model country :choices (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! country %)) :placeholder "Country" :filter-box? true]
                                                          [single-dropdown :model portfolio :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! portfolio %)) :placeholder "Portfolio" :filter-box? true]
                                                          [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/post-main-table-data @analyst @sector @country @portfolio])]
-
-                                                         ]]
-
-                                             ]
-
-                                            )
+                                                         ]]])
 
                     (gt/element-box-generic "isin-picker" element-box-width "Results" nil
                                             [[:> ReactTable
@@ -481,9 +443,9 @@
                              :strategy        nil
                              :entry-rationale nil
                              :ISIN            @(rf/subscribe [:ta2022/trade-isin])
-                             :relval-alert    taalerts/single-alert-template
-                             :target-alert    taalerts/single-alert-template
-                             :review-alert    taalerts/single-alert-template
+                             :relval-alert    (assoc taalerts/spread-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "Z_SPRD_MID" :operator "-" :bloomberg-request-security-2 "JBCDCBZW Index" :bloomberg-request-field-2 "PX_LAST")
+                             :target-alert    (assoc taalerts/single-alert-template :comparison ">" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "PX_LAST")
+                             :review-alert    (assoc taalerts/single-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "PX_LAST")
                              :other-alerts    {}})
         entry-rationale (r/cursor trade-entry [:entry-rationale])
         strategy (r/cursor trade-entry [:strategy])
@@ -499,10 +461,11 @@
                                                    [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
                   [label :label "New trade rationale"] [input-textarea :model entry-rationale :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
                   [taalerts/trade-alert-input trade-entry]
+                  (if-let [x @(rf/subscribe [:ta2022/implied-price-difference])] [label :label (str "Implied upside price difference (has to be <1%) " (gstring/format "%.1f%" (* 100 x)))])
                   [line]
                   [h-box :gap "10px" :children [[button :class btc :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
                                                 [button :class btc :label "Morph trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/save-new-trade last-leg-uuid @exit-rationale @trade-entry])]
-                                                [button :class btc :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+                                                [button :class btc :label "Cancel" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/show-modal nil]))]]]
                   ]])))
 
 (defn amend-latest-trade-modal []
@@ -533,7 +496,7 @@
                   [line]
                   [h-box :gap "10px" :children [[button :class btc :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
                                                 [button :class btc :label "Amend trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/amend-latest-trade last-leg-uuid @trade-entry])]
-                                                [button :class btc :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+                                                [button :class btc :label "Cancel" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/show-modal nil]))]]]
                   ]])))
 
 (defn modal-ta2022 []
