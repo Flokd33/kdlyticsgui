@@ -8,10 +8,12 @@
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    [jasminegui.ta2022.actions :as taactions :refer [checknb]]
+
 )
   )
 
+
+(defn checknb [res k] (and res (some? (res k)) (number? (res k))))
 (def default-width "800px")
 (def lw "100px")
 (defn hb [x] [h-box :gap "10px" :align :center :children x])
@@ -34,6 +36,18 @@
                             :comparison-value "100"})
 
 (def fundamental-alert-template {:alert-type "fundamental" :description nil})
+
+
+(defn alert->alert-with-triggers [triggers a]
+  (clojure.set/rename-keys (merge a (triggers (:ta2022.alert/uuid a))) {:latest-market-spread :latest-market-price}))
+
+(defn trade->alerts [trade alerts]
+  (remove nil? (concat [(if-let [a (:ta2022.trade/relval-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "relval"))
+                        (if-let [a (:ta2022.trade/target-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "target"))
+                        (if-let [a (:ta2022.trade/review-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "review"))
+                        (if-let [a (:ta2022.trade/price-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "price"))]
+                       (if (and (:ta2022.trade/other-alert-uuids trade) (pos? (count (:ta2022.trade/other-alert-uuids trade))))
+                         (mapv #(assoc (alerts %) :ta2022.alert/alert-scope "other") (:ta2022.trade/other-alert-uuids trade))))))
 
 (defn alert-from-backend [alert]
   (-> (clojure.set/rename-keys alert
@@ -84,16 +98,17 @@
         description                  (r/cursor trade-entry (if o? [alert-key alert-number :description] [alert-key :description]))
         comparison                   (r/cursor trade-entry (if o? [alert-key alert-number :comparison] [alert-key :comparison]))
         comparison-value             (r/cursor trade-entry (if o? [alert-key alert-number :comparison-value] [alert-key :comparison-value]))
-        guess-description            (if (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp"))
-                                       (case @bloomberg-request-field-1
-                                         "PX_LAST" (str "price " @comparison " " @comparison-value)
-                                         "YLD_YTM_MID" (str "yield " @comparison " " @comparison-value)
-                                         "YAS_BOND_YLD" (str "yield " @comparison " " @comparison-value)
-                                         "Z_SPRD_MID" (str "zspread " @comparison " " @comparison-value)
-                                         "YAS_ZSPREAD" (str "zspread " @comparison " " @comparison-value)
-                                         "BLOOMBERG_MID_G_SPREAD" (str "gspread " @comparison " " @comparison-value)
-                                         "Failed to guess")
-                                       "Failed to guess")]
+        guess-description (cond
+                            (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")) (case @bloomberg-request-field-1
+                                                                                                   "PX_LAST" (str "price " @comparison " " @comparison-value)
+                                                                                                   "YLD_YTM_MID" (str "yield " @comparison " " @comparison-value)
+                                                                                                   "YAS_BOND_YLD" (str "yield " @comparison " " @comparison-value)
+                                                                                                   "Z_SPRD_MID" (str "zspread " @comparison " " @comparison-value)
+                                                                                                   "YAS_ZSPREAD" (str "zspread " @comparison " " @comparison-value)
+                                                                                                   "BLOOMBERG_MID_G_SPREAD" (str "gspread " @comparison " " @comparison-value)
+                                                                                                   "Failed to guess")
+                            (some #{(clean-case (last (.split @bloomberg-request-security-1 " ")))} ["Equity" "Comdty" "Index" "Curncy"]) (str (first (.split @bloomberg-request-security-1 " ")) " " @comparison " " @comparison-value)
+                            :else "Failed to guess")]
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Condition"]
                      [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")))]
@@ -116,7 +131,11 @@
         operator                     (r/cursor trade-entry-alert [:operator])
         description                  (r/cursor trade-entry-alert [:description])
         comparison                   (r/cursor trade-entry-alert [:comparison])
-        comparison-value             (r/cursor trade-entry-alert [:comparison-value])]
+        comparison-value             (r/cursor trade-entry-alert [:comparison-value])
+        guess-description (if (and (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")) (= @bloomberg-request-field-1 "Z_SPRD_MID")
+                                   (= @bloomberg-request-security-2 "JBCDCBZW Index") (= @bloomberg-request-field-2 "PX_LAST")
+                                   (= @operator "-") (= @comparison "<"))
+                            (str "< " @comparison-value " vs CEMBI") "Failed to guess")]
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Security 1"]
                      [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")))]
@@ -130,7 +149,9 @@
                 [hb [[label :width lw :label "Comparison"]
                      [single-dropdown :width "100px" :choices [{:id ">" :label "above"} {:id "<" :label "below"}] :model comparison :title? false :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison %))]
                      [input-text :width "75px" :model comparison-value :status (not-number-error-status @comparison-value) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison-value %))]]]
-                [hb [[label :width lw :label "Description"] [input-text :width "570px" :model description :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description %))]]]
+                [hb [[label :width lw :label "Description"]
+                     [md-icon-button :md-icon-name "zmdi zmdi-flare" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description guess-description))]
+                     [input-text :width "570px"  :model description :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description %))]]]
                 [hb [[label :width lw :label "Test?"] [test-result alert-key alert-number]]]
                 ]]))
 

@@ -21,6 +21,7 @@
     [jasminegui.tools :as t]
     [jasminegui.ta2022.tables :as tatables]
     [jasminegui.ta2022.alerts :as taalerts]
+    [jasminegui.ta2022.actions :as taactions]
     [oz.core :as oz])
 
   )
@@ -36,7 +37,7 @@
     (t/format-date-from-int (aget this "original" accessor)) "No"))
 
 (defn trade-static-and-pricing
-  [isin qdata last-trade triggers]
+  [isin qdata last-trade alerts triggers]
   (let [fmt-rtn (fn [this] (if-let [x (aget this "value")] (gstring/format "%.2f" (* 100. x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
         fmt-rtn-1 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.2f" x) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))]
     (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
@@ -48,23 +49,31 @@
                                 {:data           [(assoc qdata
                                                     :relval (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-tr-1y])
                                                     :target (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-tr-1y])
-                                                    :price (get-in triggers [(last-trade :ta2022.trade/price-alert-uuid) :implied-tr-1y])
+                                                    :review (get-in triggers [(last-trade :ta2022.trade/review-alert-uuid) :implied-tr-1y])
                                                     :relval-price (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-price])
                                                     :target-price (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-price])
-                                                    :price-price (get-in triggers [(last-trade :ta2022.trade/price-alert-uuid) :implied-price]))]
+                                                    :review-price (get-in triggers [(last-trade :ta2022.trade/review-alert-uuid) :implied-price])
+                                                    :relval-start-price (get-in alerts [(last-trade :ta2022.trade/relval-alert-uuid) :ta2022.alert/start-implied-price])
+                                                    :target-start-price (get-in alerts [(last-trade :ta2022.trade/target-alert-uuid) :ta2022.alert/start-implied-price])
+                                                    :review-start-price (get-in alerts [(last-trade :ta2022.trade/review-alert-uuid) :ta2022.alert/start-implied-price])
+                                                    )]
                                  :columns        [{:Header  "Current alert implied prices"
-                                                   :columns [{:Header "Relval" :accessor "relval-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}
-                                                             {:Header "Target" :accessor "target-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}
-                                                             {:Header "Review" :accessor "price-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}]}
+                                                   :columns [{:Header "Target" :accessor "target-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}
+                                                             {:Header "Relval" :accessor "relval-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}
+                                                             {:Header "Review" :accessor "review-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}]}
+                                                  {:Header  "Original alert implied prices"
+                                                   :columns [{:Header "Target" :accessor "target-start-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}
+                                                             {:Header "Relval" :accessor "relval-start-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}
+                                                             {:Header "Review" :accessor "review-start-price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn-1}]}
                                                   {:Header  "Target returns with 1y coupon (%)"
                                                    :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 70 :style {:textAlign "right"} :Cell tables/round2}
                                                              {:Header "2D" :accessor "svr2d1yrtn" :width 70 :style {:textAlign "right"} :Cell tables/round2}
                                                              {:Header "Tight" :accessor "upside1y" :width 70 :style {:textAlign "right"} :Cell tables/round2}
                                                              {:Header "Median" :accessor "expected1y" :width 70 :style {:textAlign "right"} :Cell tables/round2}
                                                              {:Header "Wide" :accessor "downside1y" :width 70 :style {:textAlign "right"} :Cell tables/round2}
-                                                             {:Header "Relval" :accessor "relval" :width 70 :style {:textAlign "right"} :Cell fmt-rtn}
                                                              {:Header "Target" :accessor "target" :width 70 :style {:textAlign "right"} :Cell fmt-rtn}
-                                                             {:Header "Review" :accessor "price" :width 70 :style {:textAlign "right"} :Cell fmt-rtn}]}]
+                                                             {:Header "Relval" :accessor "relval" :width 70 :style {:textAlign "right"} :Cell fmt-rtn}
+                                                             {:Header "Review" :accessor "review" :width 70 :style {:textAlign "right"} :Cell fmt-rtn}]}]
                                  :showPagination false :pageSize 1 :filterable false}]
                                [p "loading..."])])))
 
@@ -96,7 +105,7 @@
                         {:mark {:type "rule" :color "yellow"} :data {:values {:y target-price :x last-entry-date :x2 last-date} :format {:parse {:x "date:'%Y%m%d'" :x2 "date:'%Y%m%d'"}}} :encoding {:y {:field "y" :type "quantitative"} :x {:field "x" :type "temporal"} :x2 {:field "x2" :type "temporal"}}}
                         {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "review" :price review-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}
                         {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "relval" :price relval-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}
-                        {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "price" :price target-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}]
+                        {:mark {:type "text" :dx -20 :dy -15} :data {:values [{:label "target" :price target-price :dt last-date}] :format {:parse {:dt "date:'%Y%m%d'" :price "quantitative"}}} :encoding {:y {:field "price" :type "quantitative"} :x {:field "dt" :type "temporal"} :text {:field "label" :type "nominal"}}}]
           ]
 
       (gt/element-box-generic "history-chart" element-box-width "Trade history" nil
@@ -181,7 +190,7 @@
   )
 
 (defn alert-sort [data]
-  (sort-by #(.indexOf ["relval" "target" "price" "review" "other"] (:ta2022.alert/alert-scope %)) data))
+  (sort-by #(.indexOf ["target" "relval" "price" "review" "other"] (:ta2022.alert/alert-scope %)) data))
 
 (defn alert-table [data with-triggers]
   [:> ReactTable
@@ -208,16 +217,6 @@
     :filterable false :showPagination false :pageSize (count data) :showPageSizeOptions false :className "-striped -highlight"}]
   )
 
-(defn alert->alert-with-triggers [triggers a]
-  (clojure.set/rename-keys (merge a (triggers (:ta2022.alert/uuid a))) {:latest-market-spread :latest-market-price}))
-
-(defn trade->alerts [trade alerts]
-  (remove nil? (concat [(if-let [a (:ta2022.trade/relval-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "relval"))
-                        (if-let [a (:ta2022.trade/target-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "target"))
-                        (if-let [a (:ta2022.trade/review-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "review"))
-                        (if-let [a (:ta2022.trade/price-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "price"))]
-                       (if (and (:ta2022.trade/other-alert-uuids trade) (pos? (count (:ta2022.trade/other-alert-uuids trade))))
-                         (mapv #(assoc (alerts %) :ta2022.alert/alert-scope "other") (:ta2022.trade/other-alert-uuids trade))))))
 
 (defn trade-description
   [sorted-trades alerts triggers]
@@ -238,8 +237,8 @@
                                                                     [hb [[box :size "1" :child [title :level :level3 :label "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale tl)) (catch js/Error e (:ta2022.trade/entry-rationale tl)))]]]]
                                                                     [hb [[box :size "1" :child [title :level :level3 :label "Exit date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/exit-date tl))]]]]
                                                                     [hb [[box :size "1" :child [title :level :level3 :label "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]]]])
-                                       [[title :label "Current triggers" :level :level2] [alert-table (map #(alert->alert-with-triggers triggers %)
-                                                                                                           (trade->alerts tl alerts)) true]]))))
+                                       [[title :label "Current triggers" :level :level2] [alert-table (map #(taalerts/alert->alert-with-triggers triggers %)
+                                                                                                           (taalerts/trade->alerts tl alerts)) true]]))))
 
 (defn trade-history
   [sorted-trades alerts]
@@ -253,7 +252,7 @@
                                                                   [hb [[box :size "1" :child [title :level :level3 :label "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale tl)) (catch js/Error e (:ta2022.trade/entry-rationale tl)))]]]]
                                                                   [hb [[box :size "1" :child [title :level :level3 :label "Exit date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/exit-date tl))]]]]
                                                                   [hb [[box :size "1" :child [title :level :level3 :label "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]
-                                                                  [hb [[box :size "1" :child [title :level :level3 :label "Alerts"]] [box :size "3" :child [alert-table (trade->alerts tl alerts) false]]]]
+                                                                  [hb [[box :size "1" :child [title :level :level3 :label "Alerts"]] [box :size "3" :child [alert-table (taalerts/trade->alerts tl alerts) false]]]]
                                                                   ]]))))
 
 (defn isin-picker []
@@ -288,7 +287,7 @@
           {:keys [trades alerts performances triggers]} th]
       [v-box :gap "10px"
        :children [[isin-picker]
-                  [trade-static-and-pricing isin qdata (last trades) triggers]
+                  [trade-static-and-pricing isin qdata (last trades) alerts triggers]
                   [trade-description trades alerts triggers]
                   [historical-chart isin qdata trades triggers]
                   [attachments isin]
@@ -423,91 +422,15 @@
                                     :class (str btc (if (and (= active-esg (:code item))) " active"))
                                     :label (:name item)
                                     :on-click #(rf/dispatch [:ta2022/active-home (:code item)])]))]]]))
-
-(defn close-trade-modal []
-  (let [exit-rationale (r/atom nil)
-        last-leg-uuid (:ta2022.trade/uuid (last (sort-by :ta2022.trade/entry-date (first @(rf/subscribe [:ta2022/trade-history])))))]
-    (fn []
-      [v-box :width "1024px" :height "300px" :gap "10px" :padding "20px"
-       :children [[title :label "Close trade" :level :level1]
-                  [label :label "Exit rationale"] [input-textarea :model exit-rationale :on-change #(reset! exit-rationale %) :width "600px" :rows 5]
-                  [line]
-                  [h-box :gap "10px" :children [[button :class btc :label "Close trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/close-trade last-leg-uuid @exit-rationale])]
-                                                [button :class btc :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
-                  ]])))
-
-(defn morph-trade-modal []
-  (let [last-trade (last (sort-by :ta2022.trade/entry-date (first @(rf/subscribe [:ta2022/trade-history]))))
-        exit-rationale (r/atom nil)
-        trade-entry (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
-                             :strategy        nil
-                             :entry-rationale nil
-                             :ISIN            @(rf/subscribe [:ta2022/trade-isin])
-                             :relval-alert    (assoc taalerts/spread-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "Z_SPRD_MID" :operator "-" :bloomberg-request-security-2 "JBCDCBZW Index" :bloomberg-request-field-2 "PX_LAST")
-                             :target-alert    (assoc taalerts/single-alert-template :comparison ">" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "PX_LAST")
-                             :review-alert    (assoc taalerts/single-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "PX_LAST")
-                             :other-alerts    {}})
-        entry-rationale (r/cursor trade-entry [:entry-rationale])
-        strategy (r/cursor trade-entry [:strategy])
-        analyst (r/cursor trade-entry [:analyst])
-        last-leg-uuid (:ta2022.trade/uuid last-trade)]
-    (fn []
-      [v-box :width "1024px" :height "800px" :gap "10px" :padding "20px"
-       :children [[title :label "Morph trade" :level :level1]
-                  [label :label "Exit rationale"] [input-textarea :model exit-rationale :on-change #(reset! exit-rationale %) :width "600px" :rows 5]
-                  [h-box :align :center :children [[label :width "125px" :label "New analyst"]
-                                                   [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]]]
-                  [h-box :align :center :children [[label :width "125px" :label "New strategy"]
-                                                   [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
-                  [label :label "New trade rationale"] [input-textarea :model entry-rationale :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
-                  [taalerts/trade-alert-input trade-entry]
-                  (if-let [x @(rf/subscribe [:ta2022/implied-price-difference])] [label :label (str "Implied upside price difference (has to be <1%) " (gstring/format "%.1f%" (* 100 x)))])
-                  [line]
-                  [h-box :gap "10px" :children [[button :class btc :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
-                                                [button :class btc :label "Morph trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/save-new-trade last-leg-uuid @exit-rationale @trade-entry])]
-                                                [button :class btc :label "Cancel" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/show-modal nil]))]]]
-                  ]])))
-
-(defn amend-latest-trade-modal []
-  (let [last-trade (last (sort-by :ta2022.trade/entry-date (first @(rf/subscribe [:ta2022/trade-history]))))
-        all-alerts (let [x (trade->alerts last-trade (second @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map :ta2022.alert/uuid x) x))
-        trade-entry (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
-                             :strategy        (:ta2022.trade/strategy last-trade)
-                             :entry-rationale (:ta2022.trade/entry-rationale last-trade)
-                             :ISIN            @(rf/subscribe [:ta2022/trade-isin])
-                             :relval-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/relval-alert-uuid last-trade)))
-                             :target-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/target-alert-uuid last-trade)))
-                             :review-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/review-alert-uuid last-trade))) ;TODO IS IT PRICE OR REVIEW!!!
-                             :other-alerts    {}})          ;TODO
-        entry-rationale (r/cursor trade-entry [:entry-rationale])
-        strategy (r/cursor trade-entry [:strategy])
-        analyst (r/cursor trade-entry [:analyst])
-        last-leg-uuid (:ta2022.trade/uuid (last (first @(rf/subscribe [:ta2022/trade-history]))))]
-    ;    (println last-trade)
-    (fn []
-      [v-box :width "1024px" :height "800px" :gap "10px" :padding "20px"
-       :children [[title :label "Amend latest trade" :level :level1]
-                  [h-box :align :center :children [[label :width "125px" :label "New analyst"]
-                                                   [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]]]
-                  [h-box :align :center :children [[label :width "125px" :label "New strategy"]
-                                                   [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
-                  [label :label "New trade rationale"] [input-textarea :model entry-rationale :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
-                  [taalerts/trade-alert-input trade-entry]
-                  [line]
-                  [h-box :gap "10px" :children [[button :class btc :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
-                                                [button :class btc :label "Amend trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/amend-latest-trade last-leg-uuid @trade-entry])]
-                                                [button :class btc :label "Cancel" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/show-modal nil]))]]]
-                  ]])))
-
 (defn modal-ta2022 []
   (if-let [modal-data @(rf/subscribe [:ta2022/show-modal])]
     [modal-panel
      :child [scroller :h-scroll :off :v-scroll :on
              :child
              (case (modal-data :type)
-               :amend-latest-trade [amend-latest-trade-modal]
-               :close-trade [close-trade-modal]
-               :morph-trade [morph-trade-modal]
+               :amend-latest-trade [taactions/amend-latest-trade-modal]
+               :close-trade [taactions/close-trade-modal]
+               :morph-trade [taactions/morph-trade-modal]
                :add-attachment nil
                nil
 
