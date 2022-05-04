@@ -644,12 +644,6 @@
 
 (def start-date-curve (r/atom (t/int-to-gdate 20150101)))   ;(t/int-to-gdate 20150101)
 (def serie-2 (r/atom "curve"))
-;(rf/reg-event-fx
-;  :post-model-history-pricing
-;  (fn [{:keys [db]} [_ query isin]]
-;    {:http-post-dispatch {:url (str static/server-address "model-history")
-;                          :edn-params {:query query :isinseq isin}
-;                          :dispatch-key [:quant-model/history-result]}}))
 
 (rf/reg-event-fx
   :post-model-history-pricing

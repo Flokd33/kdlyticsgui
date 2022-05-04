@@ -256,10 +256,10 @@
                  :analysts nil
 
                  :ta2022/trade-view-position-and-performance-table []
-                 :ta2022/trade-isin "USU1065PAA94"
+                 :ta2022/trade-isin nil
                  :ta2022/trade-attachments nil
                  :ta2022/trade-latest-targets-and-triggers nil
-                 :ta2022/trade-history nil
+                 :ta2022/trade-history {}
                  :ta2022/active-home :main
                  :ta2022/main-table-data []
                  :ta2022/show-modal nil

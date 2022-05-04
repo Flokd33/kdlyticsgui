@@ -163,8 +163,7 @@
     :selection {:grid {:type "interval" :bind "scales"}}
     :encoding  {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                 :y     {:field field :type "quantitative" :axis {:title title}
-                        :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}
-                        }
+                        :scale {:domain [(dec (apply min (map key data))) (inc (apply max (map key data)))]}}
                 :color {:field "Bond" :type "nominal" :scale {:range ["#134848" "#FDAA94"]}}}})
   ([field title key data extras]
    {:layer (vec (remove nil? (concat [(graph field title key data)] extras)))}))

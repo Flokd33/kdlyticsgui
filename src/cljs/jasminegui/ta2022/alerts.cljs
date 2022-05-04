@@ -8,6 +8,7 @@
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
+    [jasminegui.tools :as t]
 
 )
   )
@@ -118,7 +119,7 @@
                      [input-text :width "75px" :model comparison-value :status (not-number-error-status @comparison-value) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison-value %))]]]
                 [hb [[label :width lw :label "Description"]
                      [md-icon-button :md-icon-name "zmdi zmdi-flare" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description guess-description))]
-                     [input-text :width "570px"  :model description :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description %))]]]
+                     [input-text :width "570px" :model description :status (if (zero? (count @description)) :error) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description %))]]]
                 [hb [[label :width lw :label "Test"] [test-result alert-key alert-number]]]
                 ]]))
 
@@ -132,10 +133,18 @@
         description                  (r/cursor trade-entry-alert [:description])
         comparison                   (r/cursor trade-entry-alert [:comparison])
         comparison-value             (r/cursor trade-entry-alert [:comparison-value])
-        guess-description (if (and (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")) (= @bloomberg-request-field-1 "Z_SPRD_MID")
-                                   (= @bloomberg-request-security-2 "JBCDCBZW Index") (= @bloomberg-request-field-2 "PX_LAST")
-                                   (= @operator "-") (= @comparison "<"))
-                            (str "< " @comparison-value " vs CEMBI") "Failed to guess")]
+        all-isins                    (map :ISIN @(rf/subscribe [:quant-model/model-output]))
+        guess-description (fn [] (cond
+                                   (and (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")) (= @bloomberg-request-field-1 "Z_SPRD_MID")
+                                        (= @bloomberg-request-security-2 "JBCDCBZW Index") (= @bloomberg-request-field-2 "PX_LAST")
+                                        (= @operator "-") (= @comparison "<")) (str "< " @comparison-value " vs CEMBI")
+                                   (and (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")) (= @bloomberg-request-field-1 "Z_SPRD_MID")
+                                        (some #{(first (.split @bloomberg-request-security-2 " "))} all-isins) (= @bloomberg-request-field-2 "Z_SPRD_MID")
+                                        (= @operator "-") (= @comparison "<")) (str "< " @comparison-value "z vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
+                                   (and (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")) (= @bloomberg-request-field-1 "YLD_YTM_MID")
+                                        (some #{(first (.split @bloomberg-request-security-2 " "))} all-isins) (= @bloomberg-request-field-2 "YLD_YTM_MID")
+                                        (= @operator "-") (= @comparison "<")) (str "< " @comparison-value " yield vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
+                                   :else "Failed to guess"))]
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Security 1"]
                      [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")))]
@@ -150,8 +159,8 @@
                      [single-dropdown :width "100px" :choices [{:id ">" :label "above"} {:id "<" :label "below"}] :model comparison :title? false :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison %))]
                      [input-text :width "75px" :model comparison-value :status (not-number-error-status @comparison-value) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! comparison-value %))]]]
                 [hb [[label :width lw :label "Description"]
-                     [md-icon-button :md-icon-name "zmdi zmdi-flare" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description guess-description))]
-                     [input-text :width "570px"  :model description :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description %))]]]
+                     [md-icon-button :md-icon-name "zmdi zmdi-flare" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description (guess-description)))]
+                     [input-text :width "570px"  :model description :status (if (zero? (count @description)) :error) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! description %))]]]
                 [hb [[label :width lw :label "Test?"] [test-result alert-key alert-number]]]
                 ]]))
 
@@ -159,7 +168,7 @@
   (let [description (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number :description] [alert-key :description]))]
     [h-box :padding "0px 30px 0px 0px" :gap "10px" :align :center
      :children [[label :width lw :label "Description"]
-                [input-textarea :width "570px" :rows "5" :model description :on-change #(reset! description %)]]]))
+                [input-textarea :width "570px" :rows "5" :model description :status (if (zero? (count @description)) :error) :on-change #(reset! description %)]]]))
 
 (defn trade-alert [trade-entry title-header alert-key alert-number]
   (let [alert-type (if (= alert-key :other-alerts) (r/cursor trade-entry [:other-alerts alert-number :alert-type]) (r/cursor trade-entry [alert-key :alert-type]))
@@ -168,14 +177,15 @@
                                "spread" [spread-alert trade-entry alert-key alert-number]
                                "fundamental" [fundamental-alert trade-entry alert-key alert-number]))]
     [v-box :gap "10px" :style {:border "solid 1px grey"} :class "element"
-     :children [[title :label title-header :level :level2]
-                [h-box :gap "10px" :align :center
-                 :children [[label :width lw :label "Alert type"]
-                            [h-box :gap "10px"
-                             :children [[radio-button :label "Market data (single)" :value "single"       :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]
-                                        [radio-button :label "Market data (spread)" :value "spread"       :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]
-                                        [radio-button :label "Fundamental data"     :value "fundamental"  :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]]]]]
-                [alert-details]]]))
+     :children (remove nil? [[title :label title-header :level :level2]
+                             (if (= alert-key :other-alerts)
+                               [h-box :gap "10px" :align :center
+                                :children [[label :width lw :label "Alert type"]
+                                           [h-box :gap "10px"
+                                            :children [[radio-button :label "Market data (single)" :value "single" :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]
+                                                       [radio-button :label "Market data (spread)" :value "spread" :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]
+                                                       [radio-button :label "Fundamental data" :value "fundamental" :model alert-type :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! alert-type %))]]]]])
+                             [alert-details]])]))
 
 (defn custom-alerts
   [nbalerts]
