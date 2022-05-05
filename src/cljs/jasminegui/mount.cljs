@@ -647,7 +647,11 @@
                   :multiple-portfolio-risk/field-one :nav
                   :multiple-portfolio-risk/hide-zero-holdings true
                   :multiple-portfolio-risk/filter {1 :country 2 :issuer 3 "None"})
-      3 (assoc db :multiple-portfolio-risk/shortcut snapshot)
+      3 (assoc db :multiple-portfolio-risk/shortcut snapshot
+                  :multiple-portfolio-risk/display-style "Tree"
+                  :multiple-portfolio-risk/field-one :nav
+                  :multiple-portfolio-risk/hide-zero-holdings true
+                  :multiple-portfolio-risk/filter {1 :sector 2 :country 3 "None"})
       4 (assoc db :multiple-portfolio-risk/shortcut snapshot))))
 
 (rf/reg-event-db

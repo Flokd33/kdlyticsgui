@@ -317,3 +317,22 @@
 
               ]]
     ))
+
+(defn esg-viz-display []
+  (let [data (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
+    ;(println @esg-calculator-summary)
+
+    ;input to select report
+    ;display category new issue or reporting
+    ;display overall score
+    ;display questions and answers by sub category
+
+    [v-box :width "1280px" :gap "5px" :class "element"
+     :children [[modal-success]
+                [title :label "Green bond reports" :level :level1]
+                [h-box :gap "10px" :align :center
+                 :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
+                            [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12}
+                             :on-change #(reset! identifier %)]]]
+                ]]
+    ))
