@@ -315,6 +315,7 @@
                                                              (into [] (for [[d g] clean-by-date]
                                                                         (let [h (sort-by #(.indexOf (map :ISIN bond-isin-names) (:ISIN %)) g)]
                                                                           (reduce #(assoc %1 %2 (- (%2 (first h)) (%2 (second h)))) {:date d} (keys which?))))))]
+
                              (if(= choice "relative1")
                                data-pricing-clean
                                (update-keyseq-to-opposite data-pricing-clean (keys which?)))))
@@ -333,6 +334,7 @@
                             #(assoc % :Bond (mapping (% :ISIN)))
                             #(assoc % :Bond lbl))
                           data-pricing-filtered)]
+    (println data-pricing-1)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
