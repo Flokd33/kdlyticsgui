@@ -23,8 +23,16 @@
   (fn [{:keys [db]} [_ analyst sector country portfolio]]
     {:db                db
      :http-post-dispatch {:url          (str static/server-address "ta2022-main-table-data")
-                          :edn-params {:analyst (if analyst analyst "All") :sector (if sector sector "All") :country (if country country "All") :portfolio (if portfolio portfolio "All")}
+                          :edn-params {:kind :main-table :analyst (if analyst analyst "All") :sector (if sector sector "All") :country (if country country "All") :portfolio (if portfolio portfolio "All")}
                           :dispatch-key [:ta2022/main-table-data]}}))
+
+(rf/reg-event-fx
+  :ta2022/post-journal-data
+  (fn [{:keys [db]} [_]]
+    {:db                db
+     :http-post-dispatch {:url          (str static/server-address "ta2022-main-table-data")
+                          :edn-params {:kind :journal}
+                          :dispatch-key [:ta2022/journal-data]}}))
 
 (rf/reg-event-fx
   :get-ta2022-trade-view-history
@@ -123,24 +131,29 @@
                           :dispatch-key [:ta2022/post-save-result]}}))
 
 (rf/reg-event-fx
+  :ta2022/get-attachments
+  (fn [{:keys [db]} [_ isin]]
+    {:db db
+     :http-get-dispatch {:url (str static/server-address "ta2022-trade-attachments?isin=" isin) :dispatch-key [:ta2022/trade-attachments]}}))
+
+(rf/reg-event-fx
   :ta2022/go-to-active-trade
   (fn [{:keys [db]} [_ isin]]
-    {:db                 (assoc db :ta2022/active-home :trade-view
-                                   :ta2022/trade-isin isin
-                                   :ta2022/trade-history nil)
-     :fx       [
-                [:dispatch [:get-ta2022-trade-view-history isin]]
-                [:dispatch [:post-model-history-pricing :pricing [isin]]]
-                [:dispatch [:post-model-history-prediction :prediction [isin]]]
-                [:dispatch [:get-ta2022-trade-view-position-and-performance-table isin]]
-                ]}))
+    {:db (assoc db :ta2022/active-home :trade-view
+                   :ta2022/trade-isin isin
+                   :ta2022/trade-history nil)
+     :fx [[:dispatch [:get-ta2022-trade-view-history isin]]
+          [:dispatch [:post-model-history-pricing :pricing [isin]]]
+          [:dispatch [:post-model-history-prediction :prediction [isin]]]
+          [:dispatch [:get-ta2022-trade-view-position-and-performance-table isin]]
+          [:dispatch [:ta2022/get-attachments isin]]]}))
 
 
 
 
 (defn close-trade-modal []
   (let [exit-rationale (r/atom nil)
-        last-leg-uuid (:ta2022.trade/uuid (last (sort-by :ta2022.trade/entry-date (first @(rf/subscribe [:ta2022/trade-history])))))]
+        last-leg-uuid (:ta2022.trade/uuid (last (:trades @(rf/subscribe [:ta2022/trade-history]))))]
     (fn []
       [v-box :width "850px" :height "300px" :gap "10px" :padding "20px"
        :children [[h-box :align :center :children [[title :label "Close trade" :level :level1] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/show-modal nil]))]]]

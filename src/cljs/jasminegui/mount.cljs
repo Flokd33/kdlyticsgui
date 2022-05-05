@@ -257,15 +257,17 @@
 
                  :ta2022/trade-view-position-and-performance-table []
                  :ta2022/trade-isin nil
-                 :ta2022/trade-attachments nil
+                 :ta2022/trade-attachments []
                  :ta2022/trade-latest-targets-and-triggers nil
                  :ta2022/trade-history {}
                  :ta2022/active-home :main
                  :ta2022/main-table-data []
+                 :ta2022/journal-data nil
                  :ta2022/show-modal nil
                  :ta2022/test-result nil
                  :ta2022/can-morph false
                  :ta2022/implied-price-difference nil
+
 
                  :dummy nil                                 ;can be useful
                  })
@@ -460,6 +462,7 @@
            :ta2022/test-result
            :ta2022/can-morph
            :ta2022/implied-price-difference
+           :ta2022/journal-data
 
 
            :dummy

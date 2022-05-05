@@ -22,11 +22,12 @@
     [jasminegui.ta2022.tables :as tatables]
     [jasminegui.ta2022.alerts :as taalerts]
     [jasminegui.ta2022.actions :as taactions]
-    [oz.core :as oz])
-
+    [oz.core :as oz]
+    [cljs-time.core :refer [today interval plus days in-days]]
+    )
   )
 
-(def element-box-width "1280px")
+(def element-box-width "1500px")
 (def dw "850px")
 (defn hb [x] [h-box :gap "10px" :width "1024px" :align :center :children x])
 (def btc "btn btn-primary btn-block")
@@ -43,41 +44,50 @@
         fmt-rtn-1 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f" x) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
         fmt-rtn-2 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f" x) "-"))
         fmt-rtn-3 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f%" x) "-"))
+        data (if triggers (assoc qdata
+                            :relval (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-tr-1y])
+                            :target (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-tr-1y])
+                            :review (get-in triggers [(last-trade :ta2022.trade/review-alert-uuid) :implied-tr-1y])
+                            :relval-price (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-price])
+                            :target-price (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-price])
+                            :review-price (get-in triggers [(last-trade :ta2022.trade/review-alert-uuid) :implied-price])
+                            :relval-start-price (get-in alerts [(last-trade :ta2022.trade/relval-alert-uuid) :ta2022.alert/start-implied-price])
+                            :target-start-price (get-in alerts [(last-trade :ta2022.trade/target-alert-uuid) :ta2022.alert/start-implied-price])
+                            :review-start-price (get-in alerts [(last-trade :ta2022.trade/review-alert-uuid) :ta2022.alert/start-implied-price]))
+                          qdata)
         ]
     (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
                             [(if qdata [:> ReactTable
                                         {:data [qdata] :columns (qstables/table-style->qs-table-col "TA2022" nil) :showPagination false :pageSize 1 :filterable false}]
                                        [p "loading..."])
                              (if (and qdata triggers)
-                               [:> ReactTable
-                                {:data           [(assoc qdata
-                                                    :relval (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-tr-1y])
-                                                    :target (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-tr-1y])
-                                                    :review (get-in triggers [(last-trade :ta2022.trade/review-alert-uuid) :implied-tr-1y])
-                                                    :relval-price (get-in triggers [(last-trade :ta2022.trade/relval-alert-uuid) :implied-price])
-                                                    :target-price (get-in triggers [(last-trade :ta2022.trade/target-alert-uuid) :implied-price])
-                                                    :review-price (get-in triggers [(last-trade :ta2022.trade/review-alert-uuid) :implied-price])
-                                                    :relval-start-price (get-in alerts [(last-trade :ta2022.trade/relval-alert-uuid) :ta2022.alert/start-implied-price])
-                                                    :target-start-price (get-in alerts [(last-trade :ta2022.trade/target-alert-uuid) :ta2022.alert/start-implied-price])
-                                                    :review-start-price (get-in alerts [(last-trade :ta2022.trade/review-alert-uuid) :ta2022.alert/start-implied-price]))]
-                                 :columns        [{:Header  "Current alert implied prices"
-                                                   :columns [{:Header "Target" :accessor "target-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-1}
-                                                             {:Header "Relval" :accessor "relval-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-1}
-                                                             {:Header "Review" :accessor "review-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-1}]}
-                                                  {:Header  "Original alert implied prices"
-                                                   :columns [{:Header "Target" :accessor "target-start-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-2}
-                                                             {:Header "Relval" :accessor "relval-start-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-2}
-                                                             {:Header "Review" :accessor "review-start-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-2}]}
-                                                  {:Header  "Expected returns with 1y coupon"
-                                                   :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
-                                                             {:Header "2D" :accessor "svr2d1yrtn" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
-                                                             {:Header "Tight" :accessor "upside1y" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
-                                                             {:Header "Median" :accessor "expected1y" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
-                                                             {:Header "Wide" :accessor "downside1y" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
-                                                             {:Header "Target" :accessor "target" :width 60 :style {:textAlign "right"} :Cell fmt-rtn}
-                                                             {:Header "Relval" :accessor "relval" :width 60 :style {:textAlign "right"} :Cell fmt-rtn}
-                                                             {:Header "Review" :accessor "review" :width 60 :style {:textAlign "right"} :Cell fmt-rtn}]}]
-                                 :showPagination false :pageSize 1 :filterable false}]
+                               [h-box :gap "20px"
+                                :children [
+                                           [:> ReactTable
+                                            {:data           [data]
+                                             :columns        [{:Header  "Current alert implied prices"
+                                                               :columns [{:Header "Target" :accessor "target-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-1}
+                                                                         {:Header "Relval" :accessor "relval-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-1}
+                                                                         {:Header "Review" :accessor "review-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-1}]}
+                                                              {:Header  "Original alert implied prices"
+                                                               :columns [{:Header "Target" :accessor "target-start-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-2}
+                                                                         {:Header "Relval" :accessor "relval-start-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-2}
+                                                                         {:Header "Review" :accessor "review-start-price" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-2}]}]
+                                             :showPagination false :pageSize 1 :filterable false}]
+                                           [:> ReactTable
+                                            {:data           [data]
+                                             :columns        [{:Header  "Expected returns with 1y coupon"
+                                                               :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
+                                                                         {:Header "2D" :accessor "svr2d1yrtn" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
+                                                                         {:Header "Tight" :accessor "upside1y" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
+                                                                         {:Header "Median" :accessor "expected1y" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
+                                                                         {:Header "Wide" :accessor "downside1y" :width 60 :style {:textAlign "right"} :Cell fmt-rtn-3}
+                                                                         {:Header "Target" :accessor "target" :width 60 :style {:textAlign "right"} :Cell fmt-rtn}
+                                                                         {:Header "Relval" :accessor "relval" :width 60 :style {:textAlign "right"} :Cell fmt-rtn}
+                                                                         {:Header "Review" :accessor "review" :width 60 :style {:textAlign "right"} :Cell fmt-rtn}]}]
+                                             :showPagination false :pageSize 1 :filterable false}]
+
+                                           ]]
                                [p "loading..."])])))
 
 (defn historical-chart
@@ -188,9 +198,8 @@
 
 (defn attachments
   [isin]
-  (gt/element-box-generic "attachments" element-box-width "Attachments" nil [[p "No attachments found."]])
-  ;[h-box :width dw :gap "10px" :children [[box :size "1" :child [label :label "Attachments"]] [box :size "3" :child [v-box :children (let [c (into [] (for [k @(rf/subscribe [:active-trade-attachments])] [hyperlink-href :href (str static/cms-address (:tradeanalyser.trade/ISIN trade) "/" k) :label k :target "_blank"]))] (if (pos? (count c)) c [[p "No attachments"]]))]]]]
-  )
+  (gt/element-box-generic "attachments" element-box-width "Attachments" nil
+                          [[v-box :children (let [c (into [] (for [k @(rf/subscribe [:ta2022/trade-attachments])] [hyperlink-href :href (str static/cms-address isin "/" k) :label k :target "_blank"]))] (if (pos? (count c)) c [[p "No attachments"]]))]]))
 
 (defn alert-sort [data]
   (sort-by #(.indexOf ["target" "relval" "price" "review" "other"] (:ta2022.alert/alert-scope %)) data))
@@ -224,7 +233,6 @@
   [sorted-trades alerts triggers]
   (if (pos? (count sorted-trades))
     (let [t0 (first sorted-trades) tl (last sorted-trades)]
-      (println t0)
       (gt/element-box-generic "trade-description" element-box-width "Trade description" nil
                               (concat [
                                        [v-box :gap "5px" :children [[title :label "Original trade" :level :level2]
@@ -262,19 +270,23 @@
                                                                   ]]))))
 ;(def isin (r/atom nil))
 
-(defn isin-picker [trades]
-  (gt/element-box-generic "isin-picker" element-box-width "Actions" nil
-                          [[h-box :gap "10px" :align :center
-                            :children [[label :label "Pick an ISIN:"]
-                                       [input-text :model (rf/subscribe [:ta2022/trade-isin]) :on-change #(rf/dispatch [:ta2022/trade-isin %])]
-                                       [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/go-to-active-trade @(rf/subscribe [:ta2022/trade-isin])])]
-                                       [gap :size "1"]
-                                       [button :label "Amend latest entry" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :amend-latest-trade}])]
-                                       [button :label (if trades "Morph trade" "New trade") :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
-                                       [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
-                                       [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(do)]
+(defn isin-picker
+  [trades]
+  (let [too-old?
+        (try (> (in-days (interval (t/int-to-gdate (:ta2022.trade/entry-date (last trades))) (t/int-to-gdate (today)))) 4) (catch js/Error e true))]
 
-                                       ]]]))
+    (gt/element-box-generic "isin-picker" element-box-width "Actions" nil
+                            [[h-box :gap "10px" :align :center
+                              :children [[label :label "Pick an ISIN:"]
+                                         [input-text :model (rf/subscribe [:ta2022/trade-isin]) :on-change #(rf/dispatch [:ta2022/trade-isin %])]
+                                         [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/go-to-active-trade @(rf/subscribe [:ta2022/trade-isin])])]
+                                         [gap :size "1"]
+                                         [button :label "Amend latest entry" :class btc :disabled? (or (not trades) too-old?) :on-click #(rf/dispatch [:ta2022/show-modal {:type :amend-latest-trade}])]
+                                         [button :label (if trades "Morph trade" "New trade") :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
+                                         [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
+                                         [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(do)]
+
+                                         ]]])))
 
 (defn actions [trades]
   (gt/element-box-generic "actions" element-box-width "Actions" nil
@@ -304,43 +316,7 @@
 
 
 
-(def table-columns
-  {:id                          {:Header "ID" :accessor "id" :show false}
-   :id-show                     {:Header "ID" :accessor "id" :width 60}
-   ;:strategy-shortcut           {:Header "Strategy"       :accessor "strategy-shortcut"           :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR :Cell tables/strategy-pop-up}
-   :strategy                    {:Header "Strategy" :accessor "strategy" :Cell #(if-let [x (aget % "value")] (tatables/strategy->shortcut x) "-")  :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR} ;we need to have it in the table for the props
-   ;:entry-date                  {:Header "Entry date"     :accessor "entry-date"                  :width 80 :style {:textAlign "center"} :Cell tables/format-date-from-int-rt}
-   ;:exit-date                   {:Header "Exit date"      :accessor "exit-date"                   :width 70 :style {:textAlign "center"} :Cell tables/exit-date-props :filterMethod tables/exit-date-filter}
-   ;:analyst                     {:Header "Analyst"        :accessor "analyst"                     :width 50 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
-   :NAME                        {:Header "Name" :accessor "Bond" :width 120 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
-   :portfolio                   {:Header "Portfolio" :accessor "portfolio" :width 135 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
-   :ISIN                        {:Header "ISIN" :accessor "ISIN" :width 125 :style {:textAlign "center"} :show false}
-   :status                      {:Header "Status" :accessor "status" :show false} ;we need to have it in the table for the props
-   :status-show                 {:Header "Status" :accessor "status" :width 60 :style {:textAlign "center"}} ;we need to have it in the table for the props
-   :thisyear                    {:Header "thisyear" :accessor "thisyear" :show false} ;we need to have it in the table for the props
-   :position                    {:Header "Model" :accessor "position" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
-   :weight               {:Header "Actual" :accessor "weight" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
-   :entry-price                 {:Header "Entry" :accessor "entry-price" :width 60 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND}
-   :price                       {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND}
-   :yield                       {:Header "Yield" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :Cell tables/yield-format :filterMethod tables/nb-filter-OR-AND}
-   :z-spread                    {:Header "Z-Sprd" :accessor "Used_ZTW" :width 55 :style {:textAlign "right"} :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND}
-   :g-spread                    {:Header "G-Sprd" :accessor "G_SPREAD_MID_CALC" :width 55 :style {:textAlign "right"} :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND}
-   :duration                    {:Header "Dur." :accessor "Used_Duration" :width 45 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :filterMethod tables/nb-filter-OR-AND}
-   :rating-string               {:Header "Rating" :accessor "Rating_String" :width 110 :style {:textAlign "center"}}
-   :difference_svr              {:Header "4D" :accessor "difference_svr" :width 35 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.0f" 1. %) :filterMethod tables/nb-filter-OR-AND}
-   :difference_svr_2d           {:Header "2D" :accessor "difference_svr_2d" :width 35 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.0f" 1. %) :filterMethod tables/nb-filter-OR-AND}
-   :ltd-return                  {:Header "Raw" :accessor "ltd-return" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND} ;:getProps fp4
-   :ltd-return-vs-cembi         {:Header "CEMBI" :accessor "ltd-return-vs-cembi" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND} ;:getProps fp4
-   :ltd-return-vs-cembi-rating  {:Header "IGHY" :accessor "ltd-return-vs-cembi-rating" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
-   :ltd-return-vs-cembi-country {:Header "Cntry" :accessor "ltd-return-vs-cembi-country" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
-   :ltd-return-vs-cembi-sector  {:Header "Sctr" :accessor "ltd-return-vs-cembi-sector" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
-   :price-target                {:Header "Target" :accessor "price-target" :width 55 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :filterMethod tables/nb-filter-OR-AND}
-   :review-target               {:Header "Target" :accessor "implied-price-review" :width 55 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :filterMethod tables/nb-filter-OR-AND}
-   :relval-target-description   {:Header "Description" :accessor "relval-target-description" :width 170} ;:getProps fp4 ; :headerClassName "wordwrap"
-   :relval-target-latest        {:Header "Latest" :accessor "relval-target-value" :width 50 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND} ;:getProps fp4 ; :headerClassName "wordwrap"
-   :relval-target-distance                    {:Header "Relval"         :accessor "relval-target-distance"                    :width 50 :style {:textAlign "right"} :Cell tables/round0pc :filterMethod tables/nb-filter-OR-AND}
 
-   })
 
 
 (defn row-action [action rowInfo] (clj->js {:onClick #(rf/dispatch [action (aget rowInfo "row" "_original" "isin")]) :style {:cursor "pointer"}}))
@@ -351,11 +327,16 @@
 (def country (r/atom nil))
 (def portfolio (r/atom nil))
 
+(defn distance-fmt [this]
+  (if-let [x (aget this "value")] (if (< x 1) (gstring/format "%.0f%" (* 100 x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])) "-")
+  )
+
 (defn main-table []
   (let [data @(rf/subscribe [:ta2022/main-table-data])
         qsdata @(rf/subscribe [:quant-model/model-output])
         all-sectors (conj (map (fn [x] {:id x :label x}) (sort (distinct (map :Sector qsdata)))) {:id "All" :label "All"})
-        all-countries (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"})]
+        all-countries (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"})
+        ]
     [v-box :gap "10px"
      :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
                                         [[h-box :gap "10px" :align :center
@@ -364,24 +345,57 @@
                                                      [single-dropdown :model country :choices all-countries :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! country %)) :placeholder "Country" :filter-box? true]
                                                      [single-dropdown :model portfolio :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! portfolio %)) :placeholder "Portfolio" :filter-box? true]
                                                      [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/post-main-table-data @analyst @sector @country @portfolio])]]]])
-                (gt/element-box-generic "isin-picker" element-box-width "Results" nil
-                                        [[:> ReactTable
-                                          {:data           (tatables/strategy-sort data)
-                                           :columns        [{:Header "Trade description" :columns (mapv table-columns (remove nil? (conj [:ISIN :strategy :NAME] (if (and @portfolio (not= @portfolio "All")) :weight))))} ;:id :strategy-shortcut
-                                                            {:Header "Pricing" :columns (mapv table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
-                                                            ;{:Header "Target" :columns (mapv table-columns [:relval-target-description :relval-target-latest :relval-target-distance])}
-                                                            {:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                        {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f%" 100. %)}]}
-                                                            {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                        {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f%" 100. %)}]}
-                                                            {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                        {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f%" 100. %)}]}
-                                                            ;{:Header "Performance since inception" :columns (mapv table-columns [:ltd-return :ltd-return-vs-cembi :ltd-return-vs-cembi-rating :ltd-return-vs-cembi-country :ltd-return-vs-cembi-sector])}
-                                                            ;{:Header "Performance year to date" :columns (mapv table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector])}
-                                                            ]
-                                           :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]])]]))
+                (gt/element-box-generic "ta-output" element-box-width "Results" {:download-table data}
+                                        [[h-box :children [[:> ReactTable
+                                                          {:data     (tatables/strategy-sort data)
+                                                           :columns  [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:ISIN :strategy :NAME] (if (and @portfolio (not= @portfolio "All")) :weight))))} ;:id :strategy-shortcut
+                                                                      {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
+                                                                      {:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                  {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                      {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                  {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                      {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                  {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
 
-(defn journal-table [] nil)
+                                                                      {:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :new-issue])}]
+                                                           :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]))
+
+(defn journal-table []
+  (when-not @(rf/subscribe [:ta2022/journal-data])
+    (rf/dispatch [:ta2022/post-journal-data]))
+  (let [jd @(rf/subscribe [:ta2022/journal-data])]
+    [v-box :gap "10px"
+     :children [(gt/element-box-generic "trades-amended" element-box-width "Trades amended over the past week" (:trades-changed jd)
+                                        [[h-box :children [[:> ReactTable
+                                                            {:data     (tatables/strategy-sort (:trades-changed jd))
+                                                             :columns  [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:ISIN :strategy :NAME])))} ;:id :strategy-shortcut
+                                                                        {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
+                                                                        {:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                    {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                        {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                    {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                        {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                    {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+
+                                                                        ]
+                                                             :pageSize 10 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])
+                (gt/element-box-generic "trades-triggered" element-box-width "Trades triggered over the past week" (:trades-triggered jd)
+                                        [[h-box :children [[:> ReactTable
+                                                            {:data     (tatables/strategy-sort (:trades-triggered jd))
+                                                             :columns  [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:ISIN :strategy :NAME])))} ;:id :strategy-shortcut
+                                                                        {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
+                                                                        {:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                    {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                        {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                    {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                        {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                    {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}]
+                                                             :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]
+
+
+    )
+
+  )
 
 (defn active-home []
   (let [active-ta2022 @(rf/subscribe [:ta2022/active-home])]

@@ -2,6 +2,7 @@
 
 (def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod)) ;WARNING
 (def ta-server-address "http://iamlfilive:3500/")
+(def cms-address "http://iamlfilive:8192/tradeanalyser/cms/")
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [:get-qt-date :get-total-positions   :get-naked-positions :get-instruments] ;:get-positions
