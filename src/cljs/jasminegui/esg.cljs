@@ -389,6 +389,7 @@
               :msci [msci-table]
               :refinitiv [v-box :gap "20px" :class "body" :children [[refinitiv-find-issuers] [refinitiv-table-top-view] [refinitiv-table-detailed-view]]]
               :esg-calculator [greenbondcalculator/esg-calculator-display]
+              :esg-viz [greenbondcalculator/esg-viz-display]
               :holdings [holdings]
               :esg-scores [esg-scores]
               :esg-engagements [esg-engagements]
