@@ -25,11 +25,12 @@
                  :qt-date                                            ""
                  :attribution-date                                   ""
                  :country-codes                                      nil
-                 :jpm-sectors                                         nil
+                 :gb-reports                                         []
+                 :jpm-sectors                                        nil
                  :large-exposures                                    []
 
                  ;local-storage-cache
-                 :naked-positions-last-timestamp                        nil
+                 :naked-positions-last-timestamp                     nil
                  :quant-scores-last-timestamp                        nil
 
                  ;navigation
@@ -286,6 +287,7 @@
            :navigation/show-mounting-modal
            :rating-to-score
            :country-codes
+           :gb-reports
            :jpm-sectors
            :large-exposures
            ;:pivoted-positions
@@ -787,6 +789,7 @@
    {:get-key :get-portfolio-checks    :url-tail "portfolio-checks" :dis-key :portfolio-checks}
    {:get-key :get-talanx-checks    :url-tail "talanx-checks" :dis-key :talanx-checks}
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
+   {:get-key :get-gb-reports    :url-tail "gb-reports" :dis-key :gb-reports}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
    ])
 
