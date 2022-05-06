@@ -267,6 +267,7 @@
                  :ta2022/test-result nil
                  :ta2022/can-morph false
                  :ta2022/implied-price-difference nil
+                 :ta2022/upside-vs-downside 0.0
 
 
                  :dummy nil                                 ;can be useful
@@ -462,6 +463,7 @@
            :ta2022/test-result
            :ta2022/can-morph
            :ta2022/implied-price-difference
+           :ta2022/upside-vs-downside
            :ta2022/journal-data
 
 

@@ -51,7 +51,6 @@
 (rf/reg-event-fx
   :ta2022/send-trade-to-test
   (fn [{:keys [db]} [_ trade-entry]]
-    (println trade-entry)
     {:db db
      :http-post-dispatch {:url          (str static/server-address "ta2022-post-data")
                           :edn-params {:action :test-trade
@@ -74,7 +73,12 @@
             implied-price-consistent? (if (and (main-check-fn (:relval-alert data)) (main-check-fn (:target-alert data)))
                                         (< (Math/abs (/ (- (get-in data [:relval-alert :implied-price]) (get-in data [:target-alert :implied-price]))
                                                    (get-in data [:target-alert :implied-price])))
-                                           0.01))]
+                                           0.01))
+            px (get (first (t/chainfilter {:ISIN (db :ta2022/trade-isin)} (db :quant-model/model-output))) :Used_Price)
+            upside-vs-downside? (and (main-check-fn (:target-alert data))
+                                     (main-check-fn (:review-alert data))
+                                     (>= (/ (- (get-in data [:target-alert :implied-price]) px ) (- px (get-in data [:review-alert :implied-price]) )) 0.5))
+            ]
         (-> db
             (assoc :ta2022/test-result data
                    :ta2022/can-morph (every? identity
@@ -82,8 +86,11 @@
                                                     [(main-check-fn (:relval-alert data))
                                                      (main-check-fn (:target-alert data))
                                                      (main-check-fn (:review-alert data))
-                                                     implied-price-consistent?]
+                                                     implied-price-consistent?
+                                                     upside-vs-downside?
+                                                     ]
                                                     (map other-check-fn oth)))
+                   :ta2022/upside-vs-downside (/ (- (get-in data [:target-alert :implied-price]) px ) (- px (get-in data [:review-alert :implied-price]) ))
                    :ta2022/implied-price-difference (if (and (main-check-fn (:relval-alert data)) (main-check-fn (:target-alert data)))
                                                       (Math/abs (/ (- (get-in data [:relval-alert :implied-price]) (get-in data [:target-alert :implied-price]))
                                                                    (get-in data [:target-alert :implied-price])))))))
@@ -148,7 +155,7 @@
           [:dispatch [:get-ta2022-trade-view-position-and-performance-table isin]]
           [:dispatch [:ta2022/get-attachments isin]]]}))
 
-
+(rf/reg-event-db :ta2022/close-modal (fn [db [_]] (assoc db :ta2022/show-modal nil :ta2022/test-result nil)))
 
 
 (defn close-trade-modal []
@@ -156,11 +163,11 @@
         last-leg-uuid (:ta2022.trade/uuid (last (:trades @(rf/subscribe [:ta2022/trade-history]))))]
     (fn []
       [v-box :width "850px" :height "300px" :gap "10px" :padding "20px"
-       :children [[h-box :align :center :children [[title :label "Close trade" :level :level1] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/show-modal nil]))]]]
+       :children [[h-box :align :center :children [[title :label "Close trade" :level :level1] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/close-modal]))]]]
                   [label :label "Exit rationale"] [input-textarea :model exit-rationale :status (if (zero? (count @exit-rationale)) :error) :on-change #(reset! exit-rationale %) :width "600px" :rows 5]
                   [line]
                   [h-box :gap "10px" :children [[button :class btc :label "Close trade" :on-click #(rf/dispatch [:ta2022/close-trade last-leg-uuid @exit-rationale])]
-                                                [button :class btc :label "Cancel" :on-click #(rf/dispatch [:ta2022/show-modal nil])]]]
+                                                [button :class btc :label "Cancel" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
                   ]])))
 
 
@@ -174,8 +181,8 @@
                    :entry-rationale nil
                    :ISIN            @(rf/subscribe [:ta2022/trade-isin])
                    :relval-alert    (assoc taalerts/spread-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "Z_SPRD_MID" :operator "-" :bloomberg-request-security-2 "JBCDCBZW Index" :bloomberg-request-field-2 "PX_LAST")
-                   :target-alert    (assoc taalerts/single-alert-template :comparison ">" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "PX_LAST")
-                   :review-alert    (assoc taalerts/single-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "PX_LAST")
+                   :target-alert    (assoc taalerts/single-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
+                   :review-alert    (assoc taalerts/single-alert-template :comparison ">" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
                    :other-alerts    {}})
           (let [all-alerts (let [x (taalerts/trade->alerts last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map :ta2022.alert/uuid x) x))]
             (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
@@ -194,7 +201,7 @@
       [v-box :width "850px" :height "750px" :gap "10px" :padding "20px"
        :children [
 
-                  [h-box :align :center :children [(if morph? [title :label (if last-leg-uuid "Morph trade" "New trade") :level :level1] [title :label "Amend latest trade" :level :level1]) [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/show-modal nil]))]]]
+                  [h-box :align :center :children [(if morph? [title :label (if last-leg-uuid "Morph trade" "New trade") :level :level1] [title :label "Amend latest trade" :level :level1]) [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/close-modal]))]]]
                   [gap :size "20px"]
 
                   (if (and morph? last-leg-uuid) [label :label "Exit rationale"])
@@ -206,6 +213,7 @@
                   [label :label "New trade rationale"] [input-textarea :model entry-rationale :status (if (zero? (count @entry-rationale)) :error) :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
                   [taalerts/trade-alert-input trade-entry]
                   (if-let [x @(rf/subscribe [:ta2022/implied-price-difference])] [label :label (str "Implied upside price difference (has to be <1%) " (gstring/format "%.1f%" (* 100 x)))])
+                  (if (< @(rf/subscribe [:ta2022/upside-vs-downside]) 0.5) [label :label (str "Upside/downside too poor (has to be > 0.5) " (gstring/format "%.1f" @(rf/subscribe [:ta2022/upside-vs-downside])))])
                   [line]
                   [h-box :gap "10px" :children [[button :class btc :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
 
@@ -214,7 +222,7 @@
                                                   [button :class btc :label "Amend trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/amend-trade last-leg-uuid @trade-entry @(rf/subscribe [:ta2022/test-result])])]
                                                   )
 
-                                                [button :class btc :label "Cancel" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/show-modal nil]))]]]
+                                                [button :class btc :label "Cancel" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/close-modal]))]]]
                   ]]))
   )
 

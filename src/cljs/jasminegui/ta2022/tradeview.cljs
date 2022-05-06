@@ -27,7 +27,7 @@
     )
   )
 
-(def element-box-width "1500px")
+(def element-box-width "1600px")
 (def dw "850px")
 (defn hb [x] [h-box :gap "10px" :width "1024px" :align :center :children x])
 (def btc "btn btn-primary btn-block")
@@ -314,11 +314,6 @@
   )
 
 
-
-
-
-
-
 (defn row-action [action rowInfo] (clj->js {:onClick #(rf/dispatch [action (aget rowInfo "row" "_original" "isin")]) :style {:cursor "pointer"}}))
 (defn go-to-active-trade! [state rowInfo instance] (row-action :ta2022/go-to-active-trade rowInfo))
 
@@ -331,11 +326,14 @@
   (if-let [x (aget this "value")] (if (< x 1) (gstring/format "%.0f%" (* 100 x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])) "-")
   )
 
+(def main-table-view-selector (r/atom "Scorecard"))
 (defn main-table []
   (let [data @(rf/subscribe [:ta2022/main-table-data])
         qsdata @(rf/subscribe [:quant-model/model-output])
         all-sectors (conj (map (fn [x] {:id x :label x}) (sort (distinct (map :Sector qsdata)))) {:id "All" :label "All"})
         all-countries (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"})
+        price-fmt (fn [distance this] (if-let [d (aget this "original" distance)]
+                                        (if (= d 1) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Trgrd."]) (gstring/format "%.1f" (aget this "value"))) "-"))
         ]
     [v-box :gap "10px"
      :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
@@ -346,19 +344,37 @@
                                                      [single-dropdown :model portfolio :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! portfolio %)) :placeholder "Portfolio" :filter-box? true]
                                                      [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/post-main-table-data @analyst @sector @country @portfolio])]]]])
                 (gt/element-box-generic "ta-output" element-box-width "Results" {:download-table data}
-                                        [[h-box :children [[:> ReactTable
-                                                          {:data     (tatables/strategy-sort data)
-                                                           :columns  [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:ISIN :strategy :NAME] (if (and @portfolio (not= @portfolio "All")) :weight))))} ;:id :strategy-shortcut
-                                                                      {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
-                                                                      {:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                  {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                      {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                  {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                      {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                  {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                        [[h-box :align :center :gap "10px"
+                                          :children [[label :label "View:"]
+                                                     [radio-button :model main-table-view-selector :value "Scorecard" :label "Scorecard" :on-change #(reset! main-table-view-selector %)]
+                                                     [radio-button :model main-table-view-selector :value "Distances" :label "Distances" :on-change #(reset! main-table-view-selector %)]]]
+                                         [h-box :children [[:> ReactTable
+                                                            {:data    (tatables/strategy-sort data)
+                                                             :columns (concat [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:ISIN :strategy :NAME] (if (and @portfolio (not= @portfolio "All")) :weight))))} ;:id :strategy-shortcut
+                                                                               {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}]
 
-                                                                      {:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :new-issue])}]
-                                                           :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]))
+                                                                              (case @main-table-view-selector
+                                                                                "Scorecard"
+                                                                                [{:Header "Target" :columns [{:Header "Description" :accessor "target-alert-description" :width 140}
+                                                                                                             ;{:Header "Distance" :accessor "target-alert-distance" :show false}
+                                                                                                             {:Header "Price" :accessor "target-alert-implied-price" :width 45 :style {:textAlign "right"} :Cell #(price-fmt "target-alert-distance" %)}
+                                                                                                             ]}
+                                                                                 {:Header "Relval" :columns [{:Header "Description" :accessor "relval-alert-description" :width 140}
+                                                                                                             {:Header "Price" :accessor "relval-alert-implied-price" :width 45 :style {:textAlign "right"} :Cell #(price-fmt "relval-alert-distance" %)}
+                                                                                                             ]}
+                                                                                 {:Header "Review" :columns [{:Header "Description" :accessor "review-alert-description" :width 140}
+                                                                                                             {:Header "Price" :accessor "review-alert-implied-price" :width 45 :style {:textAlign "right"} :Cell #(price-fmt "review-alert-distance" %)}
+                                                                                                             ]}]
+                                                                                "Distances"
+                                                                                [{:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                             {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                                 {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                             {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                                 {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
+                                                                                                             {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}])
+
+                                                             [{:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio ])}]) ;:new-issue
+                                                             :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]))
 
 (defn journal-table []
   (when-not @(rf/subscribe [:ta2022/journal-data])

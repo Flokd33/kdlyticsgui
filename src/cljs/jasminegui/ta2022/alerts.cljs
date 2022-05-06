@@ -9,8 +9,11 @@
     [re-com.util :refer [px]]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.tools :as t]
+    [goog.string :as gstring]
+    [goog.string.format]
 
-)
+
+    )
   )
 
 
@@ -65,7 +68,7 @@
       ))
 
 (def bloomberg-asset-keys #{"Govt" "Corp" "Mtge" "M-Mkt" "Muni" "Pfd" "Equity" "Comdty" "Index" "Curncy" "Client"})
-(def bloomberg-field-suggestions ["PX_LAST" "YLD_YTM_MID" "Z_SPRD_MID" "YAS_BOND_YLD" "YAS_ZSPREAD" "BLOOMBERG_MID_G_SPREAD" "NET_DEBT_TO_EBITDA" "TOT_DEBT_TO_EBITDA" "SHORT_AND_LONG_TERM_DEBT" "NET_DEBT" "EBITDA"])
+(def bloomberg-field-suggestions ["PX_LAST" "YLD_YTM_MID" "Z_SPRD_MID" "YAS_BOND_YLD" "YAS_ZSPREAD" "G_SPREAD_MID_CALC" "BLOOMBERG_MID_G_SPREAD" "NET_DEBT_TO_EBITDA" "TOT_DEBT_TO_EBITDA" "SHORT_AND_LONG_TERM_DEBT" "NET_DEBT" "EBITDA"])
 (defn bbg-field-finder [s] (take 3 (for [field bloomberg-field-suggestions :when (re-find (re-pattern (str "(?i)" s)) field)] field)))
 (defn clean-case [t] (+ (.toUpperCase (.charAt t 0)) (.toLowerCase (.slice t 1))))
 (defn bbg-security-status [s] (try (if-not (some #{(clean-case (last (.split s " ")))} bloomberg-asset-keys) :error nil) (catch js/Error e :error)))
@@ -81,12 +84,13 @@
                           (and (checknb res :latest-market-price-1) (checknb res :latest-market-price-2) (checknb res :latest-market-spread)))
           other-alert-ok? (and (not (get res :triggered)) market-price?)
           main-alert-ok? (and other-alert-ok? implied-price?)
+          fmtfn (fn [x] (if (and x (number? x)) (gstring/format "%.2f" x) "-"))
           txt (str
                 (if (:triggered res) "Already triggered!" "Not triggered.")
                 (if market-price? (if (res :latest-market-spread)
-                                    (str " Latest market prices and spread " (:latest-market-price-1 res) " / " (:latest-market-price-2 res) " / " (:latest-market-spread res))
-                                    (str " Latest market price " (:latest-market-price res))) " No market price!")
-                (if implied-price? (str " Implied price: " (:implied-price res)) " No implied bond price!"))]
+                                    (str " Latest market prices and spread " (fmtfn (:latest-market-price-1 res)) " / " (fmtfn (:latest-market-price-2 res)) " / " (fmtfn (:latest-market-spread res)))
+                                    (str " Latest market price " (fmtfn (:latest-market-price res)))) " No market price!")
+                (if implied-price? (str " Implied price: " (fmtfn (:implied-price res))) " No implied bond price!"))]
       (if (= alert-key :other-alerts)
         [alert-box :padding "6px" :alert-type (if other-alert-ok? :info :danger) :body txt :style {:width "595px"}]
         [alert-box :padding "6px" :alert-type (if main-alert-ok? :info :danger) :body txt :style {:width "595px"}]))
@@ -104,9 +108,10 @@
                                                                                                    "PX_LAST" (str "price " @comparison " " @comparison-value)
                                                                                                    "YLD_YTM_MID" (str "yield " @comparison " " @comparison-value)
                                                                                                    "YAS_BOND_YLD" (str "yield " @comparison " " @comparison-value)
-                                                                                                   "Z_SPRD_MID" (str "zspread " @comparison " " @comparison-value)
-                                                                                                   "YAS_ZSPREAD" (str "zspread " @comparison " " @comparison-value)
-                                                                                                   "BLOOMBERG_MID_G_SPREAD" (str "gspread " @comparison " " @comparison-value)
+                                                                                                   "Z_SPRD_MID" (str "Z " @comparison " " @comparison-value)
+                                                                                                   "YAS_ZSPREAD" (str "Z " @comparison " " @comparison-value)
+                                                                                                   "BLOOMBERG_MID_G_SPREAD" (str "G " @comparison " " @comparison-value)
+                                                                                                   "G_SPREAD_MID_CALC" (str "G " @comparison " " @comparison-value)
                                                                                                    "Failed to guess")
                             (some #{(clean-case (last (.split @bloomberg-request-security-1 " ")))} ["Equity" "Comdty" "Index" "Curncy"]) (str (first (.split @bloomberg-request-security-1 " ")) " " @comparison " " @comparison-value)
                             :else "Failed to guess")]
@@ -143,7 +148,10 @@
                                         (= @operator "-") (= @comparison "<")) (str "< " @comparison-value "z vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
                                    (and (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")) (= @bloomberg-request-field-1 "YLD_YTM_MID")
                                         (some #{(first (.split @bloomberg-request-security-2 " "))} all-isins) (= @bloomberg-request-field-2 "YLD_YTM_MID")
-                                        (= @operator "-") (= @comparison "<")) (str "< " @comparison-value " yield vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
+                                        (= @operator "-") (= @comparison "<")) (str "< " @comparison-value " yld vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
+                                   (and (= @bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")) (= @bloomberg-request-field-1 "PX_LAST")
+                                        (some #{(first (.split @bloomberg-request-security-2 " "))} all-isins) (= @bloomberg-request-field-2 "PX_LAST")
+                                        (= @operator "-") (= @comparison ">")) (str "> " @comparison-value " px vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
                                    :else "Failed to guess"))]
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Security 1"]
@@ -175,7 +183,9 @@
         alert-details (fn [] (case @alert-type
                                "single" [single-alert trade-entry alert-key alert-number]
                                "spread" [spread-alert trade-entry alert-key alert-number]
-                               "fundamental" [fundamental-alert trade-entry alert-key alert-number]))]
+                               "fundamental" [fundamental-alert trade-entry alert-key alert-number]
+                               [fundamental-alert trade-entry alert-key alert-number]
+                               ))]
     [v-box :gap "10px" :style {:border "solid 1px grey"} :class "element"
      :children (remove nil? [[title :label title-header :level :level2]
                              (if (= alert-key :other-alerts)

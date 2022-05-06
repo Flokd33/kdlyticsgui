@@ -61,6 +61,7 @@
    :ytd-return-vs-cembi-rating  {:Header "IGHY" :accessor "tr-vs-index-rating-ytd" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
    :ytd-return-vs-cembi-country {:Header "Cntry" :accessor "tr-vs-index-country-ytd" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
    :ytd-return-vs-cembi-sector  {:Header "Sctr" :accessor "tr-vs-index-sector-ytd" :width 50 :style {:textAlign "right"} :Cell tables/round1pc :filterMethod tables/nb-filter-OR-AND}
+   :return-portfolio            {:Header "Source" :accessor "portfolio" :width 80}
    :new-issue                   {:Header "NI" :accessor "full-ytd" :width 30 :style {:textAlign "center"} :Cell (fn [this] (if (not (aget this "value")) "x" "")) :filterMethod tables/nb-filter-OR-AND}
    :price-target                {:Header "Target" :accessor "price-target" :width 55 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :filterMethod tables/nb-filter-OR-AND}
    :review-target               {:Header "Target" :accessor "implied-price-review" :width 55 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :filterMethod tables/nb-filter-OR-AND}
