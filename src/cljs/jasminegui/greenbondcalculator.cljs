@@ -20,7 +20,8 @@
     [reagent.core :as r]
     [jasminegui.tools :as tools]
     [jasminegui.riskviews :as riskviews]
-    [jasminegui.tools :as t]))
+    [jasminegui.tools :as t])
+  )
 
 
 (def standard-box-width "1600px")
@@ -43,6 +44,8 @@
 
 (def other-disabled? (r/atom false))
 
+(def gb-report-selected (r/atom ""))
+
 (def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
 
 (rf/reg-event-fx
@@ -53,6 +56,15 @@
                           :edn-params answers
                           :dispatch-key [:has-loaded]
                           }}))
+
+(rf/reg-event-fx
+  :post-gb-reports-extract
+  (fn [{:keys [db]} [_ isin date]]
+    {:db (assoc db :quant-model/history-throbber true :quant-model/curves-throbber true) ;to be removed
+     :http-post-dispatch {:url (str static/server-address "post-gb-reports-extract")
+                          :edn-params {:isin isin :date date}
+                          :dispatch-key [:gb-report-extract]}}))
+
 (rf/reg-event-db
   :has-loaded
   (fn [db [_ data]]
@@ -319,10 +331,14 @@
     ))
 
 (defn esg-viz-display []
-  (let [data (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
-    ;(println @esg-calculator-summary)
-
-    ;input to select report
+  (let [gb-reports @(rf/subscribe [:gb-reports])
+        qt @(rf/subscribe [:quant-model/model-output])
+        gb-reports-clean (for [i gb-reports] (assoc i :unique_id (str (:Ticker (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
+        gb-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id gb-reports-clean))))
+        report-selected @(rf/subscribe [:gb-report-extract])
+        ]
+    ;input to select report =>  done
+    ;extract selected report => working
     ;display category new issue or reporting
     ;display overall score
     ;display questions and answers by sub category
@@ -331,8 +347,10 @@
      :children [[modal-success]
                 [title :label "Green bond reports" :level :level1]
                 [h-box :gap "10px" :align :center
-                 :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
-                            [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12}
-                             :on-change #(reset! identifier %)]]]
-                ]]
-    ))
+                 :children [[label :width question-width :label "Select Report"]
+                            [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices gb-reports-clean-input :filter-box? true :model nil
+                             :on-change #(do (reset! gb-report-selected %)
+                                             (rf/dispatch [:post-gb-reports-extract "XS2346972263" "2022-04-14"]) ;add these 2 atoms
+                                             )
+                             ]]]
+                ]]    ))

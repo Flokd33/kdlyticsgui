@@ -6,7 +6,7 @@
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [:get-qt-date :get-total-positions   :get-naked-positions :get-instruments] ;:get-positions
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
-        quant-events [:get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts]
+        quant-events [:get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (concat home-events [:get-portfolio-checks]) :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil :load-events [:get-country-codes :get-jpm-sectors :get-model-portfolios :get-quant-model]}
@@ -15,7 +15,7 @@
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
    {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events quant-events :mounting-modal true}
    {:code :scorecard        :name "Scorecard"         :dispatch :scorecard        :subs nil :load-events (concat [:get-attribution-date [:get-scorecard-attribution "OGEMCORD"]] quant-events home-events) :mounting-modal true}
-   {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores])}
+   {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-gb-reports :get-analysts :get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores :get-quant-model])}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}
    {:code :ta2022           :name "TA2022"            :dispatch :ta2022           :subs nil :load-events quant-events :mounting-modal true}]))
