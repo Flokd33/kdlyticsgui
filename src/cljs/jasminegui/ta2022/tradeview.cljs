@@ -330,20 +330,27 @@
 (defn main-table []
   (let [data @(rf/subscribe [:ta2022/main-table-data])
         qsdata @(rf/subscribe [:quant-model/model-output])
+        all-analysts @(rf/subscribe [:analysts])
         all-sectors (conj (map (fn [x] {:id x :label x}) (sort (distinct (map :Sector qsdata)))) {:id "All" :label "All"})
         all-countries (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"})
         price-fmt (fn [distance this] (if-let [d (aget this "original" distance)]
                                         (if (= d 1) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Trgrd."]) (gstring/format "%.1f" (aget this "value"))) "-"))
+        download-columns (flatten
+                                [[:db-id :strategy :isin :uuid :weight]
+                                 [:Bond :Used_Price :Used_YTW :Used_ZTW :Used_Duration :G_SPREAD_MID_CALC :difference_svr :difference_svr_2d :Rating_String]
+                                 (map (fn [k] [(keyword (str k "-alert-description")) (keyword (str k "-alert-distance")) (keyword (str k "-alert-value")) (keyword (str k "-alert-implied-price")) (keyword (str k "-alert-triggered-date"))])
+                                      ["target" "relval" "review"])])
         ]
     [v-box :gap "10px"
      :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
                                         [[h-box :gap "10px" :align :center
-                                          :children [[single-dropdown :model analyst :choices (conj (for [k @(rf/subscribe [:analysts])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! analyst %)) :placeholder "Analyst" :filter-box? true]
+                                          :children [[single-dropdown :model analyst :choices (conj (for [k all-analysts] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! analyst %)) :placeholder "Analyst" :filter-box? true]
                                                      [single-dropdown :model sector :choices all-sectors :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! sector %)) :placeholder "Sector" :filter-box? true]
                                                      [single-dropdown :model country :choices all-countries :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! country %)) :placeholder "Country" :filter-box? true]
                                                      [single-dropdown :model portfolio :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! portfolio %)) :placeholder "Portfolio" :filter-box? true]
                                                      [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/post-main-table-data @analyst @sector @country @portfolio])]]]])
-                (gt/element-box-generic "ta-output" element-box-width "Results" {:download-table data}
+                (gt/element-box-generic "ta-output" element-box-width "Results"
+                                        {:on-click-action #(t/csv-link data "trade-analyser-output.csv" download-columns)}
                                         [[h-box :align :center :gap "10px"
                                           :children [[label :label "View:"]
                                                      [radio-button :model main-table-view-selector :value "Scorecard" :label "Scorecard" :on-change #(reset! main-table-view-selector %)]
