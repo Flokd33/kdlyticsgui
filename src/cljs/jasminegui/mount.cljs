@@ -26,7 +26,7 @@
                  :attribution-date                                   ""
                  :country-codes                                      nil
                  :gb-reports                                         []
-                 :gb-report-extract                                 []
+                 :gb-report-extract                                  []
                  :jpm-sectors                                        nil
                  :large-exposures                                    []
 
