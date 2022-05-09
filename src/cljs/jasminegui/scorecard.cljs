@@ -255,7 +255,6 @@
                         (filter empty-filter)
                         )
         ]
-    (println final-data)
     (gt/element-box "scorecard-scores" "100%" (str "14 day trade history " sector) final-data
                     (concat
                       [[title :label "Main" :level :level2]]
