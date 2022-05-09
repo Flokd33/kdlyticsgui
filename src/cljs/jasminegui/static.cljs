@@ -19,7 +19,7 @@
    {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-gb-reports :get-analysts :get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores :get-quant-model])}
    {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}
-   {:code :ta2022           :name "TA2022"            :dispatch :ta2022           :subs nil :load-events quant-events :mounting-modal true}]))
+   {:code :ta2022           :name "TA2022"            :dispatch :ta2022           :subs nil :load-events (conj quant-events :get-analysts) :mounting-modal true}]))
 
 (def risk-navigation
   [{:code :summary             :name "Overview"}
