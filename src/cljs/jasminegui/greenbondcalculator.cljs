@@ -45,6 +45,8 @@
 (def other-disabled? (r/atom false))
 
 (def gb-report-selected (r/atom ""))
+(def gb-isin (r/atom "IL0066204707"))
+(def gb-date (r/atom "2022-04-14"))
 
 (def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
 
@@ -56,20 +58,24 @@
                           :edn-params answers
                           :dispatch-key [:has-loaded]
                           }}))
-
-(rf/reg-event-fx
-  :post-gb-reports-extract
-  (fn [{:keys [db]} [_ isin date]]
-    {:db (assoc db :quant-model/history-throbber true :quant-model/curves-throbber true) ;to be removed
-     :http-post-dispatch {:url (str static/server-address "post-gb-reports-extract")
-                          :edn-params {:isin isin :date date}
-                          :dispatch-key [:gb-report-extract]}}))
-
 (rf/reg-event-db
   :has-loaded
   (fn [db [_ data]]
     (assoc-in db [:esg/success-modal :response] (:text-response data))
     ))
+
+(rf/reg-event-fx
+  :post-gb-reports-extract
+  (fn [{:keys [db]} [_ isin date]]
+    { :http-post-dispatch {:url (str static/server-address "post-gb-reports-extract")
+                          :edn-params {:isin isin :date date}
+                          :dispatch-key [:gb-report-extract]}}))
+
+(rf/reg-event-db
+  :gb-report-extract
+  (fn [db [_ data]]
+    (assoc db :gb-report-extract data))
+    )
 
 (rf/reg-event-db
   :close-rebuild-esg
@@ -329,6 +335,12 @@
 
               ]]
     ))
+;input to select report =>  done
+;extract selected report => done
+;display category new issue or reporting
+;display overall score
+;display questions and answers by sub category
+
 
 (defn esg-viz-display []
   (let [gb-reports @(rf/subscribe [:gb-reports])
@@ -336,21 +348,40 @@
         gb-reports-clean (for [i gb-reports] (assoc i :unique_id (str (:Ticker (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
         gb-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id gb-reports-clean))))
         report-selected @(rf/subscribe [:gb-report-extract])
+        analyst-score (reduce + (map :analyst_score report-selected))
+        report-category (if (= (:question_category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
         ]
-    ;input to select report =>  done
-    ;extract selected report => working
-    ;display category new issue or reporting
-    ;display overall score
-    ;display questions and answers by sub category
-
-    [v-box :width "1280px" :gap "5px" :class "element"
+    (println report-selected)
+    (println analyst-score)
+    (println report-category)
+    [v-box :gap "5px" :children
+[ [v-box :width "1280px" :gap "5px" :class "element"
      :children [[modal-success]
-                [title :label "Green bond reports" :level :level1]
+                [title :label "Green bond report" :level :level1]
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label "Select Report"]
-                            [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices gb-reports-clean-input :filter-box? true :model nil
+                            [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices gb-reports-clean-input :filter-box? true :model gb-report-selected
                              :on-change #(do (reset! gb-report-selected %)
-                                             (rf/dispatch [:post-gb-reports-extract "XS2346972263" "2022-04-14"]) ;add these 2 atoms
+                                             (reset! gb-isin (:security_identifier (first (t/chainfilter {:unique_id %} gb-reports-clean))))
+                                             (reset! gb-date (:date2 (first (t/chainfilter {:unique_id %} gb-reports-clean))))
+                                             (rf/dispatch [:post-gb-reports-extract @gb-isin @gb-date])
                                              )
                              ]]]
-                ]]    ))
+                ]]
+    [v-box :width "1280px" :gap "10px" :class "element"
+     :children [[h-box :gap "20px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label report-category :level :level1]]]
+                [gap :size "1"]
+                [h-box :gap "10px" :align :center
+                 :children [[label :width question-width :label "Score" ]
+                            ]]
+                [h-box :gap "10px" :align :center
+                 :children [[label :width question-width :label "Question 1" ]
+                            ]]
+                [h-box :gap "10px" :align :center
+                 :children [[label :width question-width :label "Question 2" ]
+                            ]]
+                ]]]
+     ]
+
+
+    ))
