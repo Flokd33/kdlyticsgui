@@ -248,7 +248,7 @@
                   [line]
                   [h-box :gap "10px" :children [[button :class btc :label "Upload" :on-click #(rf/dispatch [:ta2022/upload-file
                                                                                                             {:url              (str static/server-address "ta2022-upload-attachment")
-                                                                                                             :multipart-params @attachments/temporary-file-holder}
-                                                                                                            :dispatch-key     [:ta2022/get-attachments]
+                                                                                                             :multipart-params @attachments/temporary-file-holder
+                                                                                                             :dispatch-key     [:ta2022/get-attachments]}
                                                                                                             isin])]
                                                 [button :class btc :label "Cancel" :on-click #(close-fn)]]]]])))
