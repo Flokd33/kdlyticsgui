@@ -234,9 +234,11 @@
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
         pivot @(rf/subscribe [:portfolio-trade-history/pivot])
         qs @(rf/subscribe [:quant-model/model-output])
-        data-with_ud (for [e data] (assoc e :svr4d1yrtn (/ (:svr4d1yrtn (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs))) 100)
-                                            :svr2d1yrtn  (/ (:svr2d1yrtn (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs))) 100)
-                                            :ytd-return (:ytd-return (first (t/chainfilter {:isin_id #(= % (e :ISIN)) } qs))))
+        subqs (t/chainfilter {:isin_id #(some #{%} (distinct (map :ISIN data)))} qs)
+        mqs (zipmap (map :isin_id subqs) subqs)
+        data-with_ud (for [e data] (assoc e :svr4d1yrtn (/ (:svr4d1yrtn (get mqs (e :ISIN))) 100)
+                                            :svr2d1yrtn  (/ (:svr2d1yrtn (get mqs (e :ISIN))) 100)
+                                            :ytd-return (:ytd-return (get mqs (e :ISIN))))
                                    )
 
         ]
@@ -267,14 +269,15 @@
                                           }]
                                         (if (= @(rf/subscribe [:portfolio-trade-history/fwd-return]) "Yes")
                                         [{:Header "1Y fwd return (predicted)"
-                                          :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 80 :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                                    {:Header "2D" :accessor "svr2d1yrtn" :width 80 :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                          :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                                    {:Header "2D" :accessor "svr2d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
                                                     ]
-                                          }])
-                                        [{:Header "Bond TR"
-                                          :columns [{:Header "YTD %" :accessor "ytd-return" :width 80 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                          }
+                                         {:Header "Bond TR"
+                                          :columns [{:Header "YTD %" :accessor "ytd-return" :width 80 :style {:textAlign "right"} :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
                                                     ]
-                                          }]
+                                          }
+                                         ])
                                         (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
                                           [{:Header "TR of the trade" :columns
                                                     (into [{:Header "Last price" :accessor "last-price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
