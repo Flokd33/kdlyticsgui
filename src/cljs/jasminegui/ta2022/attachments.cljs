@@ -26,8 +26,14 @@
   :ta2022/get-attachments
   (fn [{:keys [db]} [_ isin]]
     (reset! drag-drop-file-name default-message)
-    {:db                (assoc db :ta2022/show-modal nil :ta2022/test-result nil)
+    {
      :http-get-dispatch {:url (str static/server-address "trade-attachments?isin=" isin) :dispatch-key [:ta2022/trade-attachments]}}))
+
+(rf/reg-event-fx
+  :ta2022/upload-file-response
+  (fn [{:keys [db]} [_ response]]
+    {:fx [[:dispatch [:ta2022/get-attachments (:isin response)]]
+          [:dispatch [:ta2022/close-modal]]]}))
 
 (defn drag-and-drop-subscribe! []
   (dnd/subscribe! (js/document.querySelector "div#drag-and-drop-data-here") :drag-and-drop-data-here
