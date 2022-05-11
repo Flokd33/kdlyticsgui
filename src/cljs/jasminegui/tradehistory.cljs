@@ -238,80 +238,78 @@
         mqs (zipmap (map :isin_id subqs) subqs)
         data-with_ud (for [e data] (assoc e :svr4d1yrtn (/ (:svr4d1yrtn (get mqs (e :ISIN))) 100)
                                             :svr2d1yrtn  (/ (:svr2d1yrtn (get mqs (e :ISIN))) 100)
-                                            :ytd-return (:ytd-return (get mqs (e :ISIN))))
-                                   )
+                                            :ytd-return (:ytd-return (get mqs (e :ISIN)))))]
+    (fn []
+      (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
+        [box :align-self :center :align :center :child [throbber :size :large]]
+        [box :align :center
+         :child
+         (if (= pivot "No")
+           [:> ReactTable
+            {:data                data-with_ud
+             :columns             (concat [{:Header  "Trade"
+                                            :columns [{:Header "Date" :accessor "TradeDate" :width 75 :Cell subs10}
+                                                      {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
+                                                      {:Header "Type" :accessor "TransactionTypeName" :width 75}
+                                                      ;{:Header "Instrument" :accessor "IssueName" :width 400}
+                                                      {:Header "Instrument" :accessor "NAME" :width 180}
+                                                      {:Header "ISIN" :accessor "ISIN" :width 100}
+                                                      {:Header "CCY" :accessor "LocalCcy" :width 45}
+                                                      {:Header "Notional" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
+                                                      {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
+                                                      {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                                                      {:Header "Counterparty" :accessor "counterparty_code" :width 90}
+                                                      {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
+                                                      {:Header "Region" :accessor "JPMRegion" :width 85}
+                                                      {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
+                                                      {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :Cell tables/low-level-rating-score-to-string}
+                                                      ]
+                                            }]
+                                          (if (= @(rf/subscribe [:portfolio-trade-history/fwd-return]) "Yes")
+                                          [{:Header "1Y fwd return (predicted)"
+                                            :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                                      {:Header "2D" :accessor "svr2d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                                      ]
+                                            }
+                                           {:Header "Bond TR"
+                                            :columns [{:Header "YTD %" :accessor "ytd-return" :width 80 :style {:textAlign "right"} :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                                      ]
+                                            }
+                                           ])
+                                          (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
+                                            [{:Header "TR of the trade" :columns
+                                              (into [{:Header "Last price" :accessor "last-price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
+                                                     ]
+                                                    (for [[h a] [["Gross" "total-return"] ["CEMBI" "tr-vs-cembi"] ["CEMBIHY" "tr-vs-cembihy"] ["CEMBIIG" "tr-vs-cembiig"] ["EMBI" "tr-vs-embi"] ["EMBIIG" "tr-vs-embiig"]]]
+                                                      {:Header h :accessor a :width 70 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))}])
+                                          )
+             :showPagination      (> (count data) 50)
+             :defaultPageSize     (min 50 (count data))
+             :pivotBy             []
+             :filterable          true
+             :defaultFilterMethod tables/text-filter-OR
+             :className           "-striped -highlight"}]
+           ;TODO FIND OUT HOW TO SORT THROUGH PIVOT
+           [:> ReactTable
+            {:data            (sort-by (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) (map #(-> % (update :Quantity int)) data))
+             :columns         [;{:Header "" :accessor "totaldummy" :width 30 :filterable false}
+                               {:Header "Issuer" :accessor "TICKER" :width 160}
+                               {:Header "Instrument" :accessor "NAME" :width 180}
+                               {:Header "ISIN" :accessor "ISIN" :width 105}
+                               {:Header "CCY" :accessor "LocalCcy" :width 50}
+                               {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                               {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                               {:Header "Country" :accessor "CNTRY_OF_RISK" :width 120}
+                               {:Header "Sector" :accessor "JPM_SECTOR" :width 120}
+                               {:Header "Region" :accessor "JPMRegion" :width 120}
+                               {:Header "Rating" :accessor "Used_Rating_Score" :width 120 :PivotValue (fn [x] (str (tables/sub-low-level-rating-score-to-string (aget x "row" "_pivotVal")) " (" (count (aget x "row" "_subRows")) ")"))}]
+             :defaultPageSize (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
+             :filterable      false
+             ;:defaultSorted   [{:id :Quantity :desc true}]
+             :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) :TICKER :NAME]
+             :className       "-striped -highlight"}]
 
-        ]
-    (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
-      [box :align-self :center :align :center :child [throbber :size :large]]
-      [box :align :center
-       :child
-       (if (= pivot "No")
-         [:> ReactTable
-          {:data                data-with_ud
-           :columns             (concat [{:Header  "Trade"
-                                          :columns [{:Header "Date" :accessor "TradeDate" :width 75 :Cell subs10}
-                                                    {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
-                                                    {:Header "Type" :accessor "TransactionTypeName" :width 75}
-                                                    ;{:Header "Instrument" :accessor "IssueName" :width 400}
-                                                    {:Header "Instrument" :accessor "NAME" :width 180}
-                                                    {:Header "ISIN" :accessor "ISIN" :width 100}
-                                                    {:Header "CCY" :accessor "LocalCcy" :width 45}
-                                                    {:Header "Notional" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
-                                                    {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
-                                                    {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
-                                                    {:Header "Counterparty" :accessor "counterparty_code" :width 90}
-                                                    {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
-                                                    {:Header "Region" :accessor "JPMRegion" :width 85}
-                                                    {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
-                                                    {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :Cell tables/low-level-rating-score-to-string}
-                                                    ]
-                                          }]
-                                        (if (= @(rf/subscribe [:portfolio-trade-history/fwd-return]) "Yes")
-                                        [{:Header "1Y fwd return (predicted)"
-                                          :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                                    {:Header "2D" :accessor "svr2d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                                    ]
-                                          }
-                                         {:Header "Bond TR"
-                                          :columns [{:Header "YTD %" :accessor "ytd-return" :width 80 :style {:textAlign "right"} :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                                    ]
-                                          }
-                                         ])
-                                        (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
-                                          [{:Header "TR of the trade" :columns
-                                                    (into [{:Header "Last price" :accessor "last-price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
-                                                           ]
-                                                          (for [[h a] [["Gross" "total-return"] ["CEMBI" "tr-vs-cembi"] ["CEMBIHY" "tr-vs-cembihy"] ["CEMBIIG" "tr-vs-cembiig"] ["EMBI" "tr-vs-embi"] ["EMBIIG" "tr-vs-embiig"]]]
-                                                            {:Header h :accessor a :width 70 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))}])
-                                        )
-           :showPagination      (> (count data) 50)
-           :defaultPageSize     (min 50 (count data))
-           :pivotBy             []
-           :filterable          true
-           :defaultFilterMethod tables/text-filter-OR
-           :className           "-striped -highlight"}]
-         ;TODO FIND OUT HOW TO SORT THROUGH PIVOT
-         [:> ReactTable
-          {:data            (sort-by (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) (map #(-> % (update :Quantity int)) data))
-           :columns         [;{:Header "" :accessor "totaldummy" :width 30 :filterable false}
-                             {:Header "Issuer" :accessor "TICKER" :width 160}
-                             {:Header "Instrument" :accessor "NAME" :width 180}
-                             {:Header "ISIN" :accessor "ISIN" :width 105}
-                             {:Header "CCY" :accessor "LocalCcy" :width 50}
-                             {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
-                             {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
-                             {:Header "Country" :accessor "CNTRY_OF_RISK" :width 120}
-                             {:Header "Sector" :accessor "JPM_SECTOR" :width 120}
-                             {:Header "Region" :accessor "JPMRegion" :width 120}
-                             {:Header "Rating" :accessor "Used_Rating_Score" :width 120 :PivotValue (fn [x] (str (tables/sub-low-level-rating-score-to-string (aget x "row" "_pivotVal")) " (" (count (aget x "row" "_subRows")) ")"))}]
-           :defaultPageSize (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
-           :filterable      false
-           ;:defaultSorted   [{:id :Quantity :desc true}]
-           :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) :TICKER :NAME]
-           :className       "-striped -highlight"}]
-
-         )])))
+           )]))))
 
 (defn nav-trade-history-bar
   "Create the sidebar"
