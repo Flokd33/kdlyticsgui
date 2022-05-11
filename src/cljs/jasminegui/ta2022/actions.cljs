@@ -247,7 +247,7 @@
                    [box :width "100%" :height "200px" :style {:border "dashed 1px black" :background "gainsboro"} :child @attachments/drag-drop-file-name]]
                   [line]
                   [h-box :gap "10px" :children [[button :class btc :label "Upload" :on-click #(rf/dispatch [:ta2022/upload-file
-                                                                                                            {:url              (str static/server-address "upload-attachment")
+                                                                                                            {:url              (str static/server-address "ta2022-upload-attachment")
                                                                                                              :multipart-params @attachments/temporary-file-holder}
                                                                                                             :dispatch-key     [:ta2022/get-attachments]
                                                                                                             isin])]
