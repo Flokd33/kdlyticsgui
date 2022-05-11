@@ -751,6 +751,13 @@
 
 (rf/reg-fx :http-json-post-dispatch http-post-dispatch)
 
+(defn http-put-dispatch [request]
+  (go (let [response (<! (http/post (:url request) {:multipart-params (:multipart-params request)}))]
+        (rf/dispatch (conj (:dispatch-key request) (:body response)))
+        (if (:flag request) (rf/dispatch [(:flag request) (:flag-value request)])))))
+
+(rf/reg-fx :http-put-dispatch http-put-dispatch)
+
 
 (def simple-http-get-events
   [                                                         ;{:get-key :get-positions           :url-tail "positions"           :dis-key :positions :mounting-modal true}

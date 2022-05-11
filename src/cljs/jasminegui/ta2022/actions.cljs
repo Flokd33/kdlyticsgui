@@ -13,6 +13,7 @@
             [jasminegui.tools :as t]
             [jasminegui.ta2022.tables :as tatables]
             [jasminegui.ta2022.alerts :as taalerts]
+            [jasminegui.ta2022.attachments :as attachments]
             )
   )
 
@@ -140,6 +141,7 @@
 (rf/reg-event-fx
   :ta2022/get-attachments
   (fn [{:keys [db]} [_ isin]]
+    (println isin)
     {:db db
      :http-get-dispatch {:url (str static/server-address "ta2022-trade-attachments?isin=" isin) :dispatch-key [:ta2022/trade-attachments]}}))
 
@@ -163,7 +165,7 @@
         last-leg-uuid (:ta2022.trade/uuid (last (:trades @(rf/subscribe [:ta2022/trade-history]))))]
     (fn []
       [v-box :width "850px" :height "300px" :gap "10px" :padding "20px"
-       :children [[h-box :align :center :children [[title :label "Close trade" :level :level1] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/close-modal]))]]]
+       :children [[h-box :align :center :children [[title :label "Close trade" :level :level1] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
                   [label :label "Exit rationale"] [input-textarea :model exit-rationale :status (if (zero? (count @exit-rationale)) :error) :on-change #(reset! exit-rationale %) :width "600px" :rows 5]
                   [line]
                   [h-box :gap "10px" :children [[button :class btc :label "Close trade" :on-click #(rf/dispatch [:ta2022/close-trade last-leg-uuid @exit-rationale])]
@@ -201,7 +203,7 @@
       [v-box :width "850px" :height "750px" :gap "10px" :padding "20px"
        :children [
 
-                  [h-box :align :center :children [(if morph? [title :label (if last-leg-uuid "Morph trade" "New trade") :level :level1] [title :label "Amend latest trade" :level :level1]) [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/close-modal]))]]]
+                  [h-box :align :center :children [(if morph? [title :label (if last-leg-uuid "Morph trade" "New trade") :level :level1] [title :label "Amend latest trade" :level :level1]) [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
                   [gap :size "20px"]
 
                   (if (and morph? last-leg-uuid) [label :label "Exit rationale"])
@@ -230,4 +232,23 @@
 
 (defn amend-latest-trade-modal [] (morph-or-amend-trade-modal false))
 
-
+(defn modal-add-attachment [isin]
+  (let [close-fn (fn []
+                   (reset! attachments/temporary-file-holder nil)
+                   (reset! attachments/drag-drop-file-name attachments/default-message)
+                   (rf/dispatch [:ta2022/close-modal]))]
+    (do
+      (js/setTimeout #(attachments/drag-and-drop-subscribe!) 500) ;tricky and dirty but necessary because the div needs to exist first!!!
+      [v-box :width "640px" :height "480px" :gap "10px" :padding "20px"
+       :children [[h-box :align :center :children [[title :label "Add attachments" :level :level1]
+                                                   [gap :size "1"]
+                                                   [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(close-fn)]]]
+                  [:div {:id "drag-and-drop-data-here"}
+                   [box :width "100%" :height "200px" :style {:border "dashed 1px black" :background "gainsboro"} :child @attachments/drag-drop-file-name]]
+                  [line]
+                  [h-box :gap "10px" :children [[button :class btc :label "Upload" :on-click #(rf/dispatch [:ta2022/upload-file
+                                                                                                            {:url              (str static/server-address "upload-attachment")
+                                                                                                             :multipart-params @attachments/temporary-file-holder}
+                                                                                                            :dispatch-key     [:ta2022/get-attachments]
+                                                                                                            isin])]
+                                                [button :class btc :label "Cancel" :on-click #(close-fn)]]]]])))

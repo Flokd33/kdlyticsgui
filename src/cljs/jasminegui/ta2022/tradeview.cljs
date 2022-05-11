@@ -24,6 +24,8 @@
     [jasminegui.ta2022.actions :as taactions]
     [oz.core :as oz]
     [cljs-time.core :refer [today interval plus days in-days]]
+    ;["@react-pdf/renderer" :as pdf-renderer]
+    ;import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
     )
   )
 
@@ -284,7 +286,7 @@
                                          [button :label "Amend latest entry" :class btc :disabled? (or (not trades) too-old?) :on-click #(rf/dispatch [:ta2022/show-modal {:type :amend-latest-trade}])]
                                          [button :label (if trades "Morph trade" "New trade") :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
                                          [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
-                                         [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(do)]
+                                         [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :add-attachment}])]
 
                                          ]]])))
 
@@ -450,13 +452,37 @@
                :amend-latest-trade [taactions/amend-latest-trade-modal]
                :close-trade [taactions/close-trade-modal]
                :morph-trade [taactions/morph-trade-modal]
-               :add-attachment nil
+               :add-attachment [taactions/modal-add-attachment @(rf/subscribe [:ta2022/trade-isin])]
                nil
 
                )
              ]])
 
   )
+
+;(defn make-pdf-test []
+;  (let [
+;        styles (pdf-renderer/StyleSheet.create {:page {:flexDirection "row" :backgroundColor "#E4E4E4"}
+;                                                :section {:margin 10 :padding 10 :flexGrow 1}})
+;        my-document (fn []
+;                      (str
+;                        "
+;                        <Document>
+;                        <Page size=\"A4\" style="
+;                        (.page styles) ">
+;                        <View style="
+;                        (.section styles) ">
+;                        <Text>Section #1</Text>
+;                        </View>
+;                        <View style="
+;                        (.section styles) ">
+;                        <Text>Section #2</Text>
+;                        </View>
+;                        </Page>
+;                        </Document>"))
+;        viewer (fn [] [:PDFViewer [:MyDocument]])
+;        ]
+;    (dom/render [viewer] (.getElementById js/document "pdf-placeholder"))))
 
 (defn ta2022-view []
   [h-box :gap "10px" :padding "0px" :children [[nav-ta2022-bar] [active-home] [modal-ta2022]]])

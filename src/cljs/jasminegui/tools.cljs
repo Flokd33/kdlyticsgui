@@ -10,6 +10,8 @@
   (let [sx (str x)]
     (str (subs sx 6 8) "-" (subs sx 4 6) "-" (subs sx 0 4))))
 
+(defn filterkey= [k v coll] (filter #(= (get % k) v) coll))
+
 (defn chainfilter
   "Chain filter (boolean AND). Defaults to equality if predicate is not a function.
   example: (chainfilter {:portfolio #(= % \"OGEMCORD\") :weight pos?} @positions)
@@ -37,8 +39,9 @@
        (swap! res str (clojure.string/join sep (mapv #(get line %) cols)) "\n"))
      @res)))
 
-(defn download-object-as-csv [text export-name]
+(defn download-object-as-csv
   "This creates a temporary download link"
+  [text export-name]
   (let [data-blob (js/Blob. #js [text] #js {:type "text/csv"})
         link (.createElement js/document "a")]
     (set! (.-href link) (.createObjectURL js/URL data-blob))

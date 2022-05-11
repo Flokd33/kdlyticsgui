@@ -1,10 +1,11 @@
 (ns jasminegui.ta2022.attachments
   (:require
-    [reagent.core :as r]
-    [reagent.dom :as rd]
-    [re-frame.core :as rf]
     [cljs-drag-n-drop.core :as dnd]
     [jasminegui.tools :as t]
+    [jasminegui.static :as static]
+    [re-frame.core :as rf]
+    [reagent.core :as r]
+    [re-com.core :refer [p v-box]]
     )
 
   )
@@ -16,20 +17,17 @@
 (def temporary-file-holder (atom nil))
 
 (rf/reg-event-fx
-  :upload-file
-  (fn [{:keys [db]} [_ req]]
-    (let [trade (first (t/filterkey= :tradeanalyser.trade/id (keyword (db :active-trade)) (db :trade-database)))]
-      {:db                db
-       :http-put-dispatch (update req :multipart-params conj ["isin" (:tradeanalyser.trade/ISIN trade)])})))
+  :ta2022/upload-file
+  (fn [{:keys [db]} [_ req isin]]
+    {:db                db
+     :http-put-dispatch (update req :multipart-params conj ["isin" isin])}))
 
 (rf/reg-event-fx
-  :received-attachment
-  (fn [{:keys [db]} [_ req]]
-    (let [trade (first (t/filterkey= :tradeanalyser.trade/id (keyword (:active-trade db)) (:trade-database db)))]
-      (reset! drag-drop-file-name default-message)
-      {:db                (assoc db :show-add-attachment-modal false)
-       :http-get-dispatch [{:url (str static/server-address "trade-attachments?isin=" (:tradeanalyser.trade/ISIN trade)) :dispatch-key [:active-trade-attachments]}]
-       })))
+  :ta2022/get-attachments
+  (fn [{:keys [db]} [_ isin]]
+    (reset! drag-drop-file-name default-message)
+    {:db                (assoc db :ta2022/show-modal nil :ta2022/test-result nil)
+     :http-get-dispatch {:url (str static/server-address "trade-attachments?isin=" isin) :dispatch-key [:ta2022/trade-attachments]}}))
 
 (defn drag-and-drop-subscribe! []
   (dnd/subscribe! (js/document.querySelector "div#drag-and-drop-data-here") :drag-and-drop-data-here

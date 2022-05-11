@@ -334,7 +334,7 @@
                             #(assoc % :Bond (mapping (% :ISIN)))
                             #(assoc % :Bond lbl))
                           data-pricing-filtered)]
-    (println data-pricing-1)
+    ;(println data-pricing-1)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
