@@ -336,7 +336,7 @@
         all-sectors (conj (map (fn [x] {:id x :label x}) (sort (distinct (map :Sector qsdata)))) {:id "All" :label "All"})
         all-countries (conj (map (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) @(rf/subscribe [:country-codes]))))}) (sort (distinct (map :Country qsdata)))) {:id "All" :label "All"})
         price-fmt (fn [distance this] (if-let [d (aget this "original" distance)]
-                                        (if (= d 1) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Trgrd."]) (gstring/format "%.1f" (aget this "value"))) "-"))
+                                        (if (= d 1) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Trgrd."]) (if (number? (aget this "value")) (gstring/format "%.1f" (aget this "value")) "-")) "-"))
         download-columns (flatten
                                 [[:db-id :strategy :isin :uuid :weight]
                                  [:Bond :Used_Price :Used_YTW :Used_ZTW :Used_Duration :G_SPREAD_MID_CALC :difference_svr :difference_svr_2d :Rating_String]
