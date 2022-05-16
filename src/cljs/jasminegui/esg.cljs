@@ -366,6 +366,7 @@
                                                            {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))}
                                                            {:Header "Title" :accessor "title" :width 800}
                                                            {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
+                                                           {:Header "Attachments" :accessor "links" :width 100 :Cell #(if-let [v %] (r/as-element [v-box :children (into [] (for [line (gobj/getValueByKeys v "original" "links") :when (= (gobj/get line "type") "attachment")] [hyperlink-href :label "Download" :href (str "https://ldprdnexdc1:6400" (gobj/get line "link")) :target "_blank"]))]))}
                                                            ]
                                           :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}])
                                                   [title :label "Investment notes with ESG content" :level :level2]
@@ -377,6 +378,7 @@
                                                            {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))} ;(aget v "original" "entities" 0 "name")
                                                            {:Header "Title" :accessor "title" :width 800}
                                                            {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
+                                                           {:Header "Attachments" :accessor "links" :width 100 :Cell #(if-let [v %] (r/as-element [v-box :children (into [] (for [line (gobj/getValueByKeys v "original" "links") :when (= (gobj/get line "type") "attachment")] [hyperlink-href :label "Download" :href (str "https://ldprdnexdc1:6400" (gobj/get line "link")) :target "_blank"]))]))}
                                                            ]
                                           :showPagination true :sortable true :filterable false :pageSize 20 :className "-striped -highlight"}])]])]])))
 

@@ -11,7 +11,6 @@
     ["react-table-v6" :as rt :default ReactTable]
     [goog.string :as gstring]
     [goog.string.format]
-    [jasminegui.mount :as mount]
     [jasminegui.tables :as tables]
     [jasminegui.static :as static]
     [jasminegui.guitools :as gt]
@@ -193,8 +192,7 @@
                                             {:Header "Rating" :accessor :tr-vs-index-rating :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                             {:Header "Country" :accessor :tr-vs-index-country :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                             {:Header "Sector" :accessor :tr-vs-index-sector :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]
-                               :filterable false :showPagination false :pageSize (count leg-by-leg-data) :showPageSizeOptions false :className "-striped -highlight"}]
-                             ])))
+                               :filterable false :showPagination false :pageSize (count leg-by-leg-data) :showPageSizeOptions false :className "-striped -highlight"}]])))
 
 
 
@@ -214,14 +212,11 @@
                               {:Header "Type" :accessor :alert-type :width 100 :style {:textAlign "left"} :show false}
                               {:Header "Scope" :accessor :alert-scope :width 100 :style {:textAlign "left"}}
                               {:Header "Description" :accessor :description :width 400 :style {:textAlign "left"}}
-                              {:Header "Query" :accessor :description :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")]
-
-                                                                                                                               (str (aget this "original" "bloomberg-request")
-                                                                                                                                    " "
-                                                                                                                                    (aget this "original" "comparison")
-                                                                                                                                    " "
-                                                                                                                                    (aget this "original" "comparison-value")
-                                                                                                                                    ) "-"))
+                              {:Header "Query" :accessor :description :width 300 :style {:textAlign "left"}
+                               :Cell (fn [this] (if-let [x (aget this "value")]
+                                                  (str (aget this "original" "bloomberg-request") " "
+                                                       (aget this "original" "comparison") " "
+                                                       (aget this "original" "comparison-value")) "-"))
                                :show   false}
                               (if with-triggers {:Header "Implied price" :accessor :implied-price :width 85 :Cell tables/round2 :style {:textAlign "right"}})
                               {:Header "Start level" :accessor :start-level :width 85 :Cell tables/round2 :style {:textAlign "right"}}
@@ -270,13 +265,11 @@
                                                                   [hb [[box :size "1" :child [t3 "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]
                                                                   [hb [[box :size "1" :child [t3 "Alerts"]] [box :size "3" :child [alert-table (taalerts/trade->alerts tl alerts) false]]]]
                                                                   ]]))))
-;(def isin (r/atom nil))
 
 (defn isin-picker
   [trades]
   (let [too-old?
         (try (> (in-days (interval (t/int-to-gdate (:ta2022.trade/entry-date (last trades))) (t/int-to-gdate (today)))) 4) (catch js/Error e true))]
-
     (gt/element-box-generic "isin-picker" element-box-width "Actions" nil
                             [[h-box :gap "10px" :align :center
                               :children [[label :label "Pick an ISIN:"]
@@ -286,17 +279,7 @@
                                          [button :label "Amend latest entry" :class btc :disabled? (or (not trades) too-old?) :on-click #(rf/dispatch [:ta2022/show-modal {:type :amend-latest-trade}])]
                                          [button :label (if trades "Morph trade" "New trade") :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
                                          [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
-                                         [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :add-attachment}])]
-
-                                         ]]])))
-
-(defn actions [trades]
-  (gt/element-box-generic "actions" element-box-width "Actions" nil
-                          [[h-box  :gap "10px" :children [
-                                                            [button :label "Amend latest entry" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :amend-latest-trade}])]
-                                                            [button :label "Morph trade" :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
-                                                            [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
-                                                            [button :label "Add attachment" :class btc :on-click #(do)]]]]))
+                                         [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :add-attachment}])]]]])))
 
 (defn trade-view
   []
@@ -383,7 +366,7 @@
                                                                                                              {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}])
 
                                                              [{:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio ])}]) ;:new-issue
-                                                             :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]))
+                                                             :defaultPageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]))
 
 (defn journal-table []
   (when-not @(rf/subscribe [:ta2022/journal-data])
