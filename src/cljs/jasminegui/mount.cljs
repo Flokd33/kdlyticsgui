@@ -232,6 +232,8 @@
                  :quant-model/curves-throbber  false
                  :quant-model/history-start-date          (t/int-to-gdate 20150101)
                  ;:quant-model/history-end-date            (t/int-to-gdate (today))
+                 :quant-model/master-security-current-field  nil
+                 :quant-model/master-security-current-field-db {}
 
 
 
@@ -256,6 +258,8 @@
                  :talanx-checks {}
 
                  :analysts nil
+
+                 :master-security-fields-list nil
 
                  :ta2022/trade-view-position-and-performance-table []
                  :ta2022/trade-isin "USU1065PAA94"
@@ -445,6 +449,10 @@
            :talanx-checks
 
            :analysts
+
+           :master-security-fields-list
+           :quant-model/master-security-current-field
+           :quant-model/master-security-current-field-db
 
            :ta2022/trade-isin
            :ta2022/trade-attachments
@@ -775,7 +783,9 @@
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
    {:get-key :get-gb-reports    :url-tail "gb-reports" :dis-key :gb-reports}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
+   {:get-key :get-master-security-fields :url-tail "master-security-fields-list" :dis-key :master-security-fields-list}
    ])
+
 
 
 (doseq [line simple-http-get-events]

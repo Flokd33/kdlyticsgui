@@ -382,7 +382,7 @@
   (r/as-element
     (if-let [x (aget this "value")]
       [v-box :children (into [] (for [t x]
-                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next (next t))) )) "bps")]
+                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next (next t))) )) "bps") " @" (last t)]
                                   ))]
       "-"))
   )
