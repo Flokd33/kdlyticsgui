@@ -1,16 +1,13 @@
 (ns jasminegui.mount
   (:require
-    [reagent.core :as r]
     [jasminegui.static :as static]
     [re-frame.core :as rf]
     [cljs-http.client :as http]
     [cljs.core.async :refer [<!]]
     [jasminegui.tables :as tables]
     [cljs-time.core :refer [today]]
-    ;[re-pressed.core :as rp]
     [jasminegui.tools :as t])
-  (:require-macros [cljs.core.async.macros :refer [go]])
-  )
+  (:require-macros [cljs.core.async.macros :refer [go]]))
 
 
 (def default-db {
@@ -271,6 +268,17 @@
                  :ta2022/implied-price-difference nil
                  :ta2022/upside-vs-downside 0.0
 
+                 :implementation/portfolio-nav nil
+                 :implementation/fx nil
+                 :implementation/security-to-issuer-map nil
+                 :implementation/live-positions nil
+                 :implementation/live-cast-parent-positions nil
+                 :implementation/implementation-list []
+
+                 ; Trade implementation
+                 :implementation/trade-implementation                           nil
+                 :implementation/show-implementation-selector                   false
+
 
                  :dummy nil                                 ;can be useful
                  })
@@ -469,6 +477,12 @@
            :ta2022/upside-vs-downside
            :ta2022/journal-data
 
+           ; Trade implementation
+           :implementation/show-implementation-selector
+           :implementation/implementation-list
+           :implementation/portfolio-nav
+           :implementation/fx
+           :implementation/live-cast-parent-positions
 
            :dummy
 
@@ -555,12 +569,15 @@
 (rf/reg-event-fx
   :naked-positions
   (fn [{:keys [db]} [_ naked-positions]]
-    ;(reset! nkp naked-positions)
     (let [res (array-of-lists->records naked-positions)
           positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res))]
-      {:db                 (assoc db :naked-positions res
-                                     :navigation/show-mounting-modal false
-                                     :positions positions)
+      (println (count naked-positions) (keys naked-positions))
+      {:db (assoc db :naked-positions res
+                     :navigation/show-mounting-modal false
+                     :positions positions
+                     :implementation/live-positions (into {} (for [[p g] (group-by :portfolio positions)]
+                                                               [p (into {} (for [line g :when (and (some? (:isin line)) (pos? (:weight line)))] [(:isin line) (* 100. (:weight line))]))]))
+                     )
        })))
 
 
@@ -568,10 +585,13 @@
 (rf/reg-event-fx
   :instruments
   (fn [{:keys [db]} [_ instruments]]
-    {:db (assoc db :all-instrument-ids (keys instruments)
-                   :instruments instruments
-                   :positions (if (and (= (:positions db) []) (:naked-positions db)) (mapv #(merge % (get-in db [:instruments (:id %)])) (:naked-positions db))))
-     }))
+    (let [positions (if (and (= (:positions db) []) (:naked-positions db)) (mapv #(merge % (get-in db [:instruments (:id %)])) (:naked-positions db)))]
+      {:db (assoc db :all-instrument-ids (keys instruments)
+                     :instruments instruments
+                     :positions positions
+                     :implementation/live-positions (into {} (for [[p g] (group-by :portfolio positions)]
+                                                               [p (into {} (for [line g :when (and (some? (:isin line)) (pos? (:weight line)))] [(:isin line) (* 100. (:weight line))]))]))
+                     )})))
 
 ;(rf/reg-event-db
 ;  :pivoted-positions
@@ -799,6 +819,15 @@
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
    {:get-key :get-gb-reports    :url-tail "gb-reports" :dis-key :gb-reports}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
+
+   {:get-key :implementation-list-request         :url-tail "trade-implementation-list"   :dis-key :implementation/implementation-list}
+   {:get-key :portfolio-nav-request               :url-tail "portfolio-nav"               :dis-key :implementation/portfolio-nav}
+   {:get-key :fx-request                          :url-tail "fx"                          :dis-key :implementation/fx}
+   ;{:rfk :security-to-issuer-map-request      :addr "security-to-issuer-map"      :dk :implementation/security-to-issuer-map}
+   ;{:rfk :live-positions-request              :addr "live-positions"              :dk :live-positions}
+   {:get-key :live-cast-parent-positions-request  :url-tail "live-parent-positions"       :dis-key :implementation/live-cast-parent-positions}
+
+
    ])
 
 

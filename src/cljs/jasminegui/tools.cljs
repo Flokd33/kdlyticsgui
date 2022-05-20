@@ -1,5 +1,9 @@
 (ns jasminegui.tools
-  (:require ["html2canvas" :as html2canvas])
+  (:require ["html2canvas" :as html2canvas]
+            [goog.string :as gstring]
+            [goog.string.format])
+  (:import (goog.i18n NumberFormat)
+           (goog.i18n.NumberFormat Format))
   )
 
 (defn int-to-gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
@@ -149,3 +153,15 @@
   (.removeItem (.-localStorage js/window) key))
 
 ;;;
+(def nff (NumberFormat. Format/DECIMAL))
+(defn nf [x] (.format nff (str x)))
+(defn round-to-thousand [x] (* 1000 (int (/ x 1000.))))
+(def tnfmt (comp nf round-to-thousand))
+
+(defn not-number-m100-to-100-error-status [s]
+  ;allows negative numbers for wishlist
+  (try
+    (let [k (cljs.reader/read-string s)]
+      (if-not (and (number? k) (<= -100 k 100)) :error nil))
+    (catch :default e
+      :error)))
