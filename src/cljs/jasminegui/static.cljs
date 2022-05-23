@@ -69,8 +69,8 @@
    {:code :universe-des         :name "Universe overview"}
    {:code :universe-harvest     :name "Universe harvest"}
    {:code :index-crawler        :name "Index crawler"}
-   {:code :master-security      :name "Master Security"}
-   {:code :methodology          :name "Methodology"}
+   {:code :master-security      :name "Security master"}
+   ;{:code :methodology          :name "Methodology"}
    {:code :issuer-coverage      :name "Issuer coverage"}
    {:code :model-portfolios     :name "Model portfolios (WIP)"}
    {:code :score-vs-outlook2    :name "Up/down candidates"}

@@ -153,7 +153,7 @@
      [v-box :class "element"  :gap "20px" :width "1690px"
       :children [[title :label mytitle :level :level1]
                  [h-box :align :center :gap "10px"
-                  :children (concat (into [] (for [c ["Summary" "Full" "Legacy" "New" "SVR" "Upside/Downside" "Screener (SVR)"]]
+                  :children (concat (into [] (for [c ["Summary" "Full" "SVR" "Upside/Downside" "Screener (SVR)"]] ;"Legacy" "New"
                                                ^{:key c} [radio-button :label c :value c :model qstables/table-style :on-change #(reset! qstables/table-style %)]))   ;; key should be unique among siblings
                                     [[gap :size "20px"]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
@@ -320,9 +320,9 @@
     [:> ReactTable
      {:data           display
       :columns        [{:Header "Model" :accessor "model" :width 200}
-                       {:Header "Legacy" :accessor "legacy" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
-                       {:Header "New" :accessor "new" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
-                       {:Header "SVR" :accessor "svr" :width 60 :style {:textAlign "right" :backgroundColor "lightgrey"} :Cell tables/zspread-format}
+                       ;{:Header "Legacy" :accessor "legacy" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                       ;{:Header "New" :accessor "new" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                       {:Header "SVR" :accessor "svr" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format} ; :backgroundColor "lightgrey"
                        {:Header "Comparables" :accessor "comps" :width 100 :style {:textAlign "right"}}]
       :showPagination false :pageSize 4 :filterable false}]))
 
@@ -413,8 +413,8 @@
        [h-box :gap "50px" :children
         [[v-box :gap "0px" :width "125px" :children
           (into [] (concat
-                      (into [[title :label "Model type" :level :level3]]
-                            (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
+                      ;(into [[title :label "Model type" :level :level3]]
+                      ;      (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
                       [[title :label "Rating curves" :level :level3]
                         [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)]
                        [gap :size "10px"]
@@ -450,8 +450,8 @@
        [h-box :align :start :justify :between :children [
                                                           [v-box :gap "0px" :width "125px" :children
                                                            (into [] (concat
-                                                                      (into [[title :label "Model type" :level :level3]]
-                                                                            (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
+                                                                      ;(into [[title :label "Model type" :level :level3]]
+                                                                      ;      (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
                                                                       [[gap :size "10px"] [title :label "Rating curves" :level :level3]
                                                                        [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)][gap :size "10px"]
                                                                        [selection-list :model spot-chart-rating-choice :choices (into [] (map (fn [i] {:id i :label (qstables/get-implied-rating (str i))}) (range 2 19))) :on-change #(reset! spot-chart-rating-choice %)]
@@ -510,22 +510,22 @@
        [oz/vega-lite (qscharts/histogram-chart-vega-spec @advanced-spot-chart-isins @histogram-target (:label (first (t/chainfilter {:id @histogram-target} all-histogram-targets))) @histogram-exclude-outliers)]
        ]]]))
 
-(defn methodology []
-  [box :padding "80px 10px" :class "rightelement" :child
-   [v-box :class "element" :children
-    [[title :label "Methodology" :level :level1] [gap :size "20px"]
-     [title :label "General" :level :level3]
-     [p "We are running a four factor model, regressing spreads against country, sector, rating and duration. Country and sector are categorical variables while rating and duration are numerical. The latter are normalised before the regression."]
-     [title :label "Legacy model" :level :level3]
-     [p "We run log(spread) = a.Duration + b.Rating + categorical variables. This correctly takes into account spreads widening faster as we go down credit ratings. However, it will be misleading (too high spreads) for long dated bonds, especially low rated credits, as it will keep curves quite steep."]
-     [title :label "New model" :level :level3]
-     [p "We run log(spread) = a.log(Duration) + b.Rating + categorical variables. This correctly takes into account spreads widening faster as we go down credit ratings. It also creates curves that are flatter (better) in the long end, but too steep in the short end (too low spreads), especially for low rated credits."]
-     [title :label "Support vector regression (SVR)" :level :level3]
-     [p "We run spread = SVR(Duration, Rating, categorical variables), using the RBF Kernel and C=1000, e=0.01. C and e are roughly calibrated to match the explanatory power of the legacy and new model. The SVR model moves the data into a hyperspace where it can better be linearly explained. It will correctly reflect that high grade credit curves are steep while high yield ones are flat to inverted. On the other hand, it may overfit curves with very few bonds. For more on SVR: " [hyperlink-href :label "Wikipedia" :href "https://en.wikipedia.org/wiki/Support_vector_machine"]]
-     [title :label "Curve shapes: the big issue with the legacy and new model" :level :level3]
-     [p "The legacy and new model will give the same curve steepness to all credits: the steepness is independent from the spread level which is intuitively and factually wrong. In the legacy model, the spread ratio between durations is a fixed ratio of the duration difference, while in the new model, it's a fixed ratio of the duration ratio. Convexity makes the approach slightly better in the legacy model, and even worse in the new model."]
-     ]]]
-  )
+;(defn methodology []
+;  [box :padding "80px 10px" :class "rightelement" :child
+;   [v-box :class "element" :children
+;    [[title :label "Methodology" :level :level1] [gap :size "20px"]
+;     [title :label "General" :level :level3]
+;     [p "We are running a four factor model, regressing spreads against country, sector, rating and duration. Country and sector are categorical variables while rating and duration are numerical. The latter are normalised before the regression."]
+;     [title :label "Legacy model" :level :level3]
+;     [p "We run log(spread) = a.Duration + b.Rating + categorical variables. This correctly takes into account spreads widening faster as we go down credit ratings. However, it will be misleading (too high spreads) for long dated bonds, especially low rated credits, as it will keep curves quite steep."]
+;     [title :label "New model" :level :level3]
+;     [p "We run log(spread) = a.log(Duration) + b.Rating + categorical variables. This correctly takes into account spreads widening faster as we go down credit ratings. It also creates curves that are flatter (better) in the long end, but too steep in the short end (too low spreads), especially for low rated credits."]
+;     [title :label "Support vector regression (SVR)" :level :level3]
+;     [p "We run spread = SVR(Duration, Rating, categorical variables), using the RBF Kernel and C=1000, e=0.01. C and e are roughly calibrated to match the explanatory power of the legacy and new model. The SVR model moves the data into a hyperspace where it can better be linearly explained. It will correctly reflect that high grade credit curves are steep while high yield ones are flat to inverted. On the other hand, it may overfit curves with very few bonds. For more on SVR: " [hyperlink-href :label "Wikipedia" :href "https://en.wikipedia.org/wiki/Support_vector_machine"]]
+;     [title :label "Curve shapes: the big issue with the legacy and new model" :level :level3]
+;     [p "The legacy and new model will give the same curve steepness to all credits: the steepness is independent from the spread level which is intuitively and factually wrong. In the legacy model, the spread ratio between durations is a fixed ratio of the duration difference, while in the new model, it's a fixed ratio of the duration ratio. Convexity makes the approach slightly better in the legacy model, and even worse in the new model."]
+;     ]]]
+;  )
 
 (rf/reg-event-fx
   :save-issuer-coverage
@@ -1012,7 +1012,7 @@
       :universe-harvest   [harvest/universe-harvest]
       :index-crawler      [index-crawler]
       :master-security    [master-security]
-      :methodology        [methodology]
+      ;:methodology        [methodology]
       :issuer-coverage    [issuer-coverage]
       :model-portfolios   [modelportfolios/model-portfolio-view]
       :score-vs-outlook2   [score-vs-outlook]              ; FC
