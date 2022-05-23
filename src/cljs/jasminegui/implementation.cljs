@@ -203,28 +203,28 @@
 (rf/reg-event-fx
   :trade-implementation/send-email
   (fn [{:keys [db]} [_ trade]]
-    {:db (assoc db :success-modal {:show true :on-close :trade-implementation/saved :response nil})
+    {:db (assoc db :implementation/success-modal {:show true :on-close :trade-implementation/saved :response nil})
      :http-post-dispatch {:url         (str static/server-address "trade-implementation-save-email")
                           :edn-params  (trade-implementation-format-before-saving trade)
-                          :dispatch-key [:implementation/trade-implementation-save-response]}}))
+                          :dispatch-key [:trade-implementation-save-response]}}))
 
 (rf/reg-event-fx
   :trade-implementation/save
   (fn [{:keys [db]} [_ trade]]
-    {:db (assoc db :success-modal {:show true :on-close :trade-implementation/saved :response nil})
+    {:db (assoc db :implementation/success-modal {:show true :on-close :trade-implementation/saved :response nil})
      :http-post-dispatch {:url         (str static/server-address "trade-implementation-save")
                           :edn-params  (trade-implementation-format-before-saving trade)
-                          :dispatch-key [:implementation/trade-implementation-save-response]}}))
+                          :dispatch-key [:trade-implementation-save-response]}}))
 
 (rf/reg-event-db
   :trade-implementation-save-response
   (fn [db [_ data]]
     (rf/dispatch [:implementation-list-request])
-    (assoc-in db [:success-modal :response] (:text-response data))))
+    (assoc-in db [:implementation/success-modal :response] (:text-response data))))
 
 (rf/reg-event-db
   :trade-implementation/saved
-  (fn [db [_]] (assoc db :success-modal {:show false :on-close nil :response nil})))
+  (fn [db [_]] (assoc db :implementation/success-modal {:show false :on-close nil :response nil})))
 
 (rf/reg-event-fx
   :trade-implementation/open
@@ -326,7 +326,7 @@
 (rf/reg-event-fx
   :trade-implementation/add-to-trade-analyzer
   (fn [{:keys [db]} [_ trade]]
-    {:db (assoc db :success-modal {:show true :on-close :trade-implementation/saved-to-TA :response nil})
+    {:db (assoc db :implementation/success-modal {:show true :on-close :trade-implementation/saved-to-TA :response nil})
      :http-post-dispatch {:url         (str static/server-address "trade-implementation-to-TA")
                           :edn-params  (update-in trade [:tradeanalyser.implementation/entry-date] tools/gdate-to-yyyymmdd)
                           :dispatch-key [:implementation/trade-implementation-to-TA-response]}}))
@@ -335,11 +335,11 @@
   :trade-implementation-to-TA-response
   (fn [db [_ data]]
     (rf/dispatch [:trade-database-request (:active-portfolio db)])
-    (assoc-in db [:success-modal :response] (:text-response data))))
+    (assoc-in db [:implementation/success-modal :response] (:text-response data))))
 
 (rf/reg-event-db
   :trade-implementation/saved-to-TA
-  (fn [db [_]] (assoc db :success-modal {:show false :on-close nil :response nil})))
+  (fn [db [_]] (assoc db :implementation/success-modal {:show false :on-close nil :response nil})))
 
 (rf/reg-event-db
   :trade-implementation/get-parent-exposure
@@ -573,7 +573,19 @@
 
 
 
+(defn modal-success []
+  (let [modal-data @(rf/subscribe [:implementation/success-modal])]
+    (if (:show modal-data)
+      [modal-panel
+       :wrap-nicely? false
+       :backdrop-on-click #(rf/dispatch [(:on-close modal-data)])
+       :child [alert-box
+               :padding "15px"
+               :style {:width "450px"}
+               :heading (if-let [x (:response modal-data)] x [box :align :center :child [throbber :size :large]])
+               :closeable? true
+               :on-close #(rf/dispatch [(:on-close modal-data)])]])))
 
 (defn trade-implementation-view []
   (when-not @(rf/subscribe [:implementation/trade-implementation]) (rf/dispatch [:trade-implementation/reset]))
-  [h-box :gap "10px" :padding "0px" :children [[trade-implementation-control] [trade-implementation-input] [modal-open-implementation]]])
+  [h-box :gap "10px" :padding "0px" :children [[trade-implementation-control] [trade-implementation-input] [modal-open-implementation] [modal-success]]])

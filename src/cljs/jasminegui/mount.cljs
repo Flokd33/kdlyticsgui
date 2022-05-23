@@ -282,7 +282,7 @@
                  ; Trade implementation
                  :implementation/trade-implementation                           nil
                  :implementation/show-implementation-selector                   false
-
+                 :implementation/success-modal                                  {:show false :on-close nil :response nil}
 
                  :dummy nil                                 ;can be useful
                  })
