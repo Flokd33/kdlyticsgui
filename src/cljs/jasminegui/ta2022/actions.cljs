@@ -14,6 +14,8 @@
             [jasminegui.ta2022.tables :as tatables]
             [jasminegui.ta2022.alerts :as taalerts]
             [jasminegui.ta2022.attachments :as attachments]
+            [jasminegui.qs.qstables :as qstables]
+            ["react-table-v6" :as rt :default ReactTable]
             )
   )
 
@@ -213,6 +215,10 @@
                   [h-box :align :center :children [[label :width "125px" :label "New strategy"]
                                                    [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
                   [label :label "New trade rationale"] [input-textarea :model entry-rationale :status (if (zero? (count @entry-rationale)) :error) :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
+                  [h-box :align :center :children [[label :width "125px" :label "Current levels"]
+                                                   [:> ReactTable
+                                                    {:data [(first (t/chainfilter {:ISIN @(rf/subscribe [:ta2022/trade-isin])} @(rf/subscribe [:quant-model/model-output])))] :columns (qstables/table-style->qs-table-col "TA2022morph" nil) :showPagination false :pageSize 1 :filterable false}]
+                                                   ]]
                   [taalerts/trade-alert-input trade-entry]
                   (if-let [x @(rf/subscribe [:ta2022/implied-price-difference])] [label :label (str "Implied upside price difference (has to be <1%) " (gstring/format "%.1f%" (* 100 x)))])
                   (if (< @(rf/subscribe [:ta2022/upside-vs-downside]) 0.5) [label :label (str "Upside/downside too poor (has to be > 0.5) " (gstring/format "%.1f" @(rf/subscribe [:ta2022/upside-vs-downside])))])
