@@ -339,7 +339,13 @@
 
 
 (defn esg-engagements []
-  (let [start-date (r/atom (tools/int-to-gdate 20220101)) end-date (r/atom (today))]
+  (let [start-date (r/atom (tools/int-to-gdate 20220101)) end-date (r/atom (today))
+        table-columns [{:Header "Date" :accessor "date" :width 100}
+                       {:Header "note_id" :accessor "note_id" :width 100 :show false}
+                       {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))}
+                       {:Header "Title" :accessor "title" :width 800}
+                       {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))}
+                       {:Header "Attachments" :accessor "links" :width 100 :Cell #(if-let [v %] (r/as-element [v-box :children (into [] (for [line (gobj/getValueByKeys v "original" "links") :when (= (gobj/get line "type") "attachment")] [hyperlink-href :label "Download" :href (str "https://ldprdnexdc1:6400" (gobj/get line "link")) :target "_blank"]))]))}]]
     (fn []
       [v-box :gap "20px" :class "element" :width standard-box-width
        :children [[h-box :align :center :children [[title :label "ESG interactions" :level :level1]]]
@@ -356,31 +362,15 @@
                                                                [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements (t/gdate-to-yyyy-mm-dd @start-date) (t/gdate-to-yyyy-mm-dd @end-date)])]]]
                   (if @(rf/subscribe [:esg/engagement-throbber])
                     [throbber :size :large]
-                    [v-box :gap "10px" :children [
-                                                  [title :label "Engagements" :level :level2]
-                                      (let [data (if-let [data (:results @(rf/subscribe [:esg/engagements]))] data [])]
-                                        [:> ReactTable
-                                         {:data           (sort-by :date data)
-                                          :columns        [{:Header "Date" :accessor "date" :width 100}
-                                                           {:Header "note_id" :accessor "note_id" :width 100 :show false}
-                                                           {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))}
-                                                           {:Header "Title" :accessor "title" :width 800}
-                                                           {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
-                                                           {:Header "Attachments" :accessor "links" :width 100 :Cell #(if-let [v %] (r/as-element [v-box :children (into [] (for [line (gobj/getValueByKeys v "original" "links") :when (= (gobj/get line "type") "attachment")] [hyperlink-href :label "Download" :href (str "https://ldprdnexdc1:6400" (gobj/get line "link")) :target "_blank"]))]))}
-                                                           ]
-                                          :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}])
+                    [v-box :gap "10px" :children [[title :label "Engagements" :level :level2]
+                                                  (let [data (if-let [data (:results @(rf/subscribe [:esg/engagements]))] data [])]
+                                                    [:> ReactTable
+                                                     {:data (sort-by :date data) :columns table-columns
+                                                      :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}])
                                                   [title :label "Investment notes with ESG content" :level :level2]
-                                      (let [data (if-let [data (:results @(rf/subscribe [:esg/security-notes]))] data [])]
-                                        [:> ReactTable
-                                         {:data           (sort-by :date data)
-                                          :columns        [{:Header "Date" :accessor "date" :width 100}
-                                                           {:Header "note_id" :accessor "note_id" :width 100 :show false}
-                                                           {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))} ;(aget v "original" "entities" 0 "name")
-                                                           {:Header "Title" :accessor "title" :width 800}
-                                                           {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
-                                                           {:Header "Attachments" :accessor "links" :width 100 :Cell #(if-let [v %] (r/as-element [v-box :children (into [] (for [line (gobj/getValueByKeys v "original" "links") :when (= (gobj/get line "type") "attachment")] [hyperlink-href :label "Download" :href (str "https://ldprdnexdc1:6400" (gobj/get line "link")) :target "_blank"]))]))}
-                                                           ]
-                                          :showPagination true :sortable true :filterable false :pageSize 20 :className "-striped -highlight"}])]])]])))
+                                                  [:> ReactTable
+                                                   {:data (sort-by :date (:results @(rf/subscribe [:esg/security-notes]))) :columns table-columns
+                                                    :showPagination true :sortable true :filterable false :defaultPageSize 20 :className "-striped -highlight"}]]])]])))
 
 
 (defn active-home []

@@ -2,6 +2,7 @@ node_modules/
 public/js
 
 resources/public/js.compiled
+resources/public/js.compiled/
 
 /target
 /checkouts
@@ -18,6 +19,7 @@ pom.xml.asc
 .lein-*
 .nrepl-*
 .DS_Store
+projectFilesBackup/
 
 .hgignore
 .hg/
