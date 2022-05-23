@@ -384,9 +384,9 @@
                 [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
 (defn qs-table-container []
-  ;(println @(rf/subscribe [:quant-model/model-js-output]))
-  [box :padding "80px 10px" :class "rightelement" :child [qs-table "Quant model output" @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster
-
+  ;(println (:date-model-run (first @(rf/subscribe [:quant-model/model-output]))))
+  [box :padding "80px 10px" :class "rightelement" :child [qs-table (str "Quant model output " @(rf/subscribe [:qt-date])) @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster
+;no date in the model output
 
 
 (def spot-chart-rating-curves-keys (zipmap ["Base" "Sov only" "Non ESG (SVR)" "ESG (SVR)" "ESG benefit (SVR)"] [:base :sov-only :nesg :esg :esg-benefit])) ;UNUSED ATM BUT IMPORTANT LOGIC
@@ -957,13 +957,10 @@
     ))
 
 
-;(def isin-update (r/atom ""))
-;(def field (r/atom ""))
 (def new-value (r/atom ""))
-;(def current-value (r/atom ""))
 
 (rf/reg-event-fx
-  :get-master-security-current-field
+  :master-security-current-field
   (fn [{:keys [db]} [_ isin field]]
     {:http-get-dispatch {:url          (str static/server-address "current-field?isin=" isin "&field=" field)
                          :dispatch-key [:quant-model/master-security-current-field-result]}
@@ -972,26 +969,35 @@
 (rf/reg-event-db :quant-model/master-security-current-field-change-isin (fn [db [_ isin]] (assoc-in db [:quant-model/master-security-current-field-db :isin] isin)))
 (rf/reg-event-db :quant-model/master-security-current-field-change-field (fn [db [_ field]] (assoc-in db [:quant-model/master-security-current-field-db :field] field)))
 (rf/reg-event-db :quant-model/master-security-current-field-result (fn [db [_  data]]  (assoc-in db [:quant-model/master-security-current-field-db :current-value] (:result data)))) ;(:not-exists data) (:message data)
-;(rf/reg-event-db :quant-model/master-security-current-field-db (fn [db [_ k v]] (assoc-in db [:quant-model/master-security-current-field-db k] v)))
+
+(rf/reg-event-fx
+  :master-security-update-field
+  (fn [{:keys [db]} [_ isin field new-value]]
+    {:http-get-dispatch {:url          (str static/server-address "update-field?isin=" isin "&field=" field "&new-value=" new-value)
+                         :dispatch-key [:quant-model/master-security-update-field-result]}
+     }))
+
+(rf/reg-event-db :quant-model/master-security-update-field-result (fn [db [_  data]]  (assoc-in db [:quant-model/master-security-update-field-db :message] (:message data))))
 
 (defn update-field []
   (let [db            (rf/subscribe [:quant-model/master-security-current-field-db])
+        db2           (rf/subscribe [:quant-model/master-security-update-field-db])
         isin-update   (r/cursor db [:isin])
         field         (r/cursor db [:field])
         current-value (r/cursor db [:current-value])
+        update-message (r/cursor db2 [:message])
         hb (fn [v] [h-box  :gap "10px" :align :center :children v])
         ]
-    (println @(r/cursor db [:not-exists]))
-    (println db)
-
+    (println @field )
       [v-box :width "400px" :gap "10px" :class "element"
        :children [[title :label "Update field" :level :level1]
                   [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model isin-update :change-on-blur? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-isin %])]]]
                   [hb [[label :width "100px" :label "Field"] [single-dropdown :width "250px" :model field :choices (into [] (for [x @(rf/subscribe [:master-security-fields-list])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-field  %])]]]
-                  [hb [[button :style {:width "360px"} :label "Get Current Field Value!" :on-click #(do (rf/dispatch [:get-master-security-current-field @isin-update @field]))]]]
+                  [hb [[button :style {:width "360px"} :label "Get Current Field Value!" :on-click #(do (rf/dispatch [:master-security-current-field @isin-update @field]))]]]
                   [hb [[label :width "100px" :label "Current Value"] [box :width "250px" :child [label :label @current-value]]]]
                   [hb [[label :width "100px" :label "New Value"] [input-text :width "250px" :model new-value :change-on-blur? false :on-change #(reset! new-value %)]]]
-                  [hb [[button :style {:width "360px"} :label "Update!" :on-click #(rf/dispatch [:quant-model-new-bond/check-isin])] ]] ; dispatch upadte fct
+                  [hb [[button :style {:width "360px"} :label "Update!" :on-click #(rf/dispatch [:master-security-update-field @isin-update @field @new-value])] ]]
+                  [hb [[label :width "100px" :label "Result"] [box :width "250px" :child [label :label @update-message]]]]
                   ]])
 
     )
