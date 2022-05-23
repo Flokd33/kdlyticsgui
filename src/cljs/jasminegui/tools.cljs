@@ -1,5 +1,9 @@
 (ns jasminegui.tools
-  (:require ["html2canvas" :as html2canvas])
+  (:require ["html2canvas" :as html2canvas]
+            [goog.string :as gstring]
+            [goog.string.format])
+  (:import (goog.i18n NumberFormat)
+           (goog.i18n.NumberFormat Format))
   )
 
 (defn int-to-gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
@@ -9,6 +13,8 @@
 (defn format-date-from-int [x]
   (let [sx (str x)]
     (str (subs sx 6 8) "-" (subs sx 4 6) "-" (subs sx 0 4))))
+
+(defn filterkey= [k v coll] (filter #(= (get % k) v) coll))
 
 (defn chainfilter
   "Chain filter (boolean AND). Defaults to equality if predicate is not a function.
@@ -37,8 +43,9 @@
        (swap! res str (clojure.string/join sep (mapv #(get line %) cols)) "\n"))
      @res)))
 
-(defn download-object-as-csv [text export-name]
+(defn download-object-as-csv
   "This creates a temporary download link"
+  [text export-name]
   (let [data-blob (js/Blob. #js [text] #js {:type "text/csv"})
         link (.createElement js/document "a")]
     (set! (.-href link) (.createObjectURL js/URL data-blob))
@@ -146,3 +153,15 @@
   (.removeItem (.-localStorage js/window) key))
 
 ;;;
+(def nff (NumberFormat. Format/DECIMAL))
+(defn nf [x] (.format nff (str x)))
+(defn round-to-thousand [x] (* 1000 (int (/ x 1000.))))
+(def tnfmt (comp nf round-to-thousand))
+
+(defn not-number-m100-to-100-error-status [s]
+  ;allows negative numbers for wishlist
+  (try
+    (let [k (cljs.reader/read-string s)]
+      (if-not (and (number? k) (<= -100 k 100)) :error nil))
+    (catch :default e
+      :error)))

@@ -1,14 +1,17 @@
 (ns jasminegui.static)
 
-(def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod))
+(def server-address ({:prod "http://iamlfilive:3501/" :dev "http://localhost:3501/"} :prod)) ;WARNING
 (def ta-server-address "http://iamlfilive:3500/")
+(def cms-address "http://iamlfilive:8192/tradeanalyser/cms/")
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [:get-qt-date :get-total-positions   :get-naked-positions :get-instruments] ;:get-positions
         attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
         quant-events [:get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields]
-        var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]]
-  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (concat home-events [:get-portfolio-checks]) :mounting-modal true}
+        var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
+        implementation-events (conj home-events :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :live-cast-parent-positions-request)
+        ]
+  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (conj home-events :get-portfolio-checks) :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil :load-events [:get-country-codes :get-jpm-sectors :get-model-portfolios :get-quant-model]}
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events attr-events}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events var-events [:get-large-exposures]) :mounting-modal true} ;var-events
@@ -16,9 +19,12 @@
    {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events quant-events :mounting-modal true}
    {:code :scorecard        :name "Scorecard"         :dispatch :scorecard        :subs nil :load-events (concat [:get-attribution-date [:get-scorecard-attribution "OGEMCORD"]] quant-events home-events) :mounting-modal true}
    {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-gb-reports :get-analysts :get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores :get-quant-model])}
-   {:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
+   ;{:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
+   {:code :ta2022           :name "TA2022"            :dispatch :ta2022           :subs nil :load-events (conj quant-events :get-analysts) :mounting-modal true}
+   {:code :implementation   :name "Implementation"    :dispatch :implementation   :subs nil :load-events implementation-events :mounting-modal true}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}
-   {:code :ta2022           :name "TA2022"            :dispatch :ta2022           :subs nil :load-events quant-events :mounting-modal true}]))
+   ]))
+
 
 (def risk-navigation
   [{:code :summary             :name "Overview"}
@@ -63,8 +69,8 @@
    {:code :universe-des         :name "Universe overview"}
    {:code :universe-harvest     :name "Universe harvest"}
    {:code :index-crawler        :name "Index crawler"}
-   {:code :master-security      :name "Master Security"}
-   {:code :methodology          :name "Methodology"}
+   {:code :master-security      :name "Security master"}
+   ;{:code :methodology          :name "Methodology"}
    {:code :issuer-coverage      :name "Issuer coverage"}
    {:code :model-portfolios     :name "Model portfolios (WIP)"}
    {:code :score-vs-outlook2    :name "Up/down candidates"}
@@ -78,6 +84,12 @@
    {:code :esg-calculator       :name "Green bond calculator (beta)"}
    {:code :esg-viz              :name "Green bond visualisator (beta)"}
    {:code :esg-engagements      :name "ESG interactions"}
+   ])
+
+(def ta2022-navigation
+  [{:code :main                 :name "Table"}
+   {:code :trade-view           :name "Trade view"}
+   {:code :journal              :name "Journal"}
    ])
 
 (def risk-choice-map
@@ -225,4 +237,5 @@
                                 "31Dec21"
                                 "31Jan22"
                                 "28Feb22"
-                                "31Mar22"])
+                                "31Mar22"
+                                "30Apr22"])

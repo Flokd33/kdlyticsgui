@@ -106,7 +106,7 @@
 (rf/reg-event-fx
   :get-portfolio-review-marginal-beta-chart-data
   (fn [{:keys [db]} [_ portfolio grouping]]
-    (println portfolio grouping)
+    ;(println portfolio grouping)
     (let [g (if (and (some #{portfolio} emd-portfolios) (= grouping "Region")) "EMDRegion" grouping)]                                              ;ugly hack for EMD portfolios
       {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=marginal-beta&portfolio=" portfolio "&grouping=" g)
                            :dispatch-key [:portfolio-review/marginal-beta-chart-data]}})))

@@ -334,14 +334,14 @@
                             #(assoc % :Bond (mapping (% :ISIN)))
                             #(assoc % :Bond lbl))
                           data-pricing-filtered)]
-    (println data-pricing-1)
+    ;(println data-pricing-1)
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
      :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
-     :vconcat (->> [[:price "Price"] [:ytw "YTW"] [:ztw "ZTW"] [:duration "Duration"] [:rating_score "Rating"] [:cheapness2D "2D cheapness"] [:cheapness4D "4D cheapness"]]
-                   (mapv #(if ((first %) which?) (graph (name (first %)) (second %) (first %) data-to-plot ((first %) extras))))
-                   (remove nil?))}))
+     :vconcat (vec (->> [[:price "Price"] [:ytw "YTW"] [:ztw "ZTW"] [:duration "Duration"] [:rating_score "Rating"] [:cheapness2D "2D cheapness"] [:cheapness4D "4D cheapness"]]
+                        (mapv #(if ((first %) which?) (graph (name (first %)) (second %) (first %) data-to-plot ((first %) extras))))
+                        (remove nil?)))}))                  ;vec so it's not lazy
 
 (def curve-type-mapping {:two-d-curves "2D" :four-d-sovereign-curves "4D" :two-d-curves-sovs "2DSov" :two-d-curves-corps "2DCorp"})
 

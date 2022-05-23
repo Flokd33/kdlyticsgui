@@ -125,7 +125,7 @@
 (rf/reg-event-db
   :time-machine/has-rebuilt
   (fn [db [_ msg]]
-    (println msg)
+    ;(println msg)
     (assoc db :time-machine/has-rebuilt msg
               :navigation/show-mounting-modal false)))
 

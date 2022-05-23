@@ -388,6 +388,8 @@
               ;[{:Header "Call schedule" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call]))}]
               [{:Header "Valuation" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String]))}
                {:Header "Model outputs (ZTW)" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr]))}])
+      "TA2022morph"
+      (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :predicted_spread_svr_3 :predicted_spread_svr_2d_3]))
       "Upgrades/Downgrades"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON :Rating_String ])}]
               [{:Header "Outlook" :columns (mapv quant-score-table-columns [:RTG_SP_OUTLOOK :RTG_FITCH_OUTLOOK :RTG_MDY_OUTLOOK])}])

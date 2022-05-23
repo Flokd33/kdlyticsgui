@@ -48,7 +48,6 @@
 (rf/reg-event-fx
   :esg/fetch-data
   (fn [{:keys [db]} [_ detail]]
-    ;(println (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail))
     {:db                db
      :http-get-dispatch {:url          (str static/server-address "refinitiv-data?companies=" (clojure.string/join "," (map :id (db :esg/selected-companies))) "&detail="detail)
                          :dispatch-key (if (= detail "top") [:esg/data] [:esg/data-detailed])}}))
@@ -250,19 +249,15 @@
       (riskviews/add-total-line-to-pivot (sort-by (apply juxt (concat [(comp riskviews/first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero) (map keyword (:portfolios db))))))
 
 (defn holdings []
-  (let [a 3]
-    [v-box :gap "20px" :class "element" :width standard-box-width
-     :children [[title :level :level2 :label "MSCI NAV across portfolios"]
-                (let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
-                                      {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-not0}))]
-                  [:> ReactTable
-                   {:data                @(rf/subscribe [:esg-risk/multiple-tree])
-                    :columns             (concat (mapv tables/risk-table-columns [:msci-rating :issuer]) cols)
-                    :showPagination      false :sortable true :filterable false :pageSize (inc (count (distinct (map :msci-rating @(rf/subscribe [:esg-risk/multiple-tree])))))
-                    :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:msci-rating :TICKER] :defaultSorted [{:id :msci-rating :desc true}]
-                    }]
-
-                  )]]))
+  [v-box :gap "20px" :class "element" :width standard-box-width
+   :children [[title :level :level2 :label "MSCI NAV across portfolios"]
+              (let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
+                                    {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-not0}))]
+                [:> ReactTable
+                 {:data                @(rf/subscribe [:esg-risk/multiple-tree])
+                  :columns             (concat (mapv tables/risk-table-columns [:msci-rating :issuer]) cols)
+                  :showPagination      false :sortable true :filterable false :pageSize (inc (count (distinct (map :msci-rating @(rf/subscribe [:esg-risk/multiple-tree])))))
+                  :showPageSizeOptions false :className "-striped -highlight" :pivotBy [:msci-rating :TICKER] :defaultSorted [{:id :msci-rating :desc true}]}])]])
 
 (defn esg-scores []
   (when (zero? (count @(rf/subscribe [:esg/summary-report]))) (rf/dispatch [:get-esg-summary-report]))
@@ -281,19 +276,26 @@
                                                                   {:Header "Scope 3" :accessor "msci-CARBON_EMISSIONS_SCOPE_3" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
                                  {:Header "Portfolios" :columns [{:Header "List" :accessor "Portfolios"}]}]
                 :showPagination true :sortable true :filterable true :pageSize 20
-                :className      "-striped -highlight"
-                }]
-              ]]
-    )
+                :className      "-striped -highlight"}]]])
 
 (rf/reg-event-fx
   :esg/get-tamale-body
   (fn [{:keys [db]} [_ note-id]]
     {:db (assoc db :esg/tamale-body "")
-     :http-get-dispatch
-     {:url          (str "https://ldprdnexdc1:6400/v1/notes/" note-id "/body")
-      :dispatch-key [:esg/tamale-body]}
-     }))
+     :http-get-dispatch {:url (str "https://ldprdnexdc1:6400/v1/notes/" note-id "/body") :dispatch-key [:esg/tamale-body]}}))
+
+(def tamale-analysts ["Tammy LLoyd"                         ;two capital L
+                      "Stacy Xie"
+                      "Kevan Salisbury"
+                      "Rahul Bhat"
+                      "Alan Siow"
+                      "Alexandre Almosni"
+                      "Antonio Luiz Gomes"
+                      "Victoria Harling"
+                      "Adrian Chan"
+                      "Matt Christ"
+                      "Florian Cadet"
+                      "Tom Peberdy"])
 
 (rf/reg-event-fx
   :esg/get-engagements
@@ -304,54 +306,25 @@
        :json-params  {:filters
                       {:note_type ["ESG_ENGAGEMENT_NOTE"]
                        :dates     {:start_date yyyy-mm-dd-start-date, :end_date yyyy-mm-dd-end-date}
-                       :submitter ["Tammy Lloyd"
-                                   "Stacy Xie"
-                                   "Kevan Salisbury"
-                                   "Rahul Bhat"
-                                   "Alan Siow"
-                                   "Alexandre Almosni"
-                                   "Antonio Luiz Gomes"
-                                   "Victoria Harling"
-                                   "Adrian Chan"
-                                   "Matt Christ"
-                                   "Florian Cadet"
-                                   "Tom Peberdy"]}
+                       :submitter tamale-analysts}
                       :body_verbose false}
        :dispatch-key [:esg/receive-engagements]}
       {:url          "https://ldprdnexdc1:6400/v1/notes"
        :json-params  {:filters
                       {:note_type ["SECURITY_RESEARCH_INVESTMENT_REPORT"]
-                       :tags ["All ESG Categories"
-                              "Governance (ESG Category)"
-                              "Social (ESG Category)"
-                              "Environmental (ESG Category)"]
+                       :tags ["All ESG Categories" "Governance (ESG Category)" "Social (ESG Category)" "Environmental (ESG Category)"]
                        :dates     {:start_date yyyy-mm-dd-start-date, :end_date yyyy-mm-dd-end-date}
-                       :submitter ["Tammy Lloyd"
-                                   "Stacy Xie"
-                                   "Kevan Salisbury"
-                                   "Rahul Bhat"
-                                   "Alan Siow"
-                                   "Alexandre Almosni"
-                                   "Antonio Luiz Gomes"
-                                   "Victoria Harling"
-                                   "Adrian Chan"
-                                   "Matt Christ"
-                                   "Florian Cadet"
-                                   "Tom Peberdy"]}
+                       :submitter tamale-analysts}
                       :body_verbose false}
        :dispatch-key [:esg/receive-security-notes]}]}))
 
 (rf/reg-event-db
   :esg/receive-security-notes
-  (fn [db [_ data]]
-    (assoc db :esg/engagement-throbber false
-              :esg/security-notes data)))
+  (fn [db [_ data]] (assoc db :esg/engagement-throbber false :esg/security-notes data)))
 
 (rf/reg-event-db
   :esg/receive-engagements
-  (fn [db [_ data]]
-    (assoc db                                               ;:esg/engagement-throbber false NO POINT TOO QUICK
-              :esg/engagements data)))
+  (fn [db [_ data]] (assoc db :esg/engagements data)))                                                ;:esg/engagement-throbber false NO POINT TOO QUICK
 
 (def show-modal-engagement (r/atom nil))
 
@@ -366,7 +339,13 @@
 
 
 (defn esg-engagements []
-  (let [start-date (r/atom (tools/int-to-gdate 20220101)) end-date (r/atom (today))]
+  (let [start-date (r/atom (tools/int-to-gdate 20220101)) end-date (r/atom (today))
+        table-columns [{:Header "Date" :accessor "date" :width 100}
+                       {:Header "note_id" :accessor "note_id" :width 100 :show false}
+                       {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))}
+                       {:Header "Title" :accessor "title" :width 800}
+                       {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))}
+                       {:Header "Attachments" :accessor "links" :width 100 :Cell #(if-let [v %] (r/as-element [v-box :children (into [] (for [line (gobj/getValueByKeys v "original" "links") :when (= (gobj/get line "type") "attachment")] [hyperlink-href :label "Download" :href (str "https://ldprdnexdc1:6400" (gobj/get line "link")) :target "_blank"]))]))}]]
     (fn []
       [v-box :gap "20px" :class "element" :width standard-box-width
        :children [[h-box :align :center :children [[title :label "ESG interactions" :level :level1]]]
@@ -383,34 +362,15 @@
                                                                [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements (t/gdate-to-yyyy-mm-dd @start-date) (t/gdate-to-yyyy-mm-dd @end-date)])]]]
                   (if @(rf/subscribe [:esg/engagement-throbber])
                     [throbber :size :large]
-
-                    [v-box :gap "10px" :children [
-                                                  [title :label "Engagements" :level :level2]
-                                      (let [data (if-let [data (:results @(rf/subscribe [:esg/engagements]))] data [])] ;(println (:results @(rf/subscribe [:esg/engagements])))
-                                        [:> ReactTable
-                                         {:data           data
-                                          :columns        [
-                                                           {:Header "Date" :accessor "date" :width 100}
-                                                           {:Header "note_id" :accessor "note_id" :width 100 :show false}
-                                                           {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (aget v "original" "entities" 0 "name"))}
-                                                           {:Header "Title" :accessor "title" :width 800}
-                                                           {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
-                                                           ]
-                                          :showPagination false :sortable true :filterable false :pageSize (count data)
-                                          :className      "-striped -highlight"}])
+                    [v-box :gap "10px" :children [[title :label "Engagements" :level :level2]
+                                                  (let [data (if-let [data (:results @(rf/subscribe [:esg/engagements]))] data [])]
+                                                    [:> ReactTable
+                                                     {:data (sort-by :date data) :columns table-columns
+                                                      :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}])
                                                   [title :label "Investment notes with ESG content" :level :level2]
-                                      (let [data (if-let [data (:results @(rf/subscribe [:esg/security-notes]))] data [])] ;(println (:results @(rf/subscribe [:esg/engagements])))
-                                        [:> ReactTable
-                                         {:data           data
-                                          :columns        [{:Header "Date" :accessor "date" :width 100}
-                                                           {:Header "note_id" :accessor "note_id" :width 100 :show false}
-                                                           {:Header "Entity" :accessor "entities" :width 200 :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))} ;(aget v "original" "entities" 0 "name")
-                                                           {:Header "Title" :accessor "title" :width 800}
-                                                           {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))} ;(r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget v "original" "body")}}])
-                                                           ]
-                                          :showPagination true :sortable true :filterable false :pageSize 20
-                                          :className      "-striped -highlight"}])]]
-                    )]])))
+                                                  [:> ReactTable
+                                                   {:data (sort-by :date (:results @(rf/subscribe [:esg/security-notes]))) :columns table-columns
+                                                    :showPagination true :sortable true :filterable false :defaultPageSize 20 :className "-striped -highlight"}]]])]])))
 
 
 (defn active-home []

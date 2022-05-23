@@ -23,6 +23,7 @@
     [goog.string :as gstring]
     [jasminegui.tradehistory :as th]
     [jasminegui.ta2022.tradeview :as ta2022.tradeview]
+    [jasminegui.implementation :as implementation]
     ))
 
 
@@ -108,7 +109,8 @@
       :esg              [esg/esg-view]
       :scorecard        [scorecard/view]
       :administration   [administration/administration-view]
-      :ta2022           [ta2022.tradeview/trade-view]
+      :ta2022           [ta2022.tradeview/ta2022-view]
+      :implementation   [implementation/trade-implementation-view]
       [:div.output "nothing to display"])))
 
 

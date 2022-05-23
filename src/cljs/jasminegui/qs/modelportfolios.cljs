@@ -203,7 +203,7 @@
                             [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Position"] [input-text :width "100px" :placeholder "target" :model position :on-change #(reset! position %)]]]
                             [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Objective"] [single-dropdown :width "100px" :choices (into [] (for [k ["Active risk" "Diversifier" "For sale"]] {:id k :label k})) :model objective :on-change #(reset! objective %)]]]
                             [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Reason"] [input-text :placeholder "> 10 characters" :model reason :on-change #(reset! reason %)]]]
-                            [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Date"] [datepicker-dropdown :model date :format "dd/MM/yyyy" :show-today? true :on-change #(do (println %) (reset! date %))]]]
+                            [h-box :gap "10px" :align :center :children [[label :width "125px" :label "Date"] [datepicker-dropdown :model date :format "dd/MM/yyyy" :show-today? true :on-change #(do  (reset! date %))]]]
                             [h-box :gap "10px" :children [[button
                                                            :label "Save"
                                                            :disabled? (not (and (>= (count @reason) 10) (number? (js/parseFloat @position))))

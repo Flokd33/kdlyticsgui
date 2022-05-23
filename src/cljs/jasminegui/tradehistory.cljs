@@ -311,8 +311,9 @@
 
          )])))
 
-(defn nav-trade-history-bar []
+(defn nav-trade-history-bar
   "Create the sidebar"
+  []
   (let [active-trade-history @(rf/subscribe [:trade-history/active-home])]
     [h-box
      :children [[v-box
@@ -388,10 +389,7 @@
   )
 
 (defn recent-trades-display-date [this]
-  (r/as-element
-    (if-let [x (aget this "value")]
-      [p (str (subs x 0 10))]))
-  )
+  (r/as-element (if-let [x (aget this "value")] [p (str (subs x 0 10))])))
 
 (defn portfolio-history-table-recent []
   (let [data (map #(select-keys % (conj @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) :date)) @(rf/subscribe [:recent-trade-data/trades]))
@@ -406,7 +404,7 @@
                         (filter empty-filter)
                         )
         ]
-    (println (first data))
+    ;(println (first data))
     [box :align :center
      :child
      [:> ReactTable
@@ -417,8 +415,9 @@
                                    {:Header p :accessor p :Cell recent-trades-display :width 200})))
        :className "-striped -highlight"}]]))
 
-(defn trade-history-recent []
+(defn trade-history-recent
   "Create the inputs in the body + add the output table at the end"
+  []
   (let [portfolios @(rf/subscribe [:portfolios])
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
@@ -492,23 +491,23 @@
 (def multiple-portfolio-risk-display-view-th (atom nil))
 
 (defn multiple-bond-trade-history-event-th [state rowInfo instance]
-  (do (rf/dispatch [:get-single-bond-flat-history
-                    (aget rowInfo "row" "_original" "NAME")
-                    (aget rowInfo "row" "_original" "id")
-                    (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))
-                    "01Jan2019"
-                    @(rf/subscribe [:qt-date])
-                    "nominal"
-                    ])))
+  (rf/dispatch [:get-single-bond-flat-history
+                (aget rowInfo "row" "_original" "NAME")
+                (aget rowInfo "row" "_original" "id")
+                (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))
+                "01Jan2019"
+                @(rf/subscribe [:qt-date])
+                "nominal"
+                ]))
 
 (defn multiple-bond-trade-history-nav-event-th [state rowInfo instance]
-  (do (rf/dispatch [:get-single-bond-flat-history
-                    (aget rowInfo "row" "_original" "NAME")
-                    (aget rowInfo "row" "_original" "id")
-                    (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))
-                    "01Jan2019"
-                    @(rf/subscribe [:qt-date])
-                    "nav"])))
+  (rf/dispatch [:get-single-bond-flat-history
+                (aget rowInfo "row" "_original" "NAME")
+                (aget rowInfo "row" "_original" "id")
+                (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))
+                "01Jan2019"
+                @(rf/subscribe [:qt-date])
+                "nav"]))
 
 (defn fnevt-multiple-th [state rowInfo instance evt]
   (rcm/context!
