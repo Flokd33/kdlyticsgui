@@ -110,7 +110,7 @@
                    "Final parent NAV" (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/parent-exposure kportfolio :existing])
                    0)
         value-usd (* (get-in db [:implementation/fx (keyword (:CRNCY leg))]) value)
-        portfolio-nav-usd (* (get-in db [:implementation/fx (keyword (get-in db [:portfolio-nav kportfolio :ccy]))]) (get-in db [:portfolio-nav kportfolio :nav]))]
+        portfolio-nav-usd (* (get-in db [:implementation/fx (keyword (get-in db [:implementation/portfolio-nav kportfolio :ccy]))]) (get-in db [:implementation/portfolio-nav kportfolio :nav]))]
     (assoc-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation kportfolio :trade-notional] (/ (* 0.01 (- target existing) portfolio-nav-usd) (* 0.01 value-usd)))))
 
 (defn recalculate-trade-notional-all-portfolios [db leg-number]
@@ -256,7 +256,7 @@
 
 
 (defn fill-parent-exposure [db cast-parent-id]
-  (let [get-exposure (fn [database portfolio] (assoc-in database [:implementation/trade-implementation :tradeanalyser.implementation/parent-exposure (keyword portfolio) :existing] (get-in db [:implementation/live-cast-parent-position portfolio (str cast-parent-id)])))]
+  (let [get-exposure (fn [database portfolio] (assoc-in database [:implementation/trade-implementation :tradeanalyser.implementation/parent-exposure (keyword portfolio) :existing] (* 100. (get-in db [:implementation/live-cast-parent-positions portfolio (str cast-parent-id)]))))]
     (reduce get-exposure db (:portfolios db))))
 
 (defn fill-quant-value [db leg-number qmd]
