@@ -20,6 +20,7 @@
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
                  :qt-date                                            ""
+                 :model-date                                         ""
                  :attribution-date                                   ""
                  :country-codes                                      nil
                  :gb-reports                                         []
@@ -229,8 +230,8 @@
                  :quant-model/curves-throbber  false
                  :quant-model/history-start-date          (t/int-to-gdate 20150101)
                  ;:quant-model/history-end-date            (t/int-to-gdate (today))
-                 :quant-model/master-security-current-field  nil
                  :quant-model/master-security-current-field-db {}
+                 :quant-model/master-security-update-field-db {}
 
 
 
@@ -466,6 +467,10 @@
            :talanx-checks
 
            :analysts
+
+           :master-security-fields-list
+           :quant-model/master-security-current-field-db
+           :quant-model/master-security-update-field-db
 
            :ta2022/trade-isin
            :ta2022/trade-attachments
@@ -795,6 +800,7 @@
    ;{:get-key :get-pivoted-positions   :url-tail "pivoted-position-array"   :dis-key :pivoted-positions}
    {:get-key :get-total-positions     :url-tail "total-positions"     :dis-key :total-positions}
    {:get-key :get-qt-date             :url-tail "qt-date"             :dis-key :qt-date}
+   {:get-key :get-model-date          :url-tail "model-date"       :dis-key :model-date}
    {:get-key :get-large-exposures     :url-tail "large-exposures"     :dis-key :large-exposures}
    {:get-key :get-var-proxies         :url-tail "var-proxies"         :dis-key :var/proxies}
    {:get-key :get-var-dates           :url-tail "var-dates"           :dis-key :var/dates}
