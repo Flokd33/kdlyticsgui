@@ -399,8 +399,8 @@
                 [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
 (defn qs-table-container []
-  ;(println (:date-model-run (first @(rf/subscribe [:quant-model/model-output]))))
-  [box :padding "80px 10px" :class "rightelement" :child [qs-table (str "Quant model output ") @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster;(rf/subscribe [:qt-date])
+  (println @(rf/subscribe [:quant-model/model-date]))
+  [box :padding "80px 10px" :class "rightelement" :child [qs-table (str "Quant model output " @(rf/subscribe [:quant-model/model-date])) @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster;(rf/subscribe [:qt-date])
 ;no date in the model output
 
 

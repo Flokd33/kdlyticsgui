@@ -20,7 +20,6 @@
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
                  :qt-date                                            ""
-                 :model-date                                         ""
                  :attribution-date                                   ""
                  :country-codes                                      nil
                  :gb-reports                                         []
@@ -220,6 +219,7 @@
                  :quant-model/saved-charts                {}
                  :quant-model/saved-advanced-charts       {}
                  :quant-model/issuer-coverage             []
+                 :quant-model/model-date                  ""
 
                  :quant-model/history-result              []
                  :quant-model/history-result-prediction   []
@@ -435,13 +435,11 @@
            :quant-model/new-bond-tested
            :quant-model/new-bond-already-exists
            :quant-model/new-bond-saved-message
-           ;:quant-model/table-filter
            :quant-model/saved-charts
            :quant-model/saved-advanced-charts
            :quant-model/issuer-coverage
-
+           :quant-model/model-date
            :quant-model/history-start-date
-           ;:quant-model/history-end-date
 
            :scorecard/attribution-table
            :scorecard/portfolio
@@ -802,7 +800,7 @@
    ;{:get-key :get-pivoted-positions   :url-tail "pivoted-position-array"   :dis-key :pivoted-positions}
    {:get-key :get-total-positions     :url-tail "total-positions"     :dis-key :total-positions}
    {:get-key :get-qt-date             :url-tail "qt-date"             :dis-key :qt-date}
-   {:get-key :get-model-date          :url-tail "model-date"       :dis-key :model-date}
+   {:get-key :get-model-date          :url-tail "model-date"          :dis-key :quant-model/model-date}
    {:get-key :get-large-exposures     :url-tail "large-exposures"     :dis-key :large-exposures}
    {:get-key :get-var-proxies         :url-tail "var-proxies"         :dis-key :var/proxies}
    {:get-key :get-var-dates           :url-tail "var-dates"           :dis-key :var/dates}
