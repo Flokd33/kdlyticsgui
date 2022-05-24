@@ -168,7 +168,7 @@
      [v-box :class "element"  :gap "20px" :width "1690px"
       :children [[title :label mytitle :level :level1]
                  [h-box :align :center :gap "10px"
-                  :children (concat (into [] (for [c ["Summary" "Full" "SVR" "Upside/Downside" "Screener (SVR)"]] ;"Legacy" "New"
+                  :children (concat (into [] (for [c ["SVR" "Upside/Downside" "Screener (SVR)"]] ;"Summary" "Full"  "Legacy" "New"
                                                ^{:key c} [radio-button :label c :value c :model qstables/table-style :on-change #(reset! qstables/table-style %)]))   ;; key should be unique among siblings
                                     [[gap :size "20px"]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
