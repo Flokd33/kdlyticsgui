@@ -435,6 +435,14 @@
   (rf/dispatch [:trade-implementation/check-isin leg-number i])
   (rf/dispatch [:trade-implementation/check-pricing leg-number i]))
 
+(rf/reg-event-fx
+  :implementation/on-isin-change
+  (fn [{:keys [db]} [_ leg-number i]]
+    {:db db
+     :fx [[:dispatch [:trade-implementation/trade-leg leg-number :ISIN i]]
+          [:dispatch [:trade-implementation/check-isin leg-number i]]
+          [:dispatch [:trade-implementation/check-pricing leg-number i]]]}))
+
 (defn hb [x] [h-box :gap "10px" :align :center :children x])
 
 (defn trade-description []
@@ -464,7 +472,7 @@
                       :minimum (tools/int-to-gdate 20220101) :maximum (today)
                       :selectable-fn #(< (day-of-week %) 6) :start-of-week 0 :format "dd/MM/yyyy" :show-today? true
                       :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/entry-date %])]]]
-                [hb [[label :width fw :label "ISIN of first leg"][input-text :width lw :model first-leg-isin :on-change (partial on-isin-change 0)]]]
+                [hb [[label :width fw :label "ISIN of first leg"][input-text :width lw :model first-leg-isin :on-change #(rf/dispatch [:implementation/on-isin-change 0 %])]]] ;(partial on-isin-change 0)
                 [hb [[label :width fw :label "Analyst"] [single-dropdown :width lw :model analyst :choices analyst-map :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/analyst %])]]]
                 [hb [[label :width fw :label "Sector"][single-dropdown :width lw :model sector :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/sector %])]]]
                 [hb [[label :width fw :label "Country"][single-dropdown :width lw :model country :choices (sort-by :label (mapv #(clojure.set/rename-keys % {:CountryCode :id :LongName :label}) @(rf/subscribe [:country-codes]))) :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/country %])]]]
@@ -503,7 +511,7 @@
      :gap "10px" :style {:border "solid 1px grey"} :class "element" :width "500px"
      :children [[title :label (str "Trade leg " (inc leg-number)) :level :level1]
                 [hb [[label :width fw :label "Buy/Sell"]         [single-dropdown :width lw :model buysell :choices [{:id "Buy" :label "Buy"} {:id "Sell" :label "Sell"}] :on-change #(rf/dispatch [:trade-implementation/trade-leg leg-number :buysell %])]]]
-                [hb [[label :width fw :label "ISIN"]             [input-text :width lw :model ISIN :on-change (partial on-isin-change leg-number)]]]
+                [hb [[label :width fw :label "ISIN"]             [input-text :width lw :model ISIN :on-change #(rf/dispatch [:implementation/on-isin-change leg-number %])]]] ;(partial on-isin-change leg-number)
                 [hb [[label :width fw :label "Currency"]         [input-text :width lw :model CRNCY :on-change #(rf/dispatch [:trade-implementation/trade-leg leg-number :CRNCY %])]]]
                 [hb [[label :width fw :label "Name"]             [input-text :width lw :model NAME :on-change #(rf/dispatch [:trade-implementation/trade-leg leg-number :NAME %])]]]
                 [hb [[label :width fw :label "Cast parent id"]   [input-text :width lw :model cast-parent :on-change on-cast-parent-change]]]

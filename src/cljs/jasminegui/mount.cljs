@@ -575,13 +575,15 @@
   (fn [{:keys [db]} [_ naked-positions]]
     (let [res (array-of-lists->records naked-positions)
           positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res))]
-      (println (count naked-positions) (keys naked-positions))
       {:db (assoc db :naked-positions res
                      :navigation/show-mounting-modal false
                      :positions positions
                      :implementation/live-positions (into {} (for [[p g] (group-by :portfolio positions)]
                                                                [p (into {} (for [line g :when (and (some? (:isin line)) (pos? (:weight line)))] [(:isin line) (* 100. (:weight line))]))]))
                      )
+       ;fx below is tricky - this is so at mount you can go to quant screen then right click implementation. Probably a better way to do this
+       :fx (let [isin (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs 0 :ISIN])]
+             (if (and (some? isin) (not= isin "NEW ISSUE")) [[:dispatch [:implementation/on-isin-change 0 isin]]] []))
        })))
 
 

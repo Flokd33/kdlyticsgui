@@ -125,6 +125,19 @@
 ;Moodys-score
 ;
 
+
+(rf/reg-event-fx
+  :quant-screen-to-implementation
+  (fn [{:keys [db]} [_ isin]]
+    {:db (assoc db :navigation/active-view :implementation)
+     :fx (concat (into [] (for [k (:load-events (first (t/filterkey= :code :implementation static/main-navigation)))]
+                            [:dispatch (if (vector? k) k [k])]))
+                 [[:dispatch [:trade-implementation/reset]]
+                  [:dispatch [:implementation/on-isin-change 0 isin]]
+                  ;there will be a second, same event, after positions are loaded. We still need this one to set the ISIN
+                  ])
+     }))
+
 (defn fnevt [state rowInfo instance evt]
   (rcm/context!
     evt
@@ -136,6 +149,8 @@
                                   (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [(aget rowInfo "original" "ISIN")])])
                                   (rf/dispatch [:navigation/active-qs :historical-charts])
                                   ))]
+     ;["Trade analyser" (fn [] (t/copy-to-clipboard (aget rowInfo "original" "ISIN")))]
+     ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation (aget rowInfo "original" "ISIN")]))]
      ]))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
