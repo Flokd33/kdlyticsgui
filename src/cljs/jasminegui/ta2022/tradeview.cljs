@@ -339,7 +339,9 @@
                                         [[h-box :align :center :gap "10px"
                                           :children [[label :label "View:"]
                                                      [radio-button :model main-table-view-selector :value "Scorecard" :label "Scorecard" :on-change #(reset! main-table-view-selector %)]
-                                                     [radio-button :model main-table-view-selector :value "Distances" :label "Distances" :on-change #(reset! main-table-view-selector %)]]]
+                                                     [radio-button :model main-table-view-selector :value "Distances" :label "Distances" :on-change #(reset! main-table-view-selector %)]
+                                                     [radio-button :model main-table-view-selector :value "Total returns (1Y)" :label "Total returns (1Y)" :on-change #(reset! main-table-view-selector %)]
+                                                     ]]
                                          [h-box :children [[:> ReactTable
                                                             {:data    (tatables/strategy-sort data)
                                                              :columns (concat [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:ISIN :strategy :NAME] (if (and @portfolio (not= @portfolio "All")) :weight))))} ;:id :strategy-shortcut
@@ -356,16 +358,30 @@
                                                                                                              ]}
                                                                                  {:Header "Review" :columns [{:Header "Description" :accessor "review-alert-description" :width 140}
                                                                                                              {:Header "Price" :accessor "review-alert-implied-price" :width 45 :style {:textAlign "right"} :Cell #(price-fmt "review-alert-distance" %)}
-                                                                                                             ]}]
+                                                                                                             ]}
+                                                                                 {:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio ])}
+                                                                                 ]
                                                                                 "Distances"
                                                                                 [{:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
                                                                                                              {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
                                                                                  {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
                                                                                                              {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
                                                                                  {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                             {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}])
+                                                                                                             {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
+                                                                                 {:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio ])}
+                                                                                 ]
+                                                                                "Total returns (1Y)"
+                                                                                [{:Header "Analyst" :columns [{:Header "Target" :accessor "target-alert-tr-1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %)}
+                                                                                                              {:Header "Relval" :accessor "relval-alert-tr-1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %)}
+                                                                                                              {:Header "Review" :accessor "review-alert-tr-1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %)}]}
+                                                                                 {:Header "Model" :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}
+                                                                                                             {:Header "2D" :accessor "svr2d1yrtn" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}]}
+                                                                                 {:Header "History" :columns [{:Header "Tight" :accessor "upside1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}
+                                                                                                             {:Header "Median" :accessor "expected1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}
+                                                                                                              {:Header "Wide" :accessor "downside1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}]}]
+                                                                                )
 
-                                                             [{:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio ])}]) ;:new-issue
+                                                             ) ;:new-issue
                                                              :defaultPageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]))
 
 (defn journal-table []
