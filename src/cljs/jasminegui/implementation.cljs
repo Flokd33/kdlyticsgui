@@ -276,18 +276,18 @@
     (-> db
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/analyst] (case (get qmd "Sector")
                                                                                   "Sovereign" "Thys"
-                                                                                  "TMT" "Tammy"
+                                                                                  "TMT" "Rahul"
                                                                                   "Utilities" "Rahul"
                                                                                   "Metals & Mining" "Rahul"
                                                                                   "Oil & Gas" "Kevan"
                                                                                   "Financial" "Stacy"
                                                                                   "Real Estate" "Alan"
-                                                                                  "Industrial" "Chris"
-                                                                                  "Pulp & Paper" "Chris"
+                                                                                  "Industrial" "Antonio"
+                                                                                  "Pulp & Paper" "Rahul"
                                                                                   "Consumer" "Antonio"
-                                                                                  "Infrastructure" "Tammy"
+                                                                                  "Infrastructure" "Antonio"
                                                                                   "Diversified" "Rahul"
-                                                                                  "Transport" "Tammy"
+                                                                                  "Transport" "Antonio"
                                                                                   ""))
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/sector] (get qmd "Sector"))
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/country] (get qmd "Country"))
