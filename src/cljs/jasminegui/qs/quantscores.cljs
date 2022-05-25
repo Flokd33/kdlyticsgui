@@ -400,9 +400,7 @@
 
 (defn qs-table-container []
   (println @(rf/subscribe [:quant-model/model-date]))
-  [box :padding "80px 10px" :class "rightelement" :child [qs-table (str "Quant model output " @(rf/subscribe [:quant-model/model-date])) @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster;(rf/subscribe [:qt-date])
-;no date in the model output
-
+  [box :padding "80px 10px" :class "rightelement" :child [qs-table (str "Quant model output " @(rf/subscribe [:quant-model/model-date])) @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster
 
 (def spot-chart-rating-curves-keys (zipmap ["Base" "Sov only" "Non ESG (SVR)" "ESG (SVR)" "ESG benefit (SVR)"] [:base :sov-only :nesg :esg :esg-benefit])) ;UNUSED ATM BUT IMPORTANT LOGIC
 (def spot-chart-model-choice (r/atom "SVR"))

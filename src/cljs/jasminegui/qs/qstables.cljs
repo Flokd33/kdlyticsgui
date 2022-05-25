@@ -106,7 +106,7 @@
    :Used_YTW                            {:Header "YTW" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :Used_Duration                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :FIRST_SETTLE_DT                     {:Header "Issued" :accessor "FIRST_SETTLE_DT" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1 %) :filterable true}
-   :Current_yield                       {:Header "Curr Yield" :accessor "CURRENT_YIELD" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Current_yield                       {:Header "Curr Yield" :accessor "CURRENT_YIELD" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format*100 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    :predicted_spread_legacy_1           {:Header "Legacy" :accessor "predicted_spread_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :predicted_spread_new_1              {:Header "New" :accessor "predicted_spread_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
