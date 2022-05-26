@@ -138,6 +138,19 @@
                   ])
      }))
 
+(rf/dispatch [:ta2022/go-to-active-trade @(rf/subscribe [:ta2022/trade-isin])])
+
+(rf/reg-event-fx
+  :quant-screen-to-ta2022
+  (fn [{:keys [db]} [_ isin]]
+    {:db (assoc db :navigation/active-view :ta2022
+                   :ta2022/trade-isin isin)
+     :fx [[:dispatch [:ta2022/go-to-active-trade isin]]
+          ;[:dispatch [:implementation/on-isin-change 0 isin]]
+          ;there will be a second, same event, after positions are loaded. We still need this one to set the ISIN
+          ]
+     }))
+
 (defn fnevt [state rowInfo instance evt]
   (rcm/context!
     evt
@@ -147,10 +160,9 @@
                                   (reset! bond-historical-charts (aget rowInfo "original" "Bond"))
                                   (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [(aget rowInfo "original" "ISIN")])])
                                   (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [(aget rowInfo "original" "ISIN")])])
-                                  (rf/dispatch [:navigation/active-qs :historical-charts])
-                                  ))]
-     ;["Trade analyser" (fn [] (t/copy-to-clipboard (aget rowInfo "original" "ISIN")))]
+                                  (rf/dispatch [:navigation/active-qs :historical-charts])))]
      ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation (aget rowInfo "original" "ISIN")]))]
+     ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 (aget rowInfo "original" "ISIN")]))]
      ]))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
@@ -171,6 +183,7 @@
                   :children (concat (into [] (for [c ["SVR" "Upside/Downside" "Screener (SVR)"]] ;"Summary" "Full"  "Legacy" "New"
                                                ^{:key c} [radio-button :label c :value c :model qstables/table-style :on-change #(reset! qstables/table-style %)]))   ;; key should be unique among siblings
                                     [[gap :size "20px"]
+                                     [checkbox :model (r/cursor qstables/table-checkboxes [:flags]) :label "Show flags?" :on-change #(swap! qstables/table-checkboxes assoc-in [:flags] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "1"]

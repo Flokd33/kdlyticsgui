@@ -178,6 +178,7 @@
                            [gap :size "20px"]
                            [checkbox :model (rf/subscribe [:model-portfolios/hide-zeros]) :label "Hide zero positions?" :on-change #(rf/dispatch [:model-portfolios/hide-zeros %])]
                            [gap :size "20px"]
+                           [checkbox :model (r/cursor qstables/table-checkboxes [:flags]) :label "Show flags?" :on-change #(swap! qstables/table-checkboxes assoc-in [:flags] %)]
                            [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                            [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                            [gap :size "1"]

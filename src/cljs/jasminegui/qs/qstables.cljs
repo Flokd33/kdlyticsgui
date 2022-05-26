@@ -303,6 +303,7 @@
    :RTG_MDY_OUTLOOK                     {:Header "Moody's" :accessor "RTG_MDY_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    :n91held                             {:Header "Held?" :accessor "n91held" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show false}
+   :n91heldvisible                      {:Header "Held?" :accessor "n91held" :width 65 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show true}
 
    :BBG_CEMBI_D1Y_BETA                  {:Header "vs CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 60 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
    :totaldummy                          {:Header " " :accessor "totaldummy" :width 30}
@@ -376,12 +377,14 @@
          {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
          {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}])
       "Screener (SVR)"
-      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN-hide :Country :Sector :SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe :AMT_OUTSTANDING_3 :COUPON])}] ;we include ISIN-hide so it's in the view download
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN-hide :Country :Sector :AMT_OUTSTANDING_3 :COUPON])}] ;we include ISIN-hide so it's in the view download
+              (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
-               {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}])
+               {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}
+               {:Header "91" :columns (mapv quant-score-table-columns [:n91heldvisible])}])
       "TA2022"
       (concat [{:Header "Description" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON]))}]
               ;[{:Header "Index inclusion" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci]))}]
@@ -416,4 +419,4 @@
       ))
   )
 
-(def table-checkboxes (r/atom {:indices false :calls false}))
+(def table-checkboxes (r/atom {:indices false :calls false :flags false}))
