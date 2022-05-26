@@ -90,7 +90,7 @@
                                                      (main-check-fn (:target-alert data))
                                                      (main-check-fn (:review-alert data))
                                                      implied-price-consistent?
-                                                     upside-vs-downside?
+                                                     ;upside-vs-downside? ; we no longer force for this
                                                      ]
                                                     (map other-check-fn oth)))
                    :ta2022/upside-vs-downside (/ (- (get-in data [:target-alert :implied-price]) px ) (- px (get-in data [:review-alert :implied-price]) ))
@@ -221,7 +221,7 @@
                                                    ]]
                   [taalerts/trade-alert-input trade-entry]
                   (if-let [x @(rf/subscribe [:ta2022/implied-price-difference])] [label :label (str "Implied upside price difference (has to be <1%) " (gstring/format "%.1f%" (* 100 x)))])
-                  (if (< @(rf/subscribe [:ta2022/upside-vs-downside]) 0.5) [label :label (str "Upside/downside too poor (has to be > 0.5) " (gstring/format "%.1f" @(rf/subscribe [:ta2022/upside-vs-downside])))])
+                  (if (< @(rf/subscribe [:ta2022/upside-vs-downside]) 0.5) [label :style {:color "red"} :label (str "Upside/downside too poor (preferred to be > 0.5) " (gstring/format "%.1f" @(rf/subscribe [:ta2022/upside-vs-downside])))])
                   [line]
                   [h-box :gap "10px" :children [[button :class btc :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
 
