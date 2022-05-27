@@ -44,6 +44,7 @@
   [{:code :single-portfolio   :name "Single portfolio"}
    {:code :multiple-portfolio :name "Multiple portfolio"}
    {:code :recent-trades      :name "Recent trades"}
+   {:code :recent-trades-perf :name "Recent trades perf"}
    ])
 
 (def attribution-navigation
