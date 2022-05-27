@@ -90,6 +90,15 @@
      :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date-from=" date-from "&date-to=" date-to)
                          :dispatch-key [:recent-trade-data/trades]}}))
 
+(rf/reg-event-fx
+  :get-traded-since-date-output
+  (fn [{:keys [db]} [_ date-from date-to]]
+    {:db (assoc db :traded-since-date-output/trades []
+                   :recent-trade-data/show-throbber true
+                   )
+     :http-get-dispatch {:url          (str static/server-address "traded-since-date-output?date-from=" date-from "&date-to=" date-to)
+                         :dispatch-key [:traded-since-date-output/trades]}}))
+
 (rf/reg-event-db
   :single-bond-trade-history/data
   (fn [db [_ data]]
@@ -101,6 +110,13 @@
   (fn [db [_ data]]
     (assoc db :single-bond-trade-history/flat-data data
               :single-bond-trade-history/show-throbber false)))
+
+
+(rf/reg-event-db
+  :traded-since-date-output/trades
+  (fn [db [_ data]]
+    (assoc db :traded-since-date-output/flat-data data
+              :recent-trade-data/show-throbber false)))
 
 (rf/reg-event-db
   :portfolio-trade-history/data
@@ -415,6 +431,82 @@
                                    {:Header p :accessor p :Cell recent-trades-display :width 200})))
        :className "-striped -highlight"}]]))
 
+
+(defn trade-history-recent-perf-table []
+  (let [data @(rf/subscribe [:traded-since-date-output/flat-data])
+        ]
+    (if @(rf/subscribe [:recent-trade-data/show-throbber])
+      [box :align-self :center :align :center :child [throbber :size :large]]
+  [box :align :center
+   :child
+   [:> ReactTable
+    {:data                data
+     :columns             (concat [{:Header  "Trade"
+                                    :columns [{:Header "Portfolio" :accessor "portfolio" :width 100 }
+                                              {:Header "Trade" :accessor "TransactionTypeName" :width 100}
+                                              {:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
+                                              {:Header "Name" :accessor "NAME" :width 100 }
+                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 100}
+                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
+                                              {:Header "Quantity" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "bps" :accessor "bps" :width 100 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                                              {:Header "Price" :accessor "PriceLcl" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Last Price" :accessor "last-price" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                              ]
+                                    }
+                                   {:Header  "Performance"
+                                    :columns [{:Header "TR" :accessor "total-return" :width 100 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                              {:Header "TR CEMBI" :accessor "tr-vs-cembi" :width 100 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                              ]
+                                    }
+                                   ]
+                                  )
+     :showPagination      (> (count data) 50)
+     :defaultPageSize     (min 50 (count data))
+     :pivotBy             []
+     :filterable          true
+     :defaultFilterMethod tables/text-filter-OR
+     :className           "-striped -highlight"}]]))
+
+    )
+
+(defn trade-history-recent-perf []
+  (let [start-date (rf/subscribe [:portfolio-trade-history/start-date])
+        end-date (rf/subscribe [:portfolio-trade-history/end-date])
+        ]
+    ;(println (first data))
+    [box :class "subbody rightelement" :child
+     [v-box :class "element" :gap "20px" :align :start
+      :children [[title :label (str "Recent trade history with performance") :level :level1]
+                 [h-box :gap "50px"
+                  :children [[v-box :gap "15px"
+                              :children [[h-box
+                                          :width "1700px"
+                                          :gap "10px"
+                                          :children [[title :label "Start:" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model start-date
+                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :maximum (today)
+                                                      :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:portfolio-trade-history/start-date %]))]
+                                                     [gap :size "20px"]
+                                                     [title :label "End:" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model end-date
+                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :maximum (today)
+                                                      :format "dd/MM/yyyy" :show-today? false :on-change #(do (rf/dispatch [:portfolio-trade-history/end-date %]))]
+                                                     [gap :size "20px"]
+                                                     [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-traded-since-date-output @start-date @end-date])]
+                                                     [gap :size "20px"]
+                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:traded-since-date-output/trades]) "multi-port-recent-trades-perf")]
+                                                     ]]]]]]
+                 [trade-history-recent-perf-table]
+                 [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]
+                 ]]]))
+
+
+
 (defn trade-history-recent
   "Create the inputs in the body + add the output table at the end"
   []
@@ -614,6 +706,7 @@
     :single-portfolio [trade-history]
     :multiple-portfolio [multiple-portfolio-history-table]
     :recent-trades [trade-history-recent]
+    :recent-trades-perf [trade-history-recent-perf]
     [:div.output "nothing to display"]))
 
 (defn trade-history-view
