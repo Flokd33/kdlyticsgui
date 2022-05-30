@@ -702,11 +702,12 @@
         portfolio-checks-data-dur (filter #(or (= (:check-name %) "MDUR Delta") (= (:check-name %) "MDUR") (= (:check-name %) "MDUR vs BM %")) portfolio-checks-data)
         talanx-checks-data-raw @(rf/subscribe [:talanx-checks])
         talanx-checks-data (for [e talanx-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-warning)) (get {false 0 true 1} (e :check-breach))])))
-        talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)]
+        talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)
+        date @(rf/subscribe [:qt-date])]
     ;(println talanx-checks-data-clean)
     [h-box :padding "80px 10px" :class "rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px"  :children
-       [(gt/element-box "checks" "100%" (str "Portfolio NAV exposure checks " ((first portfolio-checks-data-nav) :last-updated)) portfolio-checks-data-nav
+       [(gt/element-box "checks" "100%" (str "Portfolio NAV exposure checks " date) portfolio-checks-data-nav
                      [[:> ReactTable
                        {:data           portfolio-checks-data-nav
                         :columns        [{:Header "Portfolio" :accessor :portfolio :width 90  :style {:textAlign "left"}}
@@ -718,7 +719,7 @@
                                          {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-nav) :showPageSizeOptions false :className "-striped -highlight"}]]
                      )
-        (gt/element-box "checks" "100%" (str "Portfolio duration exposure checks " ((first portfolio-checks-data-dur) :last-updated)) portfolio-checks-data-dur
+        (gt/element-box "checks" "100%" (str "Portfolio duration exposure checks " date) portfolio-checks-data-dur
                         [[:> ReactTable
                           {:data           portfolio-checks-data-dur
                            :columns        [{:Header "Portfolio" :accessor :portfolio :width 90  :style {:textAlign "left"}}
@@ -731,7 +732,7 @@
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-dur) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )]]
 
-     (gt/element-box "talanx-checks" "100%" (str "Talanx issuer concentration checks " ((first portfolio-checks-data) :last-updated)) talanx-checks-data-clean
+     (gt/element-box "talanx-checks" "100%" (str "Talanx issuer concentration checks " date) talanx-checks-data-clean
                      [[:> ReactTable
                        {:data           talanx-checks-data-clean
                         :columns        [{:Header "Portfolio" :accessor :portfolio :width 100  :style {:textAlign "left"}}
