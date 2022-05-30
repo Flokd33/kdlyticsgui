@@ -433,8 +433,7 @@
 
 
 (defn trade-history-recent-perf-table []
-  (let [data @(rf/subscribe [:traded-since-date-output/flat-data])
-        ]
+  (let [data @(rf/subscribe [:traded-since-date-output/flat-data])]
     (if @(rf/subscribe [:recent-trade-data/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
   [box :align :center
@@ -442,10 +441,10 @@
    [:> ReactTable
     {:data                data
      :columns             (concat [{:Header  "Trade"
-                                    :columns [{:Header "Portfolio" :accessor "portfolio" :width 100 }
-                                              {:Header "Trade" :accessor "TransactionTypeName" :width 100}
+                                    :columns [{:Header "Name" :accessor "NAME" :width 100 }
                                               {:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
-                                              {:Header "Name" :accessor "NAME" :width 100 }
+                                              {:Header "Portfolio" :accessor "portfolio" :width 100 }
+                                              {:Header "Trade" :accessor "TransactionTypeName" :width 100}
                                               {:Header "Country" :accessor "CNTRY_OF_RISK" :width 100}
                                               {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
                                               {:Header "Quantity" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
@@ -474,7 +473,6 @@
   (let [start-date (rf/subscribe [:portfolio-trade-history/start-date])
         end-date (rf/subscribe [:portfolio-trade-history/end-date])
         ]
-    ;(println (first data))
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history with performance") :level :level1]
@@ -632,7 +630,6 @@
         download-columns (concat ["NAME" "isin" "description" "TICKER" "jpm-region" "emd-region" "qt-risk-country-name" "qt-iam-int-lt-median-rating-score" "qt-jpm-sector" "qt-final-maturity-band"] (filter @selected-portfolios portfolios))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
-    ;(println data)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "multiple-portfolio-risk" "1675px" (str "Trade history - portfolio drill-down ") {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view-th "multiple_portfolio_trade_history" download-columns is-tree)}
                              [[h-box :gap "50px" :align :center
