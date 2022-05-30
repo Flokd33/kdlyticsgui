@@ -437,7 +437,7 @@
         selected-portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         data-filtered  (t/chainfilter {:portfolio #(some #{%} selected-portfolios)} data)
         ]
-    (println selected-portfolios)
+    ;(println selected-portfolios)
     (if @(rf/subscribe [:recent-trade-data/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
   [box :align :center
