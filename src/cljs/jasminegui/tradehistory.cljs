@@ -433,13 +433,17 @@
 
 
 (defn trade-history-recent-perf-table []
-  (let [data @(rf/subscribe [:traded-since-date-output/flat-data])]
+  (let [data @(rf/subscribe [:traded-since-date-output/flat-data])
+        selected-portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        data-filtered  (t/chainfilter {:portfolio #(some #{%} selected-portfolios)} data)
+        ]
+    (println selected-portfolios)
     (if @(rf/subscribe [:recent-trade-data/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
   [box :align :center
    :child
    [:> ReactTable
-    {:data                data
+    {:data                data-filtered
      :columns             (concat [{:Header  "Trade"
                                     :columns [{:Header "Name" :accessor "NAME" :width 100 }
                                               {:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
@@ -472,10 +476,23 @@
 (defn trade-history-recent-perf []
   (let [start-date (rf/subscribe [:portfolio-trade-history/start-date])
         end-date (rf/subscribe [:portfolio-trade-history/end-date])
+        portfolios @(rf/subscribe [:portfolios])
+        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history with performance") :level :level1]
+                 [h-box :gap "5px"  :children
+                  (into [[title :label "Portfolios:" :level :level3]
+                         [gap :size "20px"]
+                         [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
+                                                      [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]]]
+                        (for [line static/portfolio-alignment-groups]
+                          (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                            [v-box :gap "2px" :children
+                             [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                              [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
                  [h-box :gap "50px"
                   :children [[v-box :gap "15px"
                               :children [[h-box
@@ -517,7 +534,6 @@
         country-codes @(rf/subscribe [:country-codes])
         countries (concat [{:id "All" :label "All"}] (mapv (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) country-codes)))}) (sort (distinct (map :Country data)))))
         sectors (concat [{:id "All" :label "All"}] (mapv (fn [x] {:id x :label x}) (sort (distinct (map :Sector data)))))
-        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         download-columns (concat ["TradeDate"] (filter @selected-portfolios portfolios))
         ]
     [box :class "subbody rightelement" :child
