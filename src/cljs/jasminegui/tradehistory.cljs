@@ -437,7 +437,7 @@
         selected-portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         data-filtered  (t/chainfilter {:portfolio #(some #{%} selected-portfolios)} data)
         ]
-    ;(println selected-portfolios)
+    (println data)
     (if @(rf/subscribe [:recent-trade-data/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
   [box :align :center
@@ -455,6 +455,11 @@
                                               {:Header "bps" :accessor "bps" :width 100 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
                                               {:Header "Price" :accessor "PriceLcl" :width 100  :style {:textAlign "right"} :Cell tables/round2}
                                               {:Header "Last Price" :accessor "last-price" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                              ]
+                                    }
+                                   {:Header  "Beta vs Cembi"
+                                    :columns [{:Header "Issue" :accessor "beta-vs-cembi" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Trade Contrib" :accessor "beta-vs-cembi-contri"  :style {:textAlign "right"} :Cell tables/round3}
                                               ]
                                     }
                                    {:Header  "Performance"
