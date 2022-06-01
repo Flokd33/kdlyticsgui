@@ -90,6 +90,15 @@
      :http-get-dispatch {:url          (str static/server-address "portfolio-recent-trades?date-from=" date-from "&date-to=" date-to)
                          :dispatch-key [:recent-trade-data/trades]}}))
 
+(rf/reg-event-fx
+  :get-traded-since-date-output
+  (fn [{:keys [db]} [_ date-from date-to]]
+    {:db (assoc db :traded-since-date-output/trades []
+                   :recent-trade-data/show-throbber true
+                   )
+     :http-get-dispatch {:url          (str static/server-address "traded-since-date-output?date-from=" date-from "&date-to=" date-to)
+                         :dispatch-key [:traded-since-date-output/trades]}}))
+
 (rf/reg-event-db
   :single-bond-trade-history/data
   (fn [db [_ data]]
@@ -101,6 +110,13 @@
   (fn [db [_ data]]
     (assoc db :single-bond-trade-history/flat-data data
               :single-bond-trade-history/show-throbber false)))
+
+
+(rf/reg-event-db
+  :traded-since-date-output/trades
+  (fn [db [_ data]]
+    (assoc db :traded-since-date-output/flat-data data
+              :recent-trade-data/show-throbber false)))
 
 (rf/reg-event-db
   :portfolio-trade-history/data
@@ -415,6 +431,102 @@
                                    {:Header p :accessor p :Cell recent-trades-display :width 200})))
        :className "-striped -highlight"}]]))
 
+
+(defn trade-history-recent-perf-table []
+  (let [data @(rf/subscribe [:traded-since-date-output/flat-data])
+        selected-portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        data-filtered  (t/chainfilter {:portfolio #(some #{%} selected-portfolios)} data)
+        ]
+    (println data)
+    (if @(rf/subscribe [:recent-trade-data/show-throbber])
+      [box :align-self :center :align :center :child [throbber :size :large]]
+  [box :align :center
+   :child
+   [:> ReactTable
+    {:data                data-filtered
+     :columns             (concat [{:Header  "Trade"
+                                    :columns [{:Header "Name" :accessor "NAME" :width 100 }
+                                              {:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
+                                              {:Header "Portfolio" :accessor "portfolio" :width 100 }
+                                              {:Header "Trade" :accessor "TransactionTypeName" :width 100}
+                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 100}
+                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
+                                              {:Header "Quantity" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "bps" :accessor "bps" :width 100 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                                              {:Header "Price" :accessor "PriceLcl" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Last Price" :accessor "last-price" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                              ]
+                                    }
+                                   {:Header  "Beta vs Cembi"
+                                    :columns [{:Header "Issue" :accessor "beta-vs-cembi" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Trade Contrib" :accessor "beta-vs-cembi-contri"  :style {:textAlign "right"} :Cell tables/round3}
+                                              ]
+                                    }
+                                   {:Header  "Performance"
+                                    :columns [{:Header "TR" :accessor "total-return" :width 100 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                              {:Header "TR CEMBI" :accessor "tr-vs-cembi" :width 100 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                              ]
+                                    }
+                                   ]
+                                  )
+     :showPagination      (> (count data) 50)
+     :defaultPageSize     (min 50 (count data))
+     :pivotBy             []
+     :filterable          true
+     :defaultFilterMethod tables/text-filter-OR
+     :className           "-striped -highlight"}]]))
+
+    )
+
+(defn trade-history-recent-perf []
+  (let [start-date (rf/subscribe [:portfolio-trade-history/start-date])
+        end-date (rf/subscribe [:portfolio-trade-history/end-date])
+        portfolios @(rf/subscribe [:portfolios])
+        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
+        toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
+        ]
+    [box :class "subbody rightelement" :child
+     [v-box :class "element" :gap "20px" :align :start
+      :children [[title :label (str "Recent trade history with performance") :level :level1]
+                 [h-box :gap "5px"  :children
+                  (into [[title :label "Portfolios:" :level :level3]
+                         [gap :size "20px"]
+                         [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
+                                                      [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]]]
+                        (for [line static/portfolio-alignment-groups]
+                          (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                            [v-box :gap "2px" :children
+                             [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                              [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
+                 [h-box :gap "50px"
+                  :children [[v-box :gap "15px"
+                              :children [[h-box
+                                          :width "1700px"
+                                          :gap "10px"
+                                          :children [[title :label "Start:" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model start-date
+                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :maximum (today)
+                                                      :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:portfolio-trade-history/start-date %]))]
+                                                     [gap :size "20px"]
+                                                     [title :label "End:" :level :level3]
+                                                     [datepicker-dropdown
+                                                      :model end-date
+                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :maximum (today)
+                                                      :format "dd/MM/yyyy" :show-today? false :on-change #(do (rf/dispatch [:portfolio-trade-history/end-date %]))]
+                                                     [gap :size "20px"]
+                                                     [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-traded-since-date-output @start-date @end-date])]
+                                                     [gap :size "20px"]
+                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:traded-since-date-output/trades]) "multi-port-recent-trades-perf")]
+                                                     ]]]]]]
+                 [trade-history-recent-perf-table]
+                 [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]
+                 ]]]))
+
+
+
 (defn trade-history-recent
   "Create the inputs in the body + add the output table at the end"
   []
@@ -427,7 +539,6 @@
         country-codes @(rf/subscribe [:country-codes])
         countries (concat [{:id "All" :label "All"}] (mapv (fn [x] {:id x :label (:LongName (first (filter #(= (:CountryCode %) x) country-codes)))}) (sort (distinct (map :Country data)))))
         sectors (concat [{:id "All" :label "All"}] (mapv (fn [x] {:id x :label x}) (sort (distinct (map :Sector data)))))
-        selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         download-columns (concat ["TradeDate"] (filter @selected-portfolios portfolios))
         ]
     [box :class "subbody rightelement" :child
@@ -540,7 +651,6 @@
         download-columns (concat ["NAME" "isin" "description" "TICKER" "jpm-region" "emd-region" "qt-risk-country-name" "qt-iam-int-lt-median-rating-score" "qt-jpm-sector" "qt-final-maturity-band"] (filter @selected-portfolios portfolios))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
-    ;(println data)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "multiple-portfolio-risk" "1675px" (str "Trade history - portfolio drill-down ") {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view-th "multiple_portfolio_trade_history" download-columns is-tree)}
                              [[h-box :gap "50px" :align :center
@@ -614,6 +724,7 @@
     :single-portfolio [trade-history]
     :multiple-portfolio [multiple-portfolio-history-table]
     :recent-trades [trade-history-recent]
+    :recent-trades-perf [trade-history-recent-perf]
     [:div.output "nothing to display"]))
 
 (defn trade-history-view

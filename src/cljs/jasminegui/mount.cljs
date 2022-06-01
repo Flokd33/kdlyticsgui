@@ -155,6 +155,9 @@
                  :single-bond-trade-history/show-flat-modal          false
                  :single-bond-trade-history/show-throbber            false
 
+                 :recent-trade-data/show-throbber                    false
+                 :traded-since-date-output/flat-data                  []
+
                  :portfolio-trade-history/data                       []
                  :portfolio-trade-history/portfolio                  "OGEMCORD"
                  :portfolio-trade-history/start-date                 (t/int-to-gdate 20220101)
@@ -169,6 +172,7 @@
                  :multiple-portfolio-trade-history/pivot              "No"
 
                  :recent-trade-data/trades                           []
+                 :traded-since-date-output/trades                    []
                  :recent-trade-data/date-from                         (t/int-to-gdate 20220101)
                  :recent-trade-data/date-to                           (t/int-to-gdate (today))
                  :recent-trade-data/sector                           "All"
@@ -383,6 +387,8 @@
            :single-bond-trade-history/bond
            :single-bond-trade-history/show-throbber
 
+           :recent-trade-data/show-throbber
+
            :portfolio-trade-history/portfolio
            :portfolio-trade-history/start-date
            :portfolio-trade-history/end-date
@@ -395,6 +401,7 @@
            :multiple-portfolio-trade-history/pivot
 
            :recent-trade-data/trades
+           :traded-since-date-output/trades
            :recent-trade-data/date-from
            :recent-trade-data/date-to
            :recent-trade-data/country
