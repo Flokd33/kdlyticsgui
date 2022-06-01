@@ -102,8 +102,6 @@
 ;(defn csv-link [data filename]
 ;  (tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv")))
 
-(def download-period (atom "ytd"))
-(def download-portfolio (atom "OGEMCORD"))
 
 ;(defn download-attribution-file [period port]
 ;  "cannot download file from drive if not HTTP"
@@ -133,6 +131,10 @@
         download-columns ["Security" "Code" "Issuer" "Sector" "Region" "Country" "Duration-Bucket" "Total-Effect" "Fund-Contribution" "Index-Contribution" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"]
         ;path-download (download-attribution-file @download-period @download-portfolio )
         ]
+    (when (and (= @(rf/subscribe [:single-portfolio-attribution/portfolio]) "OGEMCORD")
+               (= @(rf/subscribe [:single-portfolio-attribution/period]) "ytd")
+               (zero? (count @(rf/subscribe [:single-portfolio-attribution/table]))))
+      (rf/dispatch [:get-single-attribution "OGEMCORD" "ytd"]))
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label (str "Attribution drill-down " @(rf/subscribe [:attribution-date])) :level :level1]
@@ -149,11 +151,13 @@
                                                      [single-dropdown :width dropdown-width :model period :choices (period-choices)
                                                       :on-change #(do
                                                                     (rf/dispatch [:change-single-attribution-period %])
-                                                                    (reset! download-period %)
+                                                                    ;(reset! download-period %)
                                                                       )]]]]]
                              [v-box :gap "10px" :children [[h-box :gap "10px" :children
                                                             (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:change-single-attribution-portfolio %]) (reset! download-portfolio %))]]
+                                                                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:change-single-attribution-portfolio %])
+                                                                                                                                                                             ;(reset! download-portfolio %)
+                                                                                                                                                                             )]]
                                                                              (filtering-row :single-portfolio-attribution/filter)))]
                                                            [h-box :gap "20px" :children (into [] (concat
                                                                                                    (shortcut-row :single-portfolio-attribution/shortcut)
@@ -183,7 +187,11 @@
         download-columns (concat ["Security" "Code" "Issuer" "Region" "Country" "Rating" "Duration-Bucket"] (filter @selected-portfolios portfolios))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
-    ;(println download-columns)
+    (when (and (= @(rf/subscribe [:multiple-portfolio-attribution/field-one]) :total-effect)
+               (= @(rf/subscribe [:multiple-portfolio-attribution/period]) "ytd")
+               (zero? (count @(rf/subscribe [:multiple-portfolio-attribution/table]))))
+      (rf/dispatch [:get-multiple-attribution "Total Effect" "ytd"]))
+
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label (str "Attribution drill-down " @(rf/subscribe [:attribution-date])) :level :level1]
@@ -284,6 +292,10 @@
         y-axis (rf/subscribe [:attribution-index-returns/y-filter])
         portfolio (rf/subscribe [:attribution-index-returns/portfolio])
         period (rf/subscribe [:attribution-index-returns/period])]
+    (when (and (= @(rf/subscribe [:attribution-index-returns/portfolio]) "OGEMCORD")
+               (= @(rf/subscribe [:attribution-index-returns/period]) "ytd")
+               (zero? (count @(rf/subscribe [:attribution-index-returns/table]))))
+      (rf/dispatch [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"]))
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label (str "Index returns " @(rf/subscribe [:attribution-date])) :level :level1]

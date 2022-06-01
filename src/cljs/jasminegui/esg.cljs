@@ -347,9 +347,6 @@
                        {:Header "Title" :accessor "title" :width 200 :style {:whiteSpace "unset"}}
                        {:Header "Purpose" :accessor "attributes" :width 200 :style {:whiteSpace "unset"} :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "attributes" "purpose"))}
                        {:Header "Outcome" :accessor "attributes" :width 700 :style {:whiteSpace "unset"} :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "attributes" "outcome"))}
-                       ;{:Header "Detail" :accessor "attributes" :width 800 :Cell #(if-let [v %] (r/as-element [v-box :children [[p (str "Purpose" (gobj/getValueByKeys v "original" "attributes" "purpose"))]
-                       ;                                                                                                         [p (str "Outcome" (gobj/getValueByKeys v "original" "attributes" "outcome"))]]])
-                       ;                                                                         )}
                        {:Header "Full note" :accessor "body" :width 75 :Cell #(if-let [v %] (r/as-element [button :label "Open" :on-click (fn [] (rf/dispatch [:esg/get-tamale-body (gobj/getValueByKeys v "original" "note_id")]) (reset! show-modal-engagement true))]))}
                        {:Header "Attachments" :accessor "links" :width 100 :Cell #(if-let [v %] (r/as-element [v-box :children (into [] (for [line (gobj/getValueByKeys v "original" "links") :when (= (gobj/get line "type") "attachment")] [hyperlink-href :label "Download" :href (str "https://ldprdnexdc1:6400" (gobj/get line "link")) :target "_blank"]))]))}]]
     (fn []

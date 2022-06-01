@@ -6,7 +6,7 @@
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [:get-qt-date :get-total-positions   :get-naked-positions :get-instruments] ;:get-positions
-        attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months [:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"] [:get-portfolio-review-summary-data "OGEMCORD"]]
+        attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months  [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
         quant-events [:get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         implementation-events (conj home-events :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :live-cast-parent-positions-request)
@@ -90,6 +90,7 @@
   [{:code :main                 :name "Table"}
    {:code :trade-view           :name "Trade view"}
    {:code :journal              :name "Journal"}
+   {:code :pivots               :name "Pivots_WIP"}
    ])
 
 (def risk-choice-map

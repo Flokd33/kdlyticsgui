@@ -138,7 +138,7 @@
                   ])
      }))
 
-(rf/dispatch [:ta2022/go-to-active-trade @(rf/subscribe [:ta2022/trade-isin])])
+;(rf/dispatch [:ta2022/go-to-active-trade @(rf/subscribe [:ta2022/trade-isin])])
 
 (rf/reg-event-fx
   :quant-screen-to-ta2022
