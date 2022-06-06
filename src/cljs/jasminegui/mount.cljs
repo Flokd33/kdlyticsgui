@@ -270,6 +270,9 @@
                  :ta2022/trade-history {}
                  :ta2022/active-home :main
                  :ta2022/main-table-data []
+                 :ta2022/main-table-pivot "No"
+                 :ta2022/main-table-show-relval-value false
+                 :ta2022/main-table-view-selector "Scorecard"
                  :ta2022/journal-data nil
                  :ta2022/show-modal nil
                  :ta2022/test-result nil
@@ -484,6 +487,9 @@
            :ta2022/trade-history
            :ta2022/active-home
            :ta2022/main-table-data
+           :ta2022/main-table-pivot
+           :ta2022/main-table-show-relval-value
+           :ta2022/main-table-view-selector
            :ta2022/show-modal
            :ta2022/test-result
            :ta2022/can-morph

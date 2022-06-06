@@ -31,7 +31,7 @@
    :id-show                     {:Header "ID" :accessor "id" :width 60}
    ;:strategy-shortcut           {:Header "Strategy"       :accessor "strategy-shortcut"           :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR :Cell tables/strategy-pop-up}
    :strategy                    {:Header "Strategy" :accessor "strategy" :Cell #(if-let [x (aget % "value")] (strategy->shortcut x) "-")  :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR} ;we need to have it in the table for the props
-   :strategy-pivot              {:Header "Strategy" :accessor "strategy" :width 180}
+   :strategy-pivot              {:Header "Strategy" :accessor "strategy" :width 180} ; :Aggregated #(str "hi")
    ;:entry-date                  {:Header "Entry date"     :accessor "entry-date"                  :width 80 :style {:textAlign "center"} :Cell tables/format-date-from-int-rt}
    ;:exit-date                   {:Header "Exit date"      :accessor "exit-date"                   :width 70 :style {:textAlign "center"} :Cell tables/exit-date-props :filterMethod tables/exit-date-filter}
    :analyst                     {:Header "Analyst"        :accessor "analyst"                     :width 75 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
