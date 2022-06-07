@@ -279,6 +279,7 @@
                  :ta2022/can-morph false
                  :ta2022/implied-price-difference nil
                  :ta2022/upside-vs-downside 0.0
+                 :ta2022/throbber false
 
                  :implementation/portfolio-nav nil
                  :implementation/fx nil
@@ -486,7 +487,7 @@
            :ta2022/trade-latest-targets-and-triggers
            :ta2022/trade-history
            :ta2022/active-home
-           :ta2022/main-table-data
+           :ta2022/throbber
            :ta2022/main-table-pivot
            :ta2022/main-table-show-relval-value
            :ta2022/main-table-view-selector

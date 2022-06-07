@@ -30,19 +30,20 @@
   {:id                          {:Header "ID" :accessor "id" :show false}
    :id-show                     {:Header "ID" :accessor "id" :width 60}
    ;:strategy-shortcut           {:Header "Strategy"       :accessor "strategy-shortcut"           :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR :Cell tables/strategy-pop-up}
-   :strategy                    {:Header "Strategy" :accessor "strategy" :Cell #(if-let [x (aget % "value")] (strategy->shortcut x) "-")  :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR} ;we need to have it in the table for the props
-   :strategy-pivot              {:Header "Strategy" :accessor "strategy" :width 180} ; :Aggregated #(str "hi")
+   :strategy                    {:Header "Strategy" :accessor "strategy"  :aggregate #(str "-") :Cell #(if-let [x (aget % "value")] (strategy->shortcut x) "-")  :width 80 :style {:textAlign "center"} :filterMethod tables/text-filter-OR} ;we need to have it in the table for the props
+   :strategy-pivot              {:Header "Strategy" :accessor "strategy" :width 180  :Aggregated tables/total-txt} ; :Aggregated #(str "hi")
    ;:entry-date                  {:Header "Entry date"     :accessor "entry-date"                  :width 80 :style {:textAlign "center"} :Cell tables/format-date-from-int-rt}
    ;:exit-date                   {:Header "Exit date"      :accessor "exit-date"                   :width 70 :style {:textAlign "center"} :Cell tables/exit-date-props :filterMethod tables/exit-date-filter}
-   :analyst                     {:Header "Analyst"        :accessor "analyst"                     :width 75 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
-   :NAME                        {:Header "Name" :accessor "Bond" :width 120 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
+   :analyst                     {:Header "Analyst"        :accessor "analyst"                     :width 125  :filterMethod tables/text-filter-OR :aggregate #(str "-")}
+   :country                     {:Header "Country"        :accessor "Country"                     :width 125  :filterMethod tables/text-filter-OR :aggregate #(str "-")}
+   :NAME                        {:Header "Name" :accessor "Bond" :width 120 :style {:textAlign "center"} :filterMethod tables/text-filter-OR :aggregate #(str "-")}
    :portfolio                   {:Header "Portfolio" :accessor "portfolio" :width 135 :style {:textAlign "center"} :filterMethod tables/text-filter-OR}
    :ISIN                        {:Header "ISIN" :accessor "ISIN" :width 125 :style {:textAlign "center"} :show false}
    :status                      {:Header "Status" :accessor "status" :show false} ;we need to have it in the table for the props
    :status-show                 {:Header "Status" :accessor "status" :width 60 :style {:textAlign "center"}} ;we need to have it in the table for the props
    :thisyear                    {:Header "thisyear" :accessor "thisyear" :show false} ;we need to have it in the table for the props
    :position                    {:Header "Model" :accessor "position" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
-   :weight               {:Header "Actual" :accessor "weight" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND}
+   :weight                      {:Header "NAV" :accessor "weight" :width 50 :style {:textAlign "right"} :Cell tables/round2pc :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
    :entry-price                 {:Header "Entry" :accessor "entry-price" :width 60 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND}
    :price                       {:Header "Price" :accessor "Used_Price" :width 50 :style {:textAlign "right"} :Cell tables/round2 :filterMethod tables/nb-filter-OR-AND :aggregate tables/median}
    :yield                       {:Header "Yield" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :Cell tables/yield-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/median}

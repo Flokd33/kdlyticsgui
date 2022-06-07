@@ -24,10 +24,15 @@
 (rf/reg-event-fx
   :ta2022/post-main-table-data
   (fn [{:keys [db]} [_ analyst sector country portfolio]]
-    {:db                db
+    {:db                 (assoc db :ta2022/throbber true)
      :http-post-dispatch {:url          (str static/server-address "ta2022-main-table-data")
-                          :edn-params {:kind :main-table :analyst (if analyst analyst "All") :sector (if sector sector "All") :country (if country country "All") :portfolio (if portfolio portfolio "All")}
+                          :edn-params   {:kind :main-table :analyst (if analyst analyst "All") :sector (if sector sector "All") :country (if country country "All") :portfolio (if portfolio portfolio "All")}
                           :dispatch-key [:ta2022/main-table-data]}}))
+
+(rf/reg-event-db
+  :ta2022/main-table-data
+  (fn [db [_ data]]
+    (assoc db :ta2022/main-table-data data :ta2022/throbber false)))
 
 (rf/reg-event-fx
   :ta2022/post-journal-data

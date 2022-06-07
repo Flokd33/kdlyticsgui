@@ -3,7 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as r]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink alert-box md-circle-icon-button modal-panel
+                         single-dropdown hyperlink alert-box md-circle-icon-button modal-panel throbber
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -306,6 +306,7 @@
 (def sector (r/atom nil))
 (def country (r/atom nil))
 (def portfolio (r/atom nil))
+(def expanded (r/atom {0 {}}))
 
 (defn distance-fmt [this]
   (if-let [x (aget this "value")] (if (< x 1) (gstring/format "%.0f%" (* 100 x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])) "-")
@@ -327,8 +328,7 @@
                                       ["target" "relval" "review"])])
         mtvs (rf/subscribe [:ta2022/main-table-view-selector])
         mtp (rf/subscribe [:ta2022/main-table-pivot])
-        is-table (= @mtp "No")
-        ]
+        is-table (= @mtp "No")]
     [v-box :gap "10px"
      :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
                                         [[h-box :gap "10px" :align :center
@@ -349,54 +349,60 @@
                                                      [radio-button :model mtp :value "No" :label "No" :on-change #(rf/dispatch [:ta2022/main-table-pivot %])]
                                                      [radio-button :model mtp :value "Strategy" :label "Strategy" :on-change #(rf/dispatch [:ta2022/main-table-pivot %])]
                                                      [radio-button :model mtp :value "Analyst" :label "Analyst" :on-change #(rf/dispatch [:ta2022/main-table-pivot %])]
+                                                     [radio-button :model mtp :value "Country" :label "Country" :on-change #(rf/dispatch [:ta2022/main-table-pivot %])]
                                                      [gap :size "50px"]
                                                      [checkbox :label "Show relval spread" :model (rf/subscribe [:ta2022/main-table-show-relval-value]) :on-change #(rf/dispatch [:ta2022/main-table-show-relval-value %])]
                                                      [gap :size "50px"]
-                                                     [label :label (if is-table "" "Median values shown for pivot except position (sum)") :style {:font-style "italic"}]
+                                                     [label :label (if is-table "" "Median values shown for pivot except NAV (sum)") :style {:font-style "italic"}]
                                                      ]]
-                                         [h-box :children [[:> ReactTable
-                                                            {:data            (tatables/strategy-sort data)
-                                                             :columns         (concat [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:ISIN (if is-table :strategy :strategy-pivot) :NAME] (if (and @portfolio (not= @portfolio "All")) :weight))))} ;:id :strategy-shortcut
-                                                                                       {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}]
+                                         (if @(rf/subscribe [:ta2022/throbber])
+                                           [throbber :size :large]
+                                           [h-box :children [[:> ReactTable
+                                                              {:data            (if is-table (tatables/strategy-sort data) (map #(assoc % :totaldummy "") (tatables/strategy-sort data)))
+                                                               :columns         (concat [{:Header  "Trade description"
+                                                                                          :columns (remove nil? (conj (map tatables/table-columns (remove nil? (conj [:ISIN (if (= @mtp "Strategy") :strategy-pivot :strategy) :NAME (if-not is-table :analyst) (if-not is-table :country)] (if (and @portfolio (not= @portfolio "All")) :weight))))
+                                                                                                                      (if-not is-table {:Header "" :accessor "totaldummy" :width 30 :Aggregated tables/total-txt})
+                                                                                                                      ))}
+                                                                                         {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}]
 
-                                                                                      (case @mtvs
-                                                                                        "Scorecard"
-                                                                                        [{:Header "Target" :columns (remove nil? [(if is-table {:Header "Description" :accessor "target-alert-description" :width 140})
-                                                                                                                                  {:Header "Price" :accessor "target-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "target-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
-                                                                                                                                  ])}
-                                                                                         {:Header "Relval" :columns (remove nil? [(if is-table {:Header "Description" :accessor "relval-alert-description" :width 140})
-                                                                                                                                  {:Header "Price" :accessor "relval-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "relval-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
-                                                                                                                                  (if @(rf/subscribe [:ta2022/main-table-show-relval-value]) {:Header "Sprd" :accessor "relval-alert-value" :width 45 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1. %) :aggregate #(str "-")})
-                                                                                                                                  ])}
-                                                                                         {:Header "Review" :columns (remove nil? [(if is-table {:Header "Description" :accessor "review-alert-description" :width 140})
-                                                                                                                                  {:Header "Price" :accessor "review-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "review-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
-                                                                                                                                  ])}
-                                                                                         {:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio])}
-                                                                                         ]
-                                                                                        "Distances"
-                                                                                        [{:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                                     {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                                         {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                                     {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                                         {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                                     {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                                         {:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio])}
-                                                                                         ]
-                                                                                        "Total returns (1Y)"
-                                                                                        [{:Header "Analyst" :columns [{:Header "Target" :accessor "target-alert-tr-1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %)}
-                                                                                                                      {:Header "Relval" :accessor "relval-alert-tr-1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %)}
-                                                                                                                      {:Header "Review" :accessor "review-alert-tr-1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %)}]}
-                                                                                         {:Header "Model" :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}
-                                                                                                                    {:Header "2D" :accessor "svr2d1yrtn" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}]}
-                                                                                         {:Header "History" :columns [{:Header "Tight" :accessor "upside1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}
-                                                                                                                      {:Header "Median" :accessor "expected1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}
-                                                                                                                      {:Header "Wide" :accessor "downside1y" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %)}]}]
-                                                                                        )
+                                                                                        (case @mtvs
+                                                                                          "Scorecard"
+                                                                                          [{:Header "Target" :columns (remove nil? [(if is-table {:Header "Description" :accessor "target-alert-description" :width 140})
+                                                                                                                                    {:Header "Price" :accessor "target-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "target-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
+                                                                                                                                    ])}
+                                                                                           {:Header "Relval" :columns (remove nil? [(if is-table {:Header "Description" :accessor "relval-alert-description" :width 140})
+                                                                                                                                    {:Header "Price" :accessor "relval-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "relval-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
+                                                                                                                                    (if @(rf/subscribe [:ta2022/main-table-show-relval-value]) {:Header "Sprd" :accessor "relval-alert-value" :width 45 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1. %) :aggregate #(str "-")})
+                                                                                                                                    ])}
+                                                                                           {:Header "Review" :columns (remove nil? [(if is-table {:Header "Description" :accessor "review-alert-description" :width 140})
+                                                                                                                                    {:Header "Price" :accessor "review-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "review-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
+                                                                                                                                    ])}
+                                                                                           {:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio])}
+                                                                                           ]
+                                                                                          "Distances"
+                                                                                          [{:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :aggregate tables/median}
+                                                                                                                       {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt :aggregate tables/median}]}
+                                                                                           {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :aggregate tables/median}
+                                                                                                                       {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt :aggregate tables/median}]}
+                                                                                           {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %) :aggregate tables/median}
+                                                                                                                       {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt :aggregate tables/median}]}
+                                                                                           {:Header "Performance year to date" :columns (mapv tatables/table-columns [:ytd-return :ytd-return-vs-cembi :ytd-return-vs-cembi-rating :ytd-return-vs-cembi-country :ytd-return-vs-cembi-sector :return-portfolio])}
+                                                                                           ]
+                                                                                          "Total returns (1Y)"
+                                                                                          [{:Header "Analyst" :columns [{:Header "Target" :accessor "target-alert-tr-1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %) :aggregate tables/median}
+                                                                                                                        {:Header "Relval" :accessor "relval-alert-tr-1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %) :aggregate tables/median}
+                                                                                                                        {:Header "Review" :accessor "review-alert-tr-1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %) :aggregate tables/median}]}
+                                                                                           {:Header "Model" :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}
+                                                                                                                      {:Header "2D" :accessor "svr2d1yrtn" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}]}
+                                                                                           {:Header "History" :columns [{:Header "Tight" :accessor "upside1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}
+                                                                                                                        {:Header "Median" :accessor "expected1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}
+                                                                                                                        {:Header "Wide" :accessor "downside1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}]}]
+                                                                                          )
 
-                                                                                      ) ;:new-issue
-                                                             :pivotBy         (case @mtp "No" [] "Strategy" [:strategy] "Analyst" [:analyst] "Country" [:Country])
-                                                             :defaultPageSize 20 :showPagination true :getTrProps (if is-table go-to-active-trade! (fn [a b c] #js {})) :className "-striped -highlight"}]]]
-
+                                                                                        ) ;:new-issue
+                                                               :pivotBy         (case @mtp "No" [] "Strategy" [:totaldummy :strategy] "Analyst" [:totaldummy :analyst] "Country" [:totaldummy :Country])
+                                                               :expanded        @expanded :onExpandedChange #(reset! expanded %)
+                                                               :defaultPageSize 20 :showPagination true :getTrProps (if is-table go-to-active-trade! (fn [a b c] #js {})) :className "-striped -highlight"}]]])
 
                                          ])]]))
 
