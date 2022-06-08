@@ -91,7 +91,6 @@
   [{:code :main                 :name "Table"}
    {:code :trade-view           :name "Trade view"}
    {:code :journal              :name "Journal"}
-   {:code :pivots               :name "Pivots_WIP"}
    ])
 
 (def risk-choice-map

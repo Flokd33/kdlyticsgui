@@ -182,17 +182,28 @@
 
 (defn morph-or-amend-trade-modal [morph?]
   (let [last-trade (last (:trades @(rf/subscribe [:ta2022/trade-history])))
+        last-leg-uuid (:ta2022.trade/uuid last-trade)
         exit-rationale (r/atom nil)
         trade-entry
         (if morph?
-          (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
-                   :strategy        nil
-                   :entry-rationale nil
-                   :ISIN            @(rf/subscribe [:ta2022/trade-isin])
-                   :relval-alert    (assoc taalerts/spread-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "Z_SPRD_MID" :operator "-" :bloomberg-request-security-2 "JBCDCBZW Index" :bloomberg-request-field-2 "PX_LAST")
-                   :target-alert    (assoc taalerts/single-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
-                   :review-alert    (assoc taalerts/single-alert-template :comparison ">" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
-                   :other-alerts    {}})
+          (if last-leg-uuid
+            (let [all-alerts (let [x (taalerts/trade->alerts last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map :ta2022.alert/uuid x) x))]
+              (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
+                       :strategy        nil
+                       :entry-rationale nil
+                       :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                       :relval-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/relval-alert-uuid last-trade)))
+                       :target-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/target-alert-uuid last-trade)))
+                       :review-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/review-alert-uuid last-trade)))
+                       :other-alerts    (into {} (for [[i u] (map-indexed vector (:ta2022.trade/other-alert-uuids last-trade))] [i (taalerts/alert-from-backend (all-alerts u))]))}))
+            (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
+                     :strategy        nil
+                     :entry-rationale nil
+                     :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                     :relval-alert    (assoc taalerts/spread-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "Z_SPRD_MID" :operator "-" :bloomberg-request-security-2 "JBCDCBZW Index" :bloomberg-request-field-2 "PX_LAST")
+                     :target-alert    (assoc taalerts/single-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
+                     :review-alert    (assoc taalerts/single-alert-template :comparison ">" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
+                     :other-alerts    {}}))
           (let [all-alerts (let [x (taalerts/trade->alerts last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map :ta2022.alert/uuid x) x))]
             (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
                      :strategy        (:ta2022.trade/strategy last-trade)
@@ -205,7 +216,7 @@
         entry-rationale (r/cursor trade-entry [:entry-rationale])
         strategy (r/cursor trade-entry [:strategy])
         analyst (r/cursor trade-entry [:analyst])
-        last-leg-uuid (:ta2022.trade/uuid last-trade)]
+        ]
     (fn []
       [v-box :width "850px" :height "750px" :gap "10px" :padding "20px"
        :children [

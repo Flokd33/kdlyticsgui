@@ -302,15 +302,18 @@
 (defn row-action [action rowInfo] (clj->js {:onClick #(rf/dispatch [action (aget rowInfo "row" "_original" "isin")]) :style {:cursor "pointer"}}))
 (defn go-to-active-trade! [state rowInfo instance] (row-action :ta2022/go-to-active-trade rowInfo))
 
-(def analyst (r/atom nil))
-(def sector (r/atom nil))
-(def country (r/atom nil))
-(def portfolio (r/atom nil))
+;(def analyst (r/atom nil))
+;(def sector (r/atom nil))
+;(def country (r/atom nil))
+;(def portfolio (r/atom nil))
+
+(rf/reg-event-db :ta2022/filter-change (fn [db [_ k v]] (-> db (assoc :ta2022/main-table-data []) (assoc-in [:ta2022/filter k] v))))
+(rf/reg-sub :ta2022/filter-value (fn [db [_ k]] (get-in db [:ta2022/filter k])))
+
 (def expanded (r/atom {0 {}}))
 
 (defn distance-fmt [this]
-  (if-let [x (aget this "value")] (if (< x 1) (gstring/format "%.0f%" (* 100 x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])) "-")
-  )
+  (if-let [x (aget this "value")] (if (< x 1) (gstring/format "%.0f%" (* 100 x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])) "-"))
 
 
 (defn main-table []
@@ -322,7 +325,7 @@
         price-fmt (fn [distance this] (if-let [d (aget this "original" distance)]
                                         (if (= d 1) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Trgrd."]) (if (number? (aget this "value")) (gstring/format "%.1f" (aget this "value")) "-")) "-"))
         download-columns (flatten
-                                [[:db-id :strategy :isin :uuid :weight]
+                                [[:db-id :strategy :isin :uuid :weight :analyst :Country]
                                  [:Bond :Used_Price :Used_YTW :Used_ZTW :Used_Duration :G_SPREAD_MID_CALC :difference_svr :difference_svr_2d :Rating_String]
                                  (map (fn [k] [(keyword (str k "-alert-description")) (keyword (str k "-alert-distance")) (keyword (str k "-alert-value")) (keyword (str k "-alert-implied-price")) (keyword (str k "-alert-triggered-date"))])
                                       ["target" "relval" "review"])])
@@ -332,11 +335,11 @@
     [v-box :gap "10px"
      :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
                                         [[h-box :gap "10px" :align :center
-                                          :children [[single-dropdown :model analyst :choices (conj (for [k all-analysts] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! analyst %)) :placeholder "Analyst" :filter-box? true]
-                                                     [single-dropdown :model sector :choices all-sectors :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! sector %)) :placeholder "Sector" :filter-box? true]
-                                                     [single-dropdown :model country :choices all-countries :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! country %)) :placeholder "Country" :filter-box? true]
-                                                     [single-dropdown :model portfolio :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(do (rf/dispatch [:ta2022/main-table-data []]) (reset! portfolio %)) :placeholder "Portfolio" :filter-box? true]
-                                                     [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/post-main-table-data @analyst @sector @country @portfolio])]]]])
+                                          :children [[single-dropdown :model (rf/subscribe [:ta2022/filter-value :analyst]) :choices (conj (for [k all-analysts] {:id k :label k}) {:id "All" :label "All"}) :on-change #(rf/dispatch [:ta2022/filter-change :analyst %]) :placeholder "Analyst" :filter-box? true]
+                                                     [single-dropdown :model (rf/subscribe [:ta2022/filter-value :sector]) :choices all-sectors :on-change #(rf/dispatch [:ta2022/filter-change :sector %]) :placeholder "Sector" :filter-box? true]
+                                                     [single-dropdown :model (rf/subscribe [:ta2022/filter-value :country]) :choices all-countries :on-change #(rf/dispatch [:ta2022/filter-change :country %]) :placeholder "Country" :filter-box? true]
+                                                     [single-dropdown :model (rf/subscribe [:ta2022/filter-value :portfolio]) :choices (conj (for [k @(rf/subscribe [:portfolios])] {:id k :label k}) {:id "All" :label "All"}) :on-change #(rf/dispatch [:ta2022/filter-change :portfolio %]) :placeholder "Portfolio" :filter-box? true]
+                                                     [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/post-main-table-data @(rf/subscribe [:ta2022/filter-value :analyst]) @(rf/subscribe [:ta2022/filter-value :sector]) @(rf/subscribe [:ta2022/filter-value :country]) @(rf/subscribe [:ta2022/filter-value :portfolio])])]]]])
                 (gt/element-box-generic "ta-output" element-box-width "Results"
                                         {:on-click-action #(t/csv-link data "trade-analyser-output.csv" download-columns)}
                                         [[h-box :align :center :gap "10px"
@@ -360,7 +363,7 @@
                                            [h-box :children [[:> ReactTable
                                                               {:data            (if is-table (tatables/strategy-sort data) (map #(assoc % :totaldummy "") (tatables/strategy-sort data)))
                                                                :columns         (concat [{:Header  "Trade description"
-                                                                                          :columns (remove nil? (conj (map tatables/table-columns (remove nil? (conj [:ISIN (if (= @mtp "Strategy") :strategy-pivot :strategy) :NAME (if-not is-table :analyst) (if-not is-table :country)] (if (and @portfolio (not= @portfolio "All")) :weight))))
+                                                                                          :columns (remove nil? (conj (map tatables/table-columns (remove nil? (conj [:ISIN (if (= @mtp "Strategy") :strategy-pivot :strategy) :NAME (if-not is-table :analyst) (if-not is-table :country)] (if (and @(rf/subscribe [:ta2022/filter-value :portfolio]) (not= @(rf/subscribe [:ta2022/filter-value :portfolio]) "All")) :weight))))
                                                                                                                       (if-not is-table {:Header "" :accessor "totaldummy" :width 30 :Aggregated tables/total-txt})
                                                                                                                       ))}
                                                                                          {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}]

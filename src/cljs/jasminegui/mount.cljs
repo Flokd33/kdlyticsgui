@@ -280,6 +280,7 @@
                  :ta2022/implied-price-difference nil
                  :ta2022/upside-vs-downside 0.0
                  :ta2022/throbber false
+                 :ta2022/filter {:analyst nil :sector nil :country nil :portfolio nil}
 
                  :implementation/portfolio-nav nil
                  :implementation/fx nil
