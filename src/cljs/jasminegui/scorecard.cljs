@@ -433,25 +433,41 @@
      :width  (- (* 0.75 standard-box-width-nb) 200)
      :height 625}))
 
+;
+;(rf/reg-event-fx
+;  :scorecard/change-portfolio
+;  (fn [{:keys [db]} [_ portfolio]]
+;    ;(println "scorecard-change" portfolio (:scorecard/sector db) (count (:positions db)))
+;    {:db (assoc db :scorecard/portfolio portfolio)
+;     :http-post-dispatch {:url (str static/ta-server-address "scorecard-request")
+;                         :edn-params {:portfolio portfolio
+;                                      :isin-seq (map :isin (t/chainfilter {:portfolio portfolio :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db)))}
+;      :dispatch-key [:scorecard/trade-analyser-data]}}))
+;
+;(rf/reg-event-fx
+;  :scorecard/change-sector
+;  (fn [{:keys [db]} [_ sector]]
+;    {:db (assoc db :scorecard/sector sector)
+;     :fx [[:dispatch [:get-qdb-securities (qdb-sectors sector)]]]
+;     :http-post-dispatch
+;         {:url          (str static/ta-server-address "scorecard-request") :edn-params {:portfolio (:scorecard/portfolio db) :isin-seq (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector sector :original-quantity pos?} (:positions db)))}
+;          :dispatch-key [:scorecard/trade-analyser-data]}}))
 
 (rf/reg-event-fx
   :scorecard/change-portfolio
   (fn [{:keys [db]} [_ portfolio]]
-    ;(println "scorecard-change" portfolio (:scorecard/sector db) (count (:positions db)))
     {:db (assoc db :scorecard/portfolio portfolio)
-     :http-post-dispatch {:url (str static/ta-server-address "scorecard-request")
-                         :edn-params {:portfolio portfolio
-                                      :isin-seq (map :isin (t/chainfilter {:portfolio portfolio :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db)))}
-      :dispatch-key [:scorecard/trade-analyser-data]}}))
+     :fx [[:dispatch [:ta2022/post-sub-table-data {:portfolio portfolio
+                                                   :isinseq (map :isin (t/chainfilter {:portfolio portfolio :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db)))}]]]}))
 
 (rf/reg-event-fx
   :scorecard/change-sector
   (fn [{:keys [db]} [_ sector]]
     {:db (assoc db :scorecard/sector sector)
-     :fx [[:dispatch [:get-qdb-securities (qdb-sectors sector)]]]
-     :http-post-dispatch
-         {:url          (str static/ta-server-address "scorecard-request") :edn-params {:portfolio (:scorecard/portfolio db) :isin-seq (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector sector :original-quantity pos?} (:positions db)))}
-          :dispatch-key [:scorecard/trade-analyser-data]}}))
+     :fx [[:dispatch [:get-qdb-securities (qdb-sectors sector)]]
+          [:dispatch [:ta2022/post-sub-table-data {:portfolio (:scorecard/portfolio db)
+                                                   :isinseq (map :isin (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector sector :original-quantity pos?} (:positions db)))}]]]
+     }))
 
 ;(defn change-sector [sector]
 ;  (rf/dispatch [:scorecard/sector sector])

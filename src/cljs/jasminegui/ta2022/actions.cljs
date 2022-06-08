@@ -29,6 +29,14 @@
                           :edn-params   {:kind :main-table :analyst (if analyst analyst "All") :sector (if sector sector "All") :country (if country country "All") :portfolio (if portfolio portfolio "All")}
                           :dispatch-key [:ta2022/main-table-data]}}))
 
+(rf/reg-event-fx
+  :ta2022/post-sub-table-data
+  (fn [{:keys [db]} [_ isinseq portfolio]]
+    {:db                 db
+     :http-post-dispatch {:url          (str static/server-address "ta2022-main-table-data")
+                          :edn-params   {:kind :sub-table :isinseq isinseq :portfolio portfolio}
+                          :dispatch-key [:ta2022/main-table-data]}}))
+
 (rf/reg-event-db
   :ta2022/main-table-data
   (fn [db [_ data]]
