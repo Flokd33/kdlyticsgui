@@ -206,6 +206,7 @@
                  :esg/security-notes                      []
                  :esg/tamale-body                         ""
                  :esg/engagement-throbber                 false
+                 :esg/ungc-problem-securities             []
 
                  :quant-model/model-output                []
                  :quant-model/model-js-output             #js []
@@ -435,6 +436,7 @@
            :esg/engagements
            :esg/security-notes
            :esg/tamale-body
+           :esg/ungc-problem-securities
 
            :trade-history/active-home
 
@@ -844,6 +846,8 @@
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
    {:get-key :get-gb-reports    :url-tail "gb-reports" :dis-key :gb-reports}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
+   {:get-key :get-ungc-problem-securities :url-tail "ungc-problem-securities" :dis-key :esg/ungc-problem-securities}
+
 
    {:get-key :implementation-list-request         :url-tail "trade-implementation-list"   :dis-key :implementation/implementation-list}
    {:get-key :portfolio-nav-request               :url-tail "portfolio-nav"               :dis-key :implementation/portfolio-nav}

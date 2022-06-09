@@ -376,12 +376,57 @@
                                                     :showPagination true :sortable true :filterable false :defaultPageSize 20 :className "-striped -highlight"}]]])]])))
 
 
+(defn ungc-table []
+  (let [data @(rf/subscribe [:esg/ungc-problem-securities])
+        header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
+    (when (zero? (count data)) (rf/dispatch [:get-ungc-problem-securities]))
+    (println data)
+    [v-box :gap "20px" :class "element" :width standard-box-width
+     :children [
+                [h-box :align :center :children [[title :label "UNGC problem securities" :level :level1]
+                                                 [gap :size "1"]
+                                                 [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (sort-by :Ticker data) "msci"  msci-cols "\t")]]]
+                [:> ReactTable
+                 {:data                data
+                  :columns             [
+                                        {:Header  "Description" :headerStyle header-style
+                                         :columns [{:Header "Bond" :accessor "Bond" :width 100} {:Header "Ticker" :accessor "Ticker" :width 100} {:Header "Country" :accessor "Country" :width 55} {:Header "Sector" :accessor "Sector" :width 120}]}
+                                        {:Header  "MSCI" :headerStyle header-style
+                                         :columns [{:Header "UNGC compliance" :headerStyle header-style :accessor "UNGC_COMPLIANCE" :style {:textAlign "center"} :width 90} ]}
+                                        {:Header  "Reprisk" :headerStyle header-style
+                                         :columns [{:Header "P1 human rights" :headerStyle header-style :accessor "principle_1_human_rights" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P2 human rights" :headerStyle header-style :accessor "principle_2_human_rights" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P3 labour" :headerStyle header-style :accessor "principle_3_labour" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P4 labour" :headerStyle header-style :accessor "principle_4_labour" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P5 labour" :headerStyle header-style :accessor "principle_5_labour" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P6 labour" :headerStyle header-style :accessor "principle_6_labour" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P7 environment" :headerStyle header-style :accessor "principle_7_environment" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P8 environment" :headerStyle header-style :accessor "principle_8_environment" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P9 environment" :headerStyle header-style :accessor "principle_9_environment" :width 90 :style {:textAlign "center"}}
+                                                   {:Header "P10 anti corruption" :headerStyle header-style :accessor "principle_10_anti_corruption" :width 90 :style {:textAlign "center"}}
+
+
+
+
+                                                   ]}
+
+
+
+                                        ]
+                  :pageSize            20
+                  :showPagination      true
+                  :defaultSorted       [{:id :Ticker :desc false}]
+                  :filterable          true
+                  :defaultFilterMethod tables/text-filter-OR
+                  :className           "-striped -highlight"}]]]))
+
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     [box :padding "80px 20px" :class "rightelement"
      :child (case active-esg
               :msci [msci-table]
+              :ungc [ungc-table]
               :refinitiv [v-box :gap "20px" :class "body" :children [[refinitiv-find-issuers] [refinitiv-table-top-view] [refinitiv-table-detailed-view]]]
               :esg-calculator [greenbondcalculator/esg-calculator-display]
               :esg-viz [greenbondcalculator/esg-viz-display]
