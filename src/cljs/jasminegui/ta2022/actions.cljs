@@ -192,18 +192,21 @@
   (let [last-trade (last (:trades @(rf/subscribe [:ta2022/trade-history])))
         last-leg-uuid (:ta2022.trade/uuid last-trade)
         exit-rationale (r/atom nil)
+        all-alerts (let [x (taalerts/trade->alerts last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map :ta2022.alert/uuid x) x))
         trade-entry
         (if morph?
-          (if last-leg-uuid
-            (let [all-alerts (let [x (taalerts/trade->alerts last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map :ta2022.alert/uuid x) x))]
-              (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
-                       :strategy        nil
-                       :entry-rationale nil
-                       :ISIN            @(rf/subscribe [:ta2022/trade-isin])
-                       :relval-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/relval-alert-uuid last-trade)))
-                       :target-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/target-alert-uuid last-trade)))
-                       :review-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/review-alert-uuid last-trade)))
-                       :other-alerts    (into {} (for [[i u] (map-indexed vector (:ta2022.trade/other-alert-uuids last-trade))] [i (taalerts/alert-from-backend (all-alerts u))]))}))
+          (if (and last-leg-uuid
+                   (= (get-in all-alerts [(:ta2022.trade/relval-alert-uuid last-trade) :ta2022.alert/alert-type]) "spread")
+                   (= (get-in all-alerts [(:ta2022.trade/target-alert-uuid last-trade) :ta2022.alert/alert-type]) "single")
+                   (= (get-in all-alerts [(:ta2022.trade/review-alert-uuid last-trade) :ta2022.alert/alert-type]) "single"))
+            (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
+                     :strategy        nil
+                     :entry-rationale nil
+                     :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                     :relval-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/relval-alert-uuid last-trade)))
+                     :target-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/target-alert-uuid last-trade)))
+                     :review-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/review-alert-uuid last-trade)))
+                     :other-alerts    (into {} (for [[i u] (map-indexed vector (:ta2022.trade/other-alert-uuids last-trade))] [i (taalerts/alert-from-backend (all-alerts u))]))})
             (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
                      :strategy        nil
                      :entry-rationale nil
@@ -212,15 +215,14 @@
                      :target-alert    (assoc taalerts/single-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
                      :review-alert    (assoc taalerts/single-alert-template :comparison ">" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
                      :other-alerts    {}}))
-          (let [all-alerts (let [x (taalerts/trade->alerts last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map :ta2022.alert/uuid x) x))]
-            (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
-                     :strategy        (:ta2022.trade/strategy last-trade)
-                     :entry-rationale (:ta2022.trade/entry-rationale last-trade)
-                     :ISIN            @(rf/subscribe [:ta2022/trade-isin])
-                     :relval-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/relval-alert-uuid last-trade)))
-                     :target-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/target-alert-uuid last-trade)))
-                     :review-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/review-alert-uuid last-trade)))
-                     :other-alerts    (into {} (for [[i u] (map-indexed vector (:ta2022.trade/other-alert-uuids last-trade))] [i (taalerts/alert-from-backend (all-alerts u))]))})))
+          (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
+                   :strategy        (:ta2022.trade/strategy last-trade)
+                   :entry-rationale (:ta2022.trade/entry-rationale last-trade)
+                   :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                   :relval-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/relval-alert-uuid last-trade)))
+                   :target-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/target-alert-uuid last-trade)))
+                   :review-alert    (taalerts/alert-from-backend (all-alerts (:ta2022.trade/review-alert-uuid last-trade)))
+                   :other-alerts    (into {} (for [[i u] (map-indexed vector (:ta2022.trade/other-alert-uuids last-trade))] [i (taalerts/alert-from-backend (all-alerts u))]))}))
         entry-rationale (r/cursor trade-entry [:entry-rationale])
         strategy (r/cursor trade-entry [:strategy])
         analyst (r/cursor trade-entry [:analyst])

@@ -390,7 +390,12 @@
                  {:data                data
                   :columns             [
                                         {:Header  "Description" :headerStyle header-style
-                                         :columns [{:Header "Bond" :accessor "Bond" :width 100} {:Header "Ticker" :accessor "Ticker" :width 100} {:Header "Country" :accessor "Country" :width 55} {:Header "Sector" :accessor "Sector" :width 120}]}
+                                         :columns [{:Header "Bond" :accessor "Bond" :width 100}
+                                                   {:Header "Ticker" :accessor "Ticker" :width 100}
+                                                   {:Header "Country" :accessor "Country" :width 55}
+                                                   {:Header "Sector" :accessor "Sector" :width 120}
+                                                   {:Header "Held?" :accessor "n91held" :width 65 :style {:textAlign "center"} :filterable true :filterMethod tables/nb-filter-OR-AND :show true}
+                                                   {:Header "Danger?" :accessor "danger" :width 65 :style {:textAlign "center"} :filterable true :filterMethod tables/nb-filter-OR-AND :show true}]}
                                         {:Header  "MSCI" :headerStyle header-style
                                          :columns [{:Header "UNGC compliance" :headerStyle header-style :accessor "UNGC_COMPLIANCE" :style {:textAlign "center"} :width 90} ]}
                                         {:Header  "Reprisk" :headerStyle header-style
