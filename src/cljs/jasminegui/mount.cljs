@@ -163,8 +163,9 @@
                  :portfolio-trade-history/start-date                 (t/int-to-gdate 20220101)
                  :portfolio-trade-history/end-date                   (t/int-to-gdate (today))
                  :portfolio-trade-history/performance                "Yes"
-                 :portfolio-trade-history/fwd-return                  "No"
+                 :portfolio-trade-history/fwd-return                 "No"
                  :portfolio-trade-history/pivot                      "No"
+                 :portfolio-trade-history/comments                   "No"
 
                  :multiple-portfolio-trade-history/data               []
                  :multiple-portfolio-trade-history/start-date         (t/int-to-gdate 20220101)
@@ -394,6 +395,7 @@
            :portfolio-trade-history/end-date
            :portfolio-trade-history/performance
            :portfolio-trade-history/fwd-return
+           :portfolio-trade-history/comments
            :portfolio-trade-history/pivot
 
            :multiple-portfolio-trade-history/start-date
