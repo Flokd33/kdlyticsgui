@@ -1026,7 +1026,7 @@
     [box :padding "80px 225px" :child
      [v-box :class "element" :align :center :gap "20px"
       :children
-      [[title :label "Top Bottom 1W Price Return" :level :level1]
+      [[title :label "Top/bottom 1W price return" :level :level1]
        [:> ReactTable
         {:data                data
          :columns             (concat [{:columns [{:Header "Isin" :accessor "ISIN" :width 100 }
