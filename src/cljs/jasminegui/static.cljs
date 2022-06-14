@@ -75,6 +75,7 @@
    {:code :issuer-coverage      :name "Issuer coverage"}
    {:code :model-portfolios     :name "Model portfolios (WIP)"}
    {:code :score-vs-outlook2    :name "Up/down candidates"}
+   {:code :top-bottom-pr        :name "Top/bottom universe"}
    ])
 
 (def esg-navigation

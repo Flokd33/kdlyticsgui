@@ -267,11 +267,7 @@
           {:data                data
            :columns             (concat [{:Header  "Trade"
                                           :columns [{:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10}
-                                                    {:Header "Input Date" :accessor "InputDate" :width 80 :Cell subs10}
-                                                    {:Header "Exec. time" :accessor "Time_to_trade" :width 80 :style {:textAlign "right"}}
-                                                    {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
                                                     {:Header "Type" :accessor "TransactionTypeName" :width 75}
-                                                    ;{:Header "Instrument" :accessor "IssueName" :width 400}
                                                     {:Header "Instrument" :accessor "NAME" :width 120}
                                                     {:Header "ISIN" :accessor "ISIN" :width 100}
                                                     {:Header "CCY" :accessor "LocalCcy" :width 45}
@@ -298,7 +294,10 @@
                                            ])
                                         (if (= @(rf/subscribe [:portfolio-trade-history/comments]) "Yes")
                                           [{:Header "Comments"
-                                            :columns [{:Header "Order reason" :accessor "order_reason" :width 220}
+                                            :columns [{:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
+                                                      {:Header "Input Date" :accessor "InputDate" :width 80 :Cell subs10}
+                                                      {:Header "Exec. time" :accessor "Time_to_trade" :width 80 :style {:textAlign "right"}}
+                                                      {:Header "Order reason" :accessor "order_reason" :width 220}
                                                       {:Header "Trader" :accessor "trader" :width 110}
                                                       {:Header "Trader Comment" :accessor "trader_comments" :width 200}
                                                       {:Header "PM" :accessor "portfolio_manager" :width 120}
