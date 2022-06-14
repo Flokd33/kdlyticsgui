@@ -1009,6 +1009,7 @@
         hb (fn [v] [h-box  :gap "10px" :align :center :children v])
         ]
     (println @field )
+    (println @(rf/subscribe [:quant-model/top-bottom-price-change])) ; new top bottom here
       [v-box :width "400px" :gap "10px" :class "element"
        :children [[title :label "Update field" :level :level1]
                   [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model isin-update :change-on-blur? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-isin %])]]]
