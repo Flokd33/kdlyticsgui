@@ -463,33 +463,33 @@
    [:> ReactTable
     {:data                data-filtered
      :columns             (concat [{:Header  "Trade"
-                                    :columns [{:Header "Name" :accessor "NAME" :width 100 }
-                                              {:Header "Trade Date" :accessor "TradeDate" :width 100 :Cell subs10}
-                                              {:Header "Input Date" :accessor "InputDate" :width 100 :Cell subs10}
-                                              {:Header "Exec. time" :accessor "Time_to_trade" :width 100 :style {:textAlign "right"} }
-                                              {:Header "Portfolio" :accessor "portfolio" :width 100 }
-                                              {:Header "Trade" :accessor "TransactionTypeName" :width 100}
-                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 100}
-                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
-                                              {:Header "Quantity" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
-                                              {:Header "bps" :accessor "bps" :width 100 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
-                                              {:Header "Price" :accessor "PriceLcl" :width 100  :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Last Price" :accessor "last-price" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                    :columns [{:Header "Name" :accessor "NAME" :width 80 }
+                                              {:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10}
+                                              {:Header "Input Date" :accessor "InputDate" :width 80 :Cell subs10}
+                                              {:Header "Exec. time" :accessor "Time_to_trade" :width 70 :style {:textAlign "right"} }
+                                              {:Header "Portfolio" :accessor "portfolio" :width 80 }
+                                              {:Header "Trade" :accessor "TransactionTypeName" :width 80}
+                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 80}
+                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 80}
+                                              {:Header "Quantity" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "bps" :accessor "bps" :width 80 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                                              {:Header "Price" :accessor "PriceLcl" :width 80  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Last Price" :accessor "last-price" :width 80  :style {:textAlign "right"} :Cell tables/round2}
                                               ]
                                     }
                                    {:Header  "Beta vs Cembi"
-                                    :columns [{:Header "Issue" :accessor "beta-vs-cembi" :width 100  :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Trade Contrib" :accessor "beta-vs-cembi-contri"  :style {:textAlign "right"} :Cell tables/round3}
+                                    :columns [{:Header "Issue" :accessor "beta-vs-cembi" :width 80 :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Trade Contrib" :accessor "beta-vs-cembi-contri" :width 80 :style {:textAlign "right"} :Cell tables/round3}
                                               ]
                                     }
                                    {:Header  "Performance"
-                                    :columns [{:Header "TR" :accessor "total-return" :width 100 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                              {:Header "TR CEMBI" :accessor "tr-vs-cembi" :width 100 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                    :columns [{:Header "TR" :accessor "total-return" :width 80 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                              {:Header "TR CEMBI" :accessor "tr-vs-cembi" :width 80 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
                                               ]
                                     }
                                    {:Header  "Comments"
                                     :columns [{:Header "Order Reason" :accessor "order_reason" :width 250 }
-                                              {:Header "PM comment" :accessor "pm_instruction" :width 150 }
+                                              {:Header "PM comment" :accessor "pm_instruction" :width 100 }
                                               {:Header "Trader comment" :accessor "trader_comments" :width 300 }
                                               ]
                                     }
