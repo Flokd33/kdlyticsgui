@@ -1031,6 +1031,7 @@
         {:data                data
          :columns             (concat [{:columns [{:Header "Isin" :accessor "ISIN" :width 100 }
                                                   {:Header "Name" :accessor "NAME" :width 100 :style {:textAlign "left"}}
+                                                  {:Header "Sector" :accessor "SECTOR" :width 100 :style {:textAlign "left"}}
                                                   {:Header "Date start" :accessor "FROM" :width 80  :style {:textAlign "left"}}
                                                   {:Header "Date end" :accessor "TO" :width 80 :style {:textAlign "right"}}
                                                   {:Header "Price start" :accessor "PRICE_TO" :width 80  :style {:textAlign "right"} :Cell tables/round2}
