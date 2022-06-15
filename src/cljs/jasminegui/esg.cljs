@@ -380,14 +380,13 @@
   (let [data @(rf/subscribe [:esg/ungc-problem-securities])
         header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
     (when (zero? (count data)) (rf/dispatch [:get-ungc-problem-securities]))
-    (println data)
     [v-box :gap "20px" :class "element" :width standard-box-width
      :children [
                 [h-box :align :center :children [[title :label "UNGC problem securities" :level :level1]
                                                  [gap :size "1"]
                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (sort-by :Ticker data) "msci"  msci-cols "\t")]]]
                 [:> ReactTable
-                 {:data                data
+                 {:data                (map #(update % :danger (fn [d] (if d 1 0))) data)
                   :columns             [
                                         {:Header  "Description" :headerStyle header-style
                                          :columns [{:Header "Bond" :accessor "Bond" :width 100}
@@ -397,7 +396,7 @@
                                                    {:Header "Held?" :accessor "n91held" :width 65 :style {:textAlign "center"} :filterable true :filterMethod tables/nb-filter-OR-AND :show true}
                                                    {:Header "Danger?" :accessor "danger" :width 65 :style {:textAlign "center"} :filterable true :filterMethod tables/nb-filter-OR-AND :show true}]}
                                         {:Header  "MSCI" :headerStyle header-style
-                                         :columns [{:Header "UNGC compliance" :headerStyle header-style :accessor "UNGC_COMPLIANCE" :style {:textAlign "center"} :width 90} ]}
+                                         :columns [{:Header "UNGC compliance" :headerStyle header-style :accessor "UNGC_COMPLIANCE" :style {:textAlign "center"} :width 90}]}
                                         {:Header  "Reprisk" :headerStyle header-style
                                          :columns [{:Header "P1 human rights" :headerStyle header-style :accessor "principle_1_human_rights" :width 90 :style {:textAlign "center"}}
                                                    {:Header "P2 human rights" :headerStyle header-style :accessor "principle_2_human_rights" :width 90 :style {:textAlign "center"}}
@@ -410,12 +409,7 @@
                                                    {:Header "P9 environment" :headerStyle header-style :accessor "principle_9_environment" :width 90 :style {:textAlign "center"}}
                                                    {:Header "P10 anti corruption" :headerStyle header-style :accessor "principle_10_anti_corruption" :width 90 :style {:textAlign "center"}}
 
-
-
-
                                                    ]}
-
-
 
                                         ]
                   :pageSize            20
