@@ -268,7 +268,7 @@
            :columns             (concat [{:Header  "Trade"
                                           :columns [{:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10}
                                                     {:Header "Type" :accessor "TransactionTypeName" :width 75}
-                                                    {:Header "Instrument" :accessor "NAME" :width 120}
+                                                    {:Header "Instrument" :accessor "NAME" :width 180}
                                                     {:Header "ISIN" :accessor "ISIN" :width 100}
                                                     {:Header "CCY" :accessor "LocalCcy" :width 45}
                                                     {:Header "Notional" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
@@ -367,7 +367,7 @@
                   :children [[v-box :gap "15px"
                               :children [[h-box
                                           :width "1700px"
-                                          :gap "10px"
+                                          :gap "6px"
                                           :children [[title :label "Portfolio:" :level :level3]
                                                      [single-dropdown
                                                       :width riskviews/dropdown-width
