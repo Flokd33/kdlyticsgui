@@ -1008,7 +1008,6 @@
         update-message (r/cursor db2 [:message])
         hb (fn [v] [h-box  :gap "10px" :align :center :children v])
         ]
-    (println @field )
       [v-box :width "400px" :gap "10px" :class "element"
        :children [[title :label "Update field" :level :level1]
                   [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model isin-update :change-on-blur? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-isin %])]]]
@@ -1019,9 +1018,34 @@
                   [hb [[button :style {:width "360px"} :label "Update!" :on-click #(rf/dispatch [:master-security-update-field @isin-update @field @new-value])] ]]
                   [hb [[label :width "100px" :label "Result"] [box :width "250px" :child [label :label @update-message]]]]
                   ]])
-
     )
 
+(defn top-bottom-pr []
+  (let [data  @(rf/subscribe [:quant-model/top-bottom-price-change])]
+    (println data)
+    [box :padding "80px 225px" :child
+     [v-box :class "element" :align :center :gap "20px"
+      :children
+      [[title :label "Top/bottom 1W price return" :level :level1]
+       [:> ReactTable
+        {:data                data
+         :columns             (concat [{:columns [{:Header "Isin" :accessor "ISIN" :width 100 }
+                                                  {:Header "Name" :accessor "NAME" :width 100 :style {:textAlign "left"}}
+                                                  {:Header "Sector" :accessor "SECTOR" :width 100 :style {:textAlign "left"}}
+                                                  {:Header "Date start" :accessor "FROM" :width 80  :style {:textAlign "left"}}
+                                                  {:Header "Date end" :accessor "TO" :width 80 :style {:textAlign "right"}}
+                                                  {:Header "Price start" :accessor "PRICE_TO" :width 80  :style {:textAlign "right"} :Cell tables/round2}
+                                                  {:Header "Price end" :accessor "PRICE_FROM" :width 80  :style {:textAlign "right"} :Cell tables/round2}
+                                                  {:Header "Price return" :accessor "PRICE_RETURN" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}
+                                                  ]}]
+                                      )
+         :showPagination      (> (count data) 50)
+         :defaultPageSize     (min 50 (count data))
+         :filterable          true
+         :className           "-striped -highlight"}]]
+      ]]
+    )
+  )
 
 (defn master-security [] [v-box :padding "80px 10px" :class "rightelement" :gap "20px" :children [[new-bond-entry] [update-field]]])
 
@@ -1047,7 +1071,8 @@
       ;:methodology        [methodology]
       :issuer-coverage    [issuer-coverage]
       :model-portfolios   [modelportfolios/model-portfolio-view]
-      :score-vs-outlook2   [score-vs-outlook]              ; FC
+      :score-vs-outlook2  [score-vs-outlook]
+      :top-bottom-pr      [top-bottom-pr]
       [:div.output "nothing to display"])))
 
 (defn display-saved-chart [line]

@@ -12,6 +12,7 @@
     [re-com.util :refer [px]]
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
+    [cljs-time.core :as time]
     [cljs-time.core :refer [today]]
     ["react-table-v6" :as rt :default ReactTable]
     [jasminegui.riskviews :as riskviews]
@@ -255,7 +256,8 @@
 
 (defn portfolio-history-table []
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
-        pivot @(rf/subscribe [:portfolio-trade-history/pivot])]
+        pivot @(rf/subscribe [:portfolio-trade-history/pivot])
+        ]
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
@@ -264,11 +266,9 @@
          [:> ReactTable
           {:data                data
            :columns             (concat [{:Header  "Trade"
-                                          :columns [{:Header "Date" :accessor "TradeDate" :width 75 :Cell subs10}
-                                                    {:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
+                                          :columns [{:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10}
                                                     {:Header "Type" :accessor "TransactionTypeName" :width 75}
-                                                    ;{:Header "Instrument" :accessor "IssueName" :width 400}
-                                                    {:Header "Instrument" :accessor "NAME" :width 180}
+                                                    {:Header "Instrument" :accessor "NAME" :width 120}
                                                     {:Header "ISIN" :accessor "ISIN" :width 100}
                                                     {:Header "CCY" :accessor "LocalCcy" :width 45}
                                                     {:Header "Notional" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
@@ -289,6 +289,19 @@
                                             }
                                            {:Header "Bond TR"
                                             :columns [{:Header "YTD %" :accessor "ytd-return" :width 80 :style {:textAlign "right"} :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                                      ]
+                                            }
+                                           ])
+                                        (if (= @(rf/subscribe [:portfolio-trade-history/comments]) "Yes")
+                                          [{:Header "Comments"
+                                            :columns [{:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
+                                                      {:Header "Input Date" :accessor "InputDate" :width 80 :Cell subs10}
+                                                      {:Header "Exec. time" :accessor "Time_to_trade" :width 80 :style {:textAlign "right"}}
+                                                      {:Header "Order reason" :accessor "order_reason" :width 220}
+                                                      {:Header "Trader" :accessor "trader" :width 110}
+                                                      {:Header "Trader Comment" :accessor "trader_comments" :width 200}
+                                                      {:Header "PM" :accessor "portfolio_manager" :width 120}
+                                                      {:Header "PM Instruction" :accessor "pm_instruction" :width 150}
                                                       ]
                                             }
                                            ])
@@ -380,6 +393,9 @@
                                                      [title :label "Get performance?" :level :level3]
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/performance]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/performance %])]
                                                      [gap :size "20px"]
+                                                     [title :label "Get trade comments?" :level :level3]
+                                                     [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/comments]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/comments %])]
+                                                     [gap :size "20px"]
                                                      [title :label "Get forward return?" :level :level3]
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/fwd-return]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/fwd-return %])]
                                                      [gap :size "20px"]
@@ -395,11 +411,13 @@
                  [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]
                  ]]]))
 
+(defn txt-format [fmt m this]    (if-let [x (aget this "value")] (gstring/format fmt (* m x)) "-"))
+
 (defn recent-trades-display [this]
   (r/as-element
     (if-let [x (aget this "value")]
       [v-box :children (into [] (for [t x]
-                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next (next t))) )) "bps") " @" (last t)]
+                                  [p (first t) " " (second t) " " (str (gstring/format "%.0f" (js/parseFloat (second (next (next t))) )) "bps") " @" (gstring/format "%.3f" (last t))]
                                   ))]
       "-"))
   )
@@ -437,7 +455,6 @@
         selected-portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         data-filtered  (t/chainfilter {:portfolio #(some #{%} selected-portfolios)} data)
         ]
-    (println data)
     (if @(rf/subscribe [:recent-trade-data/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
   [box :align :center
@@ -445,26 +462,34 @@
    [:> ReactTable
     {:data                data-filtered
      :columns             (concat [{:Header  "Trade"
-                                    :columns [{:Header "Name" :accessor "NAME" :width 100 }
-                                              {:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
-                                              {:Header "Portfolio" :accessor "portfolio" :width 100 }
-                                              {:Header "Trade" :accessor "TransactionTypeName" :width 100}
-                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 100}
-                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
-                                              {:Header "Quantity" :accessor "Quantity" :width 100 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
-                                              {:Header "bps" :accessor "bps" :width 100 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
-                                              {:Header "Price" :accessor "PriceLcl" :width 100  :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Last Price" :accessor "last-price" :width 100  :style {:textAlign "right"} :Cell tables/round2}
+                                    :columns [{:Header "Name" :accessor "NAME" :width 80 }
+                                              {:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10}
+                                              {:Header "Input Date" :accessor "InputDate" :width 80 :Cell subs10}
+                                              {:Header "Exec. time" :accessor "Time_to_trade" :width 70 :style {:textAlign "right"} }
+                                              {:Header "Portfolio" :accessor "portfolio" :width 80 }
+                                              {:Header "Trade" :accessor "TransactionTypeName" :width 80}
+                                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 80}
+                                              {:Header "Sector" :accessor "JPM_SECTOR" :width 80}
+                                              {:Header "Quantity" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
+                                              {:Header "bps" :accessor "bps" :width 80 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                                              {:Header "Price" :accessor "PriceLcl" :width 80  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Last Price" :accessor "last-price" :width 80  :style {:textAlign "right"} :Cell tables/round2}
                                               ]
                                     }
                                    {:Header  "Beta vs Cembi"
-                                    :columns [{:Header "Issue" :accessor "beta-vs-cembi" :width 100  :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Trade Contrib" :accessor "beta-vs-cembi-contri"  :style {:textAlign "right"} :Cell tables/round3}
+                                    :columns [{:Header "Issue" :accessor "beta-vs-cembi" :width 80 :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Trade Contrib" :accessor "beta-vs-cembi-contri" :width 80 :style {:textAlign "right"} :Cell tables/round3}
                                               ]
                                     }
                                    {:Header  "Performance"
-                                    :columns [{:Header "TR" :accessor "total-return" :width 100 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                              {:Header "TR CEMBI" :accessor "tr-vs-cembi" :width 100 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                    :columns [{:Header "TR" :accessor "total-return" :width 80 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                              {:Header "TR CEMBI" :accessor "tr-vs-cembi" :width 80 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
+                                              ]
+                                    }
+                                   {:Header  "Comments"
+                                    :columns [{:Header "Order Reason" :accessor "order_reason" :width 250 }
+                                              {:Header "PM comment" :accessor "pm_instruction" :width 100 }
+                                              {:Header "Trader comment" :accessor "trader_comments" :width 300 }
                                               ]
                                     }
                                    ]
@@ -519,7 +544,7 @@
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-traded-since-date-output @start-date @end-date])]
                                                      [gap :size "20px"]
-                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:traded-since-date-output/trades]) "multi-port-recent-trades-perf")]
+                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:traded-since-date-output/flat-data]) "multi-port-recent-trades-perf" [:portfolio :TransactionTypeName :TICKER :TradeDate :JPM_SECTOR :bps :PriceLcl :last-price :total-return :tr-vs-cembi :beta-vs-cembi :beta-vs-cembi-contri])]
                                                      ]]]]]]
                  [trade-history-recent-perf-table]
                  [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]
