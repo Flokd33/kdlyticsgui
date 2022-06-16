@@ -323,6 +323,25 @@
                  [title :label "Warning: these are weighted average returns from StatPro. Totals won't add-up nor will they match real sub index time series." :level :level3]
                  [index-returns-display]]]]))
 
+(defn top-bottom-pr []
+  (let [data  @(rf/subscribe [:quant-model/top-bottom-price-change])]
+    [v-box :class "subbody" :gap "20px"
+     :children [[box :class "rightelement" :child
+                 (gt/element-box "top-bottom-pr" "100%" (str "Top/bottom 1W price return " ) data
+                                 [[:> ReactTable
+                                   {:data            data
+                                    :columns [{:Header "Isin" :accessor "ISIN" :width 100 }
+                                              {:Header "Name" :accessor "NAME" :width 100 :style {:textAlign "left"}}
+                                              {:Header "Sector" :accessor "SECTOR" :width 100 :style {:textAlign "left"}}
+                                              {:Header "Date start" :accessor "FROM" :width 80  :style {:textAlign "left"}}
+                                              {:Header "Date end" :accessor "TO" :width 80 :style {:textAlign "right"}}
+                                              {:Header "Price start" :accessor "PRICE_TO" :width 80  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Price end" :accessor "PRICE_FROM" :width 80  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Price return" :accessor "PRICE_RETURN" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}
+                                              ]}]])]
+                ]]
+    )
+  )
 
 (defn nav-attribution-bar []
   (let [active-home @(rf/subscribe [:navigation/active-attribution])]
@@ -351,6 +370,7 @@
     :single-portfolio               [single-portfolio-attribution-controller]
     :all-portfolios                 [multiple-portfolio-attribution-controller]
     :index-returns                  [index-returns-controller]
+    :top-bottom-pr                  [top-bottom-pr]
     [:div.output "nothing to display"]))
 
 

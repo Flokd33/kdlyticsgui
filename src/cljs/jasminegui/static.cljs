@@ -51,7 +51,8 @@
   [{:code :summary             :name "Overview"}
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
-   {:code :index-returns       :name "Index returns"}])
+   {:code :index-returns       :name "Index returns"}
+   {:code :top-bottom-pr       :name "Top/bottom universe"}])
 
 (def var-navigation
   [{:code :overview            :name "Overview"}
@@ -75,7 +76,6 @@
    {:code :issuer-coverage      :name "Issuer coverage"}
    {:code :model-portfolios     :name "Model portfolios (WIP)"}
    {:code :score-vs-outlook2    :name "Up/down candidates"}
-   {:code :top-bottom-pr        :name "Top/bottom universe"}
    ])
 
 (def esg-navigation

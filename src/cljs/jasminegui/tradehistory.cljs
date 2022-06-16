@@ -438,7 +438,6 @@
                         (filter empty-filter)
                         )
         ]
-    ;(println (first data))
     [box :align :center
      :child
      [:> ReactTable
