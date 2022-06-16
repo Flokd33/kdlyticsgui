@@ -324,7 +324,7 @@
                  [index-returns-display]]]]))
 
 (defn top-bottom-pr []
-  (let [data  @(rf/subscribe [:quant-model/top-bottom-price-change])]
+  (let [data  @(rf/subscribe [:top-bottom-price-change])]
     [v-box :class "subbody" :gap "20px"
      :children [[box :class "rightelement" :child
                  (gt/element-box "top-bottom-pr" "100%" (str "Top/bottom 1W price return " ) data
