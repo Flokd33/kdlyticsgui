@@ -254,10 +254,17 @@
                    [p (if nominal "" "bps based on latest NAV, not at time of trade")]
                    ]]])))
 
+(def show-modal-commentary (r/atom {:show false :txt nil}))
+
+(defn on-click-context [state rowInfo instance]
+  (clj->js {:onClick #(reset! show-modal-commentary {:show true :txt (aget rowInfo "original" "trader_comments")}) :style {:cursor "pointer"}}))
+
+
 (defn portfolio-history-table []
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
         pivot @(rf/subscribe [:portfolio-trade-history/pivot])
         ]
+
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
@@ -266,9 +273,9 @@
          [:> ReactTable
           {:data                data
            :columns             (concat [{:Header  "Trade"
-                                          :columns [{:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10}
+                                          :columns [{:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10 }
                                                     {:Header "Type" :accessor "TransactionTypeName" :width 75}
-                                                    {:Header "Instrument" :accessor "NAME" :width 180}
+                                                    {:Header "Instrument" :accessor "NAME" :width 150}
                                                     {:Header "ISIN" :accessor "ISIN" :width 100}
                                                     {:Header "CCY" :accessor "LocalCcy" :width 45}
                                                     {:Header "Notional" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
@@ -299,7 +306,7 @@
                                                       {:Header "Exec. time" :accessor "Time_to_trade" :width 80 :style {:textAlign "right"}}
                                                       {:Header "Order reason" :accessor "order_reason" :width 220}
                                                       {:Header "Trader" :accessor "trader" :width 110}
-                                                      {:Header "Trader Comment" :accessor "trader_comments" :width 200}
+                                                      {:Header "Trader Comment" :accessor "trader_comments" :width 300 :style {:whiteSpace "unset"}}
                                                       {:Header "PM" :accessor "portfolio_manager" :width 120}
                                                       {:Header "PM Instruction" :accessor "pm_instruction" :width 150}
                                                       ]
@@ -317,7 +324,9 @@
            :pivotBy             []
            :filterable          true
            :defaultFilterMethod tables/text-filter-OR
-           :className           "-striped -highlight"}]
+           :className           "-striped -highlight"
+           }
+          ]
          ;TODO FIND OUT HOW TO SORT THROUGH PIVOT
          [:> ReactTable
           {:data            (sort-by (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) (map #(-> % (update :Quantity int)) data))
@@ -338,7 +347,13 @@
            :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) :TICKER :NAME]
            :className       "-striped -highlight"}]
 
-         )])))
+         )])
+
+
+
+      )
+    )
+
 
 (defn nav-trade-history-bar
   "Create the sidebar"
@@ -487,7 +502,7 @@
                                     }
                                    {:Header  "Comments"
                                     :columns [{:Header "Order Reason" :accessor "order_reason" :width 250 }
-                                              {:Header "Trader comment" :accessor "trader_comments" :width 300 }
+                                              ;{:Header "Trader comment" :accessor "trader_comments" :width 300 } ;:style {:whiteSpace "unset"}
                                               {:Header "PM comment" :accessor "pm_instruction" :width 100 }
                                               ]
                                     }
@@ -498,7 +513,9 @@
      :pivotBy             []
      :filterable          true
      :defaultFilterMethod tables/text-filter-OR
-     :className           "-striped -highlight"}]]))
+     :className           "-striped -highlight"
+     :getTrProps      on-click-context
+     }]]))
 
     )
 
@@ -739,6 +756,23 @@
     )
   )
 
+(defn modal-commentary []
+  (if (:show @show-modal-commentary)
+    ;(println @(rf/subscribe show-modal-commentary [:txt]))
+    [modal-panel
+     :wrap-nicely? true
+     :backdrop-on-click #(reset! show-modal-commentary [:show false])
+     :child
+     [v-box :gap "10px" :width "400px"
+      :children [[h-box :gap "20px" :align :center :width "400px"
+                  :children [[v-box :gap "20px" :align :center
+                              :children [[title :label "Trader Comments" :level :level2]
+                                         [label :width "350px" :label (:txt @show-modal-commentary) ] ;(rf/subscribe show-modal-commentary [:txt])
+                                         ]]
+                             [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(reset! show-modal-commentary [:show false])]
+                             ]]
+                 ]]])
+  )
 
 (defn active-home
   "Create the body with trade-history"
@@ -754,4 +788,4 @@
 (defn trade-history-view
   "Create the full view with sidebar and body"
   []
-  [h-box :gap "10px" :padding "0px" :children [[nav-trade-history-bar] [active-home]]])
+  [h-box :gap "10px" :padding "0px" :children [[nav-trade-history-bar] [active-home] [modal-commentary]]])
