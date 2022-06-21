@@ -487,8 +487,8 @@
                                     }
                                    {:Header  "Comments"
                                     :columns [{:Header "Order Reason" :accessor "order_reason" :width 250 }
-                                              {:Header "PM comment" :accessor "pm_instruction" :width 100 }
                                               {:Header "Trader comment" :accessor "trader_comments" :width 300 }
+                                              {:Header "PM comment" :accessor "pm_instruction" :width 100 }
                                               ]
                                     }
                                    ]
@@ -543,7 +543,7 @@
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-traded-since-date-output @start-date @end-date])]
                                                      [gap :size "20px"]
-                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:traded-since-date-output/flat-data]) "multi-port-recent-trades-perf" [:portfolio :TransactionTypeName :TICKER :TradeDate :JPM_SECTOR :bps :PriceLcl :last-price :total-return :tr-vs-cembi :beta-vs-cembi :beta-vs-cembi-contri])]
+                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:traded-since-date-output/flat-data]) "multi-port-recent-trades-perf" [:portfolio :TransactionTypeName :TICKER :TradeDate :JPM_SECTOR :bps :PriceLcl :last-price :total-return :tr-vs-cembi :beta-vs-cembi :beta-vs-cembi-contri :pm_instruction :order-reason :trader_comments])]
                                                      ]]]]]]
                  [trade-history-recent-perf-table]
                  [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]
