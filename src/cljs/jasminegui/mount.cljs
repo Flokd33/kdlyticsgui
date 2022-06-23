@@ -148,6 +148,8 @@
                  :attribution-index-returns/table                   []
                  :attribution-index-returns/x-top-15                false
 
+                 :top-bottom-price-change                           []
+
                  :single-bond-trade-history/data                     []
                  :single-bond-trade-history/flat-data                []
                  :single-bond-trade-history/bond                     nil
@@ -226,7 +228,7 @@
                  :quant-model/saved-advanced-charts       {}
                  :quant-model/issuer-coverage             []
                  :quant-model/model-date                  ""
-                 :quant-model/top-bottom-price-change     []
+
 
                  :quant-model/history-result              []
                  :quant-model/history-result-prediction   []
@@ -390,6 +392,8 @@
            :attribution-index-returns/table
            :attribution-index-returns/x-top-15
 
+           :top-bottom-price-change
+
            :single-bond-trade-history/show-flat-modal
            :single-bond-trade-history/show-modal
            :single-bond-trade-history/bond
@@ -456,7 +460,6 @@
            :quant-model/saved-advanced-charts
            :quant-model/issuer-coverage
            :quant-model/model-date
-           :quant-model/top-bottom-price-change
            :quant-model/history-start-date
 
            :scorecard/attribution-table
@@ -851,7 +854,7 @@
    {:get-key :get-gb-reports    :url-tail "gb-reports" :dis-key :gb-reports}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
    {:get-key :get-ungc-problem-securities :url-tail "ungc-problem-securities" :dis-key :esg/ungc-problem-securities}
-   {:get-key :get-top-bottom-price-change :url-tail "top_bottom_price_change" :dis-key  :quant-model/top-bottom-price-change}
+   {:get-key :get-top-bottom-price-change :url-tail "top_bottom_price_change" :dis-key  :top-bottom-price-change}
 
 
    {:get-key :implementation-list-request         :url-tail "trade-implementation-list"   :dis-key :implementation/implementation-list}

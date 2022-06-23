@@ -6,8 +6,8 @@
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [:get-qt-date :get-total-positions   :get-naked-positions :get-instruments] ;:get-positions
-        attr-events [:get-attribution-date :get-attribution-summary :get-attribution-available-months  [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
-        quant-events [:get-top-bottom-price-change :get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts]
+        attr-events [:get-top-bottom-price-change :get-attribution-date :get-attribution-summary :get-attribution-available-months  [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
+        quant-events [:get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         implementation-events (conj home-events :get-quant-model :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :live-cast-parent-positions-request)
         ]
@@ -51,7 +51,8 @@
   [{:code :summary             :name "Overview"}
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
-   {:code :index-returns       :name "Index returns"}])
+   {:code :index-returns       :name "Index returns"}
+   {:code :top-bottom-pr       :name "Top/bottom universe"}])
 
 (def var-navigation
   [{:code :overview            :name "Overview"}
@@ -75,7 +76,6 @@
    {:code :issuer-coverage      :name "Issuer coverage"}
    {:code :model-portfolios     :name "Model portfolios (WIP)"}
    {:code :score-vs-outlook2    :name "Up/down candidates"}
-   {:code :top-bottom-pr        :name "Top/bottom universe"}
    ])
 
 (def esg-navigation
