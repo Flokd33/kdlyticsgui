@@ -244,10 +244,26 @@
                                         (assoc :tradeanalyser.implementation/trade-legs (into {} (for [[k v] (:tradeanalyser.implementation/trade-legs data)] [(cljs.reader/read-string (name k)) v]))))
               :implementation/show-implementation-selector false)))
 
+;(rf/reg-event-fx
+;  :trade-implementation/check-isin-old
+;  (fn [{:keys [db]} [_ leg-number isin]]
+;    {:http-get-dispatch {:url (str static/server-address "bond-static-data?ISIN=" isin) :dispatch-key [:trade-implementation/bond-static-data leg-number]}}))
+
 (rf/reg-event-fx
   :trade-implementation/check-isin
-  (fn [{:keys [db]} [_ leg-number isin]]
-    {:http-get-dispatch {:url (str static/server-address "bond-static-data?ISIN=" isin) :dispatch-key [:trade-implementation/bond-static-data leg-number]}}))
+  (fn [{:keys [db]} [_ leg-number ISIN]]
+    (let [data (first (filter #(= (:ISIN %) ISIN) (db :quant-model/model-output)))
+          f (fn [start-db p] (assoc-in
+                               start-db
+                               [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation (keyword p) :existing]
+                               (if-let [x (get-in (:implementation/live-positions db) [p ISIN])] x 0)))]
+      (println data)
+      {:db (reduce f
+                   (-> db
+                       (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :NAME] (if data (:Bond data) "not found"))
+                       (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :CRNCY] (if data (:CRNCY data) "not found")))
+                   (:portfolios db))})))
+
 
 (rf/reg-event-fx
   :trade-implementation/check-pricing
@@ -310,19 +326,19 @@
         (fill-static leg-number qmd)                        ;(:quant-model data)
         (fill-quant-value leg-number qmd)))))               ;(:quant-model data)
 
-(rf/reg-event-db
-  :trade-implementation/bond-static-data
-  (fn [db [_ leg-number data]]
-    (let [ISIN (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :ISIN])
-          f (fn [start-db p] (assoc-in
-                               start-db
-                               [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation (keyword p) :existing]
-                               (if-let [x (get-in (:implementation/live-positions db) [p ISIN])] x 0)))]
-      (reduce f
-              (-> db
-                  (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :NAME] (if data (:NAME data) "not found"))
-                  (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :CRNCY] (if data (:CRNCY data) "not found")))
-              (:portfolios db)))))
+;(rf/reg-event-db
+;  :trade-implementation/bond-static-data
+;  (fn [db [_ leg-number data]]
+;    (let [ISIN (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :ISIN])
+;          f (fn [start-db p] (assoc-in
+;                               start-db
+;                               [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation (keyword p) :existing]
+;                               (if-let [x (get-in (:implementation/live-positions db) [p ISIN])] x 0)))]
+;      (reduce f
+;              (-> db
+;                  (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :NAME] (if data (:NAME data) "not found"))
+;                  (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :CRNCY] (if data (:CRNCY data) "not found")))
+;              (:portfolios db)))))
 
 (rf/reg-event-fx
   :trade-implementation/add-to-trade-analyzer

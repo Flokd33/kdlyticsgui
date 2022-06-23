@@ -12,11 +12,11 @@ background-color: #313131;
 }
 
 .subbody {
-padding: 65px 10px;
+padding: 65px 5px;
 }
 
 .element {
-background-color: white;
+background-color: #FAF9F6;
 border-radius: 15px;
 padding: 20px 20px;
 }
@@ -24,7 +24,7 @@ padding: 20px 20px;
 
 .leftnavbar {
 display: flex;
-width: 200px;
+width: 175px;
 z-index: 250;
 position: fixed;
 padding: 77px 0px;
@@ -34,7 +34,7 @@ background-color: #414141;/*#D6E0EA */
 /*border: solid 1px black;*/
 }
 
-.rightelement {margin-left: 200px;}
+.rightelement {margin-left: 175px;}
 
 .navbar {
   position: fixed;
