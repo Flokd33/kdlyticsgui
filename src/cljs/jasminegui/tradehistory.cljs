@@ -325,6 +325,7 @@
            :filterable          true
            :defaultFilterMethod tables/text-filter-OR
            :className           "-striped -highlight"
+           :getTrProps      on-click-context
            }
           ]
          ;TODO FIND OUT HOW TO SORT THROUGH PIVOT
@@ -767,7 +768,7 @@
       :children [[h-box :gap "20px" :align :center :width "400px"
                   :children [[v-box :gap "20px" :align :center
                               :children [[title :label "Trader Comments" :level :level2]
-                                         [label :width "350px" :label (:txt @show-modal-commentary) ] ;(rf/subscribe show-modal-commentary [:txt])
+                                         [label :width "350px" :label (:txt @show-modal-commentary)] ;(rf/subscribe show-modal-commentary [:txt])
                                          ]]
                              [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(reset! show-modal-commentary [:show false])]
                              ]]
