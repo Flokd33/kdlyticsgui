@@ -31,7 +31,7 @@
                  [:> ReactTable
                   {:data           (sort-by (juxt :qt-risk-country-name :qt-jpm-sector :NAME) data)
                    :columns        (vec (remove nil? (concat
-                                                       [{:Header "Description" :columns (concat [{:Header "Name" :accessor "NAME" :width 140 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}] (mapv tables/risk-table-columns [:isin :country :sector]))}]
+                                                       [{:Header "Description" :columns (concat [{:Header "BOND" :accessor "NAME" :width 140 :className "sticky-rt-column" :headerClassName "sticky-rt-column"}] (mapv tables/risk-table-columns [:isin :country :sector]))}]
                                                        (if (@table-checkboxes :Pricing?) [{:Header "Pricing" :columns (mapv tables/risk-table-columns [:yield :g-spread :z-spread :duration])}])
 
 
