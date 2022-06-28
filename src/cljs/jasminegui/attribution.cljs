@@ -337,7 +337,7 @@
         ]
     [h-box :padding "80px 10px" :class "rightelement" :gap "50px"
      :children [[box :class "element" :child
-                 (gt/element-box "top-bottom-pr" "100%" (str "Price return >0 " start-date " to " end-date) data-up
+                 (gt/element-box "top-bottom-pr" "100%" (str "Positive price return " start-date " to " end-date) data-up
                                  [[:> ReactTable
                                    {:data            data-up
                                     :pageSize 50
@@ -358,7 +358,7 @@
                                     :getTrProps held-formating :className "-striped -highlight"
                                     }]])]
                 [box :class "element" :child
-                 (gt/element-box "top-bottom-pr" "100%" (str "Price return <0" start-date " to " end-date) data-down
+                 (gt/element-box "top-bottom-pr" "100%" (str "Negative price return" start-date " to " end-date) data-down
                                  [[:> ReactTable
                                    {:data            data-down
                                     :pageSize 50
