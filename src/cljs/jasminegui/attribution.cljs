@@ -323,6 +323,11 @@
                  [title :label "Warning: these are weighted average returns from StatPro. Totals won't add-up nor will they match real sub index time series." :level :level3]
                  [index-returns-display]]]]))
 
+(defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "held") 1)))
+(defn held-formating [state rowInfo instance]
+  (println rowInfo)
+  (clj->js {:style (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"})}))
+
 (defn top-bottom-pr []
   (let [data  @(rf/subscribe [:top-bottom-price-change])]
     [v-box :class "subbody" :gap "20px"
@@ -338,7 +343,10 @@
                                               {:Header "Price start" :accessor "PRICE_FROM" :width 80  :style {:textAlign "right"} :Cell tables/round2}
                                               {:Header "Price end" :accessor "PRICE_TO" :width 80  :style {:textAlign "right"} :Cell tables/round2}
                                               {:Header "Price return" :accessor "PRICE_RETURN" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}
-                                              ]}]])]
+                                              ;{:Header "91 held" :accessor "held" :width 80  :style {:textAlign "right"} }
+                                              ]
+                                    :getTrProps held-formating :className "-striped -highlight"
+                                    }]])]
                 ]]
     )
   )
