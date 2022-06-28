@@ -24,6 +24,7 @@
     [jasminegui.qs.modelportfolios :as modelportfolios]
     [jasminegui.qs.harvest :as harvest]
     [jasminegui.guitools :as gt]
+    [goog.object :as gobj]
     )
   )
 
@@ -151,28 +152,41 @@
           ]
      }))
 
+(def qs-table-filter (r/atom []))
+;USING A NORMAL ATOM INSTEAD OF REAGENT ACCELERATES THINGS - NOT SURE WHY OR IF IT'S RIGHT THING
+;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
+;UPDATE CLEAR FILTER NEEDS A REAGENT ATOM
+
+(def qs-table-favorites (r/atom #{}))
+
+
 (defn fnevt [state rowInfo instance evt]
   (rcm/context!
     evt
-    [(aget rowInfo "original" "Bond")                                         ; <---- string is a section title
-     ["Copy ISIN" (fn [] (t/copy-to-clipboard (aget rowInfo "original" "ISIN")))]
-     ["Historical charts" (fn [] ((reset! isin-historical-charts (aget rowInfo "original" "ISIN"))
-                                  (reset! bond-historical-charts (aget rowInfo "original" "Bond"))
-                                  (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [(aget rowInfo "original" "ISIN")])])
-                                  (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [(aget rowInfo "original" "ISIN")])])
-                                  (rf/dispatch [:navigation/active-qs :historical-charts])))]
-     ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation (aget rowInfo "original" "ISIN")]))]
-     ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 (aget rowInfo "original" "ISIN")]))]
-     ]))
+    (let [bond (aget rowInfo "original" "Bond") ISIN (aget rowInfo "original" "ISIN")
+          fav (contains? @qs-table-favorites ISIN)]
+      [bond                     ; <---- string is a section title
+       [(if fav "Unstar" "Star") (fn [] (swap! qs-table-favorites (if fav disj conj) ISIN))]
+       ["Copy ISIN" (fn [] (t/copy-to-clipboard ISIN))]
+       ["Historical charts" (fn [] ((reset! isin-historical-charts ISIN)
+                                    (reset! bond-historical-charts bond)
+                                    (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [ISIN])])
+                                    (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [ISIN])])
+                                    (rf/dispatch [:navigation/active-qs :historical-charts])))]
+       ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
+       ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
+       ])))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
 
 (defn on-click-context [state rowInfo instance]
   (clj->js {:onClick #(fnevt state rowInfo instance %) :style (merge {:cursor "pointer"} (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"}))}))
 
-(def qs-table-filter (atom []))
-;USING A NORMAL ATOM INSTEAD OF REAGENT ACCELERATES THINGS - NOT SURE WHY OR IF IT'S RIGHT THING
-;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
+
+(defn favorite-formatting [this]
+  (if this
+    (r/as-element [:i {:class (if (contains? @qs-table-favorites (gobj/getValueByKeys this "value")) "zmdi zmdi-star" "zmdi zmdi-star-outline")}])))
+
 
 (defn qs-table [mytitle data]
   (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
@@ -191,12 +205,17 @@
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:flags]) :label "Show flags?" :on-change #(swap! qstables/table-checkboxes assoc-in [:flags] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
+                                     [gap :size "20px"]
+                                     [button :label "Stars only"  :on-click #(do (println @qs-table-favorites) (reset! qs-table-filter (clj->js [{"id" "ISIN" "value" (clojure.string/join "," @qs-table-favorites )}])))]
+                                     [button :label "Clear stars" :on-click #(do (reset! qs-table-favorites #{}) (reset! qs-table-filter []))]
+                                     [button :label "Clear filter" :on-click #(reset! qs-table-filter [])]
                                      [gap :size "1"]
                                      ])]
                  [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
                  [:div {:id "quant-table-output-id"}
                   [:> ReactTable
-                   {:data            data :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)
+                   ;BELOW: NEED TO REFERENCE QS-TABLE-FAVORITES BEFORE THE CELL FORMATTING OTHERWISE DIDN'T WORK
+                   {:data            data :columns (concat (if @qs-table-favorites [{:Header " " :filterable true :accessor "ISIN" :style {:textAlign "center"} :width 40 :Cell favorite-formatting}] []) (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))
                     :showPagination  true :defaultPageSize 15 :pageSizeOptions [5 10 15 25 50 100]
                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
