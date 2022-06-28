@@ -323,23 +323,63 @@
                  [title :label "Warning: these are weighted average returns from StatPro. Totals won't add-up nor will they match real sub index time series." :level :level3]
                  [index-returns-display]]]]))
 
+(defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "held") 1)))
+(defn held-formating [state rowInfo instance]
+  (println rowInfo)
+  (clj->js {:style (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"})}))
+
 (defn top-bottom-pr []
-  (let [data  @(rf/subscribe [:top-bottom-price-change])]
-    [v-box :class "subbody" :gap "20px"
-     :children [[box :class "rightelement" :child
-                 (gt/element-box "top-bottom-pr" "100%" (str "Top/bottom 1W price return " ) data
+  (let [data  @(rf/subscribe [:top-bottom-price-change])
+        data-up  (tools/chainfilter {:PRICE_RETURN #(>= % 0)} data)
+        data-down  (sort-by :PRICE_RETURN (tools/chainfilter {:PRICE_RETURN #(< % 0)} data))
+        start-date (:FROM (first data))
+        end-date (:TO (first data))
+        ]
+    [h-box :padding "80px 10px" :class "rightelement" :gap "50px"
+     :children [[box :class "element" :child
+                 (gt/element-box "top-bottom-pr" "100%" (str "Positive price return " start-date " to " end-date) data-up
                                  [[:> ReactTable
-                                   {:data            data
-                                    :columns [{:Header "Isin" :accessor "ISIN" :width 100 }
-                                              {:Header "Name" :accessor "NAME" :width 100 :style {:textAlign "left"}}
+                                   {:data            data-up
+                                    :pageSize 50
+                                    :sortable true
+                                    :filterable true
+                                    :defaultFilterMethod tables/text-filter-OR
+                                    :columns [{:Header "ISIN" :accessor "ISIN" :width 100 }
+                                              {:Header "BOND" :accessor "NAME" :width 100 :style {:textAlign "left"}}
                                               {:Header "Sector" :accessor "SECTOR" :width 100 :style {:textAlign "left"}}
-                                              {:Header "Date start" :accessor "FROM" :width 80  :style {:textAlign "left"}}
-                                              {:Header "Date end" :accessor "TO" :width 80 :style {:textAlign "right"}}
-                                              {:Header "Price start" :accessor "PRICE_FROM" :width 80  :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Price end" :accessor "PRICE_TO" :width 80  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Country" :accessor "COUNTRY" :width 100 :style {:textAlign "left"}}
+                                              ;{:Header "Date start" :accessor "FROM" :width 80  :style {:textAlign "left"}} ;To be removed
+                                              ;{:Header "Date end" :accessor "TO" :width 80 :style {:textAlign "right"}}  ;To be removed
+                                              {:Header "Price start" :accessor "PRICE_FROM" :width 70  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Price end" :accessor "PRICE_TO" :width 70  :style {:textAlign "right"} :Cell tables/round2}
                                               {:Header "Price return" :accessor "PRICE_RETURN" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}
-                                              ]}]])]
-                ]]
+                                              {:Header "91held ?" :accessor "held" :width 80  :style {:textAlign "right"} }
+                                              ]
+                                    :getTrProps held-formating :className "-striped -highlight"
+                                    }]])]
+                [box :class "element" :child
+                 (gt/element-box "top-bottom-pr" "100%" (str "Negative price return" start-date " to " end-date) data-down
+                                 [[:> ReactTable
+                                   {:data            data-down
+                                    :pageSize 50
+                                    :sortable true
+                                    :filterable true
+                                    :defaultFilterMethod tables/text-filter-OR
+                                    :columns [{:Header "ISIN" :accessor "ISIN" :width 100 }
+                                              {:Header "BOND" :accessor "NAME" :width 100 :style {:textAlign "left"}}
+                                              {:Header "Sector" :accessor "SECTOR" :width 100 :style {:textAlign "left"}}
+                                              {:Header "Country" :accessor "COUNTRY" :width 100 :style {:textAlign "left"}}
+                                              ;{:Header "Date start" :accessor "FROM" :width 80  :style {:textAlign "left"}} ;To be removed
+                                              ;{:Header "Date end" :accessor "TO" :width 80 :style {:textAlign "right"}}  ;To be removed
+                                              {:Header "Price start" :accessor "PRICE_FROM" :width 70  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Price end" :accessor "PRICE_TO" :width 70  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Price return" :accessor "PRICE_RETURN" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}
+                                              {:Header "91held ?" :accessor "held" :width 80  :style {:textAlign "right"} }
+                                              ]
+                                    :getTrProps held-formating :className "-striped -highlight"
+                                    }]])]]
+
+                ]
     )
   )
 
