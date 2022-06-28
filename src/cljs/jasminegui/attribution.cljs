@@ -329,21 +329,29 @@
   (clj->js {:style (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"})}))
 
 (defn top-bottom-pr []
-  (let [data  @(rf/subscribe [:top-bottom-price-change])]
+  (let [data  @(rf/subscribe [:top-bottom-price-change])
+        start-date (:FROM (first data))
+        end-date (:TO (first data))
+        ]
     [v-box :class "subbody" :gap "20px"
      :children [[box :class "rightelement" :child
-                 (gt/element-box "top-bottom-pr" "100%" (str "Top/bottom 1W price return " ) data
+                 (gt/element-box "top-bottom-pr" "100%" (str "Price return " start-date " to " end-date) data
                                  [[:> ReactTable
                                    {:data            data
+                                    :pageSize 50
+                                    :sortable true
+                                    :filterable true
+                                    :defaultFilterMethod tables/text-filter-OR
                                     :columns [{:Header "Isin" :accessor "ISIN" :width 100 }
                                               {:Header "Name" :accessor "NAME" :width 100 :style {:textAlign "left"}}
                                               {:Header "Sector" :accessor "SECTOR" :width 100 :style {:textAlign "left"}}
-                                              {:Header "Date start" :accessor "FROM" :width 80  :style {:textAlign "left"}}
-                                              {:Header "Date end" :accessor "TO" :width 80 :style {:textAlign "right"}}
-                                              {:Header "Price start" :accessor "PRICE_FROM" :width 80  :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Price end" :accessor "PRICE_TO" :width 80  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Country" :accessor "COUNTRY" :width 100 :style {:textAlign "left"}}
+                                              ;{:Header "Date start" :accessor "FROM" :width 80  :style {:textAlign "left"}} ;To be removed
+                                              ;{:Header "Date end" :accessor "TO" :width 80 :style {:textAlign "right"}}  ;To be removed
+                                              {:Header "Price start" :accessor "PRICE_FROM" :width 70  :style {:textAlign "right"} :Cell tables/round2}
+                                              {:Header "Price end" :accessor "PRICE_TO" :width 70  :style {:textAlign "right"} :Cell tables/round2}
                                               {:Header "Price return" :accessor "PRICE_RETURN" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}
-                                              ;{:Header "91 held" :accessor "held" :width 80  :style {:textAlign "right"} }
+                                              {:Header "91held ?" :accessor "held" :width 80  :style {:textAlign "right"} }
                                               ]
                                     :getTrProps held-formating :className "-striped -highlight"
                                     }]])]
