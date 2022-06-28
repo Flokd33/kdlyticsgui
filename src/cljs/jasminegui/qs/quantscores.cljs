@@ -177,8 +177,13 @@
 (defn qs-table [mytitle data]
   (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
     ;(println (conj (keys (first data)) :ISIN))
-     [v-box :class "element"  :gap "20px" :width "1690px"
-      :children [[title :label mytitle :level :level1]
+     [v-box :class "element"  :gap "10px" :width "1690px"
+      :children [[h-box :align :center :gap "10px" :children [[title :label mytitle :level :level1]
+                                                              [gap :size "1"]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "quant-table-output-id")]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "quant-table-output-id")]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
+                                                              [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :tooltip-position :above-center :on-click #(t/csv-link @(rf/subscribe [:quant-model/model-output]) "quant-model-output" (conj (keys (first @(rf/subscribe [:quant-model/model-output]))) :ISIN))]]]
                  [h-box :align :center :gap "10px"
                   :children (concat (into [] (for [c ["SVR" "Upside/Downside" "Screener (SVR)"]] ;"Summary" "Full"  "Legacy" "New"
                                                ^{:key c} [radio-button :label c :value c :model qstables/table-style :on-change #(reset! qstables/table-style %)]))   ;; key should be unique among siblings
@@ -187,10 +192,6 @@
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "1"]
-                                     [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "quant-table-output-id")]
-                                     [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "quant-table-output-id")]
-                                     [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
-                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :tooltip-position :above-center :on-click #(t/csv-link @(rf/subscribe [:quant-model/model-output]) "quant-model-output" (conj (keys (first @(rf/subscribe [:quant-model/model-output]))) :ISIN))]
                                      ])]
                  [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
                  [:div {:id "quant-table-output-id"}
@@ -210,7 +211,7 @@
   (let [data @(rf/subscribe [:quant-model/model-output])
         cembi-embi (map #(assoc % :totaldummy "") (filter #(or (pos? (:cembi %)) (pos? (:cembi-ig %)) (pos? (:cembi-hy %)) (pos? (:embi %)) (pos? (:embi-ig %)) (pos? (:jaci %))) data))
         final (tables/cljs-text-filter-OR @index-crawler-filter cembi-embi)]
-    [box :padding "80px 10px" :class "rightelement"
+    [box  :class "subbody rightelement"
      :child
              [v-box :class "element" :gap "20px" :width "1690px"
               :children [[title :label "Index crawler" :level :level1]
@@ -363,9 +364,8 @@
         infer-rating-fn (fn [country] (swap! calculator-target assoc :Used_Rating_Score (str (:Used_Rating_Score (first (t/chainfilter {:Country country :Sector "Sovereign"} data))))))
         update-sector-fn (fn [sector] (do (swap! calculator-target assoc :Sector sector) (when (= sector "Sovereign") (swap! calculator-chart-options assoc :rating-curves-sov-only true) (infer-rating-fn (:Country @calculator-target)))))
         update-country-fn (fn [country] (do (swap! calculator-target assoc :Country country) (when (= (:Sector @calculator-target) "Sovereign") (infer-rating-fn (:Country @calculator-target)))))]
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box :class "subbody rightelement" :gap "20px"
      :children [
-
                 (gt/element-box "calculator-controller" "1280px" "New issue calculator" (calculator-result-data @(rf/subscribe [:quant-model/model-output]) @(rf/subscribe [:quant-model/calculator-spreads]))
                                 [[h-box :gap "50px" :align :center
                                   :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"][label :width "80px" :label "Currency"]]]
@@ -412,8 +412,7 @@
                 [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
 (defn qs-table-container []
-  (println @(rf/subscribe [:quant-model/model-date]))
-  [box :padding "80px 10px" :class "rightelement" :child [qs-table (str "Quant model output " @(rf/subscribe [:quant-model/model-date])) @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster
+  [box :class "subbody rightelement" :child [qs-table (str "Quant model output " @(rf/subscribe [:quant-model/model-date])) @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster
 
 (def spot-chart-rating-curves-keys (zipmap ["Base" "Sov only" "Non ESG (SVR)" "ESG (SVR)" "ESG benefit (SVR)"] [:base :sov-only :nesg :esg :esg-benefit])) ;UNUSED ATM BUT IMPORTANT LOGIC
 (def spot-chart-model-choice (r/atom "SVR"))
@@ -433,7 +432,7 @@
   []
   (let [data @(rf/subscribe [:quant-model/model-output])
         issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data)))))]
-    [box :padding "80px 10px" :class "rightelement" :child
+    [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "50px" :width "1620px" :children
       [[h-box :align :center :justify :between :children [[title :label "Spot charts" :level :level1] [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
        [h-box :gap "50px" :children
@@ -470,7 +469,7 @@
 (def open-update (r/atom false))
 (defn advanced-spot-chart []
   (let [data @(rf/subscribe [:quant-model/model-js-output])]
-    [box :padding "80px 10px" :class "rightelement" :child
+    [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :width "1620px" :children
       [[h-box :align :center :justify :between :children [[title :label "Advanced spot charts" :level :level1]  [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
        [h-box :align :start :justify :between :children [
@@ -515,7 +514,7 @@
 
 (defn histograms []
   (let [data @(rf/subscribe [:quant-model/model-js-output])]
-    [box :padding "80px 10px" :class "rightelement" :child
+    [box  :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :width "1620px" :children
       [[title :label "Histograms" :level :level1]
        [title :level :level4 :label "Select target measure, filter table then click draw to see the distribution of results." ]
@@ -537,7 +536,7 @@
        ]]]))
 
 ;(defn methodology []
-;  [box :padding "80px 10px" :class "rightelement" :child
+;  [box  :class "subbody rightelement" :child
 ;   [v-box :class "element" :children
 ;    [[title :label "Methodology" :level :level1] [gap :size "20px"]
 ;     [title :label "General" :level :level3]
@@ -631,7 +630,7 @@
                          (reverse))]
     ;(rf/dispatch [:quant-model/table-filter []])            ;reset table filter
     (reset! qs-table-filter [])
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box  :class "subbody rightelement" :gap "20px"
      :children [
                 [v-box :class "element" :gap "10px" :width "1620px"
                  :children [[title :label "Existing bond ISIN" :level :level1]
@@ -729,7 +728,7 @@
         start-date (rf/subscribe [:quant-model/history-start-date])
         all-data (merge-pricing-with-prediction @(rf/subscribe [:quant-model/history-result]) @(rf/subscribe [:quant-model/history-result-prediction]))
         ]
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box :class "subbody rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Bonds"]
                             [h-box :gap "50px" :align :start
@@ -1020,7 +1019,7 @@
                   ]])
     )
 
-(defn master-security [] [v-box :padding "80px 10px" :class "rightelement" :gap "20px" :children [[new-bond-entry] [update-field]]])
+(defn master-security [] [v-box  :class "subbody rightelement" :gap "20px" :children [[new-bond-entry] [update-field]]])
 
 ;;;;;;
 

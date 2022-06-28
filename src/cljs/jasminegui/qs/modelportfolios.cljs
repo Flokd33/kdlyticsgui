@@ -346,5 +346,5 @@
                   :showPagination false :defaultPageSize (+ (count model-portfolio-universe) 2) :filterable false :className "-striped -highlight"}]]]))
 
 (defn model-portfolio-view []
-  [v-box :padding "80px 10px" :class "rightelement" :gap "50px"
+  [v-box  :class "subbody rightelement" :gap "50px"
    :children [[model-portfolios] [analytics] [explorer] [trade-history]]])

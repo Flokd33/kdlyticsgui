@@ -372,7 +372,8 @@
     ;(println download-columns)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
-                             {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)}
+                             {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @portfolio download-columns is-tree)
+                              :shortcuts :single-portfolio-risk/shortcut}
                              [[h-box :gap "10px" :align :center
                                :children (concat
                                            [[title :label "Display:" :level :level3]
@@ -384,7 +385,8 @@
                                                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
                                                             (filtering-row :single-portfolio-risk/filter)
                                                             [[gap :size "30px"]]))
-                                           (shortcut-row :single-portfolio-risk/shortcut))]
+                                           ;(shortcut-row :single-portfolio-risk/shortcut)
+                                           )]
                               [:div {:id "single-portfolio-risk-table"}
                                [tables/tree-table-risk-table
                                 :single-portfolio-risk/table
@@ -420,14 +422,16 @@
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
     [box :class "subbody rightelement" :child
-     (gt/element-box-generic "multiple-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date])) {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "multiple_portfolio_holdings" download-columns is-tree)}
+     (gt/element-box-generic "multiple-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
+                             {:target-id "multiple-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-risk-display-view "multiple_portfolio_holdings" download-columns is-tree)
+                              :shortcuts :multiple-portfolio-risk/shortcut}
                              [[h-box :gap "50px" :align :center
                                :children
                                [
                                 [h-box :gap "5px" :align :center :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %])  (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
                                 [checkbox :model hide-zero-risk :label "Hide zero lines?"  :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]
                                 [h-box :gap "5px" :align :center :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]
-                                [h-box :gap "5px" :align :center :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]
+                                [h-box :gap "5px" :align :center :children (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter))]
                                 ;[v-box :gap "20px"
                                 ; :children [
                                 ;             ;:disabled? (= @display-style "Tree")
@@ -495,24 +499,22 @@
         field (rf/subscribe [:portfolio-alignment/field])
         threshold (rf/subscribe [:portfolio-alignment/threshold])]
     [box :class "subbody rightelement" :child
-     (gt/element-box "pivot-portfolio-risk" max-width (str "Portfolio alignment " @(rf/subscribe [:qt-date])) nil #(tools/react-table-to-csv @portfolio-alignment-risk-display-view
-                                                                                                                                             "alignment"
-                                                                                                                                             (map name (concat [:NAME :description :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups)))))))
-                     [[h-box :gap "50px"
-                       :children
-                       [[v-box :gap "20px"
-                         :children [[h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:portfolio-alignment/display-style %])]]]
-                                    [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field :choices static/risk-field-choices :on-change #(rf/dispatch [:portfolio-alignment/field %])]]]
-                                    [h-box :gap "10px" :children [[title :label "Threshold:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model threshold :choices static/threshold-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/threshold %])]]]]]
-                        [v-box :gap "20px"
-                         :children [[h-box :gap "10px" :children [[title :label "Portfolios:" :level :level3] [gap :size "1"]
-                                                                  [single-dropdown :width dropdown-width :model portfolio-alignment-group :choices static/portfolio-alignment-groups :on-change #(rf/dispatch [:portfolio-alignment/group %])]]]]]
-
-                        [v-box :gap "20px"
-                         :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :portfolio-alignment/filter)))]
-                                    [h-box :gap "10px" :children (shortcut-row :portfolio-alignment/shortcut)]]]]]
-
-                      [portfolio-alignment-risk-display]]
+     (gt/element-box-generic "pivot-portfolio-risk" max-width (str "Portfolio alignment " @(rf/subscribe [:qt-date]))
+                             {:shortcuts :portfolio-alignment/shortcut
+                              :target-id  :portfolio-alignment/table
+                              :on-click-action #(tools/react-table-to-csv @portfolio-alignment-risk-display-view "alignment" (map name (concat [:NAME :description :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups)))))))}
+                             [[h-box :gap "50px"
+                               :children
+                               [[v-box :gap "10px"
+                                 :children [[h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:portfolio-alignment/display-style %])]]]
+                                            [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field :choices static/risk-field-choices :on-change #(rf/dispatch [:portfolio-alignment/field %])]]]
+                                            [h-box :gap "10px" :children [[title :label "Threshold:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model threshold :choices static/threshold-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/threshold %])]]]]]
+                                [v-box :gap "20px"
+                                 :children [[h-box :gap "10px" :children [[title :label "Portfolios:" :level :level3] [gap :size "1"]
+                                                                          [single-dropdown :width dropdown-width :model portfolio-alignment-group :choices static/portfolio-alignment-groups :on-change #(rf/dispatch [:portfolio-alignment/group %])]]]]]
+                                [v-box :gap "20px"
+                                 :children [[h-box :gap "10px" :children (concat [[title :label "Filtering:" :level :level3]] (filtering-row :portfolio-alignment/filter))]]]]]
+                              [portfolio-alignment-risk-display]]
                      )]))
 
 
@@ -705,7 +707,7 @@
         talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)
         date @(rf/subscribe [:qt-date])]
     ;(println talanx-checks-data-clean)
-    [h-box :padding "80px 10px" :class "rightelement" :gap "20px" :children
+    [h-box  :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px"  :children
        [(gt/element-box "checks" "100%" (str "Portfolio NAV exposure checks " date) portfolio-checks-data-nav
                      [[:> ReactTable
@@ -865,7 +867,8 @@
                                                              [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:position-history/data []]) (rf/dispatch [:position-history/portfolio %]))]]
                                                             (filtering-row :position-history/filter)
                                                             [[gap :size "30px"]]))
-                                           (shortcut-row :position-history/shortcut))]
+                                           ;(shortcut-row :position-history/shortcut)
+                                           )]
                               [h-box :gap "10px" :align :center
                                :children [[title :label "Start period:" :level :level3]
                                           [single-dropdown :width dropdown-width :model start-period :choices (drop-last date-map) :on-change #(rf/dispatch [:position-history/start-period %])]

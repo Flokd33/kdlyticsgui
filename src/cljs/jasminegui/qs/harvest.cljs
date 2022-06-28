@@ -75,7 +75,7 @@
         sres (->> res
                   (remove #(= (:duration-bucket %) "uncategorized"))
                   (sort-by #(.indexOf ["0-3Y" "3-5Y" "5-7Y" "7-10Y" "10Y+"] (:duration-bucket %))))]
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box  :class "subbody rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Most expensive / cheap bonds by category"]
                             [h-box :gap "20px" :align :center
@@ -134,7 +134,7 @@
         sres (->> res
                   (remove #(= (:duration-bucket %) "uncategorized"))
                   (sort-by #(.indexOf ["0-3Y" "3-5Y" "5-7Y" "7-10Y" "10Y+"] (:duration-bucket %))))]
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box  :class "subbody rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Z-spread range by category"]
                             [h-box :gap "20px" :align :center
@@ -200,7 +200,7 @@
                    (into {:Country (cntry-translate-sub c) :code c} (for [s dsec] (let [bonds (filter #(= (:Sector %) s) grp)] [s [(count (distinct (map :Ticker bonds))) (count bonds) (market-cap bonds)]])))
                    {"Total" [(count (distinct (map :Ticker grp))) (count grp) (market-cap grp)]})))
      col-width (if @universe-ignore-sovs-govts? 110 95)]
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box  :class "subbody rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Universe overview"]
                             [h-box :gap "20px" :align :center

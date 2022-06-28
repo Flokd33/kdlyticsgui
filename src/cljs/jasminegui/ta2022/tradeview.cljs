@@ -270,7 +270,7 @@
   (let [too-old?
         (try (> (in-days (interval (t/int-to-gdate (:ta2022.trade/entry-date (last trades))) (t/int-to-gdate (today)))) 4) (catch js/Error e true))
         ]
-    (gt/element-box-generic "isin-picker" element-box-width "Actions" nil
+    (gt/element-box-generic "isin-picker" element-box-width "Actions" {:no-icons true}
                             [[h-box :gap "10px" :align :center
                               :children [[label :label "Pick an ISIN:"]
                                          [input-text :model (rf/subscribe [:ta2022/trade-isin]) :on-change #(rf/dispatch [:ta2022/trade-isin %])]
@@ -333,7 +333,7 @@
         mtp (rf/subscribe [:ta2022/main-table-pivot])
         is-table (= @mtp "No")]
     [v-box :gap "10px"
-     :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" nil
+     :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" {:no-icons true}
                                         [[h-box :gap "10px" :align :center
                                           :children [[single-dropdown :model (rf/subscribe [:ta2022/filter-value :analyst]) :choices (conj (for [k all-analysts] {:id k :label k}) {:id "All" :label "All"}) :on-change #(rf/dispatch [:ta2022/filter-change :analyst %]) :placeholder "Analyst" :filter-box? true]
                                                      [single-dropdown :model (rf/subscribe [:ta2022/filter-value :sector]) :choices all-sectors :on-change #(rf/dispatch [:ta2022/filter-change :sector %]) :placeholder "Sector" :filter-box? true]
