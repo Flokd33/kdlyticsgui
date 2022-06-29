@@ -156,8 +156,10 @@
                                         (some #{(first (.split @bloomberg-request-security-2 " "))} all-isins) (= @bloomberg-request-field-2 "PX_LAST")
                                         (= @operator "-") (= @comparison ">")) (str "> " @comparison-value " px vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
                                    :else "Failed to guess"))]
+    (println  @(rf/subscribe [:ta2022/trade-history]))
     [v-box :gap "5px"
-     :children [[hb [[label :width lw :label "Security 1"]
+     :children [[hb [[label :width lw :label "Suggestions:"] [v-box :children (vec (remove nil? (into [] (for [line (sort-by :name (:indexcomps @(rf/subscribe [:ta2022/trade-history])))] [p (str (:name line) "@" (:latest line) "bps, code " (:bbg-code line))]))))]]]
+                [hb [[label :width lw :label "Security 1"]
                      [md-icon-button :md-icon-name "zmdi zmdi-link" :size :smaller :on-click #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 (str (:ISIN @trade-entry) " Corp")))]
                      [input-text :width "165px" :placeholder "BRL Curncy" :model bloomberg-request-security-1 :status (bbg-security-status @bloomberg-request-security-1) :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-security-1 %))]
                      [typeahead :width "200px" :data-source bbg-field-finder :change-on-blur? true :placeholder "PX_LAST" :rigid? false :model bloomberg-request-field-1 :on-change #(do (rf/dispatch [:ta2022/post-test-result nil]) (reset! bloomberg-request-field-1 %))]]]

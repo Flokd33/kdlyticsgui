@@ -4,9 +4,6 @@
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                          single-dropdown hyperlink md-circle-icon-button md-icon-button selection-list modal-panel typeahead throbber
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
-    [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
-    [re-com.util :refer [px]]
-    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     ["react-table-v6" :as rt :default ReactTable]
     [jasminegui.mount :as mount]
     [jasminegui.tables :as tables]
@@ -24,9 +21,7 @@
     [jasminegui.qs.modelportfolios :as modelportfolios]
     [jasminegui.qs.harvest :as harvest]
     [jasminegui.guitools :as gt]
-    [goog.object :as gobj]
-    )
-  )
+    [goog.object :as gobj]))
 
 ;;
 (def show-chart-modal (r/atom nil))
@@ -44,13 +39,6 @@
 (def nb-bond (r/atom 1))
 (def nb-curve (r/atom 1))
 (def which-charts? (r/atom {:price true :ytw false :ztw false :duration false :rating_score false :cheapness2D false :cheapness4D false}))
-;(def show-historical-price (r/atom true))
-;(def show-historical-ytw (r/atom false))
-;(def show-historical-ztw (r/atom false))
-;(def show-historical-duration (r/atom false))
-;(def show-historical-rating (r/atom false))
-;(def show-cheapness-4d (r/atom false))
-;(def show-cheapness-2d (r/atom false))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def dropdown-width "100px")
 
@@ -161,10 +149,10 @@
 
 
 (defn fnevt [state rowInfo column instance evt]
-  (let [bond (aget rowInfo "original" "Bond") ISIN (aget rowInfo "original" "ISIN")
+  (let [bond (gobj/getValueByKeys rowInfo "original" "Bond") ISIN (gobj/getValueByKeys rowInfo "original" "ISIN")
         ;fav (contains? @qs-table-favorites ISIN)
         ]
-    (if (= (aget column "Header") "*")
+    (if (= (gobj/getValueByKeys column "Header") "*")
       (swap! qs-table-favorites (if (contains? @qs-table-favorites ISIN) disj conj) ISIN)
       (rcm/context!
         evt
@@ -191,7 +179,7 @@
 
 (defn favorite-formatting [this]
   (if this
-    (r/as-element [:i {:class (if (contains? @qs-table-favorites (gobj/getValueByKeys this "value")) "zmdi zmdi-star" "zmdi zmdi-star-outline")}])))
+    [:i {:class (if (contains? @qs-table-favorites (gobj/getValueByKeys this "value")) "zmdi zmdi-star" "zmdi zmdi-star-outline")}]))
 
 
 (defn qs-table [mytitle data]
@@ -274,15 +262,9 @@
                                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :Cell tables/round1}
                                       {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"}}
                                       {:Header "TR %*" :accessor "ytd-return" :width 60 :style {:textAlign "right"}:Cell tables/round2pc} ; FC
-                                      {:Header (gstring/unescapeEntities "&Delta; ZTW*") :accessor "ytd-z-delta" :width 80 :style {:textAlign "right"}:Cell tables/zspread-format} ; FC
-
-                                      ]
-                           :pageSize 5 :filterable false :showPageSizeOptions false :showPagination false}
-                          ]
-                         [title :level :level4 :label "*NB: figures do not include new issues as well as matured and called bonds"]
-                         ]]])
-
-  )
+                                      {:Header (gstring/unescapeEntities "&Delta; ZTW*") :accessor "ytd-z-delta" :width 80 :style {:textAlign "right"}:Cell tables/zspread-format}]
+                           :pageSize 5 :filterable false :showPageSizeOptions false :showPagination false}]
+                         [title :level :level4 :label "*NB: figures do not include new issues as well as matured and called bonds"]]]]))
 
 (defn score-vs-outlook []
   (let [data @(rf/subscribe [:quant-model/model-output])
@@ -361,17 +343,14 @@
                                                    [checkbox :model (r/cursor calculator-chart-options [:country-neighbours]) :label "Country neighbours (same country and rating)" :on-change #(swap! calculator-chart-options assoc :country-neighbours %)]]]
                      [title :level :level4 :label "Left button to move chart, wheel to zoom" ]
                      [oz/vega-lite (qscharts/fair-value-calculator-chart data color-domain-scale (:labels @calculator-chart-options) (:rating-curves @calculator-chart-options) curve-data)]]
-                    )
-
-    ))
+                    )))
 
 (defn calculator-result-data [data calc-data]
   (into [] (for [[k txt c] [[:d4 "Four factor" (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Used_Duration) data))]
                             [:d3country (str (:Country @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Used_Duration) data))]
                             [:d3sector (str (:Sector @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Country :Used_Duration) data))]
                             [:d2 (str (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Country :Used_Duration) data))]]]
-             {:model txt :svr (get-in calc-data [:svr k]) :legacy (get-in calc-data [:legacy k]) :new (get-in calc-data [:new k]) :comps c}))
-  )
+             {:model txt :svr (get-in calc-data [:svr k]) :legacy (get-in calc-data [:legacy k]) :new (get-in calc-data [:new k]) :comps c})))
 
 (defn calculator-result-table []
   (let [data @(rf/subscribe [:quant-model/model-output])
@@ -1007,7 +986,6 @@
                          [label :label "Can't save, bond already in database."]
                          [button :style {:width "360px"} :label "Save to master security!" :disabled? (save-new-bond-impossible) :on-click #(rf/dispatch [:quant-model-new-bond/save-to-bond-universe @new-bond])])]]
                   [hb [[label :width "100px" :label @(rf/subscribe [:quant-model/new-bond-saved-message])]]]]])
-
     ))
 
 
@@ -1017,8 +995,7 @@
   :master-security-current-field
   (fn [{:keys [db]} [_ isin field]]
     {:http-get-dispatch {:url          (str static/server-address "current-field?isin=" isin "&field=" field)
-                         :dispatch-key [:quant-model/master-security-current-field-result]}
-     }))
+                         :dispatch-key [:quant-model/master-security-current-field-result]}}))
 
 (rf/reg-event-db :quant-model/master-security-current-field-change-isin (fn [db [_ isin]] (assoc-in db [:quant-model/master-security-current-field-db :isin] isin)))
 (rf/reg-event-db :quant-model/master-security-current-field-change-field (fn [db [_ field]] (assoc-in db [:quant-model/master-security-current-field-db :field] field)))
@@ -1028,8 +1005,7 @@
   :master-security-update-field
   (fn [{:keys [db]} [_ isin field new-value]]
     {:http-get-dispatch {:url          (str static/server-address "update-field?isin=" isin "&field=" field "&new-value=" new-value)
-                         :dispatch-key [:quant-model/master-security-update-field-result]}
-     }))
+                         :dispatch-key [:quant-model/master-security-update-field-result]}}))
 
 (rf/reg-event-db :quant-model/master-security-update-field-result (fn [db [_  data]]  (assoc-in db [:quant-model/master-security-update-field-db :message] (:message data))))
 
@@ -1040,8 +1016,7 @@
         field         (r/cursor db [:field])
         current-value (r/cursor db [:current-value])
         update-message (r/cursor db2 [:message])
-        hb (fn [v] [h-box  :gap "10px" :align :center :children v])
-        ]
+        hb (fn [v] [h-box  :gap "10px" :align :center :children v])]
       [v-box :width "400px" :gap "10px" :class "element"
        :children [[title :label "Update field" :level :level1]
                   [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model isin-update :change-on-blur? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-isin %])]]]
@@ -1050,9 +1025,7 @@
                   [hb [[label :width "100px" :label "Current Value"] [box :width "250px" :child [label :label @current-value]]]]
                   [hb [[label :width "100px" :label "New Value"] [input-text :width "250px" :model new-value :change-on-blur? false :on-change #(reset! new-value %)]]]
                   [hb [[button :style {:width "360px"} :label "Update!" :on-click #(rf/dispatch [:master-security-update-field @isin-update @field @new-value])] ]]
-                  [hb [[label :width "100px" :label "Result"] [box :width "250px" :child [label :label @update-message]]]]
-                  ]])
-    )
+                  [hb [[label :width "100px" :label "Result"] [box :width "250px" :child [label :label @update-message]]]]]]))
 
 (defn master-security [] [v-box  :class "subbody rightelement" :gap "20px" :children [[new-bond-entry] [update-field]]])
 
@@ -1093,8 +1066,7 @@
   (reset! advanced-chart-filter (clj->js (:advanced-filter line)))
   (reset! reagent-chart-filter (clj->js (:advanced-filter line)))
   (reset! spot-chart-2d-curves-sov-only (if-let [x (:rating-curves-sov-only line)] x false))
-  (reset! open-update true)
-  )
+  (reset! open-update true))
 
 (defn modal-spot-charts []
   (let [nickname (r/atom "")
