@@ -160,28 +160,34 @@
 (def qs-table-favorites (r/atom #{}))
 
 
-(defn fnevt [state rowInfo instance evt]
-  (rcm/context!
-    evt
-    (let [bond (aget rowInfo "original" "Bond") ISIN (aget rowInfo "original" "ISIN")
-          fav (contains? @qs-table-favorites ISIN)]
-      [bond                     ; <---- string is a section title
-       [(if fav "Unstar" "Star") (fn [] (swap! qs-table-favorites (if fav disj conj) ISIN))]
-       ["Copy ISIN" (fn [] (t/copy-to-clipboard ISIN))]
-       ["Historical charts" (fn [] ((reset! isin-historical-charts ISIN)
-                                    (reset! bond-historical-charts bond)
-                                    (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [ISIN])])
-                                    (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [ISIN])])
-                                    (rf/dispatch [:navigation/active-qs :historical-charts])))]
-       ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
-       ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
-       ])))
+(defn fnevt [state rowInfo column instance evt]
+  (let [bond (aget rowInfo "original" "Bond") ISIN (aget rowInfo "original" "ISIN")
+        ;fav (contains? @qs-table-favorites ISIN)
+        ]
+    (if (= (aget column "Header") "*")
+      (swap! qs-table-favorites (if (contains? @qs-table-favorites ISIN) disj conj) ISIN)
+      (rcm/context!
+        evt
+        [bond                                               ; <---- string is a section title
+         ;[(if fav "Unstar" "Star") (fn [] (swap! qs-table-favorites (if fav disj conj) ISIN))]
+         ["Copy ISIN" (fn [] (t/copy-to-clipboard ISIN))]
+         ["Historical charts" (fn [] ((reset! isin-historical-charts ISIN)
+                                      (reset! bond-historical-charts bond)
+                                      (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [ISIN])])
+                                      (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [ISIN])])
+                                      (rf/dispatch [:navigation/active-qs :historical-charts])))]
+         ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
+         ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]]))))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
 
-(defn on-click-context [state rowInfo instance]
-  (clj->js {:onClick #(fnevt state rowInfo instance %) :style (merge {:cursor "pointer"} (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"}))}))
+;(defn on-click-context [state rowInfo instance]
+;  (clj->js {:onClick #(fnevt state rowInfo instance %) :style (merge {:cursor "pointer"} (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"}))}))
 
+(defn on-cell-click-context [state rowInfo column instance]
+  (clj->js {:onClick #(fnevt state rowInfo column instance %) :style (merge {:cursor "pointer"} (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"}))}))
+
+;(reset! clicked [(aget rowInfo "original" "maturity-band") (aget column "id")])
 
 (defn favorite-formatting [this]
   (if this
@@ -206,21 +212,23 @@
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "20px"]
-                                     [button :label "Stars only"  :on-click #(do (println @qs-table-favorites) (reset! qs-table-filter (clj->js [{"id" "ISIN" "value" (clojure.string/join "," @qs-table-favorites )}])))]
-                                     [button :label "Clear stars" :on-click #(do (reset! qs-table-favorites #{}) (reset! qs-table-filter []))]
+                                     [button :label "Filter stars"  :on-click #(do (reset! qs-table-filter (clj->js [{"id" "ISIN" "value" (clojure.string/join "," @qs-table-favorites )}])))]
                                      [button :label "Clear filter" :on-click #(reset! qs-table-filter [])]
+                                     [button :label "Clear stars" :on-click #(do (reset! qs-table-favorites #{}) (reset! qs-table-filter []))]
                                      [gap :size "1"]
                                      ])]
                  [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
                  [:div {:id "quant-table-output-id"}
                   [:> ReactTable
                    ;BELOW: NEED TO REFERENCE QS-TABLE-FAVORITES BEFORE THE CELL FORMATTING OTHERWISE DIDN'T WORK
-                   {:data            data :columns (concat (if @qs-table-favorites [{:Header " " :filterable true :accessor "ISIN" :style {:textAlign "center"} :width 40 :Cell favorite-formatting}] []) (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))
+                   {:data            data :columns (concat (if @qs-table-favorites [{:Header "*" :filterable true :accessor "ISIN" :style {:textAlign "center"} :width 40 :Cell favorite-formatting}] []) (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))
                     :showPagination  true :defaultPageSize 15 :pageSizeOptions [5 10 15 25 50 100]
                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                     :ref             #(reset! qstables/qs-table-view %)
-                    :getTrProps      on-click-context :className "-striped -highlight"}]]]])
+                    ;:getTrProps      on-click-context
+                    :getTdProps      on-cell-click-context
+                    :className "-striped -highlight"}]]]])
   )
 
 (def index-crawler-filter (r/atom []))
@@ -290,7 +298,9 @@
                                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                                     :ref             #(reset! qstables/qs-table-view %)
-                                    :getTrProps      on-click-context :className "-striped -highlight"}]])]
+                                    ;:getTrProps      on-click-context
+                                    :getTdProps      on-cell-click-context
+                                    :className "-striped -highlight"}]])]
                 [box :class "rightelement" :child
                  (gt/element-box "score-vs-outlook2" "100%" (str "Potential downgrade candidates " @(rf/subscribe [:qt-date])) data_downgrade
                                  [[:> ReactTable
@@ -300,7 +310,9 @@
                                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                                     :ref             #(reset! qstables/qs-table-view %)
-                                    :getTrProps      on-click-context :className "-striped -highlight"}]])]]]))
+                                    ;:getTrProps      on-click-context
+                                    :getTdProps      on-cell-click-context
+                                    :className "-striped -highlight"}]])]]]))
 
 
 (def show-duration-modal (r/atom false))
@@ -517,7 +529,9 @@
                                 (when @open-update
                                   (reset! advanced-spot-chart-isins (take 100 (js->clj (if % (.map (. (.getResolvedState %) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))
                                   (if % (reset! open-update false))))
-           :getTrProps     on-click-context :className "-striped -highlight"}]
+           ;:getTrProps      on-click-context
+           :getTdProps      on-cell-click-context
+           :className "-striped -highlight"}]
          ]]]]]))
 
 (def histogram-target (atom "ytd-return"))
@@ -550,7 +564,9 @@
                               (when @open-update
                                 (reset! advanced-spot-chart-isins (js->clj (if % (.map (. (.getResolvedState %) -sortedData) (fn [e] (aget e "_original" "ISIN"))))))
                                 (if % (reset! open-update false))))
-         :getTrProps     on-click-context :className "-striped -highlight"}]
+         ;:getTrProps      on-click-context
+         :getTdProps      on-cell-click-context
+         :className "-striped -highlight"}]
        [oz/vega-lite (qscharts/histogram-chart-vega-spec @advanced-spot-chart-isins @histogram-target (:label (first (t/chainfilter {:id @histogram-target} all-histogram-targets))) @histogram-exclude-outliers)]
        ]]]))
 
