@@ -307,7 +307,8 @@
 
    :BBG_CEMBI_D1Y_BETA                  {:Header "vs CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 60 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
    :totaldummy                          {:Header " " :accessor "totaldummy" :width 30}
-   :NWNAIC                              {:Header "NAIC" :accessor "NWNAIC" :width 60 :style {:textAlign "right"}   :Cell #(tables/nb-cell-format "%.1f%" 100. %)}})
+   :NWNAIC                              {:Header "NAIC" :accessor "NWNAIC" :width 60 :style {:textAlign "right"}   :Cell #(tables/nb-cell-format "%.1f%" 100. %)}
+   })
 
 
 (def table-style (reagent/atom "Screener (SVR)"))

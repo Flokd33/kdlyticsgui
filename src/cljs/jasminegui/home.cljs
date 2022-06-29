@@ -1,24 +1,14 @@
 (ns jasminegui.home
   (:require
     [re-frame.core :as rf]
-    [reagent.core :as reagent]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                          single-dropdown hyperlink alert-box
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
-    [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
-    [re-com.util :refer [px]]
-    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    ["react-table-v6" :as rt :default ReactTable]
-    [goog.string :as gstring]
-    [goog.string.format]
-    [jasminegui.mount :as mount]
     [jasminegui.static :as static]
     [jasminegui.riskviews :as riskviews]
     [jasminegui.tradehistory :as tradehistory]
     [jasminegui.var :as var]
-    [reagent-contextmenu.menu :as rcm]
-    [jasminegui.tradehistory :as th])
-  )
+    [reagent-contextmenu.menu :as rcm]))
 
 
 (defn nav-home-bar []
