@@ -179,7 +179,8 @@
 
 (defn favorite-formatting [this]
   (if this
-    [:i {:class (if (contains? @qs-table-favorites (gobj/getValueByKeys this "value")) "zmdi zmdi-star" "zmdi zmdi-star-outline")}]))
+    (r/as-element [:i {:class (if (contains? @qs-table-favorites (gobj/getValueByKeys this "value")) "zmdi zmdi-star" "zmdi zmdi-star-outline")}]))
+  )
 
 
 (defn qs-table [mytitle data]
