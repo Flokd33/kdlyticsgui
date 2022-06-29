@@ -986,14 +986,15 @@
                          :dispatch-key [:quant-model/master-security-current-field-result]}
      }))
 
-(rf/reg-event-db :quant-model/master-security-current-field-change-isin (fn [db [_ isin]] (assoc-in db [:quant-model/master-security-current-field-db :isin] isin)))
+(rf/reg-event-db :quant-model/master-security-current-field-change-id-choice (fn [db [_ id-choice]] (assoc-in db [:quant-model/master-security-current-field-db :id_choice] id-choice)))
+(rf/reg-event-db :quant-model/master-security-current-field-change-id (fn [db [_ id]] (assoc-in db [:quant-model/master-security-current-field-db :id] id)))
 (rf/reg-event-db :quant-model/master-security-current-field-change-field (fn [db [_ field]] (assoc-in db [:quant-model/master-security-current-field-db :field] field)))
 (rf/reg-event-db :quant-model/master-security-current-field-result (fn [db [_  data]]  (assoc-in db [:quant-model/master-security-current-field-db :current-value] (:result data)))) ;(:not-exists data) (:message data)
 
 (rf/reg-event-fx
   :master-security-update-field
-  (fn [{:keys [db]} [_ isin field new-value]]
-    {:http-get-dispatch {:url          (str static/server-address "update-field?isin=" isin "&field=" field "&new-value=" new-value)
+  (fn [{:keys [db]} [_ id_choice id field new-value]]
+    {:http-get-dispatch {:url          (str static/server-address "field?id_choice=" id_choice "&update-field?id=" id "&field=" field "&new-value=" new-value)
                          :dispatch-key [:quant-model/master-security-update-field-result]}
      }))
 
@@ -1002,7 +1003,8 @@
 (defn update-field []
   (let [db            (rf/subscribe [:quant-model/master-security-current-field-db])
         db2           (rf/subscribe [:quant-model/master-security-update-field-db])
-        isin-update   (r/cursor db [:isin])
+        id            (r/cursor db [:id_choice])
+        id-update     (r/cursor db [:id])
         field         (r/cursor db [:field])
         current-value (r/cursor db [:current-value])
         update-message (r/cursor db2 [:message])
@@ -1010,12 +1012,13 @@
         ]
       [v-box :width "400px" :gap "10px" :class "element"
        :children [[title :label "Update field" :level :level1]
-                  [hb [[label :width "100px" :label "REGS ISIN"] [input-text :width "250px" :model isin-update :change-on-blur? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-isin %])]]]
+                  [hb [[label :width "100px" :label "ID choice"] [single-dropdown :width "250px" :model id :choices (into [] (for [x ["ISIN_REGS" "BOND"]] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-id-choice  %])]]]
+                  [hb [[label :width "100px" :label "ID"] [input-text :width "250px" :model id-update :change-on-blur? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-id %])]]]
                   [hb [[label :width "100px" :label "Field"] [single-dropdown :width "250px" :model field :choices (into [] (for [x @(rf/subscribe [:master-security-fields-list])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-field  %])]]]
-                  [hb [[button :style {:width "360px"} :label "Get Current Field Value!" :on-click #(do (rf/dispatch [:master-security-current-field @isin-update @field]))]]]
+                  [hb [[button :style {:width "360px"} :label "Get Current Field Value!" :on-click #(do (rf/dispatch [:master-security-current-field @id-update @field]))]]]
                   [hb [[label :width "100px" :label "Current Value"] [box :width "250px" :child [label :label @current-value]]]]
                   [hb [[label :width "100px" :label "New Value"] [input-text :width "250px" :model new-value :change-on-blur? false :on-change #(reset! new-value %)]]]
-                  [hb [[button :style {:width "360px"} :label "Update!" :on-click #(rf/dispatch [:master-security-update-field @isin-update @field @new-value])] ]]
+                  [hb [[button :style {:width "360px"} :label "Update!" :on-click #(rf/dispatch [:master-security-update-field @id-update @field @new-value])] ]]
                   [hb [[label :width "100px" :label "Result"] [box :width "250px" :child [label :label @update-message]]]]
                   ]])
     )
