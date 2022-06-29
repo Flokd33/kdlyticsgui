@@ -244,10 +244,26 @@
                                         (assoc :tradeanalyser.implementation/trade-legs (into {} (for [[k v] (:tradeanalyser.implementation/trade-legs data)] [(cljs.reader/read-string (name k)) v]))))
               :implementation/show-implementation-selector false)))
 
+;(rf/reg-event-fx
+;  :trade-implementation/check-isin-old
+;  (fn [{:keys [db]} [_ leg-number isin]]
+;    {:http-get-dispatch {:url (str static/server-address "bond-static-data?ISIN=" isin) :dispatch-key [:trade-implementation/bond-static-data leg-number]}}))
+
 (rf/reg-event-fx
   :trade-implementation/check-isin
-  (fn [{:keys [db]} [_ leg-number isin]]
-    {:http-get-dispatch {:url (str static/server-address "bond-static-data?ISIN=" isin) :dispatch-key [:trade-implementation/bond-static-data leg-number]}}))
+  (fn [{:keys [db]} [_ leg-number ISIN]]
+    (let [data (first (filter #(= (:ISIN %) ISIN) (db :quant-model/model-output)))
+          f (fn [start-db p] (assoc-in
+                               start-db
+                               [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation (keyword p) :existing]
+                               (if-let [x (get-in (:implementation/live-positions db) [p ISIN])] x 0)))]
+      (println data)
+      {:db (reduce f
+                   (-> db
+                       (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :NAME] (if data (:Bond data) "not found"))
+                       (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :CRNCY] (if data (:CRNCY data) "not found")))
+                   (:portfolios db))})))
+
 
 (rf/reg-event-fx
   :trade-implementation/check-pricing
@@ -263,8 +279,8 @@
   (if (some? qmd)
     (update-in db [:implementation/trade-implementation :tradeanalyser.implementation/reasons-for]
                #(str % "\n-------\n"
-                     (get qmd "Bond") " cheapness to svr models: 4D " (Math/round (get qmd "difference_svr")) "bps 2D " (Math/round (get qmd "difference_svr_2d"))
-                     "\n 1Y TR targets: To 4D FV " (get qmd "svr4d1yrtn") "% To 2D FV " (get qmd "svr2d1yrtn") "% To tight " (get qmd "upside1y") "% To median " (get qmd "expected1y") "% To wide " (get qmd "downside1y") "%"
+                     (:Bond qmd) " cheapness to svr models: 4D " (Math/round (:difference_svr qmd)) "bps 2D " (Math/round (:difference_svr_2d qmd))
+                     "\n 1Y TR targets: To 4D FV " (:svr4d1yrtn qmd) "% To 2D FV " (:svr2d1yrtn qmd) "% To tight " (:upside1y qmd) "% To median " (:expected1y qmd) "% To wide " (:downside1y qmd) "%"
 
                      ;" universe score " (get qmd "URV_svr") " historical score " (get qmd "HRV_svr")
 
@@ -274,7 +290,7 @@
 (defn fill-static [db leg-number qmd]
   (if (and (zero? leg-number) (some? qmd))
     (-> db
-        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/analyst] (case (get qmd "Sector")
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/analyst] (case (:Sector qmd)
                                                                                   "Sovereign" "Thys"
                                                                                   "TMT" "Rahul"
                                                                                   "Utilities" "Rahul"
@@ -289,39 +305,40 @@
                                                                                   "Diversified" "Rahul"
                                                                                   "Transport" "Antonio"
                                                                                   ""))
-        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/sector] (get qmd "Sector"))
-        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/country] (get qmd "Country"))
-        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/IGHY] (if (<= (get qmd "Used_Rating_Score") 10) "IG" "HY")))
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/sector] (:Sector qmd))
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/country] (:Country qmd))
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/IGHY] (if (<= (:Used_Rating_Score qmd) 10) "IG" "HY")))
     db))
 
 ;todo force USD here?
 (rf/reg-event-db
   :trade-implementation/bond-pricing
   (fn [db [_ leg-number data]]
-    (->
-      (recalculate-trade-notional-all-portfolios
-        (let [[p v c] (if (:price data) [(:price data) (:value data) (str (:cast-parent-id data))] [100. 100. ""])]
-          (-> (if (zero? leg-number) (fill-parent-exposure db (str (:cast-parent-id data))) db)
-              (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :price] p)
-              (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :value] v)
-              (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :cast-parent-id] c)))
-        leg-number)
-      (fill-static leg-number (:quant-model data))
-      (fill-quant-value leg-number (:quant-model data)))))
+    (let [qmd (first (filter #(= (:ISIN %) (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :ISIN])) (db :quant-model/model-output)))]
+      (->
+        (recalculate-trade-notional-all-portfolios
+          (let [[p v c] (if (:price data) [(:price data) (:value data) (str (:cast-parent-id data))] [100. 100. ""])]
+            (-> (if (zero? leg-number) (fill-parent-exposure db (str (:cast-parent-id data))) db)
+                (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :price] p)
+                (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :value] v)
+                (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :cast-parent-id] c)))
+          leg-number)
+        (fill-static leg-number qmd)                        ;(:quant-model data)
+        (fill-quant-value leg-number qmd)))))               ;(:quant-model data)
 
-(rf/reg-event-db
-  :trade-implementation/bond-static-data
-  (fn [db [_ leg-number data]]
-    (let [ISIN (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :ISIN])
-          f (fn [start-db p] (assoc-in
-                               start-db
-                               [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation (keyword p) :existing]
-                               (if-let [x (get-in (:implementation/live-positions db) [p ISIN])] x 0)))]
-      (reduce f
-              (-> db
-                  (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :NAME] (if data (:NAME data) "not found"))
-                  (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :CRNCY] (if data (:CRNCY data) "not found")))
-              (:portfolios db)))))
+;(rf/reg-event-db
+;  :trade-implementation/bond-static-data
+;  (fn [db [_ leg-number data]]
+;    (let [ISIN (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :ISIN])
+;          f (fn [start-db p] (assoc-in
+;                               start-db
+;                               [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation (keyword p) :existing]
+;                               (if-let [x (get-in (:implementation/live-positions db) [p ISIN])] x 0)))]
+;      (reduce f
+;              (-> db
+;                  (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :NAME] (if data (:NAME data) "not found"))
+;                  (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :CRNCY] (if data (:CRNCY data) "not found")))
+;              (:portfolios db)))))
 
 (rf/reg-event-fx
   :trade-implementation/add-to-trade-analyzer

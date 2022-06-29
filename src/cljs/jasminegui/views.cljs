@@ -54,7 +54,7 @@
                  :align :stretch
                  :children (into [] (concat (into [] (for [item static/main-navigation]
                                                        [box
-                                                        :width (if (= (:code item) :home) "200px" "150px")
+                                                        :width (if (= (:code item) :home) "175px" "150px")
                                                         :class (if (= active-view (:code item)) "dropdown-active" "dropdown")
                                                         :child (if (:href item)
                                                                  [hyperlink-href :label (:name item) :href (:href item)]

@@ -115,7 +115,6 @@
   :get-portfolio-review-historical-beta-chart-data
   (fn [{:keys [db]} [_ portfolio countries]]
     (let [c (if (some #{portfolio} emd-portfolios) ["CN" "EG" "CO" "MX" "BR" "GH"] ["BR", "CN", "AR", "TR", "MX"])]
-      (println portfolio c)
       {:http-get-dispatch {:url          (str static/server-address "portfolio-review?query-type=historical-beta&portfolio=" portfolio "&countries=" c)
                            :dispatch-key [:portfolio-review/historical-beta-chart-data]}})))
 

@@ -4,9 +4,6 @@
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                          single-dropdown hyperlink md-circle-icon-button md-icon-button selection-list modal-panel typeahead throbber
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
-    [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
-    [re-com.util :refer [px]]
-    [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     ["react-table-v6" :as rt :default ReactTable]
     [jasminegui.mount :as mount]
     [jasminegui.tables :as tables]
@@ -24,8 +21,7 @@
     [jasminegui.qs.modelportfolios :as modelportfolios]
     [jasminegui.qs.harvest :as harvest]
     [jasminegui.guitools :as gt]
-    )
-  )
+    [goog.object :as gobj]))
 
 ;;
 (def show-chart-modal (r/atom nil))
@@ -43,13 +39,6 @@
 (def nb-bond (r/atom 1))
 (def nb-curve (r/atom 1))
 (def which-charts? (r/atom {:price true :ytw false :ztw false :duration false :rating_score false :cheapness2D false :cheapness4D false}))
-;(def show-historical-price (r/atom true))
-;(def show-historical-ytw (r/atom false))
-;(def show-historical-ztw (r/atom false))
-;(def show-historical-duration (r/atom false))
-;(def show-historical-rating (r/atom false))
-;(def show-cheapness-4d (r/atom false))
-;(def show-cheapness-2d (r/atom false))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def dropdown-width "100px")
 
@@ -151,34 +140,59 @@
           ]
      }))
 
-(defn fnevt [state rowInfo instance evt]
-  (rcm/context!
-    evt
-    [(aget rowInfo "original" "Bond")                                         ; <---- string is a section title
-     ["Copy ISIN" (fn [] (t/copy-to-clipboard (aget rowInfo "original" "ISIN")))]
-     ["Historical charts" (fn [] ((reset! isin-historical-charts (aget rowInfo "original" "ISIN"))
-                                  (reset! bond-historical-charts (aget rowInfo "original" "Bond"))
-                                  (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [(aget rowInfo "original" "ISIN")])])
-                                  (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [(aget rowInfo "original" "ISIN")])])
-                                  (rf/dispatch [:navigation/active-qs :historical-charts])))]
-     ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation (aget rowInfo "original" "ISIN")]))]
-     ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 (aget rowInfo "original" "ISIN")]))]
-     ]))
+(def qs-table-filter (r/atom []))
+;USING A NORMAL ATOM INSTEAD OF REAGENT ACCELERATES THINGS - NOT SURE WHY OR IF IT'S RIGHT THING
+;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
+;UPDATE CLEAR FILTER NEEDS A REAGENT ATOM
+
+(def qs-table-favorites (r/atom #{}))
+
+
+(defn fnevt [state rowInfo column instance evt]
+  (let [bond (gobj/getValueByKeys rowInfo "original" "Bond") ISIN (gobj/getValueByKeys rowInfo "original" "ISIN")
+        ;fav (contains? @qs-table-favorites ISIN)
+        ]
+    (if (= (gobj/getValueByKeys column "Header") "*")
+      (swap! qs-table-favorites (if (contains? @qs-table-favorites ISIN) disj conj) ISIN)
+      (rcm/context!
+        evt
+        [bond                                               ; <---- string is a section title
+         ;[(if fav "Unstar" "Star") (fn [] (swap! qs-table-favorites (if fav disj conj) ISIN))]
+         ["Copy ISIN" (fn [] (t/copy-to-clipboard ISIN))]
+         ["Historical charts" (fn [] ((reset! isin-historical-charts ISIN)
+                                      (reset! bond-historical-charts bond)
+                                      (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [ISIN])])
+                                      (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [ISIN])])
+                                      (rf/dispatch [:navigation/active-qs :historical-charts])))]
+         ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
+         ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]]))))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
 
-(defn on-click-context [state rowInfo instance]
-  (clj->js {:onClick #(fnevt state rowInfo instance %) :style (merge {:cursor "pointer"} (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"}))}))
+;(defn on-click-context [state rowInfo instance]
+;  (clj->js {:onClick #(fnevt state rowInfo instance %) :style (merge {:cursor "pointer"} (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"}))}))
 
-(def qs-table-filter (atom []))
-;USING A NORMAL ATOM INSTEAD OF REAGENT ACCELERATES THINGS - NOT SURE WHY OR IF IT'S RIGHT THING
-;this slows the table a lot as it's called twice? https://stackoverflow.com/questions/56505677/react-table-onfetchdata-getting-triggered-twice
+(defn on-cell-click-context [state rowInfo column instance]
+  (clj->js {:onClick #(fnevt state rowInfo column instance %) :style (merge {:cursor "pointer"} (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"}))}))
+
+;(reset! clicked [(aget rowInfo "original" "maturity-band") (aget column "id")])
+
+(defn favorite-formatting [this]
+  (if this
+    (r/as-element [:i {:class (if (contains? @qs-table-favorites (gobj/getValueByKeys this "value")) "zmdi zmdi-star" "zmdi zmdi-star-outline")}]))
+  )
+
 
 (defn qs-table [mytitle data]
   (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
     ;(println (conj (keys (first data)) :ISIN))
-     [v-box :class "element"  :gap "20px" :width "1690px"
-      :children [[title :label mytitle :level :level1]
+     [v-box :class "element"  :gap "10px" :width "1690px"
+      :children [[h-box :align :center :gap "10px" :children [[title :label mytitle :level :level1]
+                                                              [gap :size "1"]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "quant-table-output-id")]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "quant-table-output-id")]
+                                                              [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
+                                                              [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :tooltip-position :above-center :on-click #(t/csv-link @(rf/subscribe [:quant-model/model-output]) "quant-model-output" (conj (keys (first @(rf/subscribe [:quant-model/model-output]))) :ISIN))]]]
                  [h-box :align :center :gap "10px"
                   :children (concat (into [] (for [c ["SVR" "Upside/Downside" "Screener (SVR)"]] ;"Summary" "Full"  "Legacy" "New"
                                                ^{:key c} [radio-button :label c :value c :model qstables/table-style :on-change #(reset! qstables/table-style %)]))   ;; key should be unique among siblings
@@ -186,21 +200,24 @@
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:flags]) :label "Show flags?" :on-change #(swap! qstables/table-checkboxes assoc-in [:flags] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
+                                     [gap :size "20px"]
+                                     [button :label "Filter stars"  :on-click #(do (reset! qs-table-filter (clj->js [{"id" "ISIN" "value" (clojure.string/join "," @qs-table-favorites )}])))]
+                                     [button :label "Clear filter" :on-click #(reset! qs-table-filter [])]
+                                     [button :label "Clear stars" :on-click #(do (reset! qs-table-favorites #{}) (reset! qs-table-filter []))]
                                      [gap :size "1"]
-                                     [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "quant-table-output-id")]
-                                     [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "quant-table-output-id")]
-                                     [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
-                                     [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :tooltip-position :above-center :on-click #(t/csv-link @(rf/subscribe [:quant-model/model-output]) "quant-model-output" (conj (keys (first @(rf/subscribe [:quant-model/model-output]))) :ISIN))]
                                      ])]
                  [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
                  [:div {:id "quant-table-output-id"}
                   [:> ReactTable
-                   {:data            data :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)
+                   ;BELOW: NEED TO REFERENCE QS-TABLE-FAVORITES BEFORE THE CELL FORMATTING OTHERWISE DIDN'T WORK
+                   {:data            data :columns (concat (if @qs-table-favorites [{:Header "*" :filterable true :accessor "ISIN" :style {:textAlign "center"} :width 40 :Cell favorite-formatting}] []) (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))
                     :showPagination  true :defaultPageSize 15 :pageSizeOptions [5 10 15 25 50 100]
                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                     :ref             #(reset! qstables/qs-table-view %)
-                    :getTrProps      on-click-context :className "-striped -highlight"}]]]])
+                    ;:getTrProps      on-click-context
+                    :getTdProps      on-cell-click-context
+                    :className "-striped -highlight"}]]]])
   )
 
 (def index-crawler-filter (r/atom []))
@@ -210,7 +227,7 @@
   (let [data @(rf/subscribe [:quant-model/model-output])
         cembi-embi (map #(assoc % :totaldummy "") (filter #(or (pos? (:cembi %)) (pos? (:cembi-ig %)) (pos? (:cembi-hy %)) (pos? (:embi %)) (pos? (:embi-ig %)) (pos? (:jaci %))) data))
         final (tables/cljs-text-filter-OR @index-crawler-filter cembi-embi)]
-    [box :padding "80px 10px" :class "rightelement"
+    [box  :class "subbody rightelement"
      :child
              [v-box :class "element" :gap "20px" :width "1690px"
               :children [[title :label "Index crawler" :level :level1]
@@ -246,15 +263,9 @@
                                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :Cell tables/round1}
                                       {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"}}
                                       {:Header "TR %*" :accessor "ytd-return" :width 60 :style {:textAlign "right"}:Cell tables/round2pc} ; FC
-                                      {:Header (gstring/unescapeEntities "&Delta; ZTW*") :accessor "ytd-z-delta" :width 80 :style {:textAlign "right"}:Cell tables/zspread-format} ; FC
-
-                                      ]
-                           :pageSize 5 :filterable false :showPageSizeOptions false :showPagination false}
-                          ]
-                         [title :level :level4 :label "*NB: figures do not include new issues as well as matured and called bonds"]
-                         ]]])
-
-  )
+                                      {:Header (gstring/unescapeEntities "&Delta; ZTW*") :accessor "ytd-z-delta" :width 80 :style {:textAlign "right"}:Cell tables/zspread-format}]
+                           :pageSize 5 :filterable false :showPageSizeOptions false :showPagination false}]
+                         [title :level :level4 :label "*NB: figures do not include new issues as well as matured and called bonds"]]]]))
 
 (defn score-vs-outlook []
   (let [data @(rf/subscribe [:quant-model/model-output])
@@ -270,7 +281,9 @@
                                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                                     :ref             #(reset! qstables/qs-table-view %)
-                                    :getTrProps      on-click-context :className "-striped -highlight"}]])]
+                                    ;:getTrProps      on-click-context
+                                    :getTdProps      on-cell-click-context
+                                    :className "-striped -highlight"}]])]
                 [box :class "rightelement" :child
                  (gt/element-box "score-vs-outlook2" "100%" (str "Potential downgrade candidates " @(rf/subscribe [:qt-date])) data_downgrade
                                  [[:> ReactTable
@@ -280,7 +293,9 @@
                                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                                     :ref             #(reset! qstables/qs-table-view %)
-                                    :getTrProps      on-click-context :className "-striped -highlight"}]])]]]))
+                                    ;:getTrProps      on-click-context
+                                    :getTdProps      on-cell-click-context
+                                    :className "-striped -highlight"}]])]]]))
 
 
 (def show-duration-modal (r/atom false))
@@ -329,17 +344,14 @@
                                                    [checkbox :model (r/cursor calculator-chart-options [:country-neighbours]) :label "Country neighbours (same country and rating)" :on-change #(swap! calculator-chart-options assoc :country-neighbours %)]]]
                      [title :level :level4 :label "Left button to move chart, wheel to zoom" ]
                      [oz/vega-lite (qscharts/fair-value-calculator-chart data color-domain-scale (:labels @calculator-chart-options) (:rating-curves @calculator-chart-options) curve-data)]]
-                    )
-
-    ))
+                    )))
 
 (defn calculator-result-data [data calc-data]
   (into [] (for [[k txt c] [[:d4 "Four factor" (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Used_Duration) data))]
                             [:d3country (str (:Country @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Used_Duration) data))]
                             [:d3sector (str (:Sector @calculator-target) " " (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Country :Used_Duration) data))]
                             [:d2 (str (:Used_Duration @calculator-target) "y " (qstables/get-implied-rating (:Used_Rating_Score @calculator-target))) (count (t/chainfilter (dissoc (update @calculator-target :Used_Rating_Score cljs.reader/read-string) :Sector :Country :Used_Duration) data))]]]
-             {:model txt :svr (get-in calc-data [:svr k]) :legacy (get-in calc-data [:legacy k]) :new (get-in calc-data [:new k]) :comps c}))
-  )
+             {:model txt :svr (get-in calc-data [:svr k]) :legacy (get-in calc-data [:legacy k]) :new (get-in calc-data [:new k]) :comps c})))
 
 (defn calculator-result-table []
   (let [data @(rf/subscribe [:quant-model/model-output])
@@ -363,9 +375,8 @@
         infer-rating-fn (fn [country] (swap! calculator-target assoc :Used_Rating_Score (str (:Used_Rating_Score (first (t/chainfilter {:Country country :Sector "Sovereign"} data))))))
         update-sector-fn (fn [sector] (do (swap! calculator-target assoc :Sector sector) (when (= sector "Sovereign") (swap! calculator-chart-options assoc :rating-curves-sov-only true) (infer-rating-fn (:Country @calculator-target)))))
         update-country-fn (fn [country] (do (swap! calculator-target assoc :Country country) (when (= (:Sector @calculator-target) "Sovereign") (infer-rating-fn (:Country @calculator-target)))))]
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box :class "subbody rightelement" :gap "20px"
      :children [
-
                 (gt/element-box "calculator-controller" "1280px" "New issue calculator" (calculator-result-data @(rf/subscribe [:quant-model/model-output]) @(rf/subscribe [:quant-model/calculator-spreads]))
                                 [[h-box :gap "50px" :align :center
                                   :children [[v-box :gap "0px" :align :start :children [[h-box :gap "10px" :children [[label :width "200px" :label "Country"] [label :width "200px" :label "Sector"][label :width "80px" :label "Currency"]]]
@@ -412,8 +423,7 @@
                 [qs-table (str "Comparables table") (sort-by (juxt :Country :Ticker :Used_Duration) comparables)]]]))
 
 (defn qs-table-container []
-  (println @(rf/subscribe [:quant-model/model-date]))
-  [box :padding "80px 10px" :class "rightelement" :child [qs-table (str "Quant model output " @(rf/subscribe [:quant-model/model-date])) @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster
+  [box :class "subbody rightelement" :child [qs-table (str "Quant model output " @(rf/subscribe [:quant-model/model-date])) @(rf/subscribe [:quant-model/model-js-output])]]) ;using the js output is much faster
 
 (def spot-chart-rating-curves-keys (zipmap ["Base" "Sov only" "Non ESG (SVR)" "ESG (SVR)" "ESG benefit (SVR)"] [:base :sov-only :nesg :esg :esg-benefit])) ;UNUSED ATM BUT IMPORTANT LOGIC
 (def spot-chart-model-choice (r/atom "SVR"))
@@ -433,7 +443,7 @@
   []
   (let [data @(rf/subscribe [:quant-model/model-output])
         issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data)))))]
-    [box :padding "80px 10px" :class "rightelement" :child
+    [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "50px" :width "1620px" :children
       [[h-box :align :center :justify :between :children [[title :label "Spot charts" :level :level1] [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
        [h-box :gap "50px" :children
@@ -470,7 +480,7 @@
 (def open-update (r/atom false))
 (defn advanced-spot-chart []
   (let [data @(rf/subscribe [:quant-model/model-js-output])]
-    [box :padding "80px 10px" :class "rightelement" :child
+    [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :width "1620px" :children
       [[h-box :align :center :justify :between :children [[title :label "Advanced spot charts" :level :level1]  [title :level :level4 :label "Left button to move chart, wheel to zoom" ]]]
        [h-box :align :start :justify :between :children [
@@ -499,7 +509,9 @@
                                 (when @open-update
                                   (reset! advanced-spot-chart-isins (take 100 (js->clj (if % (.map (. (.getResolvedState %) -sortedData) (fn [e] (aget e "_original" "ISIN")))))))
                                   (if % (reset! open-update false))))
-           :getTrProps     on-click-context :className "-striped -highlight"}]
+           ;:getTrProps      on-click-context
+           :getTdProps      on-cell-click-context
+           :className "-striped -highlight"}]
          ]]]]]))
 
 (def histogram-target (atom "ytd-return"))
@@ -515,7 +527,7 @@
 
 (defn histograms []
   (let [data @(rf/subscribe [:quant-model/model-js-output])]
-    [box :padding "80px 10px" :class "rightelement" :child
+    [box  :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :width "1620px" :children
       [[title :label "Histograms" :level :level1]
        [title :level :level4 :label "Select target measure, filter table then click draw to see the distribution of results." ]
@@ -532,12 +544,14 @@
                               (when @open-update
                                 (reset! advanced-spot-chart-isins (js->clj (if % (.map (. (.getResolvedState %) -sortedData) (fn [e] (aget e "_original" "ISIN"))))))
                                 (if % (reset! open-update false))))
-         :getTrProps     on-click-context :className "-striped -highlight"}]
+         ;:getTrProps      on-click-context
+         :getTdProps      on-cell-click-context
+         :className "-striped -highlight"}]
        [oz/vega-lite (qscharts/histogram-chart-vega-spec @advanced-spot-chart-isins @histogram-target (:label (first (t/chainfilter {:id @histogram-target} all-histogram-targets))) @histogram-exclude-outliers)]
        ]]]))
 
 ;(defn methodology []
-;  [box :padding "80px 10px" :class "rightelement" :child
+;  [box  :class "subbody rightelement" :child
 ;   [v-box :class "element" :children
 ;    [[title :label "Methodology" :level :level1] [gap :size "20px"]
 ;     [title :label "General" :level :level3]
@@ -631,7 +645,7 @@
                          (reverse))]
     ;(rf/dispatch [:quant-model/table-filter []])            ;reset table filter
     (reset! qs-table-filter [])
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box  :class "subbody rightelement" :gap "20px"
      :children [
                 [v-box :class "element" :gap "10px" :width "1620px"
                  :children [[title :label "Existing bond ISIN" :level :level1]
@@ -729,7 +743,7 @@
         start-date (rf/subscribe [:quant-model/history-start-date])
         all-data (merge-pricing-with-prediction @(rf/subscribe [:quant-model/history-result]) @(rf/subscribe [:quant-model/history-result-prediction]))
         ]
-    [v-box :padding "80px 10px" :class "rightelement" :gap "20px"
+    [v-box :class "subbody rightelement" :gap "20px"
      :children [[v-box :class "element" :gap "20px" :width "1620px"
                  :children [[title :level :level1 :label "Bonds"]
                             [h-box :gap "50px" :align :start
@@ -973,7 +987,6 @@
                          [label :label "Can't save, bond already in database."]
                          [button :style {:width "360px"} :label "Save to master security!" :disabled? (save-new-bond-impossible) :on-click #(rf/dispatch [:quant-model-new-bond/save-to-bond-universe @new-bond])])]]
                   [hb [[label :width "100px" :label @(rf/subscribe [:quant-model/new-bond-saved-message])]]]]])
-
     ))
 
 
@@ -983,8 +996,8 @@
   :master-security-current-field
   (fn [{:keys [db]} [_ id-choice id field]]
     {:http-get-dispatch {:url          (str static/server-address "current-field?id-choice=" id-choice "&id=" id "&field=" field)
-                         :dispatch-key [:quant-model/master-security-current-field-result]}
-     }))
+                         :dispatch-key [:quant-model/master-security-current-field-result]}}))
+
 
 (rf/reg-event-db :quant-model/master-security-current-field-change-id-choice (fn [db [_ id-choice]] (assoc-in db [:quant-model/master-security-current-field-db :id-choice] id-choice)))
 (rf/reg-event-db :quant-model/master-security-current-field-change-id (fn [db [_ id]] (assoc-in db [:quant-model/master-security-current-field-db :id] id)))
@@ -1023,7 +1036,7 @@
                   ]])
     )
 
-(defn master-security [] [v-box :padding "80px 10px" :class "rightelement" :gap "20px" :children [[new-bond-entry] [update-field]]])
+(defn master-security [] [v-box  :class "subbody rightelement" :gap "20px" :children [[new-bond-entry] [update-field]]])
 
 ;;;;;;
 
@@ -1062,8 +1075,7 @@
   (reset! advanced-chart-filter (clj->js (:advanced-filter line)))
   (reset! reagent-chart-filter (clj->js (:advanced-filter line)))
   (reset! spot-chart-2d-curves-sov-only (if-let [x (:rating-curves-sov-only line)] x false))
-  (reset! open-update true)
-  )
+  (reset! open-update true))
 
 (defn modal-spot-charts []
   (let [nickname (r/atom "")

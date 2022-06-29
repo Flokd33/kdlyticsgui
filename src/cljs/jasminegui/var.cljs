@@ -183,16 +183,15 @@
       (rf/dispatch (if (vector? k) k [k]))))
   [v-box :width standard-box-width
    :gap "20px"
-   :padding "80px 20px"
-   :class "rightelement"  :children [[h-box :align :start :children [[var-controller]]]
-                                     [h-box :align :start :children [[var-table-view] ]]
+   :class "subbody rightelement"  :children [[h-box :align :start :children [[var-controller]]]
+                                     [h-box :align :start :children [[var-table-view]]]
                                      [h-box :align :start :children [[backtest-chart]]]
                                      [h-box :align :start :children [[histogram-chart]]]
                                      [h-box :align :start :children [[regression-chart]]]]])
 
 (defn main-proxy-view []
   (when (nil? @(rf/subscribe [:var/proxies])) (rf/dispatch [:get-var-proxies]))
-  [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"
+  [v-box :width standard-box-width :gap "20px" :class "subbody rightelement"
    :children [[h-box :align :start :children [[portfolio-proxies]]]]])
 
 (defn active-home []
@@ -200,13 +199,13 @@
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-var
       :overview                       [v-box :width standard-box-width
-                                       :gap "20px" :padding "80px 20px"
-                                       :class "rightelement"  :children [[h-box :align :start :children [[var-controller]]]
+                                       :gap "20px"
+                                       :class "subbody rightelement"  :children [[h-box :align :start :children [[var-controller]]]
                                                                          [h-box :align :start :children [[var-table-view]]]
                                                                          [h-box :align :start :children [[backtest-chart]]]
                                                                          [h-box :align :start :children [[histogram-chart]]]
                                                                          [h-box :align :start :children [[regression-chart]]]]]
-      :proxies [v-box :width standard-box-width :gap "20px" :padding "80px 20px" :class "rightelement"
+      :proxies [v-box :width standard-box-width :gap "20px"  :class "subbody rightelement"
                 :children [[h-box :align :start :children [[portfolio-proxies]]]]]
       [:div.output "nothing to display"])))
 
