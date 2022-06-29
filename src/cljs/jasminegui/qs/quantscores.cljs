@@ -1012,8 +1012,8 @@
         ]
       [v-box :width "400px" :gap "10px" :class "element"
        :children [[title :label "Update field" :level :level1]
-                  [hb [[label :width "100px" :label "ID choice"] [single-dropdown :width "250px" :model id :choices (into [] (for [x ["ISIN_REGS" "BOND"]] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-id-choice  %])]]]
-                  [hb [[label :width "100px" :label "ID"] [input-text :width "250px" :model id-choice :change-on-blur? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-id %])]]]
+                  [hb [[label :width "100px" :label "ID choice"] [single-dropdown :width "250px" :model id-choice :choices (into [] (for [x ["ISIN_REGS" "BOND"]] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-id-choice  %])]]]
+                  [hb [[label :width "100px" :label "ID"] [input-text :width "250px" :model id :change-on-blur? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-id %])]]]
                   [hb [[label :width "100px" :label "Field"] [single-dropdown :width "250px" :model field :choices (into [] (for [x @(rf/subscribe [:master-security-fields-list])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:quant-model/master-security-current-field-change-field  %])]]]
                   [hb [[button :style {:width "360px"} :label "Get Current Field Value!" :on-click #(do (rf/dispatch [:master-security-current-field @id-choice @id @field]))]]]
                   [hb [[label :width "100px" :label "Current Value"] [box :width "250px" :child [label :label @current-value]]]]
