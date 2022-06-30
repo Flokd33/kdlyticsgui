@@ -1036,7 +1036,34 @@
                   ]])
     )
 
-(defn master-security [] [v-box  :class "subbody rightelement" :gap "20px" :children [[new-bond-entry] [update-field]]])
+
+(rf/reg-event-fx
+  :model-refresh-history
+  (fn [{:keys [db]} [_ isin-refresh]]
+    {:http-get-dispatch {:url          (str static/server-address "model-refresh-history?isin-refresh=" isin-refresh)
+                         ;:dispatch-key [:model-refresh-history-result]
+                         }}))
+
+(def isin-refresh (r/atom nil))
+(def update-message-2 (r/atom "sdfsdf"))
+
+(defn update-history []
+  (let [hb (fn [v] [h-box  :gap "10px" :align :center :children v])]
+    [v-box :width "400px" :gap "10px" :class "element"
+     :children [[title :label "Update history" :level :level1]
+                [hb [[label :width "100px" :label "ISIN"] [input-text :width "250px" :model @isin-refresh :change-on-blur? true :on-change #(reset! isin-refresh %)]]]
+                [hb [[button :style {:width "360px"} :label "Update!" :on-click #(rf/dispatch [:model-refresh-history @isin-refresh])] ]]
+                [hb [[label :width "100px" :label "Result"] [box :width "250px" :child [label :label @update-message-2]]]]
+                ]])
+  )
+
+(defn master-security []
+  [h-box  :class "subbody rightelement" :gap "20px" :children
+   [[v-box  :class "element" :gap "20px" :children [[new-bond-entry]]]
+    [v-box  :class "element" :gap "20px" :children [[update-field]]]
+    [v-box  :class "element" :gap "20px" :children [[update-history]]]]]
+  )
+
 
 ;;;;;;
 

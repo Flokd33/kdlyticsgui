@@ -239,7 +239,7 @@
                  :quant-model/curves-throbber  false
                  :quant-model/history-start-date          (t/int-to-gdate 20150101)
                  ;:quant-model/history-end-date            (t/int-to-gdate (today))
-                 :quant-model/master-security-current-field-db {}
+                 :quant-model/master-security-current-field-db {:id-choice "ISIN_REGS"}
                  :quant-model/master-security-update-field-db {}
 
 
