@@ -254,6 +254,7 @@
      :region                           (text-col "Region" "jpm-region" 120)
      :emd-region                       (text-col "Region" "emd-region" 120)
      :country                          (text-col "Country" "qt-risk-country-name" 120)
+     ;:qt-risk-country-code             (text-col "Country" "qt-risk-country-name" 120)
      :issuer                           (text-col "Issuer" "TICKER" 80)
      :sector                           (text-col "Sector" "qt-jpm-sector" 120)
      :maturity-band                    (text-col "Maturity" "qt-final-maturity-band" 120)
@@ -265,6 +266,7 @@
 
      :description                      (text-col "thinkFolio ID" "description" 400)
      :nav                              (nb-col "Fund" "weight" 50 round2 sum-rows)
+     ;:weight                           (nb-col "Fund" "weight" 50 round2 sum-rows)
      :bm-weight                        (nb-col "Index" "bm-weight" 50 round2 sum-rows)
      :weight-delta                     (nb-col "Delta" "weight-delta" 50 round2 sum-rows)
      :nominal                          (nb-col "Nominal" "original-quantity" 100 nb-thousand-cell-format sum-rows)
