@@ -96,8 +96,8 @@
 
                  ;position-history
                  :position-history/portfolio                        "OGEMCORD"
-                 :position-history/start-period                     "31Dec21"
-                 :position-history/end-period                       "31Dec21"
+                 :position-history/start-period                     "20211231"
+                 :position-history/end-period                       "20220530"
                  :position-history/filter                           {1 :region 2 :country 3 :issuer}
                  :position-history/hide-zero-holdings               true
                  :position-history/table-filter                     []
@@ -671,6 +671,7 @@
            :single-portfolio-attribution/filter
            :multiple-portfolio-attribution/filter
            :position-history/filter
+           :position-history/filter2
            ]]
   (rf/reg-event-db k (fn [db [_ id f]] (assoc-in db [k id] f))))
 
@@ -678,7 +679,8 @@
   :qt-date
   (fn [db [_ qt-date]] (let [dt (.replace ^string qt-date "\"" "")]
                          (assoc db :qt-date dt
-                                   :position-history/end-period (str (subs dt 0 (- (count dt) 4)) (subs dt (- (count dt) 2)))))))
+                                   ;:position-history/end-period (str (subs dt 0 (- (count dt) 4)) (subs dt (- (count dt) 2)))
+                                   ))))
 
 (rf/reg-event-db
   :attribution-date
