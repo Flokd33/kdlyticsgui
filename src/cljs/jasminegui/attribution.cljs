@@ -358,7 +358,7 @@
                                     :getTrProps held-formating :className "-striped -highlight"
                                     }]])]
                 [box :class "element" :child
-                 (gt/element-box "top-bottom-pr" "100%" (str "Negative price return" start-date " to " end-date) data-down
+                 (gt/element-box "top-bottom-pr" "100%" (str "Negative price return " start-date " to " end-date) data-down
                                  [[:> ReactTable
                                    {:data            data-down
                                     :pageSize 50
