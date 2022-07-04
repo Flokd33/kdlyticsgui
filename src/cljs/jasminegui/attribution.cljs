@@ -201,7 +201,7 @@
                     :children [[h-box :gap "5px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
                                [h-box :gap "5px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
                                [h-box :gap "5px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(rf/dispatch [:change-multiple-attribution-target %])]]]
-                                [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [info-button :info "filtering made at bond level, not issuer level" :position :above-center]
+                                [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [info-button :info "Note: the bps filtering is made at a bond level, not at an issuer level" :position :above-center]
                                                              [single-dropdown :width dropdown-width :model threshold-att :choices static/threshold-choices-attribution :on-change #(rf/dispatch [:multiple-portfolio-attribution/threshold %])]]]]
                     ]
                    [h-box :gap "20px"
