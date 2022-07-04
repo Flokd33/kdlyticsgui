@@ -137,6 +137,7 @@
                  :multiple-portfolio-attribution/table-filter        []
                  :multiple-portfolio-attribution/table               []
                  :multiple-portfolio-attribution/expander              {0 {}}
+                 :multiple-portfolio-attribution/threshold            :zero
 
                  :attribution/summary                                []
                  :attribution/available-months                       []
@@ -380,6 +381,7 @@
            :multiple-portfolio-attribution/table-filter
            :multiple-portfolio-attribution/expander
            :multiple-portfolio-attribution/period
+           :multiple-portfolio-attribution/threshold
 
 
            :attribution/summary
@@ -671,7 +673,6 @@
            :single-portfolio-attribution/filter
            :multiple-portfolio-attribution/filter
            :position-history/filter
-           :position-history/filter2
            ]]
   (rf/reg-event-db k (fn [db [_ id f]] (assoc-in db [k id] f))))
 
