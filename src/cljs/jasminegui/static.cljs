@@ -196,6 +196,17 @@
    {:id :threequarters  :label "0.75"}
    {:id :one            :label "1.00"}])
 
+(def threshold-choices-attribution                          ; 1 => 1bps
+  [{:id :zero          :label "0"}
+   {:id :one           :label "1"}
+   {:id :two           :label "2"}
+   {:id :three         :label "3"}
+   {:id :five          :label "5"}
+   {:id :ten           :label "10"}
+   {:id :quarter       :label "25"}
+   {:id :half          :label "50"}
+   {:id :one-perc      :label "100"}])
+
 (def tree-table-choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}])
 
 (def var-charts-choice-map [{:id :daily-1y   :label "Daily 1y"   :frequency :daily   :period 1}
@@ -282,4 +293,6 @@
                                 "20220331"
                                 "20220430"
                                 "20220530"
+                                "20220630"
                                 ])
+
