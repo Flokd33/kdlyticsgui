@@ -69,9 +69,7 @@
                          :aggregate tables/sum-rows
                          :Cell (get-in tables/attribution-table-columns [display-key-one :Cell])
                          :filterable true}))
-        data @(rf/subscribe [:multiple-portfolio-attribution/clean-table] )
         ]
-    ;(println (last data))
     [tables/tree-table-risk-table
      :multiple-portfolio-attribution/clean-table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
@@ -203,7 +201,8 @@
                     :children [[h-box :gap "5px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
                                [h-box :gap "5px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
                                [h-box :gap "5px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(rf/dispatch [:change-multiple-attribution-target %])]]]
-                                [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model threshold-att :choices static/threshold-choices-attribution :on-change #(rf/dispatch [:multiple-portfolio-attribution/threshold %])]]]]
+                                [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [info-button :info "filtering made at bond level, not issuer level" :position :above-center]
+                                                             [single-dropdown :width dropdown-width :model threshold-att :choices static/threshold-choices-attribution :on-change #(rf/dispatch [:multiple-portfolio-attribution/threshold %])]]]]
                     ]
                    [h-box :gap "20px"
                     :children [[h-box :gap "5px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-attribution/filter)))]
