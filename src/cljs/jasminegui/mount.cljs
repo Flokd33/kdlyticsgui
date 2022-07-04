@@ -49,10 +49,10 @@
                  :navigation/show-mounting-modal                     false ;
 
                  ;time machine
-                 :time-machine/enabled                               false
-                 :time-machine/date                                  (t/int-to-gdate 20191230)
-                 :time-machine/model                                 "None"
-                 :time-machine/has-rebuilt                           nil
+                 ;:time-machine/enabled                               false
+                 ;:time-machine/date                                  (t/int-to-gdate 20191230)
+                 ;:time-machine/model                                 "None"
+                 ;:time-machine/has-rebuilt                           nil
 
                  ;single-portfolio view
                  :single-portfolio-risk/display-style                "Table"
@@ -472,9 +472,9 @@
            :scorecard/latest-date
            :scorecard/previous-date
 
-           :time-machine/enabled
-           :time-machine/date
-           :time-machine/model
+           ;:time-machine/enabled
+           ;:time-machine/date
+           ;:time-machine/model
 
            :model-portfolios/trades
            :model-portfolios/hide-zeros
@@ -840,7 +840,7 @@
    {:get-key :get-generic-rating-curves :url-tail "quant-generic-rating-curves" :dis-key :quant-model/generic-rating-curves}
    {:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
    {:get-key :get-jpm-sectors     :url-tail "jpm-sectors"     :dis-key :jpm-sectors}
-   {:get-key :get-time-machine-status :url-tail "time-machine-status" :dis-key :time-machine-status}
+   ;{:get-key :get-time-machine-status :url-tail "time-machine-status" :dis-key :time-machine-status}
    {:get-key :get-attribution-date    :url-tail "attribution?query-type=attribution-date" :dis-key :attribution-date}
    {:get-key :get-attribution-summary    :url-tail "attribution?query-type=summary" :dis-key :attribution/summary}
    {:get-key :get-attribution-available-months    :url-tail "attribution?query-type=available-months" :dis-key :attribution/available-months}

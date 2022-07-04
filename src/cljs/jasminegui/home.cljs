@@ -17,8 +17,8 @@
      :children [[v-box
                  :gap "20px"
                  :class "leftnavbar"
-                 :children (into (if @(rf/subscribe [:time-machine/enabled])
-                                   [[alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " (subs (str @(rf/subscribe [:time-machine/date])) 0 8))]]
+                 :children (into (if false                  ;@(rf/subscribe [:time-machine/enabled])
+                                   []                       ;[alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " (subs (str @(rf/subscribe [:time-machine/date])) 0 8))]
                                    [])
                                  (for [item static/risk-navigation]
                                    [button

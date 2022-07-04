@@ -850,7 +850,7 @@
      :children [[v-box
                  :gap "20px"
                  :class "leftnavbar"
-                 :children (into (vec (remove nil? [(if @(rf/subscribe [:time-machine/enabled]) [alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " (subs (str @(rf/subscribe [:time-machine/date])) 0 8))])
+                 :children (into (vec (remove nil? [(if false [alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " false)]) ;@(rf/subscribe [:time-machine/enabled]) ;(subs (str @(rf/subscribe [:time-machine/date])) 0 8)
                                                     [h-box :children [[md-icon-button :md-icon-name "zmdi-forward" :class "zmdi-hc-flip-horizontal" :size :larger :style {:color "white"} :on-click previous-page!]
                                                                       [box :size "1" :align :center :child [label :label (str (inc @current-page) "/" maximum-page) :style {:width "135px" :color "white" :text-align "center"}]]
                                                                       [md-icon-button :md-icon-name "zmdi-forward" :size :larger :style {:color "white"} :on-click next-page!]]]
