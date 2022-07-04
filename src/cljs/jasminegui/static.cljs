@@ -106,6 +106,17 @@
    {:id :emd-region    :label "EMD region"}
    ])
 
+(def risk-choice-map-history
+  [{:id "None"         :label "None"}
+   {:id :jpm-region    :label "Region"}
+   {:id :qt-risk-country-code       :label "Country"}
+   {:id :issuer        :label "Issuer"}
+   {:id :rating-score  :label "Rating"}
+   {:id :sector        :label "Sector"}
+   {:id :maturity-band :label "Maturity"}
+   {:id :emd-region    :label "EMD region"}
+   ])
+
 (def attribution-choice-map
   [{:id "None"         :label "None"}
    {:id :region        :label "Region"}
@@ -146,16 +157,17 @@
    {:id :weight-delta                     :label "NAV delta"}
    {:id :contrib-mdur                     :label "M dur contribution"}
    {:id :mdur-delta                       :label "M dur delta"}
+   {:id :contrib-beta                     :label "EMCD Beta"}
    {:id :value                            :label "Value"}
    {:id :nominal                          :label "Nominal"}
    {:id :contrib-yield                    :label "Yield contribution"}
    {:id :contrib-zspread                  :label "Z-spread contribution"}
    {:id :contrib-gspread                  :label "G-spread contribution"}
-   {:id :contrib-beta                     :label "EMCD Beta"}
    {:id :contrib-BBG_CEMBI_D1Y_BETA       :label "Bbg Beta"}
    {:id :contrib-delta-BBG_CEMBI_D1Y_BETA :label "Bbg Beta delta"}
    {:id :quant-value-4d                   :label "Quant value 4D"}
    {:id :quant-value-2d                   :label "Quant value 2D"}])
+
 
 (def attribution-field-choices
   [
@@ -183,6 +195,17 @@
    {:id :half           :label "0.50"}
    {:id :threequarters  :label "0.75"}
    {:id :one            :label "1.00"}])
+
+(def threshold-choices-attribution                          ; 1 => 1bps
+  [{:id :zero          :label "0"}
+   {:id :one           :label "1"}
+   {:id :two           :label "2"}
+   {:id :three         :label "3"}
+   {:id :five          :label "5"}
+   {:id :ten           :label "10"}
+   {:id :quarter       :label "25"}
+   {:id :half          :label "50"}
+   {:id :one-perc      :label "100"}])
 
 (def tree-table-choices [{:id "Table" :label "Table"} {:id "Tree" :label "Tree"}])
 
@@ -217,28 +240,59 @@
                   {:id "Event driven"             :label "Event driven"           :group "Other"              :shortcut "Oth event"}
                   ]] [(line :id) (line :shortcut)])))
 
-(def position-historical-dates ["31Dec18"
-                                "29Mar19"
-                                "28Jun19"
-                                "30Sep19"
-                                "31Dec19"
-                                "31Mar20"
-                                "30Jun20"
-                                "29Sep20"                            ; "30Sep20"
-                                "31Dec20"
-                                "29Jan21"
-                                "26Feb21"
-                                "31Mar21"
-                                "29Apr21"                            ; "30Apr21"
-                                "28May21"
-                                "30Jun21"
-                                "30Jul21"
-                                "31Aug21"
-                                "30Sep21"
-                                "02Nov21"                             ; "29Oct21"
-                                "30Nov21"
-                                "31Dec21"
-                                "31Jan22"
-                                "28Feb22"
-                                "31Mar22"
-                                "30Apr22"])
+;(def position-historical-dates ["31Dec18"
+;                                "29Mar19"
+;                                "28Jun19"
+;                                "30Sep19"
+;                                "31Dec19"
+;                                "31Mar20"
+;                                "30Jun20"
+;                                "29Sep20"                            ; "30Sep20"
+;                                "31Dec20"
+;                                "29Jan21"
+;                                "26Feb21"
+;                                "31Mar21"
+;                                "29Apr21"                            ; "30Apr21"
+;                                "28May21"
+;                                "30Jun21"
+;                                "30Jul21"
+;                                "31Aug21"
+;                                "30Sep21"
+;                                "02Nov21"                             ; "29Oct21"
+;                                "30Nov21"
+;                                "31Dec21"
+;                                "31Jan22"
+;                                "28Feb22"
+;                                "31Mar22"
+;                                "30Apr22"])
+
+
+(def position-historical-dates ["20181231"
+                                "20190329"
+                                "20190628"
+                                "20190930"
+                                "20191231"
+                                "20200331"
+                                "20200630"
+                                "20200929"                            ; "30Sep20"
+                                "20201231"
+                                "20210129"
+                                "20210226"
+                                "20210331"
+                                "20210429"                            ; "30Apr21"
+                                "20210528"
+                                "20210630"
+                                "20210730"
+                                "20210831"
+                                "20210930"
+                                "20211102"                             ; "29Oct21"
+                                "20211130"
+                                "20211231"
+                                "20220131"
+                                "20220228"
+                                "20220331"
+                                "20220430"
+                                "20220530"
+                                "20220630"
+                                ])
+

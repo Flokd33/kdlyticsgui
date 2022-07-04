@@ -68,9 +68,10 @@
                          :style {:textAlign "right"}
                          :aggregate tables/sum-rows
                          :Cell (get-in tables/attribution-table-columns [display-key-one :Cell])
-                         :filterable true}))]
-
-    ;(println grouping-columns)
+                         :filterable true}))
+        data @(rf/subscribe [:multiple-portfolio-attribution/clean-table] )
+        ]
+    ;(println (last data))
     [tables/tree-table-risk-table
      :multiple-portfolio-attribution/clean-table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
@@ -186,6 +187,7 @@
         period (rf/subscribe [:multiple-portfolio-attribution/period])
         download-columns (concat ["Security" "Code" "Issuer" "Region" "Country" "Rating" "Duration-Bucket"] (filter @selected-portfolios portfolios))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
+        threshold-att (rf/subscribe [:multiple-portfolio-attribution/threshold])
         ]
     (when (and (= @(rf/subscribe [:multiple-portfolio-attribution/field-one]) :total-effect)
                (= @(rf/subscribe [:multiple-portfolio-attribution/period]) "ytd")
@@ -195,16 +197,18 @@
     [box :class "subbody rightelement" :child
      [v-box :class "element" :align-self :center :justify :center :gap "20px"
       :children [[title :label (str "Attribution drill-down " @(rf/subscribe [:attribution-date])) :level :level1]
-                 [h-box :gap "50px"
+                 [h-box :gap "30px"
                   :children
                   [[h-box :gap "20px"
-                    :children [[h-box :gap "10px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
-                               [h-box :gap "10px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
-                               [h-box :gap "10px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(rf/dispatch [:change-multiple-attribution-target %])]]]]]
+                    :children [[h-box :gap "5px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
+                               [h-box :gap "5px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
+                               [h-box :gap "5px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(rf/dispatch [:change-multiple-attribution-target %])]]]
+                                [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model threshold-att :choices static/threshold-choices-attribution :on-change #(rf/dispatch [:multiple-portfolio-attribution/threshold %])]]]]
+                    ]
                    [h-box :gap "20px"
-                    :children [[h-box :gap "10px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-attribution/filter)))]
-                               [h-box :gap "10px" :children (shortcut-row :multiple-portfolio-attribution/shortcut)]
-                               [h-box :gap "10px" :children [ [title :label "Download:" :level :level3]
+                    :children [[h-box :gap "5px" :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-attribution/filter)))]
+                               [h-box :gap "5px" :children (shortcut-row :multiple-portfolio-attribution/shortcut)]
+                               [h-box :gap "5px" :children [[title :label "Download:" :level :level3]
                                                              [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @multiple-portfolio-attribution-display-view "attribution_multiple_portfolio" download-columns is-tree)]]]]]
                    ]]
                  [h-box :gap "5px" :children
@@ -325,7 +329,6 @@
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "held") 1)))
 (defn held-formating [state rowInfo instance]
-  (println rowInfo)
   (clj->js {:style (if (n91held? rowInfo) {:backgroundColor "#FEDDD4"})}))
 
 (defn top-bottom-pr []
@@ -335,7 +338,7 @@
         start-date (:FROM (first data))
         end-date (:TO (first data))
         ]
-    [h-box :padding "80px 10px" :class "rightelement" :gap "50px"
+    [h-box :padding "80px 10px" :class "rightelement" :gap "30px"
      :children [[box :class "element" :child
                  (gt/element-box "top-bottom-pr" "100%" (str "Positive price return " start-date " to " end-date) data-up
                                  [[:> ReactTable
@@ -358,7 +361,7 @@
                                     :getTrProps held-formating :className "-striped -highlight"
                                     }]])]
                 [box :class "element" :child
-                 (gt/element-box "top-bottom-pr" "100%" (str "Negative price return" start-date " to " end-date) data-down
+                 (gt/element-box "top-bottom-pr" "100%" (str "Negative price return " start-date " to " end-date) data-down
                                  [[:> ReactTable
                                    {:data            data-down
                                     :pageSize 50

@@ -96,8 +96,8 @@
 
                  ;position-history
                  :position-history/portfolio                        "OGEMCORD"
-                 :position-history/start-period                     "31Dec21"
-                 :position-history/end-period                       "31Dec21"
+                 :position-history/start-period                     "20211231"
+                 :position-history/end-period                       "20220530"
                  :position-history/filter                           {1 :region 2 :country 3 :issuer}
                  :position-history/hide-zero-holdings               true
                  :position-history/table-filter                     []
@@ -137,6 +137,7 @@
                  :multiple-portfolio-attribution/table-filter        []
                  :multiple-portfolio-attribution/table               []
                  :multiple-portfolio-attribution/expander              {0 {}}
+                 :multiple-portfolio-attribution/threshold            :zero
 
                  :attribution/summary                                []
                  :attribution/available-months                       []
@@ -239,7 +240,7 @@
                  :quant-model/curves-throbber  false
                  :quant-model/history-start-date          (t/int-to-gdate 20150101)
                  ;:quant-model/history-end-date            (t/int-to-gdate (today))
-                 :quant-model/master-security-current-field-db {}
+                 :quant-model/master-security-current-field-db {:id-choice "ISIN_REGS"}
                  :quant-model/master-security-update-field-db {}
 
 
@@ -380,6 +381,7 @@
            :multiple-portfolio-attribution/table-filter
            :multiple-portfolio-attribution/expander
            :multiple-portfolio-attribution/period
+           :multiple-portfolio-attribution/threshold
 
 
            :attribution/summary
@@ -678,7 +680,8 @@
   :qt-date
   (fn [db [_ qt-date]] (let [dt (.replace ^string qt-date "\"" "")]
                          (assoc db :qt-date dt
-                                   :position-history/end-period (str (subs dt 0 (- (count dt) 4)) (subs dt (- (count dt) 2)))))))
+                                   ;:position-history/end-period (str (subs dt 0 (- (count dt) 4)) (subs dt (- (count dt) 2)))
+                                   ))))
 
 (rf/reg-event-db
   :attribution-date

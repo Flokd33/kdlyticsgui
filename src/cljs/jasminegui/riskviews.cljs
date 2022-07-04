@@ -21,7 +21,7 @@
     [jasminegui.qs.qstables :as qstables]
     ;[jasminegui.tradehistory :as th]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    [cljs-time.core :refer [today]]
+    [cljs-time.core :refer [today day-of-week local-date-time days plus]]
     [reagent-contextmenu.menu :as rcm]
     )
   (:import (goog.i18n NumberFormat)
@@ -35,10 +35,10 @@
 
 (defn first-level-sort [x]
   (case x
-    "Cash"        "AAA"
-    "Collateral"  "ZZZ"
-    "Forwards"    "ZZZ"
-    "Equities"    "ZZZ"
+    "Cash" "AAA"
+    "Collateral" "ZZZ"
+    "Forwards" "ZZZ"
+    "Equities" "ZZZ"
     x))
 
 (defn add-total-line-to-pivot [pivoted-table kportfolios]
@@ -82,7 +82,7 @@
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) v2)
           sorted-data2 (into [] (for [r sorted-data] (update r :qt-iam-int-lt-median-rating-score #(str "G" %))))
-          ] ;viewable-positions
+          ]                                                 ;viewable-positions
       ;(println sorted-data2)
       (clj->js
         (if (= (:single-portfolio-risk/display-style db) "Tree")
@@ -161,13 +161,16 @@
 (rf/reg-sub
   :multiple-portfolio-attribution/clean-table
   (fn [db]
-    (let [kselected-portfolios (mapv keyword (:multiple-portfolio-attribution/selected-portfolios db))
+    (let [threshold-att (/ (:label (first (filter #(= (:id %) @(rf/subscribe [:multiple-portfolio-attribution/threshold])) static/threshold-choices-attribution))) 100)
+          kselected-portfolios (mapv keyword (:multiple-portfolio-attribution/selected-portfolios db))
           pivoted-positions (:multiple-portfolio-attribution/table db)
           display-key-one (:multiple-portfolio-attribution/field-one db)
+          att-filter-effect (fn [pos] (true? (some true? (concat (map #(>= % threshold-att) (vals (get-in pos [:Total-Effect]))) (map #(<= % (- threshold-att)) (vals (get-in pos [:Total-Effect])))))))
+          pivoted-positions-filtered (if (= display-key-one :total-effect) (filter att-filter-effect pivoted-positions) pivoted-positions)
           attribution-choices (let [rfil (:multiple-portfolio-attribution/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj attribution-choices :security))] (tables/attribution-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
-          pivoted-data (map #(merge % ((keyword (get-in tables/attribution-table-columns [display-key-one :accessor])) %)) pivoted-positions)
+          pivoted-data (map #(merge % ((keyword (get-in tables/attribution-table-columns [display-key-one :accessor])) %)) pivoted-positions-filtered)
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data)]
       (if (= (:multiple-portfolio-attribution/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:multiple-portfolio-attribution/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
@@ -194,7 +197,7 @@
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-diff-post-th)]
       (if (= (:portfolio-alignment/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:portfolio-alignment/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
-        (add-total-line-to-pivot  sorted-data kportfolios))
+        (add-total-line-to-pivot sorted-data kportfolios))
       )))
 
 (rf/reg-sub
@@ -261,9 +264,9 @@
 (defn fnevt [state rowInfo instance evt]
   (rcm/context!
     evt
-    [(aget rowInfo "original" "NAME")                                         ; <---- string is a section title
+    [(aget rowInfo "original" "NAME")                       ; <---- string is a section title
      ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "isin")))]
-     ["Trade history" (fn [] (single-bond-trade-history-event state rowInfo instance))]         ; <---- the name is a span
+     ["Trade history" (fn [] (single-bond-trade-history-event state rowInfo instance))] ; <---- the name is a span
      ;["Build ticket" (fn [] (prn "my-fn"))]
      ]))
 
@@ -306,10 +309,10 @@
 (defn fnevt-multiple [state rowInfo instance evt]
   (rcm/context!
     evt
-    [(aget rowInfo "original" "NAME")                                         ; <---- string is a section title
+    [(aget rowInfo "original" "NAME")                       ; <---- string is a section title
      ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "isin")))]
-     ["Trade history" (fn [] (multiple-bond-trade-history-event state rowInfo instance))]         ; <---- the name is a span
-     ["Trade history (% NAV)" (fn [] (multiple-bond-trade-history-nav-event state rowInfo instance))]         ; <---- the name is a span
+     ["Trade history" (fn [] (multiple-bond-trade-history-event state rowInfo instance))] ; <---- the name is a span
+     ["Trade history (% NAV)" (fn [] (multiple-bond-trade-history-nav-event state rowInfo instance))] ; <---- the name is a span
      ;["Build ticket" (fn [] (prn "my-fn"))]
      ]))
 
@@ -335,7 +338,7 @@
       {:Header "Actual" :columns [{:Header base-portfolio :accessor base-portfolio :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}]}
       {:Header  (str "Portfolio " (name display-key) " vs " base-portfolio)
        :columns (into [] (for [p portfolios] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}))}
-      {:Header  "Description" :columns [{:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
+      {:Header "Description" :columns [{:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
      is-tree
      (mapv :accessor grouping-columns)
      portfolio-alignment-risk-display-view
@@ -357,7 +360,9 @@
                 :model (r/cursor risk-filter [i])
                 :choices static/risk-choice-map
                 :disabled? (and (= i 3) (= key :position-history/filter))
-                :on-change #(rf/dispatch [key i %])]))))
+                :on-change #(do (rf/dispatch [key i %])
+                                (rf/dispatch [:position-history/data nil])
+                                )]))))
 
 (defn single-portfolio-risk-display []
   (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
@@ -390,7 +395,7 @@
                               [:div {:id "single-portfolio-risk-table"}
                                [tables/tree-table-risk-table
                                 :single-portfolio-risk/table
-                                [{:Header (str "Groups (" @(rf/subscribe [:single-portfolio-risk/portfolio]) " " @(rf/subscribe [:qt-date]) ")" ) :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+                                [{:Header (str "Groups (" @(rf/subscribe [:single-portfolio-risk/portfolio]) " " @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
                                  {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
                                  {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
                                  {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
@@ -408,7 +413,7 @@
                                 on-click-context]]])]))
 
 (defn multiple-portfolio-risk-controller []
-  (let [portfolio-map (into [] (for [p  @(rf/subscribe [:portfolios])] {:id p :label p}))
+  (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         display-style (rf/subscribe [:multiple-portfolio-risk/display-style])
         portfolios @(rf/subscribe [:portfolios])
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
@@ -428,8 +433,8 @@
                              [[h-box :gap "50px" :align :center
                                :children
                                [
-                                [h-box :gap "5px" :align :center :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %])  (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
-                                [checkbox :model hide-zero-risk :label "Hide zero lines?"  :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]
+                                [h-box :gap "5px" :align :center :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %]) (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
+                                [checkbox :model hide-zero-risk :label "Hide zero lines?" :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]
                                 [h-box :gap "5px" :align :center :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]
                                 [h-box :gap "5px" :align :center :children (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter))]
                                 ;[v-box :gap "20px"
@@ -500,8 +505,8 @@
         threshold (rf/subscribe [:portfolio-alignment/threshold])]
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "pivot-portfolio-risk" max-width (str "Portfolio alignment " @(rf/subscribe [:qt-date]))
-                             {:shortcuts :portfolio-alignment/shortcut
-                              :target-id  :portfolio-alignment/table
+                             {:shortcuts       :portfolio-alignment/shortcut
+                              :target-id       :portfolio-alignment/table
                               :on-click-action #(tools/react-table-to-csv @portfolio-alignment-risk-display-view "alignment" (map name (concat [:NAME :description :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups)))))))}
                              [[h-box :gap "50px"
                                :children
@@ -515,7 +520,7 @@
                                 [v-box :gap "20px"
                                  :children [[h-box :gap "10px" :children (concat [[title :label "Filtering:" :level :level3]] (filtering-row :portfolio-alignment/filter))]]]]]
                               [portfolio-alignment-risk-display]]
-                     )]))
+                             )]))
 
 
 (defn go-to-portfolio-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:navigation/active-home :single-portfolio]) (rf/dispatch [:single-portfolio-risk/portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
@@ -558,61 +563,61 @@
                                                       "ust" ust
                                                       "sensitive" ir-sensitive
                                                       "insensitive" ir-insensitive)))
-            download-columns [:maturity-band	:ust	:sensitive	:insensitive	:total]]
+            download-columns [:maturity-band :ust :sensitive :insensitive :total]]
         ;(println data)
         [box :class "subbody rightelement" :child
          (gt/element-box-with-cols "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
-                         [[h-box :gap "5px" :align :center  :children [[title :level :level3 :label "Portfolio:"] [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
-                                                                       [gap :size "20px"]
-                                                                       [title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]]]
+                                   [[h-box :gap "5px" :align :center :children [[title :level :level3 :label "Portfolio:"] [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
+                                                                                [gap :size "20px"]
+                                                                                [title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]]]
 
-                          [h-box :gap "5px" :align :center :children [[title :level :level3 :label "Cut-off type:"] [single-dropdown :width dropdown-width :model spread-or-rating :choices [{:id :rating-score :label "Rating"} {:id :qt-libor-spread :label "Z-spread"}] :on-change #(do (reset! spread-or-rating %) (reset! cut-off (if (= % :rating-score) 10.0 250.0)))]
-                                                                      [gap :size "20px"]
-                                                                      [title :level :level3 :label "Level:"] [slider
-                                                                                                              :model cut-off
-                                                                                                              :min (if (= @spread-or-rating :rating-score) 3.0 100.0)
-                                                                                                              :max (if (= @spread-or-rating :rating-score) 14.0 600.0)
-                                                                                                              :step (if (= @spread-or-rating :rating-score) 1.0 50.0)
-                                                                                                              :on-change #(reset! cut-off %)
-                                                                                                              :width "200px"]
-                                                                      [label :label (if (= @spread-or-rating :rating-score) (qstables/get-implied-rating (str @cut-off)) (str @cut-off "bps"))]]]
+                                    [h-box :gap "5px" :align :center :children [[title :level :level3 :label "Cut-off type:"] [single-dropdown :width dropdown-width :model spread-or-rating :choices [{:id :rating-score :label "Rating"} {:id :qt-libor-spread :label "Z-spread"}] :on-change #(do (reset! spread-or-rating %) (reset! cut-off (if (= % :rating-score) 10.0 250.0)))]
+                                                                                [gap :size "20px"]
+                                                                                [title :level :level3 :label "Level:"] [slider
+                                                                                                                        :model cut-off
+                                                                                                                        :min (if (= @spread-or-rating :rating-score) 3.0 100.0)
+                                                                                                                        :max (if (= @spread-or-rating :rating-score) 14.0 600.0)
+                                                                                                                        :step (if (= @spread-or-rating :rating-score) 1.0 50.0)
+                                                                                                                        :on-change #(reset! cut-off %)
+                                                                                                                        :width "200px"]
+                                                                                [label :label (if (= @spread-or-rating :rating-score) (qstables/get-implied-rating (str @cut-off)) (str @cut-off "bps"))]]]
 
-                          [gap :size "20px"]
-                          [title :level :level3 :label "Click on cell to see position breakdown"]
-                          [:> ReactTable
-                           {:data           data
-                            :columns        [{:Header "Maturity band" :accessor "maturity-band" :width 120}
-                                             {:Header "UST & hedges" :accessor "ust" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
-                                             {:Header label-sensitive :accessor "sensitive" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
-                                             {:Header label-insensitive :accessor "insensitive" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
-                                             {:Header "Total" :accessor "total" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}]
-                            :showPagination false :getTdProps show-main-elements :pageSize (count data) :className "-striped -highlight"}]
-                          [gap :size "20px"]
+                                    [gap :size "20px"]
+                                    [title :level :level3 :label "Click on cell to see position breakdown"]
+                                    [:> ReactTable
+                                     {:data           data
+                                      :columns        [{:Header "Maturity band" :accessor "maturity-band" :width 120}
+                                                       {:Header "UST & hedges" :accessor "ust" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
+                                                       {:Header label-sensitive :accessor "sensitive" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
+                                                       {:Header label-insensitive :accessor "insensitive" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}
+                                                       {:Header "Total" :accessor "total" :width 120 :getProps (partial tables/red-negatives-bold-if-a-b "maturity-band" (first @clicked) (second @clicked)) :Cell tables/round2}]
+                                      :showPagination false :getTdProps show-main-elements :pageSize (count data) :className "-striped -highlight"}]
+                                    [gap :size "20px"]
 
-                          [title :level :level3 :label (str "Top 20 contributors ranked by " (if (= @absrel :contrib-mdur) "fund contribution" "contribution vs index") " " (str (first @clicked) " / " (second @clicked)))]
-                          [:> ReactTable
-                           {:data           (reverse (take-last 20 display))
-                            :columns        [{:Header "Issuer" :accessor "TICKER" :width 120}
-                                             {:Header "Name" :accessor "NAME" :width 120}
-                                             {:Header "Fund" :accessor "contrib-mdur" :width 120 :getProps tables/red-negatives :Cell tables/round2}
-                                             {:Header "Index" :accessor "bm-contrib-eir-duration" :width 120 :getProps tables/red-negatives :Cell tables/round2}
-                                             {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
-                            :showPagination false :pageSize 20 :className "-striped -highlight"}]
-                          [title :level :level3 :label (str "Bottom 20 contributors ranked by " (if (= @absrel :contrib-mdur) "fund contribution" "contribution vs index") " " (str (first @clicked) " / " (second @clicked)))]
-                          [:> ReactTable
-                           {:data           (reverse (take 20 display))
-                            :columns        [{:Header "Issuer" :accessor "TICKER" :width 120}
-                                             {:Header "Name" :accessor "NAME" :width 120}
-                                             {:Header "Fund" :accessor "contrib-mdur" :width 120 :getProps tables/red-negatives :Cell tables/round2}
-                                             {:Header "Index" :accessor "bm-contrib-eir-duration" :width 120 :getProps tables/red-negatives :Cell tables/round2}
-                                             {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
-                            :showPagination false :pageSize 20 :className "-striped -highlight"}]]
-                                           download-columns
-                                           )]))))
+                                    [title :level :level3 :label (str "Top 20 contributors ranked by " (if (= @absrel :contrib-mdur) "fund contribution" "contribution vs index") " " (str (first @clicked) " / " (second @clicked)))]
+                                    [:> ReactTable
+                                     {:data           (reverse (take-last 20 display))
+                                      :columns        [{:Header "Issuer" :accessor "TICKER" :width 120}
+                                                       {:Header "Name" :accessor "NAME" :width 120}
+                                                       {:Header "Fund" :accessor "contrib-mdur" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                                       {:Header "Index" :accessor "bm-contrib-eir-duration" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                                       {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
+                                      :showPagination false :pageSize 20 :className "-striped -highlight"}]
+                                    [title :level :level3 :label (str "Bottom 20 contributors ranked by " (if (= @absrel :contrib-mdur) "fund contribution" "contribution vs index") " " (str (first @clicked) " / " (second @clicked)))]
+                                    [:> ReactTable
+                                     {:data           (reverse (take 20 display))
+                                      :columns        [{:Header "Issuer" :accessor "TICKER" :width 120}
+                                                       {:Header "Name" :accessor "NAME" :width 120}
+                                                       {:Header "Fund" :accessor "contrib-mdur" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                                       {:Header "Index" :accessor "bm-contrib-eir-duration" :width 120 :getProps tables/red-negatives :Cell tables/round2}
+                                                       {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
+                                      :showPagination false :pageSize 20 :className "-striped -highlight"}]]
+                                   download-columns
+                                   )]))))
 
 (defn concentration-risk []
   (let [index-cut-off 0.01 overweight-multiplier 2 breakdown (r/atom :country-sector)
-        download-columns [:bucket  :weight-multiplier :mdur-multiplier :weight :bm-weight :contrib-mdur  :bm-contrib-eir-duration]]
+        download-columns [:bucket :weight-multiplier :mdur-multiplier :weight :bm-weight :contrib-mdur :bm-contrib-eir-duration]]
     (fn []
       (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
             portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
@@ -620,7 +625,7 @@
             grp (group-by (case @breakdown
                             :country-sector (juxt :qt-risk-country-name :qt-jpm-sector)
                             :country-rating (juxt :qt-risk-country-name #(> (:rating-score %) 10))
-                            :sector-rating (juxt :qt-jpm-sector #(> (:rating-score %) 10)))  positions)
+                            :sector-rating (juxt :qt-jpm-sector #(> (:rating-score %) 10))) positions)
             exposures (into [] (for [[[f1 f2] v] grp] (merge {:f1 f1 :f2 f2} (into {} (for [metric [:weight :bm-weight :contrib-mdur :bm-contrib-eir-duration]] [metric (reduce + (map metric v))])))))
             exposures-post-cut-off (->> exposures (filter #(> (:bm-weight %) index-cut-off)) (filter #(> (/ (:weight %) (:bm-weight %)) overweight-multiplier)))
             display (reverse
@@ -630,27 +635,27 @@
                                                                                        :mdur-multiplier (/ (:contrib-mdur line) (:bm-contrib-eir-duration line)))))))]
         [box :class "subbody rightelement" :child
          (gt/element-box-with-cols "concentrationrisk" "100%" (str "Concentration risk " @(rf/subscribe [:qt-date])) display
-                         [[title :level :level4 :label "Filtering for buckets of risk where the index is above 1% and we hold more than 2x the index size."]
-                          [h-box :gap "20px" :align :center  :children [[title :level :level3 :label "Portfolio:"]
-                                                                        [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
-                                                                        [title :level :level3 :label "Breakdown:"]
-                                                                        [radio-button :model breakdown :label "Country / Sector" :value :country-sector :on-change #(reset! breakdown %)]
-                                                                        [radio-button :model breakdown :label "Country / Rating" :value :country-rating :on-change #(reset! breakdown  %)]
-                                                                        [radio-button :model breakdown :label "Sector / Rating" :value :sector-rating :on-change #(reset! breakdown  %)]
-                                                                        ]]
+                                   [[title :level :level4 :label "Filtering for buckets of risk where the index is above 1% and we hold more than 2x the index size."]
+                                    [h-box :gap "20px" :align :center :children [[title :level :level3 :label "Portfolio:"]
+                                                                                 [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
+                                                                                 [title :level :level3 :label "Breakdown:"]
+                                                                                 [radio-button :model breakdown :label "Country / Sector" :value :country-sector :on-change #(reset! breakdown %)]
+                                                                                 [radio-button :model breakdown :label "Country / Rating" :value :country-rating :on-change #(reset! breakdown %)]
+                                                                                 [radio-button :model breakdown :label "Sector / Rating" :value :sector-rating :on-change #(reset! breakdown %)]
+                                                                                 ]]
 
 
-                          [:> ReactTable
-                           {:data           display
-                            :columns        [{:Header "Bucket overweight" :columns [{:Header "Bucket" :accessor "bucket" :width 240}
-                                                                                    (assoc (tables/nb-col "Maturity multiplier" "weight-multiplier" 120 tables/round1 nil) :filterable false)
-                                                                                    (assoc (tables/nb-col "Duration multiplier" "mdur-multiplier" 120 tables/round1 nil) :filterable false)]}
-                                             {:Header "NAV" :columns [(assoc (tables/nb-col "Fund" "weight" 120 tables/round2pc nil) :filterable false)
-                                                                      (assoc (tables/nb-col "Index" "bm-weight" 120 tables/round2pc nil) :filterable false)]}
-                                             {:Header "Duration" :columns [(assoc (tables/nb-col "Fund" "contrib-mdur" 120 tables/round2 nil) :filterable false)
-                                                                           (assoc (tables/nb-col "Index" "bm-contrib-eir-duration" 120 tables/round2 nil) :filterable false)]}]
-                            :showPagination false  :pageSize (count display) :className "-striped -highlight"}]
-                          ]
+                                    [:> ReactTable
+                                     {:data           display
+                                      :columns        [{:Header "Bucket overweight" :columns [{:Header "Bucket" :accessor "bucket" :width 240}
+                                                                                              (assoc (tables/nb-col "Maturity multiplier" "weight-multiplier" 120 tables/round1 nil) :filterable false)
+                                                                                              (assoc (tables/nb-col "Duration multiplier" "mdur-multiplier" 120 tables/round1 nil) :filterable false)]}
+                                                       {:Header "NAV" :columns [(assoc (tables/nb-col "Fund" "weight" 120 tables/round2pc nil) :filterable false)
+                                                                                (assoc (tables/nb-col "Index" "bm-weight" 120 tables/round2pc nil) :filterable false)]}
+                                                       {:Header "Duration" :columns [(assoc (tables/nb-col "Fund" "contrib-mdur" 120 tables/round2 nil) :filterable false)
+                                                                                     (assoc (tables/nb-col "Index" "bm-contrib-eir-duration" 120 tables/round2 nil) :filterable false)]}]
+                                      :showPagination false :pageSize (count display) :className "-striped -highlight"}]
+                                    ]
                                    download-columns
                                    )]))))
 
@@ -707,77 +712,80 @@
         talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)
         date @(rf/subscribe [:qt-date])]
     ;(println talanx-checks-data-clean)
-    [h-box  :class "subbody rightelement" :gap "20px" :children
-     [[v-box :class "element" :gap "20px"  :children
+    [h-box :class "subbody rightelement" :gap "20px" :children
+     [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "Portfolio NAV exposure checks " date) portfolio-checks-data-nav
-                     [[:> ReactTable
-                       {:data           portfolio-checks-data-nav
-                        :columns        [{:Header "Portfolio" :accessor :portfolio :width 90  :style {:textAlign "left"}}
-                                         {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
-                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
-                                         {:Header "Breach" :accessor :check-threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                         {:Header "Warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                         {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                         {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
-                        :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-nav) :showPageSizeOptions false :className "-striped -highlight"}]]
-                     )
+                        [[:> ReactTable
+                          {:data       portfolio-checks-data-nav
+                           :columns    [{:Header "Portfolio" :accessor :portfolio :width 90 :style {:textAlign "left"}}
+                                        {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
+                                        {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                        {:Header "Breach" :accessor :check-threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                        {:Header "Warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                        {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-nav) :showPageSizeOptions false :className "-striped -highlight"}]]
+                        )
         (gt/element-box "checks" "100%" (str "Portfolio duration exposure checks " date) portfolio-checks-data-dur
                         [[:> ReactTable
-                          {:data           portfolio-checks-data-dur
-                           :columns        [{:Header "Portfolio" :accessor :portfolio :width 90  :style {:textAlign "left"}}
-                                            {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
-                                            {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
-                                            {:Header "Breach" :accessor :check-threshold-breach :width 100  :style {:textAlign "right"}}
-                                            {:Header "Warning" :accessor :check-threshold-warning :width 100  :style {:textAlign "right"}}
-                                            {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}
-                                            {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
+                          {:data       portfolio-checks-data-dur
+                           :columns    [{:Header "Portfolio" :accessor :portfolio :width 90 :style {:textAlign "left"}}
+                                        {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
+                                        {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                        {:Header "Breach" :accessor :check-threshold-breach :width 100 :style {:textAlign "right"}}
+                                        {:Header "Warning" :accessor :check-threshold-warning :width 100 :style {:textAlign "right"}}
+                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}
+                                        {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-dur) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )]]
 
-     (gt/element-box "talanx-checks" "100%" (str "Talanx issuer concentration checks " date) talanx-checks-data-clean
-                     [[:> ReactTable
-                       {:data           talanx-checks-data-clean
-                        :columns        [{:Header "Portfolio" :accessor :portfolio :width 100  :style {:textAlign "left"}}
-                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
-                                         {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
-                                         {:Header "Breach corp" :accessor :threshold-corp :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                         {:Header "Max corp %" :accessor :max-corp :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                         {:Header "Max corp name" :accessor :max-corp-name :width 100 :style {:textAlign "left"}}
-                                         {:Header "Breach sov" :accessor :threshold-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                         {:Header "Max sov %" :accessor :max-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                         {:Header "Max sov name" :accessor :max-sov-name :width 100 :style {:textAlign "left"}}]
-                        :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean) :showPageSizeOptions false :className "-striped -highlight"}]]
-                     )]
-        ]))
+      (gt/element-box "talanx-checks" "100%" (str "Talanx issuer concentration checks " date) talanx-checks-data-clean
+                      [[:> ReactTable
+                        {:data       talanx-checks-data-clean
+                         :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
+                                      {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                      {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
+                                      {:Header "Breach corp" :accessor :threshold-corp :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                      {:Header "Max corp %" :accessor :max-corp :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                      {:Header "Max corp name" :accessor :max-corp-name :width 100 :style {:textAlign "left"}}
+                                      {:Header "Breach sov" :accessor :threshold-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                      {:Header "Max sov %" :accessor :max-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                      {:Header "Max sov name" :accessor :max-sov-name :width 100 :style {:textAlign "left"}}]
+                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean) :showPageSizeOptions false :className "-striped -highlight"}]]
+                      )]
+     ]))
 
 
 (defn large-exposures
   "another ugly microoptimisation"
   []
-  (let [download-columns [:NAME :isin :TICKER :pct_held :original-quantity :AMT_OUTSTANDING ]]
-  (when-not (seq @(rf/subscribe [:large-exposures])) (rf/dispatch [:get-large-exposures]))
-  [box :class "subbody rightelement" :child
-   (gt/element-box-with-cols "large-exposures" "100%" (str "Large exposures (>5%) " @(rf/subscribe [:qt-date])) @(rf/subscribe [:large-exposures])
-                   [[:> ReactTable
-                     {:data           (reverse (sort-by :pct_held @(rf/subscribe [:large-exposures])))
-                      :columns        [(tables/risk-table-columns :name)
-                                       (tables/risk-table-columns :isin)
-                                       (tables/risk-table-columns :issuer)
-                                       {:Header "Held %" :accessor "pct_held" :width 80 :Cell #(tables/nb-cell-format "%.1f%" 100. %) :style {:textAlign "right"}}
-                                       (assoc (tables/risk-table-columns :nominal) :filterable false)
-                                       {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 100 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
-                      :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize 20 :showPageSizeOptions false :className "-striped -highlight"}]]
-                             download-columns
-                             )]))
+  (let [download-columns [:NAME :isin :TICKER :pct_held :original-quantity :AMT_OUTSTANDING]]
+    (when-not (seq @(rf/subscribe [:large-exposures])) (rf/dispatch [:get-large-exposures]))
+    [box :class "subbody rightelement" :child
+     (gt/element-box-with-cols "large-exposures" "100%" (str "Large exposures (>5%) " @(rf/subscribe [:qt-date])) @(rf/subscribe [:large-exposures])
+                               [[:> ReactTable
+                                 {:data       (reverse (sort-by :pct_held @(rf/subscribe [:large-exposures])))
+                                  :columns    [(tables/risk-table-columns :name)
+                                               (tables/risk-table-columns :isin)
+                                               (tables/risk-table-columns :issuer)
+                                               {:Header "Held %" :accessor "pct_held" :width 80 :Cell #(tables/nb-cell-format "%.1f%" 100. %) :style {:textAlign "right"}}
+                                               (assoc (tables/risk-table-columns :nominal) :filterable false)
+                                               {:Header "Outstanding" :accessor "AMT_OUTSTANDING" :width 100 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}]
+                                  :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize 20 :showPageSizeOptions false :className "-striped -highlight"}]]
+                               download-columns
+                               )]))
 
 
 
 
 (rf/reg-event-fx
   :get-position-history
-  (fn [{:keys [db]} [_ portfolio dates]]
-    {:db (assoc db :navigation/show-mounting-modal true)
-     :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :dates dates} :dispatch-key [:position-history/data]}}
+  (fn [{:keys [db]} [_ portfolio filter-one filter-two field dateseq]]
+    (println (str static/server-address "position-history"))
+    (println {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq})
+    {:db                 (assoc db :navigation/show-mounting-modal true)
+     :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq}
+                          :dispatch-key [:position-history/data]}}
     ))
 
 (rf/reg-event-db
@@ -796,39 +804,43 @@
                    (into [] (for [[k v] (group-by (apply juxt accessors-k) (get db :position-history/data))]
                               (into (select-keys (first v) accessors-k)
                                     (for [dt all-dates]
-                                      [(keyword (str "dt" dt))
+                                      [(keyword (str " dt " dt))
                                        (reduce + (map #(get % (keyword (get-in tables/risk-table-columns [(db :position-history/field-one) :accessor])) 0.0)
                                                       (t/chainfilter {:date dt} v)))]
                                       )))))
-          thfil (fn [line] (not (every? zero? (map line (map #(keyword (str "dt" %)) all-dates)))))
+          thfil (fn [line] (not (every? zero? (map line (map #(keyword (str " dt " %)) all-dates)))))
           sorted-data-hide-zero (if (db :position-history/hide-zero-holdings) (filter thfil sorted-data) sorted-data)
           sorted-deltas (into [] (for [line sorted-data-hide-zero]
-                                   (into (assoc line :tdelta (- (get line (keyword (str "dt" (last all-dates)))) (get line (keyword (str "dt" (first all-dates)))))
-                                                     (keyword (str "deltadt" (first all-dates))) 0.0)
+                                   (into (assoc line :tdelta (- (get line (keyword (str " dt " (last all-dates)))) (get line (keyword (str " dt " (first all-dates)))))
+                                                     (keyword (str " deltadt " (first all-dates))) 0.0)
                                          (for [i (range (dec (count all-dates)))]
-                                           [(keyword (str "deltadt" (nth all-dates (inc i))))
-                                            (- (get line (keyword (str "dt" (nth all-dates (inc i))))) (get line (keyword (str "dt" (nth all-dates i)))))]))
+                                           [(keyword (str " deltadt " (nth all-dates (inc i))))
+                                            (- (get line (keyword (str " dt " (nth all-dates (inc i))))) (get line (keyword (str " dt " (nth all-dates i)))))]))
                                    ))
           template (into {} (for [[k v] (first (get db :position-history/data))] [k "Total"]))
           portfolio-total-line (assoc (into
-                                        (into template (for [dt all-dates] [(keyword (str "dt" dt)) (reduce + (map (keyword (str "dt" dt)) sorted-deltas))]))
+                                        (into template (for [dt all-dates] [(keyword (str " dt " dt)) (reduce + (map (keyword (str " dt " dt)) sorted-deltas))]))
                                         (for [i (range (dec (count all-dates)))]
-                                          [(keyword (str "deltadt" (nth all-dates (inc i)))) (reduce + (map (keyword (str "deltadt" (nth all-dates (inc i)))) sorted-deltas))]))
+                                          [(keyword (str " deltadt " (nth all-dates (inc i)))) (reduce + (map (keyword (str " deltadt " (nth all-dates (inc i)))) sorted-deltas))]))
                                  :tdelta (reduce + (map :tdelta sorted-deltas))
                                  )
 
           ]
+
       (clj->js
         (if (= (:position-history/display-style db) "Tree")
-          (tables/cljs-text-filter-OR (:position-history/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-deltas))
+          (tables/cljs-text-filter-OR (:position-history/table-filter db) (mapv #(assoc %1 :totaldummy " ") sorted-deltas))
           (concat [portfolio-total-line] sorted-deltas)))                           ;this should be total line
       )))
 
 (def position-history-display-view (atom nil))
 
 (defn position-history []
-  (let [short-qt-date (str (subs @(rf/subscribe [:qt-date]) 0 (- (count @(rf/subscribe [:qt-date])) 4)) (subs @(rf/subscribe [:qt-date]) (- (count @(rf/subscribe [:qt-date])) 2)))
-        date-map (into [] (for [k (conj static/position-historical-dates short-qt-date)] {:id k :label k}))
+  (let [qt-date (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
+        qt-date-yyyymmdd (cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
+        qt-date-yyyymmdd-1w (cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") (plus qt-date (days -7)))
+        qt-date-yyyymmdd-2w (cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") (plus qt-date (days -15)))
+        date-map (into [] (for [k (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)] {:id k :label (str (t/gdate-to-yyyy-mm-dd (t/int-to-gdate k)))}))
         start-period (rf/subscribe [:position-history/start-period])
         end-period (rf/subscribe [:position-history/end-period])
         breakdown-map (into [] (for [k ["Start/End" "All"]] {:id k :label k}))
@@ -843,59 +855,72 @@
         risk-choices (let [rfil @(rf/subscribe [:position-history/filter])]  (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/risk-table-columns r)))
         all-dates (sort (distinct (map :date @(rf/subscribe [:position-history/data]))))
-        download-columns (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str "dt" %) all-dates))
+        download-columns (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str " dt " %) all-dates))
         get-history-dates (fn [bd start end]
-                            (let [all-dates (conj static/position-historical-dates short-qt-date)]
+                            (let [all-dates (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)]
                               (if (= bd "Start/End")
                                 [start end]
                                 (let [a (.indexOf all-dates start)
                                       b (.indexOf all-dates end)]
-                                  (take (inc (- b a)) (drop a all-dates))))))]
-    [box :class "subbody rightelement" :child
-     (gt/element-box-generic "position-history" max-width (str "Portfolio history " @(rf/subscribe [:qt-date]))
-                             {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}
-                             [[h-box :gap "10px" :align :center
+                                  (take (inc (- b a)) (drop a all-dates))
+                                  ))))]
+    ;(println (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd))
+    ;(println all-dates)
+    ;(println [:get-position-history @portfolio (keyword (:accessor (first grouping-columns))) (keyword (:accessor (second grouping-columns)))
+    ;          (keyword (:accessor (tables/risk-table-columns @field-one))) (get-history-dates @breakdown @start-period @end-period)])
+    [box :class " subbody rightelement " :child
+     (gt/element-box-generic " position-history " max-width (str " Portfolio history " @(rf/subscribe [:qt-date]))
+                             {:target-id " single-portfolio-risk-table " :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}
+                             [[h-box :gap " 10px " :align :center
                                :children (concat
-                                           [[title :label "Display:" :level :level3]
-                                            [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:position-history/display-style %]) (rf/dispatch [:single-portfolio-risk/hide-zero-holdings (= % "Table")]))]
-                                            [gap :size "30px"]
-                                            [checkbox :model hide-zero-risk :label "Hide zero lines?" :on-change #(rf/dispatch [:position-history/hide-zero-holdings %])]
-                                            [title :label "Field:" :level :level3]
-                                            [single-dropdown :width dropdown-width :model field-one :choices (take 4 static/risk-field-choices) :on-change #(rf/dispatch [:position-history/field-one %])]
-                                            [gap :size "30px"]]
-                                           (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:position-history/data []]) (rf/dispatch [:position-history/portfolio %]))]]
+                                           [[title :label " Display: " :level :level3]
+                                            [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:position-history/display-style %]) (rf/dispatch [:position-history/hide-zero-holdings (= % " Table ")]))]
+                                            [gap :size " 30px "]
+                                            [checkbox :model hide-zero-risk :label " Hide zero lines? " :on-change #(rf/dispatch [:position-history/hide-zero-holdings %])]
+                                            [title :label " Field: " :level :level3]
+                                            [single-dropdown :width dropdown-width :model field-one :choices (take 5 static/risk-field-choices) :on-change #(do (rf/dispatch [:position-history/field-one %])
+                                                                                                                                                                (rf/dispatch [:position-history/data []]))]
+                                            [gap :size " 30px "]]
+                                           (into [] (concat [[title :label " Filtering: " :level :level3]
+                                                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:position-history/data []])
+                                                                                                                                                            (rf/dispatch [:position-history/portfolio %]))]]
                                                             (filtering-row :position-history/filter)
-                                                            [[gap :size "30px"]]))
-                                           ;(shortcut-row :position-history/shortcut)
+                                                            [[gap :size " 30px "]]))
                                            )]
-                              [h-box :gap "10px" :align :center
-                               :children [[title :label "Start period:" :level :level3]
+                              [h-box :gap " 10px " :align :center
+                               :children [[title :label " Start period: " :level :level3]
                                           [single-dropdown :width dropdown-width :model start-period :choices (drop-last date-map) :on-change #(rf/dispatch [:position-history/start-period %])]
-                                          [title :label "End period:" :level :level3]
+                                          ;[datepicker-dropdown
+                                          ; :model (tools/int-to-gdate @start-period)
+                                          ; :minimum (tools/int-to-gdate 20150101)
+                                          ; :maximum (today)
+                                          ; :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:position-history/start-period (t/gdate-to-yyyymmdd %)])]
+                                          [title :label " End period: " :level :level3]
                                           [single-dropdown :width dropdown-width :model end-period :choices (rest date-map) :on-change #(rf/dispatch [:position-history/end-period %])]
-                                          [title :label "Breakdown:" :level :level3]
+                                          [title :label " Breakdown: " :level :level3]
                                           [single-dropdown :width dropdown-width :model breakdown :choices breakdown-map :on-change #(rf/dispatch [:position-history/breakdown %])]
-                                          [title :label "Position/Change:" :level :level3]
-                                          [single-dropdown :width dropdown-width :model absdiff :choices [{:id :absolute :label "Position"} {:id :difference :label "Difference"}] :on-change #(rf/dispatch [:position-history/absdiff %])]
-                                          [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-position-history @portfolio (get-history-dates @breakdown @start-period @end-period)])]
-
+                                          [title :label " Position/Change: " :level :level3]
+                                          [single-dropdown :width dropdown-width :model absdiff :choices [{:id :absolute :label " Position "} {:id :difference :label " Difference "}] :on-change #(rf/dispatch [:position-history/absdiff %])]
+                                          [button :label " Fetch " :class " btn btn-primary btn-block "
+                                           :on-click #(rf/dispatch [:get-position-history @portfolio (keyword (:accessor (first grouping-columns))) (keyword (:accessor (second grouping-columns)))
+                                                                    (keyword (:accessor (tables/risk-table-columns @field-one))) (get-history-dates @breakdown @start-period @end-period)])]
                                           ]]
                               [:div {:id "position-history-risk-table"}
                                [tables/tree-table-risk-table
                                 :position-history/table
-                                (into [{:Header (str "Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}]
+                                (into [{:Header (str " Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ") ")
+                                        :columns (concat (if is-tree [{:Header " " :accessor " totaldummy " :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}]
                                       (if (= @absdiff :absolute)
-                                        (for [dt (map #(keyword (str "dt" %)) all-dates)]
-                                          (tables/nb-col (subs (name dt) 2) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
-                                        (for [dt (conj (mapv #(keyword (str "deltadt" %)) all-dates) :tdelta)]
-                                          (tables/nb-col (str (gstring/unescapeEntities "&Delta; ") (subs (name dt) 7)) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
-                                      ))
-                                is-tree
-                                (mapv :accessor grouping-columns)
-                                position-history-display-view
-                                :position-history/table-filter
-                                :position-history/expander
-                                on-click-context]]
-                              ])]))
+                                        (for [dt (map #(keyword (str " dt " %)) all-dates)]
+                                          (tables/nb-col (subs (name dt) 3) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :weight tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
+                                        (for [dt (conj (mapv #(keyword (str " deltadt " %)) all-dates) :tdelta)]
+                                          (tables/nb-col (str (gstring/unescapeEntities "&Delta;") (subs (name dt) 8)) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :weight tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
+))
+is-tree
+(mapv :accessor grouping-columns)
+position-history-display-view
+:position-history/table-filter
+:position-history/expander
+on-click-context]]
+])]))
 
