@@ -786,8 +786,7 @@
     (println {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq})
     {:db                 (assoc db :navigation/show-mounting-modal true)
      :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq}
-                          :dispatch-key [:position-history/data]}}
-    ))
+                          :dispatch-key [:position-history/data]}}))
 
 (rf/reg-event-db
   :position-history/data
@@ -867,7 +866,7 @@
                                   ))))]
     (println @field-one)
     [box :class " subbody rightelement " :child
-     (gt/element-box-generic " position-history " max-width (str " Portfolio history " @(rf/subscribe [:qt-date]))
+     (gt/element-box-generic "position-history-risk-table" max-width (str " Portfolio history " @(rf/subscribe [:qt-date]))
                              {:target-id " single-portfolio-risk-table " :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}
                              [[h-box :gap " 10px " :align :center
                                :children (concat
@@ -901,19 +900,18 @@
                               [:div {:id "position-history-risk-table"}
                                [tables/tree-table-risk-table
                                 :position-history/table
-                                (into [{:Header (str " Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ") ")
-                                        :columns (concat (if is-tree [{:Header " " :accessor " totaldummy " :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}]
+                                (into [{:Header  (str " Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ") ")
+                                        :columns (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns)}]
                                       (if (= @absdiff :absolute)
                                         (for [dt (map #(keyword (str " dt " %)) all-dates)]
                                           (tables/nb-col (subs (name dt) 3) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
                                         (for [dt (conj (mapv #(keyword (str " deltadt " %)) all-dates) :tdelta)]
                                           (tables/nb-col (str (gstring/unescapeEntities "&Delta;") (subs (name dt) 8)) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
-))
-is-tree
-(mapv :accessor grouping-columns)
-position-history-display-view
-:position-history/table-filter
-:position-history/expander
-on-click-context]]
-])]))
+                                        ))
+                                is-tree
+                                (mapv :accessor grouping-columns)
+                                position-history-display-view
+                                :position-history/table-filter
+                                :position-history/expander
+                                on-click-context]]])]))
 
