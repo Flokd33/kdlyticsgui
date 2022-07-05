@@ -255,7 +255,7 @@
      :emd-region                       (text-col "Region" "emd-region" 120)
      :country                          (text-col "Country" "qt-risk-country-name" 120)
      ;:qt-risk-country-code             (text-col "Country" "qt-risk-country-name" 120)
-     :issuer                           (text-col "Issuer" "TICKER" 80)
+     :issuer                           (text-col "Issuer" "TICKER" 120)
      :sector                           (text-col "Sector" "qt-jpm-sector" 120)
      :maturity-band                    (text-col "Maturity" "qt-final-maturity-band" 120)
      :rating                           {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}
