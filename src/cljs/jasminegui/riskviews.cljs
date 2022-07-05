@@ -865,10 +865,7 @@
                                       b (.indexOf all-dates end)]
                                   (take (inc (- b a)) (drop a all-dates))
                                   ))))]
-    ;(println (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd))
-    ;(println all-dates)
-    ;(println [:get-position-history @portfolio (keyword (:accessor (first grouping-columns))) (keyword (:accessor (second grouping-columns)))
-    ;          (keyword (:accessor (tables/risk-table-columns @field-one))) (get-history-dates @breakdown @start-period @end-period)])
+    (println @field-one)
     [box :class " subbody rightelement " :child
      (gt/element-box-generic " position-history " max-width (str " Portfolio history " @(rf/subscribe [:qt-date]))
                              {:target-id " single-portfolio-risk-table " :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}
@@ -891,11 +888,6 @@
                               [h-box :gap " 10px " :align :center
                                :children [[title :label " Start period: " :level :level3]
                                           [single-dropdown :width dropdown-width :model start-period :choices (drop-last date-map) :on-change #(rf/dispatch [:position-history/start-period %])]
-                                          ;[datepicker-dropdown
-                                          ; :model (tools/int-to-gdate @start-period)
-                                          ; :minimum (tools/int-to-gdate 20150101)
-                                          ; :maximum (today)
-                                          ; :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:position-history/start-period (t/gdate-to-yyyymmdd %)])]
                                           [title :label " End period: " :level :level3]
                                           [single-dropdown :width dropdown-width :model end-period :choices (rest date-map) :on-change #(rf/dispatch [:position-history/end-period %])]
                                           [title :label " Breakdown: " :level :level3]
@@ -913,9 +905,9 @@
                                         :columns (concat (if is-tree [{:Header " " :accessor " totaldummy " :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}]
                                       (if (= @absdiff :absolute)
                                         (for [dt (map #(keyword (str " dt " %)) all-dates)]
-                                          (tables/nb-col (subs (name dt) 3) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :weight tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
+                                          (tables/nb-col (subs (name dt) 3) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
                                         (for [dt (conj (mapv #(keyword (str " deltadt " %)) all-dates) :tdelta)]
-                                          (tables/nb-col (str (gstring/unescapeEntities "&Delta;") (subs (name dt) 8)) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :weight tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
+                                          (tables/nb-col (str (gstring/unescapeEntities "&Delta;") (subs (name dt) 8)) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
 ))
 is-tree
 (mapv :accessor grouping-columns)
