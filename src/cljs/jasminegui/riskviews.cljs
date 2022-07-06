@@ -714,7 +714,7 @@
     ;(println talanx-checks-data-clean)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
-       [(gt/element-box "checks" "100%" (str "Portfolio NAV exposure checks " date) portfolio-checks-data-nav
+       [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
                         [[:> ReactTable
                           {:data       portfolio-checks-data-nav
                            :columns    [{:Header "Portfolio" :accessor :portfolio :width 90 :style {:textAlign "left"}}
@@ -722,11 +722,10 @@
                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
                                         {:Header "Breach" :accessor :check-threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                         {:Header "Warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                        {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
+                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-nav) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
-        (gt/element-box "checks" "100%" (str "Portfolio duration exposure checks " date) portfolio-checks-data-dur
+        (gt/element-box "checks" "100%" (str "Duration checks " date) portfolio-checks-data-dur
                         [[:> ReactTable
                           {:data       portfolio-checks-data-dur
                            :columns    [{:Header "Portfolio" :accessor :portfolio :width 90 :style {:textAlign "left"}}
@@ -734,8 +733,7 @@
                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
                                         {:Header "Breach" :accessor :check-threshold-breach :width 100 :style {:textAlign "right"}}
                                         {:Header "Warning" :accessor :check-threshold-warning :width 100 :style {:textAlign "right"}}
-                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}
-                                        {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
+                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-dur) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )]]
 
