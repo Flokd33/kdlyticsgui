@@ -710,11 +710,14 @@
         talanx-checks-data-raw @(rf/subscribe [:talanx-checks])
         talanx-checks-data (for [e talanx-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-warning)) (get {false 0 true 1} (e :check-breach))])))
         talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)
+
+        talanx-checks-data-clean-corp (filter #(= (:sov-or-corp %) "corp") talanx-checks-data-clean)
+        talanx-checks-data-clean-sov (filter #(= (:sov-or-corp %) "sov") talanx-checks-data-clean)
+
         date @(rf/subscribe [:qt-date])]
-    ;(println talanx-checks-data-clean)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
-       [(gt/element-box "checks" "100%" (str "Portfolio NAV exposure checks " date) portfolio-checks-data-nav
+       [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
                         [[:> ReactTable
                           {:data       portfolio-checks-data-nav
                            :columns    [{:Header "Portfolio" :accessor :portfolio :width 90 :style {:textAlign "left"}}
@@ -722,11 +725,36 @@
                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
                                         {:Header "Breach" :accessor :check-threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                         {:Header "Warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                        {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
+                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-nav) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
-        (gt/element-box "checks" "100%" (str "Portfolio duration exposure checks " date) portfolio-checks-data-dur
+        ]]
+      [v-box :class "element" :gap "20px" :children
+       [(gt/element-box "talanx-checks" "100%" (str "Talanx concentration corp " date) talanx-checks-data-clean-corp
+                      [[:> ReactTable
+                        {:data       talanx-checks-data-clean-corp
+                         :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
+                                      {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                      {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
+                                      {:Header "Breach" :accessor :threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                      {:Header "Max %" :accessor :max :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                      {:Header "Max name" :accessor :max-name :width 100 :style {:textAlign "left"}}
+                                      ]
+                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-corp) :showPageSizeOptions false :className "-striped -highlight"}]]
+                      )
+        (gt/element-box "talanx-checks" "100%" (str "Talanx concentration sov " date) talanx-checks-data-clean-sov
+                        [[:> ReactTable
+                          {:data       talanx-checks-data-clean-sov
+                           :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
+                                        {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                        {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
+                                        {:Header "Breach" :accessor :threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                        {:Header "Max %" :accessor :max :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                        {:Header "Max name" :accessor :max-name :width 100 :style {:textAlign "left"}}
+                                        ]
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-sov) :showPageSizeOptions false :className "-striped -highlight"}]]
+                        )
+        (gt/element-box "checks" "100%" (str "Duration checks " date) portfolio-checks-data-dur
                         [[:> ReactTable
                           {:data       portfolio-checks-data-dur
                            :columns    [{:Header "Portfolio" :accessor :portfolio :width 90 :style {:textAlign "left"}}
@@ -734,25 +762,11 @@
                                         {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
                                         {:Header "Breach" :accessor :check-threshold-breach :width 100 :style {:textAlign "right"}}
                                         {:Header "Warning" :accessor :check-threshold-warning :width 100 :style {:textAlign "right"}}
-                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}
-                                        {:Header "Check Date" :accessor :last-updated :width 100 :style {:textAlign "right"}}]
+                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-dur) :showPageSizeOptions false :className "-striped -highlight"}]]
-                        )]]
-
-      (gt/element-box "talanx-checks" "100%" (str "Talanx issuer concentration checks " date) talanx-checks-data-clean
-                      [[:> ReactTable
-                        {:data       talanx-checks-data-clean
-                         :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
-                                      {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
-                                      {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
-                                      {:Header "Breach corp" :accessor :threshold-corp :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                      {:Header "Max corp %" :accessor :max-corp :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                      {:Header "Max corp name" :accessor :max-corp-name :width 100 :style {:textAlign "left"}}
-                                      {:Header "Breach sov" :accessor :threshold-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                      {:Header "Max sov %" :accessor :max-sov :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                      {:Header "Max sov name" :accessor :max-sov-name :width 100 :style {:textAlign "left"}}]
-                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean) :showPageSizeOptions false :className "-striped -highlight"}]]
-                      )]
+                        )
+        ]]
+      ]
      ]))
 
 
