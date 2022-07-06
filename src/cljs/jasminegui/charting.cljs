@@ -130,3 +130,39 @@
              {:mark {:type "rule", :color "green", :strokeDash [10 10]},
               :encoding {:x {:datum -2.5, :type "quantitative"}, :y {:datum -2.5, :type "quantitative"}, :x2 {:datum 2.5, :type "quantitative"}, :y2 {:datum 2.5, :type "quantitative"}}}]
      :width width :height height}))
+
+(def performance-colors ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
+(def chart-text-size 12)
+(def standard-box-width "1600px")
+(def standard-box-height "1024px")
+(def standard-box-width-nb 800)
+(def standard-box-height-nb 600)
+
+(defn stacked-vertical-bars [rt-pivot-data title]
+  (let [grp (group-by #(get % "_pivotVal") rt-pivot-data)
+        xfields (remove #(= % "_pivotVal") (keys (first rt-pivot-data)))
+        colors (take (count (keys grp)) performance-colors)
+        new-data (into [] (for [g (keys grp) x xfields] {:ygroup g :xgroup x :value (get (first (grp g)) x)}))]
+    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+     :data    {:values new-data},
+     :width   (- standard-box-width-nb 200),
+     :height  (- standard-box-height-nb 200),
+     :layer
+     [{:mark "bar"
+       ;:scale   {:padding-left 30}
+       :encoding
+       {:x     {:field "xgroup", :type "nominal",
+                :axis  {:title nil :labelFontSize chart-text-size :labelAngle 0}
+                ;:sort (distinct (mapv :performance rt-pivot-data))
+                :scale {:paddingInner 0.5}},
+        :y     {:field "value", :type "quantitative", :axis {:title nil :labelFontSize chart-text-size}},
+        ;:order {:field "order", :type "quantitative"}
+        :tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup"  :type "nominal"} {:field "value"  :type "quantitative"}]
+        :color {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}}}
+      ;{:mark {:type "text" :fontSize chart-text-size :color "white" :dx 0 :dy 0}
+      ; :encoding
+      ; {;:x    {:field "xgroup", :type "nominal", :axis {:title nil}, :sort (distinct (mapv :performance rt-pivot-data))},
+      ;  ;:y    {:field "value", :type "quantitative", :aggregate "sum"},
+      ;  :detail {:type "nominal", :field "ygroup"}
+      ;  :text   {:field "ygroup", :type "nominal"}}}
+      ]}))

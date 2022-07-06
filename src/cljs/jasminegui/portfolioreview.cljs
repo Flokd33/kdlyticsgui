@@ -137,8 +137,9 @@
 (def performance-colors ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
 (def chart-text-size 16)
 
-(defn grouped-horizontal-bars [data title]
+(defn grouped-horizontal-bars
   "The data is of the form [{:group TXT :performance txt :value 0}]"
+  [data title]
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         perf-sort (reverse (distinct (mapv :performance data)))
         colors (reverse (take (count (distinct (mapv :performance data))) performance-colors))
