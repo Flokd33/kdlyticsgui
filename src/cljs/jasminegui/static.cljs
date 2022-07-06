@@ -158,8 +158,8 @@
    {:id :contrib-mdur                     :label "M dur contribution"}
    {:id :mdur-delta                       :label "M dur delta"}
    {:id :contrib-beta                     :label "EMCD Beta"}
-   {:id :value                            :label "Value"}
    {:id :nominal                          :label "Nominal"}
+   {:id :value                            :label "Value"}
    {:id :contrib-yield                    :label "Yield contribution"}
    {:id :contrib-zspread                  :label "Z-spread contribution"}
    {:id :contrib-gspread                  :label "G-spread contribution"}

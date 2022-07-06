@@ -83,7 +83,6 @@
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) v2)
           sorted-data2 (into [] (for [r sorted-data] (update r :qt-iam-int-lt-median-rating-score #(str "G" %))))
           ]                                                 ;viewable-positions
-      ;(println sorted-data2)
       (clj->js
         (if (= (:single-portfolio-risk/display-style db) "Tree")
           (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data2))
@@ -782,8 +781,6 @@
 (rf/reg-event-fx
   :get-position-history
   (fn [{:keys [db]} [_ portfolio filter-one filter-two field dateseq]]
-    (println (str static/server-address "position-history"))
-    (println {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq})
     {:db                 (assoc db :navigation/show-mounting-modal true)
      :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq}
                           :dispatch-key [:position-history/data]}}))
@@ -826,7 +823,6 @@
                                  )
 
           ]
-
       (clj->js
         (if (= (:position-history/display-style db) "Tree")
           (tables/cljs-text-filter-OR (:position-history/table-filter db) (mapv #(assoc %1 :totaldummy " ") sorted-deltas))
@@ -855,7 +851,9 @@
         risk-choices (let [rfil @(rf/subscribe [:position-history/filter])]  (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/risk-table-columns r)))
         all-dates (sort (distinct (map :date @(rf/subscribe [:position-history/data]))))
-        download-columns (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str " dt " %) all-dates))
+        download-columns (if (= @absdiff :absolute)
+           (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str " dt " %) all-dates))
+           (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str " deltadt " %) all-dates) ["tdelta"]))
         get-history-dates (fn [bd start end]
                             (let [all-dates (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)]
                               (if (= bd "Start/End")
@@ -864,10 +862,11 @@
                                       b (.indexOf all-dates end)]
                                   (take (inc (- b a)) (drop a all-dates))
                                   ))))]
-    (println @field-one)
+    (println download-columns)
+    (println (last @(rf/subscribe [:position-history/table])))
     [box :class " subbody rightelement " :child
      (gt/element-box-generic "position-history-risk-table" max-width (str " Portfolio history " @(rf/subscribe [:qt-date]))
-                             {:target-id " single-portfolio-risk-table " :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}
+                             {:target-id "position-history-risk-table" :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}
                              [[h-box :gap " 10px " :align :center
                                :children (concat
                                            [[title :label " Display: " :level :level3]
@@ -875,7 +874,7 @@
                                             [gap :size " 30px "]
                                             [checkbox :model hide-zero-risk :label " Hide zero lines? " :on-change #(rf/dispatch [:position-history/hide-zero-holdings %])]
                                             [title :label " Field: " :level :level3]
-                                            [single-dropdown :width dropdown-width :model field-one :choices (take 5 static/risk-field-choices) :on-change #(do (rf/dispatch [:position-history/field-one %])
+                                            [single-dropdown :width dropdown-width :model field-one :choices (take 6 static/risk-field-choices) :on-change #(do (rf/dispatch [:position-history/field-one %])
                                                                                                                                                                 (rf/dispatch [:position-history/data []]))]
                                             [gap :size " 30px "]]
                                            (into [] (concat [[title :label " Filtering: " :level :level3]
