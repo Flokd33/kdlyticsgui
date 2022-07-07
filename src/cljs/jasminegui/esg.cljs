@@ -340,7 +340,7 @@
 
 
 (defn esg-engagements []
-  (let [start-date (r/atom (tools/int-to-gdate 20220101)) end-date (r/atom (today))
+  (let [start-date (r/atom (tools/int->gdate 20220101)) end-date (r/atom (today))
         table-columns [{:Header "Date" :accessor "date" :width 100}
                        {:Header "note_id" :accessor "note_id" :width 100 :show false}
                        {:Header "Entity" :accessor "entities" :width 150 :style {:whiteSpace "unset"} :Cell #(if-let [v %] (gobj/getValueByKeys v "original" "entities" 0 "name"))}
@@ -354,15 +354,15 @@
        :children [[h-box :align :center :children [[title :label "ESG interactions" :level :level1]]]
                   [h-box :align :center :gap "10px" :children [[title :label "Start:" :level :level3]
                                                                [datepicker-dropdown
-                                                                :model start-date :minimum (tools/int-to-gdate 20180101) :maximum (today) :format "dd/MM/yyyy" :show-today? true
+                                                                :model start-date :minimum (tools/int->gdate 20180101) :maximum (today) :format "dd/MM/yyyy" :show-today? true
                                                                 :on-change #(do (rf/dispatch [:esg/engagements []]) (reset! start-date %))]
                                                                [gap :size "20px"]
                                                                [title :label "End:" :level :level3]
                                                                [datepicker-dropdown
-                                                                :model end-date :minimum (tools/int-to-gdate 20180101) :maximum (today) :format "dd/MM/yyyy" :show-today? true
+                                                                :model end-date :minimum (tools/int->gdate 20180101) :maximum (today) :format "dd/MM/yyyy" :show-today? true
                                                                 :on-change #(do (rf/dispatch [:esg/engagements []]) (reset! end-date %))]
                                                                [gap :size "20px"]
-                                                               [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements (t/gdate-to-yyyy-mm-dd @start-date) (t/gdate-to-yyyy-mm-dd @end-date)])]]]
+                                                               [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:esg/get-engagements (t/gdate->yyyy-MM-dd @start-date) (t/gdate->yyyy-MM-dd @end-date)])]]]
                   (if @(rf/subscribe [:esg/engagement-throbber])
                     [throbber :size :large]
                     [v-box :gap "10px" :children [[title :label "Engagements" :level :level2]

@@ -37,7 +37,7 @@
 (defn rt-int->date
   [accessor this]
   (if (aget this "value")
-    (t/format-date-from-int (aget this "original" accessor)) "No"))
+    (t/int->dd-MM-yyyy (aget this "original" accessor)) "No"))
 
 (defn trade-static-and-pricing
   [isin qdata last-trade alerts triggers]
@@ -235,16 +235,16 @@
                                                                     [hb [[box :size "1" :child [t3 "Internal ID"]] [box :size "3" :child [label :label (str (:ta2022.trade/uuid t0))]]]]
                                                                     [hb [[box :size "1" :child [t3 "Analyst"]] [box :size "3" :child [label :label (:ta2022.trade/analyst t0)]]]]
                                                                     [hb [[box :size "1" :child [t3 "Strategy"]] [box :size "3" :child [label :label (:ta2022.trade/strategy t0)]]]]
-                                                                    [hb [[box :size "1" :child [t3 "Entry date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/entry-date t0))]]]]
+                                                                    [hb [[box :size "1" :child [t3 "Entry date"]] [box :size "3" :child [label :label (t/int->dd-MM-yyyy (:ta2022.trade/entry-date t0))]]]]
                                                                     [hb [[box :size "1" :child [t3 "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale t0)) (catch js/Error e (:ta2022.trade/entry-rationale t0)))]]]]]]]
                                       (if (> (count sorted-trades) 1)
                                         [[v-box :gap "5px" :children [[title :label (str "Latest update (no." (count sorted-trades) ")") :level :level2]
                                                                       [hb [[box :size "1" :child [t3 "Internal ID"]] [box :size "3" :child [label :label (str (:ta2022.trade/uuid tl))]]]]
                                                                       [hb [[box :size "1" :child [t3 "Analyst"]] [box :size "3" :child [label :label (:ta2022.trade/analyst tl)]]]]
                                                                       [hb [[box :size "1" :child [t3 "Strategy"]] [box :size "3" :child [label :label (:ta2022.trade/strategy tl)]]]]
-                                                                      [hb [[box :size "1" :child [t3 "Entry date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/entry-date tl))]]]]
+                                                                      [hb [[box :size "1" :child [t3 "Entry date"]] [box :size "3" :child [label :label (t/int->dd-MM-yyyy (:ta2022.trade/entry-date tl))]]]]
                                                                       [hb [[box :size "1" :child [t3 "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale tl)) (catch js/Error e (:ta2022.trade/entry-rationale tl)))]]]]
-                                                                      [hb [[box :size "1" :child [t3 "Exit date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/exit-date tl))]]]]
+                                                                      [hb [[box :size "1" :child [t3 "Exit date"]] [box :size "3" :child [label :label (t/int->dd-MM-yyyy (:ta2022.trade/exit-date tl))]]]]
                                                                       [hb [[box :size "1" :child [t3 "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]]]])
                                       [[title :label "Current triggers" :level :level2]
                                        [alert-table (map #(taalerts/alert->alert-with-triggers triggers %)
@@ -258,9 +258,9 @@
                                                                   [hb [[box :size "1" :child [t3 "Internal ID"]] [box :size "3" :child [label :label (str (:ta2022.trade/uuid tl))]]]]
                                                                   [hb [[box :size "1" :child [t3 "Analyst"]] [box :size "3" :child [label :label (:ta2022.trade/analyst tl)]]]]
                                                                   [hb [[box :size "1" :child [t3 "Strategy"]] [box :size "3" :child [label :label (:ta2022.trade/strategy tl)]]]]
-                                                                  [hb [[box :size "1" :child [t3 "Entry date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/entry-date tl))]]]]
+                                                                  [hb [[box :size "1" :child [t3 "Entry date"]] [box :size "3" :child [label :label (t/int->dd-MM-yyyy (:ta2022.trade/entry-date tl))]]]]
                                                                   [hb [[box :size "1" :child [t3 "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/entry-rationale tl)) (catch js/Error e (:ta2022.trade/entry-rationale tl)))]]]]
-                                                                  [hb [[box :size "1" :child [t3 "Exit date"]] [box :size "3" :child [label :label (t/format-date-from-int (:ta2022.trade/exit-date tl))]]]]
+                                                                  [hb [[box :size "1" :child [t3 "Exit date"]] [box :size "3" :child [label :label (t/int->dd-MM-yyyy (:ta2022.trade/exit-date tl))]]]]
                                                                   [hb [[box :size "1" :child [t3 "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent (:ta2022.trade/exit-rationale tl)) (catch js/Error e (:ta2022.trade/exit-rationale tl)))]]]]
                                                                   [hb [[box :size "1" :child [t3 "Alerts"]] [box :size "3" :child [alert-table (taalerts/trade->alerts tl alerts) false]]]]
                                                                   ]]))))
@@ -268,7 +268,7 @@
 (defn isin-picker
   [trades]
   (let [too-old?
-        (try (> (in-days (interval (t/int-to-gdate (:ta2022.trade/entry-date (last trades))) (t/int-to-gdate (today)))) 4) (catch js/Error e true))
+        (try (> (in-days (interval (t/int->gdate (:ta2022.trade/entry-date (last trades))) (t/int->gdate (today)))) 4) (catch js/Error e true))
         ]
     (gt/element-box-generic "isin-picker" element-box-width "Actions" {:no-icons true}
                             [[h-box :gap "10px" :align :center

@@ -58,9 +58,9 @@
 (rf/reg-event-fx
   :get-portfolio-trade-history
   (fn [{:keys [db]} [_ portfolio start-date end-date]]
-    {:db (assoc db :portfolio-trade-history/data nil
-                   :single-bond-trade-history/show-throbber true)
-     :http-get-dispatch {:url          (str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate-to-yyyymmdd start-date) "&end-date=" (tools/gdate-to-yyyymmdd end-date))
+    {:db                (assoc db :portfolio-trade-history/data nil
+                                  :single-bond-trade-history/show-throbber true)
+     :http-get-dispatch {:url          (str static/server-address "portfolio-trade-history?portfolio=" portfolio "&start-date=" (tools/gdate->yyyyMMdd start-date) "&end-date=" (tools/gdate->yyyyMMdd end-date))
                          :dispatch-key [:portfolio-trade-history/data]}}))
 
 (rf/reg-event-fx
@@ -395,14 +395,14 @@
                                                      [title :label "Start:" :level :level3]
                                                      [datepicker-dropdown
                                                       :model start-date
-                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :minimum (tools/int->gdate 20120101)
                                                       :maximum (today)
                                                       :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:portfolio-trade-history/data []]) (rf/dispatch [:portfolio-trade-history/start-date %]))]
                                                      [gap :size "20px"]
                                                      [title :label "End:" :level :level3]
                                                      [datepicker-dropdown
                                                       :model end-date
-                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :minimum (tools/int->gdate 20120101)
                                                       :maximum (today)
                                                       :format "dd/MM/yyyy" :show-today? false :on-change #(do (rf/dispatch [:portfolio-trade-history/data []]) (rf/dispatch [:portfolio-trade-history/end-date %]))]
                                                      [gap :size "20px"]
@@ -548,14 +548,14 @@
                                           :children [[title :label "Start:" :level :level3]
                                                      [datepicker-dropdown
                                                       :model start-date
-                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :minimum (tools/int->gdate 20120101)
                                                       :maximum (today)
                                                       :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:portfolio-trade-history/start-date %]))]
                                                      [gap :size "20px"]
                                                      [title :label "End:" :level :level3]
                                                      [datepicker-dropdown
                                                       :model end-date
-                                                      :minimum (tools/int-to-gdate 20120101)
+                                                      :minimum (tools/int->gdate 20120101)
                                                       :maximum (today)
                                                       :format "dd/MM/yyyy" :show-today? false :on-change #(do (rf/dispatch [:portfolio-trade-history/end-date %]))]
                                                      [gap :size "20px"]
@@ -599,7 +599,7 @@
                  [h-box :align :center :gap "20px" :children [[title :label "From:" :level :level3]
                                                               [datepicker-dropdown
                                                                :model date-from
-                                                               :minimum (tools/int-to-gdate 20210101)
+                                                               :minimum (tools/int->gdate 20210101)
                                                                :maximum (today)
                                                                :format "DD/MM/YYYY"
                                                                :show-today? true
@@ -607,7 +607,7 @@
                                                               [title :label "To:" :level :level3]
                                                               [datepicker-dropdown
                                                                :model date-to
-                                                               :minimum (tools/int-to-gdate 20210101)
+                                                               :minimum (tools/int->gdate 20210101)
                                                                :maximum (today)
                                                                :format "DD/MM/YYYY"
                                                                :show-today? true
@@ -700,13 +700,13 @@
                                [[title :label "Start:" :level :level3]
                                 [datepicker-dropdown
                                  :model date-from
-                                 :minimum (tools/int-to-gdate 20120101)
+                                 :minimum (tools/int->gdate 20120101)
                                  :maximum (today)
                                  :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:get-multiple-portfolio-trade-history []]) (rf/dispatch [:multiple-portfolio-trade-history/start-date %]))]
                                 [title :label "End:" :level :level3]
                                 [datepicker-dropdown
                                  :model date-to
-                                 :minimum (tools/int-to-gdate 20120101)
+                                 :minimum (tools/int->gdate 20120101)
                                  :maximum (today)          ;:get-multiple-portfolio-trade-history
                                  :format "dd/MM/yyyy" :show-today? false :on-change #(do (rf/dispatch [:get-multiple-portfolio-trade-history []]) (rf/dispatch [:multiple-portfolio-trade-history/end-date %]))]
                                 [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-multiple-portfolio-trade-history @date-from @date-to])]

@@ -406,9 +406,9 @@
              :data-request (if (= p "beta contribution") [:get-portfolio-review-marginal-beta-chart-data "portfolio" (second k)])}))))
 
 (def activity-pages
-  [{:title "Trades over the past 15 days"
-    :nav-request :activity
-    :data-request [:get-portfolio-trade-history "portfolio" (tools/gdate-to-yyyymmdd (cljs-time/plus (cljs-time/today) (cljs-time/days -15))) (tools/gdate-to-yyyymmdd (cljs-time/today))]}])
+  [{:title        "Trades over the past 15 days"
+    :nav-request  :activity
+    :data-request [:get-portfolio-trade-history "portfolio" (tools/gdate->yyyyMMdd (cljs-time/plus (cljs-time/today) (cljs-time/days -15))) (tools/gdate->yyyyMMdd (cljs-time/today))]}])
 
 (def quant-value-pages
   (into [] (for [k risk-breakdowns p ["curve normalisation (4D)" "sector and country normalisation (2D)"]]

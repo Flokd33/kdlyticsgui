@@ -845,11 +845,11 @@
 (def position-history-chart-data (r/atom nil))
 
 (defn position-history []
-  (let [qt-date (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
-        qt-date-yyyymmdd (cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
-        qt-date-yyyymmdd-1w (cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") (plus qt-date (days -7)))
-        qt-date-yyyymmdd-2w (cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") (plus qt-date (days -15)))
-        date-map (into [] (for [k (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)] {:id k :label (str (t/gdate-to-yyyy-mm-dd (t/int-to-gdate k)))}))
+  (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
+        qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
+        qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7)))
+        qt-date-yyyymmdd-2w (t/gdate->yyyyMMdd (plus qt-date (days -15)))
+        date-map (into [] (for [k (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))}))
         start-period (rf/subscribe [:position-history/start-period])
         end-period (rf/subscribe [:position-history/end-period])
         breakdown-map (into [] (for [k ["Start/End" "All"]] {:id k :label k}))
@@ -905,23 +905,23 @@
                                           [button :label "Fetch" :class "btn btn-primary btn-block"
                                            :on-click #(rf/dispatch [:get-position-history @portfolio (keyword (:accessor (first grouping-columns))) (keyword (:accessor (second grouping-columns)))
                                                                     (keyword (:accessor (tables/risk-table-columns @field-one))) (get-history-dates @breakdown @start-period @end-period)])]
-                                          [button :label "Chart (beta)" :class "btn btn-primary btn-block" :on-click #(reset! position-history-chart-data
+                                          [button :label "Chart" :disabled? (not is-tree) :class "btn btn-primary btn-block" :on-click #(reset! position-history-chart-data
                                                                                                                               (->> ((first (js->clj (. (.getResolvedState @position-history-display-view) -sortedData))) "_subRows")
                                                                                                                                    (map (fn [v] (select-keys v (conj (map (fn [d] (str "dt" d)) all-dates) "_pivotVal"))))
                                                                                                                                    (map (fn [line] (clojure.set/rename-keys line (zipmap (map (fn [d] (str "dt" d)) all-dates) all-dates))))
-                                                                                                                                   (map (fn [line] (reduce (fn [a b] (update a b (fn [x] (* x 100)))) line all-dates)))))]
+                                                                                                                                   (map (fn [line] (reduce (fn [a b] (update a b (fn [x] (* x (if (= @field-one :nav) 100. 1.))))) line all-dates)))))]
                                           ]]
 
                               [:div {:id "position-history-risk-table"}
                                [tables/tree-table-risk-table
                                 :position-history/table
-                                (into [{:Header  (str " Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ") ")
+                                (into [{:Header  (str "Groups (" @(rf/subscribe [:position-history/portfolio]) " " @(rf/subscribe [:qt-date]) ") ")
                                         :columns (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns)}]
                                       (if (= @absdiff :absolute)
                                         (for [dt (map #(keyword (str "dt" %)) all-dates)]
-                                          (tables/nb-col (subs (name dt) 3) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
+                                          (tables/nb-col (t/gdate->ddMMMyy (t/int->gdate (str (subs (name dt) 2)))) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
                                         (for [dt (conj (mapv #(keyword (str "deltadt" %)) all-dates) :tdelta)]
-                                          (tables/nb-col (str (gstring/unescapeEntities "&Delta;") (subs (name dt) 8)) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
+                                          (tables/nb-col (str (gstring/unescapeEntities "&Delta;") (if (not= dt :tdelta) (t/gdate->ddMMMyy (t/int->gdate (subs (name dt) 7))))) dt 100 (let [v (get-in tables/risk-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows))
                                         ))
                                 is-tree
                                 (mapv :accessor grouping-columns)
@@ -929,6 +929,5 @@
                                 :position-history/table-filter
                                 :position-history/expander
                                 on-click-context]]
-                              [oz/vega-lite (charting/stacked-vertical-bars @position-history-chart-data "Position history")]
-                              ])]))
+                              [oz/vega-lite (charting/stacked-vertical-bars @position-history-chart-data "Position history")]])]))
 

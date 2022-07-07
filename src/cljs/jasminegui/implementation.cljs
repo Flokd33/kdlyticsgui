@@ -195,7 +195,7 @@
   [trade]
   (let [encode-uri-component (fn [x] (js/encodeURIComponent x))]
     (-> trade
-        (update :tradeanalyser.implementation/entry-date tools/gdate-to-yyyymmdd)
+        (update :tradeanalyser.implementation/entry-date tools/gdate->yyyyMMdd)
         (update :tradeanalyser.implementation/reasons-for encode-uri-component)
         (update :tradeanalyser.implementation/reasons-against encode-uri-component)
         (update :tradeanalyser.implementation/esg-considerations encode-uri-component))))
@@ -240,7 +240,7 @@
                                         (update :tradeanalyser.implementation/reasons-for #(try (js/decodeURIComponent %) (catch js/Error e %)))
                                         (update :tradeanalyser.implementation/reasons-against #(try (js/decodeURIComponent %) (catch js/Error e %)))
                                         (update :tradeanalyser.implementation/esg-considerations #(try (js/decodeURIComponent %) (catch js/Error e %)))
-                                        (update :tradeanalyser.implementation/entry-date #(tools/int-to-gdate (js/parseInt %)))
+                                        (update :tradeanalyser.implementation/entry-date #(tools/int->gdate (js/parseInt %)))
                                         (assoc :tradeanalyser.implementation/trade-legs (into {} (for [[k v] (:tradeanalyser.implementation/trade-legs data)] [(cljs.reader/read-string (name k)) v]))))
               :implementation/show-implementation-selector false)))
 
@@ -345,7 +345,7 @@
   (fn [{:keys [db]} [_ trade]]
     {:db (assoc db :implementation/success-modal {:show true :on-close :trade-implementation/saved-to-TA :response nil})
      :http-post-dispatch {:url         (str static/server-address "trade-implementation-to-TA")
-                          :edn-params  (update-in trade [:tradeanalyser.implementation/entry-date] tools/gdate-to-yyyymmdd)
+                          :edn-params  (update-in trade [:tradeanalyser.implementation/entry-date] tools/gdate->yyyyMMdd)
                           :dispatch-key [:implementation/trade-implementation-to-TA-response]}}))
 
 (rf/reg-event-db
@@ -486,7 +486,7 @@
      :children [[title :label "Overview" :level :level1]
                 [hb [[label :width fw :label "Entry date"]
                      [datepicker-dropdown :model entry-date
-                      :minimum (tools/int-to-gdate 20220101) :maximum (today)
+                      :minimum (tools/int->gdate 20220101) :maximum (today)
                       :selectable-fn #(< (day-of-week %) 6) :start-of-week 0 :format "dd/MM/yyyy" :show-today? true
                       :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/entry-date %])]]]
                 [hb [[label :width fw :label "ISIN of first leg"][input-text :width lw :model first-leg-isin :on-change #(rf/dispatch [:implementation/on-isin-change 0 %])]]] ;(partial on-isin-change 0)

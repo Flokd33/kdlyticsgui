@@ -141,7 +141,7 @@
 (rf/reg-event-fx
   :model-portfolios/save-new-trade
   (fn [{:keys [db]} [_ m]]
-    (let [m2 (update m :date t/gdate-to-yyyymmdd)]
+    (let [m2 (update m :date t/gdate->yyyyMMdd)]
       {:db (update-in db [:model-portfolios/trades (:portfolio m2)] conj (dissoc m2 :portfolio))
      :http-post-dispatch {:url (str static/server-address "model-portfolios-new-trade") :edn-params m2 :dispatch-key [:dummy]}})))
 

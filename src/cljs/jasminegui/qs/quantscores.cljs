@@ -611,7 +611,7 @@
                                                   ^{:key "Yes"} [radio-button :label "Yes" :value "Yes" :model green :on-change #(reset! green %)]]]
                     [input-textarea :placeholder "Rationale" :width "600px" :rows "10" :model rationale :on-change #(reset! rationale %) :disabled? (not (or (= @idecision "Uninvestable - financials") (= @idecision "Uninvestable - ESG")))]
                     [button :label "Save!" :class "btn btn-primary btn-block" :disabled? (not (and @ticker @idecision @analyst @date))
-                     :on-click #(rf/dispatch [:save-issuer-coverage {:ticker @ticker :analyst @analyst :decision @idecision :date (t/gdate-to-yyyymmdd @date) :green @green :rationale (js/encodeURIComponent @rationale)}])]]]
+                     :on-click #(rf/dispatch [:save-issuer-coverage {:ticker @ticker :analyst @analyst :decision @idecision :date (t/gdate->yyyyMMdd @date) :green @green :rationale (js/encodeURIComponent @rationale)}])]]]
         [v-box :class "element" :children [[title :level :level1 :label "Full history"]
                                            [:> ReactTable
                                             {:data           (reverse (sort-by :date @(rf/subscribe [:quant-model/issuer-coverage])))
@@ -682,7 +682,7 @@
                               :curve-two/selection nil
                               :curve-two/tenor "5Y"}))
 
-(def start-date-curve (r/atom (t/int-to-gdate 20150101)))   ;(t/int-to-gdate 20150101)
+(def start-date-curve (r/atom (t/int->gdate 20150101)))   ;(t/int-to-gdate 20150101)
 (def serie-2 (r/atom "curve"))
 
 (rf/reg-event-fx
@@ -753,7 +753,7 @@
                                                                                        :choices [{:id "absolute" :label "Absolute"}{:id "relative1" :label "Relative (a-b)"}{:id "relative2" :label "Relative (b-a)"}]
                                                                                        :on-change #(reset! choice-historical-graph %)]]]
                                           [h-box :gap "5px" :align :center :children [[label :label "Start" :width "75px" ]
-                                                                                      [datepicker-dropdown :model start-date :minimum (t/int-to-gdate 20150101) :maximum (today)
+                                                                                      [datepicker-dropdown :model start-date :minimum (t/int->gdate 20150101) :maximum (today)
                                                                                        :format "dd/MM/yyyy" :show-today? true
                                                                                        :on-change #(do (rf/dispatch [:quant-model/history-start-date %]))]]]
                                           [checkbox :model (r/cursor which-charts? [:price])        :label "Show price?"          :on-change #(swap! which-charts? assoc :price %)]
@@ -775,7 +775,7 @@
                                            :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))]
                                                              (reset! isin-historical-charts isin) ;isin
                                                              (reset! bond-historical-charts (:id %)) ;ticker
-                                                             (rf/dispatch [:quant-model/history-start-date (t/int-to-gdate 20150101)])
+                                                             (rf/dispatch [:quant-model/history-start-date (t/int->gdate 20150101)])
                                                              (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
                                                              (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])])))
                                            :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]
@@ -791,7 +791,7 @@
                                              :on-change #(do (let [isin2 (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))] ;get isin from ticker
                                                                (reset! isin-historical-charts-2 isin2) ;isin
                                                                (reset! bond-historical-charts-2 (:id %)) ;ticker
-                                                               (rf/dispatch [:quant-model/history-start-date (t/int-to-gdate 20150101)])
+                                                               (rf/dispatch [:quant-model/history-start-date (t/int->gdate 20150101)])
                                                                (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
                                                                (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [@isin-historical-charts @isin-historical-charts-2])])
                                                                (reset! nb-bond 2)))
@@ -805,7 +805,7 @@
                                            [throbber :size :large]
                                            [oz/vega-lite (qscharts/quant-isin-history-chart-map
                                                            all-data
-                                                           (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
+                                                           (js/parseInt (t/gdate->yyyyMMdd @(rf/subscribe [:quant-model/history-start-date])))
                                                            @which-charts?
                                                            [{:ISIN @isin-historical-charts :bond @bond-historical-charts} {:ISIN @isin-historical-charts-2 :bond @bond-historical-charts-2}]
                                                            @choice-historical-graph
@@ -822,7 +822,7 @@
                                                                                        :on-change #(reset! choice-historical-curves-graph %)]]]
 
                                           [h-box :gap "5px" :align :center :children [[label :width "50px" :label "Start"]
-                                                                                      [datepicker-dropdown :model start-date-curve :minimum (t/int-to-gdate 20150101) :maximum (today)
+                                                                                      [datepicker-dropdown :model start-date-curve :minimum (t/int->gdate 20150101) :maximum (today)
                                                                                        :format "dd/MM/yyyy" :show-today? true
                                                                                        :on-change #(do (reset! start-date-curve %))]]]
                                           [gap :size "10px"]
@@ -831,7 +831,7 @@
                                                                                                                            :choices [{:id :two-d-curves :label "Rating (2D)"} {:id :two-d-curves-sovs :label "Rating (2D) sov only"} {:id :two-d-curves-corps :label "Rating (2D) corp only"} {:id :four-d-sovereign-curves :label "Country (4D)"}] ;{:id :none :label "None"}
                                                                                                                            :placeholder "Select"
                                                                                                                            :on-change #(do (selection-change-fn "curve-one" %)
-                                                                                                                                           (reset! start-date-curve (t/int-to-gdate 20150101))
+                                                                                                                                           (reset! start-date-curve (t/int->gdate 20150101))
                                                                                                                                            (rf/dispatch [:post-model-history-curves-one (@curve-histories :curve-one/type) (remove nil? [(@curve-histories :curve-one/selection)])]))]]]
                                           [h-box :gap "5px" :align :center :children [[label :width "50px" :label "Selection"]
                                                                                       (if (or (= (get @curve-histories :curve-one/type) :two-d-curves)(= (get @curve-histories :curve-one/type) :two-d-curves-sovs)(= (get @curve-histories :curve-one/type) :two-d-curves-corps))
@@ -866,7 +866,7 @@
                                                                                                                                :placeholder "Select"
                                                                                                                                :on-change #(do (selection-change-fn "curve-two" %)
                                                                                                                                                (reset! nb-curve 2)
-                                                                                                                                               (reset! start-date-curve (t/int-to-gdate 20150101))
+                                                                                                                                               (reset! start-date-curve (t/int->gdate 20150101))
                                                                                                                                                (rf/dispatch [:post-model-history-curves-two (@curve-histories :curve-two/type) (remove nil? [(@curve-histories :curve-two/selection)])]))]]]
                                               [h-box :gap "5px" :align :center :children [[label :width "50px" :label "Selection"]
                                                                                           (if (or (= (get @curve-histories :curve-two/type) :two-d-curves)(= (get @curve-histories :curve-two/type) :two-d-curves-sovs)(= (get @curve-histories :curve-two/type) :two-d-curves-corps))
@@ -898,7 +898,7 @@
                                                                           :placeholder "Search here"
                                                                           :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))]
                                                                                             (reset! nb-curve 2)
-                                                                                            (reset! start-date-curve (t/int-to-gdate 20150101))
+                                                                                            (reset! start-date-curve (t/int->gdate 20150101))
                                                                                             (reset! isin-historical-charts isin) ;isin
                                                                                             (reset! bond-historical-charts (:id %)) ;ticker
 
@@ -910,7 +910,7 @@
                                         (if @(rf/subscribe[:quant-model/curves-throbber])
                                           [v-box :class "element" :width "1300px" :align :center :children [box [throbber :size :large]]]
                                           [v-box :class "element" :gap "10px" :width "1300px"
-                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve (js/parseInt (t/gdate-to-yyyymmdd @start-date-curve)) @choice-historical-curves-graph @serie-2 @isin-historical-charts @bond-historical-charts)]]])
+                                           :children [[oz/vega-lite (qscharts/quant-isin-history-chart-curves @curve-histories @nb-curve (js/parseInt (t/gdate->yyyyMMdd @start-date-curve)) @choice-historical-curves-graph @serie-2 @isin-historical-charts @bond-historical-charts)]]])
                                         ]]]]
                 ]]))
 

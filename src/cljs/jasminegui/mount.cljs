@@ -38,12 +38,12 @@
                  :navigation/active-qs                               :table
                  :navigation/active-attribution                      :summary
                  :navigation/active-scorecard                        :filter
-                 :navigation/active                                  {:view :entry
-                                                                      :home :summary
-                                                                      :var :overview
-                                                                      :qs :table
+                 :navigation/active                                  {:view        :entry
+                                                                      :home        :summary
+                                                                      :var         :overview
+                                                                      :qs          :table
                                                                       :attribution :summary
-                                                                      :scorecard :filter}
+                                                                      :scorecard   :filter}
                  :navigation/success-modal                           {:show false :on-close nil :response nil}
                  :esg/success-modal                                  {:show false :on-close nil :response nil}
                  :navigation/show-mounting-modal                     false ;
@@ -83,7 +83,7 @@
                  :portfolio-alignment/threshold                      :zero
                  :portfolio-alignment/shortcut                       1
                  :portfolio-alignment/table-filter                   []
-                 :portfolio-alignment/expander                     {0 {}}
+                 :portfolio-alignment/expander                       {0 {}}
 
                  ;var view
                  :var/portfolio                                      "OGEMCORD"
@@ -95,25 +95,25 @@
                  :var/chart-period                                   :daily-3y
 
                  ;position-history
-                 :position-history/portfolio                        "OGEMCORD"
-                 :position-history/start-period                     "20211231"
-                 :position-history/end-period                       "20220530"
-                 :position-history/filter                           {1 :region 2 :country 3 :issuer}
-                 :position-history/hide-zero-holdings               true
-                 :position-history/table-filter                     []
-                 :position-history/expander                         {0 {}}
-                 :position-history/shortcut                         1
-                 :position-history/display-style                    "Tree"
-                 :position-history/field-one                        :nav
-                 :position-history/breakdown                        "Start/End"
-                 :position-history/absdiff                          :absolute
-                 :position-history/data                             []
+                 :position-history/portfolio                         "OGEMCORD"
+                 :position-history/start-period                      "20211231"
+                 :position-history/end-period                        "20220530"
+                 :position-history/filter                            {1 :region 2 :country 3 :issuer}
+                 :position-history/hide-zero-holdings                true
+                 :position-history/table-filter                      []
+                 :position-history/expander                          {0 {}}
+                 :position-history/shortcut                          1
+                 :position-history/display-style                     "Tree"
+                 :position-history/field-one                         :nav
+                 :position-history/breakdown                         "Start/End"
+                 :position-history/absdiff                           :absolute
+                 :position-history/data                              []
 
 
                  ;trade history
                  :trade-history/active-bond                          nil
                  :trade-history/history                              nil
-                 :trade-history/active-home                         :single-portfolio
+                 :trade-history/active-home                          :single-portfolio
 
                  ;single-portfolio attribution
                  :single-portfolio-attribution/display-style         "Tree"
@@ -136,20 +136,20 @@
                  :multiple-portfolio-attribution/shortcut            1
                  :multiple-portfolio-attribution/table-filter        []
                  :multiple-portfolio-attribution/table               []
-                 :multiple-portfolio-attribution/expander              {0 {}}
-                 :multiple-portfolio-attribution/threshold            :zero
+                 :multiple-portfolio-attribution/expander            {0 {}}
+                 :multiple-portfolio-attribution/threshold           :zero
 
                  :attribution/summary                                []
                  :attribution/available-months                       []
 
-                 :attribution-index-returns/portfolio               "OGEMCORD"
-                 :attribution-index-returns/period                  "ytd"
-                 :attribution-index-returns/x-filter                :sector
-                 :attribution-index-returns/y-filter                :region
-                 :attribution-index-returns/table                   []
-                 :attribution-index-returns/x-top-15                false
+                 :attribution-index-returns/portfolio                "OGEMCORD"
+                 :attribution-index-returns/period                   "ytd"
+                 :attribution-index-returns/x-filter                 :sector
+                 :attribution-index-returns/y-filter                 :region
+                 :attribution-index-returns/table                    []
+                 :attribution-index-returns/x-top-15                 false
 
-                 :top-bottom-price-change                           []
+                 :top-bottom-price-change                            []
 
                  :single-bond-trade-history/data                     []
                  :single-bond-trade-history/flat-data                []
@@ -159,26 +159,26 @@
                  :single-bond-trade-history/show-throbber            false
 
                  :recent-trade-data/show-throbber                    false
-                 :traded-since-date-output/flat-data                  []
+                 :traded-since-date-output/flat-data                 []
 
                  :portfolio-trade-history/data                       []
                  :portfolio-trade-history/portfolio                  "OGEMCORD"
-                 :portfolio-trade-history/start-date                 (t/int-to-gdate 20220101)
-                 :portfolio-trade-history/end-date                   (t/int-to-gdate (today))
+                 :portfolio-trade-history/start-date                 (t/int->gdate 20220101)
+                 :portfolio-trade-history/end-date                   (t/int->gdate (today))
                  :portfolio-trade-history/performance                "Yes"
                  :portfolio-trade-history/fwd-return                 "No"
                  :portfolio-trade-history/pivot                      "No"
                  :portfolio-trade-history/comments                   "No"
 
-                 :multiple-portfolio-trade-history/data               []
-                 :multiple-portfolio-trade-history/start-date         (t/int-to-gdate 20220101)
-                 :multiple-portfolio-trade-history/end-date           (t/int-to-gdate (today))
-                 :multiple-portfolio-trade-history/pivot              "No"
+                 :multiple-portfolio-trade-history/data              []
+                 :multiple-portfolio-trade-history/start-date        (t/int->gdate 20220101)
+                 :multiple-portfolio-trade-history/end-date          (t/int->gdate (today))
+                 :multiple-portfolio-trade-history/pivot             "No"
 
                  :recent-trade-data/trades                           []
                  :traded-since-date-output/trades                    []
-                 :recent-trade-data/date-from                         (t/int-to-gdate 20220101)
-                 :recent-trade-data/date-to                           (t/int-to-gdate (today))
+                 :recent-trade-data/date-from                        (t/int->gdate 20220101)
+                 :recent-trade-data/date-to                          (t/int->gdate (today))
                  :recent-trade-data/sector                           "All"
                  :recent-trade-data/country                          "All"
 
@@ -194,113 +194,113 @@
 
                  :betas/table                                        nil
 
-                 :bond-price-history/price                          []
-                 :bond-price-history/name                          []
+                 :bond-price-history/price                           []
+                 :bond-price-history/name                            []
 
-                 :esg/refinitiv-ids                       nil
-                 :esg/active-home                         :msci
-                 :esg/selected-companies                  []
-                 :esg/data                                []
-                 :esg/data-detailed                                []
-                 :esg/refinitiv-structure                 []
-                 :esg/selected-pillars                    (set nil)
-                 :esg/msci-scores                         []
-                 :esg/summary-report                      []
-                 :esg/engagements                         []
-                 :esg/security-notes                      []
-                 :esg/tamale-body                         ""
-                 :esg/engagement-throbber                 false
-                 :esg/ungc-problem-securities             []
+                 :esg/refinitiv-ids                                  nil
+                 :esg/active-home                                    :msci
+                 :esg/selected-companies                             []
+                 :esg/data                                           []
+                 :esg/data-detailed                                  []
+                 :esg/refinitiv-structure                            []
+                 :esg/selected-pillars                               (set nil)
+                 :esg/msci-scores                                    []
+                 :esg/summary-report                                 []
+                 :esg/engagements                                    []
+                 :esg/security-notes                                 []
+                 :esg/tamale-body                                    ""
+                 :esg/engagement-throbber                            false
+                 :esg/ungc-problem-securities                        []
 
-                 :quant-model/model-output                []
-                 :quant-model/model-js-output             #js []
-                 :quant-model/bond-isin-map               {}
-                 :quant-model/calculator-spreads          {:legacy nil :new nil :svr nil}
-                 :quant-model/rating-curves               []
-                 :quant-model/rating-curves-sov-only      []
-                 :quant-model/generic-rating-curves      {}
-                 :quant-model/isin-history                []
-                 :quant-model/isin-history-2              []
-                 :quant-model/new-bond-entry              nil
-                 :quant-model/new-bond-tested             true
-                 :quant-model/new-bond-saved-message      ""
-                 :quant-model/new-bond-already-exists     false
-                 :quant-model/saved-charts                {}
-                 :quant-model/saved-advanced-charts       {}
-                 :quant-model/issuer-coverage             []
-                 :quant-model/model-date                  ""
+                 :quant-model/model-output                           []
+                 :quant-model/model-js-output                        #js []
+                 :quant-model/bond-isin-map                          {}
+                 :quant-model/calculator-spreads                     {:legacy nil :new nil :svr nil}
+                 :quant-model/rating-curves                          []
+                 :quant-model/rating-curves-sov-only                 []
+                 :quant-model/generic-rating-curves                  {}
+                 :quant-model/isin-history                           []
+                 :quant-model/isin-history-2                         []
+                 :quant-model/new-bond-entry                         nil
+                 :quant-model/new-bond-tested                        true
+                 :quant-model/new-bond-saved-message                 ""
+                 :quant-model/new-bond-already-exists                false
+                 :quant-model/saved-charts                           {}
+                 :quant-model/saved-advanced-charts                  {}
+                 :quant-model/issuer-coverage                        []
+                 :quant-model/model-date                             ""
 
 
-                 :quant-model/history-result              []
-                 :quant-model/history-result-prediction   []
-                 :quant-model/history-result-curves-one    []
-                 :quant-model/history-result-curves-two    []
-                 :quant-model/history-throbber            false
-                 :quant-model/history-prediction-throbber false
-                 :quant-model/curves-throbber  false
-                 :quant-model/history-start-date          (t/int-to-gdate 20150101)
+                 :quant-model/history-result                         []
+                 :quant-model/history-result-prediction              []
+                 :quant-model/history-result-curves-one              []
+                 :quant-model/history-result-curves-two              []
+                 :quant-model/history-throbber                       false
+                 :quant-model/history-prediction-throbber            false
+                 :quant-model/curves-throbber                        false
+                 :quant-model/history-start-date                     (t/int->gdate 20150101)
                  ;:quant-model/history-end-date            (t/int-to-gdate (today))
-                 :quant-model/master-security-current-field-db {:id-choice "ISIN_REGS"}
-                 :quant-model/master-security-update-field-db {}
+                 :quant-model/master-security-current-field-db       {:id-choice "ISIN_REGS"}
+                 :quant-model/master-security-update-field-db        {}
 
 
 
-                 :model-portfolios/trades                 {}
-                 :model-portfolios/hide-zeros              false
-                 :model-portfolios/aggregation            "Region"
+                 :model-portfolios/trades                            {}
+                 :model-portfolios/hide-zeros                        false
+                 :model-portfolios/aggregation                       "Region"
 
-                 :scorecard/portfolio                   "OGEMCORD"
-                 :scorecard/sector                      nil ;"Consumer"
-                 :scorecard/ogemcord-risk  []
-                 :scorecard/attribution-table  []
-                 :scorecard/trade-analyser-data nil
-                 :scorecard/qdb-securities              []
-                 :scorecard/qdb-scores                  []
-                 :scorecard/qdb-scores-previous                  []
-                 :scorecard/latest-date nil
-                 :scorecard/previous-date nil
+                 :scorecard/portfolio                                "OGEMCORD"
+                 :scorecard/sector                                   nil ;"Consumer"
+                 :scorecard/ogemcord-risk                            []
+                 :scorecard/attribution-table                        []
+                 :scorecard/trade-analyser-data                      nil
+                 :scorecard/qdb-securities                           []
+                 :scorecard/qdb-scores                               []
+                 :scorecard/qdb-scores-previous                      []
+                 :scorecard/latest-date                              nil
+                 :scorecard/previous-date                            nil
 
-                 :last-updated-logs nil
-                 :integrity nil
-                 :portfolio-checks {}
-                 :talanx-checks {}
+                 :last-updated-logs                                  nil
+                 :integrity                                          nil
+                 :portfolio-checks                                   {}
+                 :talanx-checks                                      {}
 
-                 :analysts nil
+                 :analysts                                           nil
 
-                 :master-security-fields-list nil
+                 :master-security-fields-list                        nil
 
-                 :ta2022/trade-view-position-and-performance-table []
-                 :ta2022/trade-isin nil
-                 :ta2022/trade-attachments []
-                 :ta2022/trade-latest-targets-and-triggers nil
-                 :ta2022/trade-history {}
-                 :ta2022/active-home :main
-                 :ta2022/main-table-data []
-                 :ta2022/main-table-pivot "No"
-                 :ta2022/main-table-show-relval-value false
-                 :ta2022/main-table-view-selector "Scorecard"
-                 :ta2022/journal-data nil
-                 :ta2022/show-modal nil
-                 :ta2022/test-result nil
-                 :ta2022/can-morph false
-                 :ta2022/implied-price-difference nil
-                 :ta2022/upside-vs-downside 0.0
-                 :ta2022/throbber false
-                 :ta2022/filter {:analyst nil :sector nil :country nil :portfolio nil}
+                 :ta2022/trade-view-position-and-performance-table   []
+                 :ta2022/trade-isin                                  nil
+                 :ta2022/trade-attachments                           []
+                 :ta2022/trade-latest-targets-and-triggers           nil
+                 :ta2022/trade-history                               {}
+                 :ta2022/active-home                                 :main
+                 :ta2022/main-table-data                             []
+                 :ta2022/main-table-pivot                            "No"
+                 :ta2022/main-table-show-relval-value                false
+                 :ta2022/main-table-view-selector                    "Scorecard"
+                 :ta2022/journal-data                                nil
+                 :ta2022/show-modal                                  nil
+                 :ta2022/test-result                                 nil
+                 :ta2022/can-morph                                   false
+                 :ta2022/implied-price-difference                    nil
+                 :ta2022/upside-vs-downside                          0.0
+                 :ta2022/throbber                                    false
+                 :ta2022/filter                                      {:analyst nil :sector nil :country nil :portfolio nil}
 
-                 :implementation/portfolio-nav nil
-                 :implementation/fx nil
-                 :implementation/security-to-issuer-map nil
-                 :implementation/live-positions nil
-                 :implementation/live-cast-parent-positions nil
-                 :implementation/implementation-list []
+                 :implementation/portfolio-nav                       nil
+                 :implementation/fx                                  nil
+                 :implementation/security-to-issuer-map              nil
+                 :implementation/live-positions                      nil
+                 :implementation/live-cast-parent-positions          nil
+                 :implementation/implementation-list                 []
 
                  ; Trade implementation
-                 :implementation/trade-implementation                           nil
-                 :implementation/show-implementation-selector                   false
-                 :implementation/success-modal                                  {:show false :on-close nil :response nil}
+                 :implementation/trade-implementation                nil
+                 :implementation/show-implementation-selector        false
+                 :implementation/success-modal                       {:show false :on-close nil :response nil}
 
-                 :dummy nil                                 ;can be useful
+                 :dummy                                              nil                                 ;can be useful
                  })
 
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))

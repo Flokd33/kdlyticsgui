@@ -99,7 +99,7 @@
                                    [gap :size "1"]
                                    [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab (if-let [tid (:target-id {:download-table @(rf/subscribe [:var/table])})] tid "var-table"))]
                                    [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image (if-let [tid (:target-id {:download-table @(rf/subscribe [:var/table])})] tid "var-table"))]
-                                   [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click (if-let [ocl (:on-click-action {:download-table @(rf/subscribe [:var/table])})] ocl #(t/csv-link (:download-table {:download-table @(rf/subscribe [:var/table])}) (str "var-table" "-" (t/gdate-to-yyyymmdd (cljs-time.core/today))) download-columns))]]]]
+                                   [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click (if-let [ocl (:on-click-action {:download-table @(rf/subscribe [:var/table])})] ocl #(t/csv-link (:download-table {:download-table @(rf/subscribe [:var/table])}) (str "var-table" "-" (t/gdate->yyyyMMdd (cljs-time.core/today))) download-columns))]]]]
                       [[var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]])]]
   )
   )

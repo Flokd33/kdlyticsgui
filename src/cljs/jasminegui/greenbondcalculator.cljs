@@ -41,7 +41,7 @@
 (def gb-score-follow-up-2 (r/atom 0))
 
 (def identifier (r/atom ""))
-(def today-date (tools/gdate-to-yyyymmdd (today)))
+(def today-date (tools/gdate->yyyyMMdd (today)))
 (def analyst-name (r/atom nil))
 
 (def other-disabled? (r/atom false))
