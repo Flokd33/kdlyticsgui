@@ -106,6 +106,7 @@
    :Used_YTW                            {:Header "YTW" :accessor "Used_YTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :Used_Duration                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :FIRST_SETTLE_DT                     {:Header "Issued" :accessor "FIRST_SETTLE_DT" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1 %) :filterable true}
+   :FIRST_SETTLE_DT_NO_SHOW             {:Header "Issued-no-show" :accessor "FIRST_SETTLE_DT" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1 %) :filterable true :show false}
    :Current_yield                       {:Header "Curr Yield" :accessor "CURRENT_YIELD" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format*100 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    :predicted_spread_legacy_1           {:Header "Legacy" :accessor "predicted_spread_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -247,6 +248,7 @@
    :z1yvalid                            {:Header "Days" :accessor "z1yvalid" :width 55 :style {:textAlign "right"} :aggregate tables/median :filterable true :filterMethod tables/nb-filter-OR-AND}
    :ytd-z-delta                         {:Header (gstring/unescapeEntities "&Delta; ZTW") :accessor "ytd-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :ytd-return                          {:Header "TR %" :accessor "ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :best-ytd-return                     {:Header "TR %" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
 
 
    :difference_svr_2_2d                 {:Header "Delta 2D" :accessor "difference_svr_2d" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -368,23 +370,23 @@
        {:Header "Rank change" :columns (mapv quant-score-table-columns [:URS_rank_svr_D1D_2 :URS_rank_svr_D1W_2 :URS_rank_svr_D1M_2])}]
       "Upside/Downside"
       (concat
-        [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :COUPON])}]
+        [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :COUPON :FIRST_SETTLE_DT_NO_SHOW])}]
         (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
         (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
-        [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Current_yield])} ; add :current yield
+        [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Current_yield])}
          {:Header "Predicted Z-spreads" :columns (mapv quant-score-table-columns [:predicted_spread_svr_3 :predicted_spread_svr_2d_3])}
          {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}
-         {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}
+         {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta])}
          {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
          {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}])
       "Screener (SVR)"
-      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN-hide :Country :Sector :AMT_OUTSTANDING_3 :COUPON])}] ;we include ISIN-hide so it's in the view download
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN-hide :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW])}] ;we include ISIN-hide so it's in the view download
               (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
-               {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}
+               {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta ])}
                {:Header "91" :columns (mapv quant-score-table-columns [:n91heldvisible])}])
       "TA2022"
       (concat [{:Header "Description" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON]))}]
@@ -411,7 +413,7 @@
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :difference_svr_2_2d])}])
       "IndexCrawler"
       (concat [{:Header " " :columns (mapv quant-score-table-columns [:totaldummy])}
-               {:Header "Description" :columns (mapv quant-score-table-columns [:Country :Sector :SENIOR-WIDE :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT :Bond])}]
+               {:Header "Description" :columns (mapv quant-score-table-columns [:Country :Sector :FIRST_SETTLE_DT_NO_SHOW :SENIOR-WIDE :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT :Bond])}]
               [{:Header "Index weight" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :cembi-hy :embi :embi-ig :us-agg :global-agg :jaci])}]
               [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call])}]
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}

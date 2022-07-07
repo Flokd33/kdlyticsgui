@@ -3,6 +3,7 @@
     [re-frame.core :as rf]
     [reagent.core :as r]
     [goog.string :as gstring]
+    [cljs-time.core :refer [today]]
     [goog.string.format]
     [jasminegui.tools :as t]
     [goog.object :as gobj]
@@ -204,6 +205,12 @@
       [:div {:style {:color "black"}} (gstring/format fmt (* 100 x))]
       "-")))
 
+(defn roundpc-italic [fmt this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [:div {:style {:color (if (neg? x) "red" "black") :font-style "italic"}} (str "*" (gstring/format fmt (* 100 x)))]
+      "-")))
+
 (defn sort-msci-rating [a b]
   (let [ax (.indexOf ["Total" "AAA" "AA" "A" "BBB" "BB" "B" "CCC" "NA"] a )
         bx (.indexOf ["Total" "AAA" "AA" "A" "BBB" "BB" "B" "CCC" "NA"] b)]
@@ -223,6 +230,11 @@
 (def round3pc #(roundpc "%.3f%" %))
 
 
+(defn ytd-ita [this]
+  (if (and (some? (aget this "value")) (= (str (subs (aget this "row" "FIRST_SETTLE_DT" ) 0 4)) (str (subs (t/gdate-to-yyyymmdd (today)) 0 4 ))))
+    (roundpc-italic "%.2f%" this)
+    (roundpc "%.2f%" this))
+  )
 
 (defn sub-low-level-rating-score-to-string [x]
   (let [i (dec (js/parseInt x))]
