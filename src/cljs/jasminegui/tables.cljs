@@ -229,9 +229,10 @@
 (def round2pc-no-red #(roundpc-no-color "%.2f%" %))
 (def round3pc #(roundpc "%.3f%" %))
 
+(def this-year (str (.getYear (today))))
 
 (defn ytd-ita [this]
-  (if (and (some? (aget this "value")) (= (str (subs (aget this "row" "FIRST_SETTLE_DT" ) 0 4)) (str (subs (t/gdate-to-yyyymmdd (today)) 0 4 ))))
+  (if (and (some? (aget this "value")) (= (str (subs (aget this "row" "FIRST_SETTLE_DT" ) 0 4)) this-year))
     (roundpc-italic "%.2f%" this)
     (roundpc "%.2f%" this))
   )
