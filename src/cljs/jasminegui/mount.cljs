@@ -149,6 +149,18 @@
                  :attribution-index-returns/table                    []
                  :attribution-index-returns/x-top-15                 false
 
+                 ;attribution-history
+                 :attribution-history/portfolio                         "OGEMCORD"
+                 :attribution-history/filter                            {1 :region 2 :country 3 :issuer}
+                 :attribution-history/hide-zero-holdings                true
+                 :attribution-history/table-filter                      []
+                 :attribution-history/expander                          {0 {}}
+                 :attribution-history/shortcut                          1
+                 :attribution-history/display-style                     "Tree"
+                 :attribution-history/field-one                         :total-effect
+                 :attribution-history/report-type                       :yearly
+                 :attribution-history/data                              []
+
                  :top-bottom-price-change                            []
 
                  :single-bond-trade-history/data                     []
@@ -363,6 +375,14 @@
            :position-history/field-one
            :position-history/absdiff
 
+           :attribution-history/portfolio
+           :attribution-history/hide-zero-holdings
+           :attribution-history/table-filter
+           :attribution-history/expander
+           :attribution-history/shortcut
+           :attribution-history/display-style
+           :attribution-history/field-one
+           :attribution-history/report-type
 
            :single-portfolio-attribution/portfolio
            :single-portfolio-attribution/display-style
@@ -673,6 +693,7 @@
            :single-portfolio-attribution/filter
            :multiple-portfolio-attribution/filter
            :position-history/filter
+           :attribution-history/filter
            ]]
   (rf/reg-event-db k (fn [db [_ id f]] (assoc-in db [k id] f))))
 

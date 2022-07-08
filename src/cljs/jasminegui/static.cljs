@@ -51,6 +51,7 @@
   [{:code :summary             :name "Overview"}
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
+   {:code :history             :name "History"}
    {:code :index-returns       :name "Index returns"}
    {:code :top-bottom-pr       :name "Top/bottom universe"}])
 
