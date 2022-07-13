@@ -345,7 +345,7 @@
            :defaultPageSize (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
            :filterable      false
            ;:defaultSorted   [{:id :Quantity :desc true}]
-           :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) :TICKER :NAME]
+           :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score "Issuer" :TICKER :NAME) :TICKER :NAME]
            :className       "-striped -highlight"}]
 
          )])
@@ -416,7 +416,7 @@
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/fwd-return]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/fwd-return %])]
                                                      [gap :size "20px"]
                                                      [title :label "Pivot?" :level :level3]
-                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Region" "Sector" "Rating"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
+                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Region" "Sector" "Rating" "Issuer"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
                                                      [gap :size "20px"]
