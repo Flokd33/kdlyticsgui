@@ -144,14 +144,13 @@
         xfields (remove #(= % "_pivotVal") (keys (first rt-pivot-data)))
         colors (take (count (keys grp)) performance-colors)
         new-data (into [] (for [g (keys grp) x xfields] {:ygroup g :xgroup (t/gdate->ddMMMyy (t/int->gdate x)) :value (get (first (grp g)) x)}))]
-    (println (mapv #(t/gdate->ddMMMyy (t/int->gdate %)) xfields))
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
+      {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
      :width    (* 30 (count colors)) :height 400
      :mark     "bar"
      :encoding {:column  {:field  "xgroup" :type "nominal" :title nil
                           :header {:orient "bottom" :labelFontSize chart-text-size},
-                          :sort   (mapv #(t/gdate->ddMMMyy (t/int->gdate %)) xfields)}
+                          :sort   (mapv #(t/gdate->ddMMMyy (t/int->gdate %)) (sort xfields))}
                 :x       {:field "ygroup" :type "nominal" :axis {:title nil :labels false}}
                 :y       {:field "value", :type "quantitative", :axis {:title nil :labelFontSize chart-text-size}}
                 :tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
