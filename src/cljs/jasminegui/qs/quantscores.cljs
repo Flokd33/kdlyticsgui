@@ -185,7 +185,7 @@
 
 (defn qs-table [mytitle data]
   (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
-    ;(println (conj (keys (first data)) :ISIN))
+    ;(println @(rf/subscribe [:quant-model/model-js-output]))
      [v-box :class "element"  :gap "10px" :width "1690px"
       :children [[h-box :align :center :gap "10px" :children [[title :label mytitle :level :level1]
                                                               [gap :size "1"]
