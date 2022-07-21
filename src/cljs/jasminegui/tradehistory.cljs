@@ -260,18 +260,19 @@
   (clj->js {:onClick #(reset! show-modal-commentary {:show true :txt (aget rowInfo "original" "trader_comments")}) :style {:cursor "pointer"}}))
 
 
-(defn portfolio-history-table []
+(defn portfolio-history-table []                            ; need to load positions when TH launch
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
         pivot @(rf/subscribe [:portfolio-trade-history/pivot])
+        position-ticker-list (map :NAME (t/chainfilter {:portfolio #(= % @(rf/subscribe [:portfolio-trade-history/portfolio])) :weight pos?} @(rf/subscribe [:positions])))
+        data-with-held (for [trade data] (assoc trade :held (if (some #(= (trade :NAME) %) position-ticker-list) 1 0)))
         ]
-
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
        :child
        (if (= pivot "No")
          [:> ReactTable
-          {:data                data
+          {:data                data-with-held
            :columns             (concat [{:Header  "Trade"
                                           :columns [{:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10 }
                                                     {:Header "Type" :accessor "TransactionTypeName" :width 75}
@@ -286,6 +287,7 @@
                                                     {:Header "Region" :accessor "JPMRegion" :width 85}
                                                     {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
                                                     {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :Cell tables/low-level-rating-score-to-string}
+                                                    {:Header "Held" :accessor "held" :width 65 :style {:textAlign "right"} :Cell tables/round0}
                                                     ]
                                           }]
                                         (if (= @(rf/subscribe [:portfolio-trade-history/fwd-return]) "Yes")
