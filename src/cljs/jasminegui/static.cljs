@@ -5,14 +5,16 @@
 (def cms-address "http://iamlfilive:8192/tradeanalyser/cms/")
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
-  (let [home-events [:get-qt-date :get-total-positions   :get-naked-positions :get-instruments] ;:get-positions
+  (let [home-events [:get-qt-date :get-total-positions :get-naked-positions :get-instruments] ;:get-positions
         attr-events [:get-top-bottom-price-change :get-attribution-date :get-attribution-summary :get-attribution-available-months  [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
         quant-events [:get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         implementation-events (conj home-events :get-quant-model :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :live-cast-parent-positions-request)
         ]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (conj home-events :get-portfolio-checks) :mounting-modal true}
-   {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil :load-events [:get-country-codes :get-jpm-sectors :get-model-portfolios :get-quant-model]}
+   {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil :load-events (concat home-events [:get-country-codes :get-jpm-sectors :get-model-portfolios :get-quant-model])} ;need load position to identify what we still own among list of trade- not effici
+   ;
+   ; ~}@:/etn , need to review with Alex
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events attr-events}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events var-events [:get-large-exposures]) :mounting-modal true} ;var-events
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
