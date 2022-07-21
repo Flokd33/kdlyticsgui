@@ -263,8 +263,10 @@
 (defn portfolio-history-table []                            ; need to load positions when TH launch
   (let [data @(rf/subscribe [:portfolio-trade-history/data])
         pivot @(rf/subscribe [:portfolio-trade-history/pivot])
-        position-ticker-list (map :NAME (t/chainfilter {:portfolio #(= % @(rf/subscribe [:portfolio-trade-history/portfolio])) :weight pos?} @(rf/subscribe [:positions])))
-        data-with-held (for [trade data] (assoc trade :held (if (some #(= (trade :NAME) %) position-ticker-list) 1 0)))
+        position-name-list (map :NAME (t/chainfilter {:portfolio #(= % @(rf/subscribe [:portfolio-trade-history/portfolio])) :weight pos?} @(rf/subscribe [:positions])))
+        position-ticker-list (map :TICKER (t/chainfilter {:portfolio #(= % @(rf/subscribe [:portfolio-trade-history/portfolio])) :weight pos?} @(rf/subscribe [:positions])))
+        data-with-held (for [trade data] (assoc trade :held (if (some #(= (trade :NAME) %) position-name-list) 1 0)
+                                                      :held-name (if (some #(= (trade :TICKER) %) position-ticker-list) 1 0)))
         ]
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
@@ -276,20 +278,26 @@
            :columns             (concat [{:Header  "Trade"
                                           :columns [{:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10 }
                                                     {:Header "Type" :accessor "TransactionTypeName" :width 75}
-                                                    {:Header "Instrument" :accessor "NAME" :width 150}
+                                                    {:Header "Instrument" :accessor "NAME" :width 80}
+                                                    {:Header "Ticker" :accessor "TICKER" :width 80}
                                                     {:Header "ISIN" :accessor "ISIN" :width 100}
                                                     {:Header "CCY" :accessor "LocalCcy" :width 45}
                                                     {:Header "Notional" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
                                                     {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2}
-                                                    {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                                                    {:Header "Vs NAV(*)" :accessor "bps" :width 80 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
                                                     {:Header "Counterparty" :accessor "counterparty_code" :width 90}
                                                     {:Header "Country" :accessor "CNTRY_OF_RISK" :width 65}
                                                     {:Header "Region" :accessor "JPMRegion" :width 85}
                                                     {:Header "Sector" :accessor "JPM_SECTOR" :width 100}
                                                     {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :Cell tables/low-level-rating-score-to-string}
-                                                    {:Header "Held" :accessor "held" :width 65 :style {:textAlign "right"} :Cell tables/round0}
                                                     ]
-                                          }]
+                                          }
+                                         {:Header  "Held?"
+                                          :columns [{:Header "Bond" :accessor "held" :width 45 :style {:textAlign "right"} :Cell tables/round0}
+                                                    {:Header "Ticker" :accessor "held-name" :width 45 :style {:textAlign "right"} :Cell tables/round0}
+                                                    ]
+                                          }
+                                         ]
                                         (if (= @(rf/subscribe [:portfolio-trade-history/fwd-return]) "Yes")
                                           [{:Header "1Y fwd return (predicted)"
                                             :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
