@@ -419,6 +419,8 @@
                   :defaultFilterMethod tables/text-filter-OR
                   :className           "-striped -highlight"}]]]))
 
+
+
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -427,8 +429,9 @@
               :msci [msci-table]
               :ungc [ungc-table]
               :refinitiv [v-box :gap "20px" :class "body" :children [[refinitiv-find-issuers] [refinitiv-table-top-view] [refinitiv-table-detailed-view]]]
-              :esg-calculator [greenbondcalculator/esg-calculator-display]
-              :esg-viz [greenbondcalculator/esg-viz-display]
+              :gb-scoring [greenbondcalculator/green-bond-scoring-display]
+              :tf-scoring [greenbondcalculator/transition-fund-scoring-display]
+              :reporting [greenbondcalculator/reporting-display]
               :holdings [holdings]
               :esg-scores [esg-scores]
               :esg-engagements [esg-engagements]
