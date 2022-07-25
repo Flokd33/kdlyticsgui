@@ -82,14 +82,15 @@
    ])
 
 (def esg-navigation
-  [{:code :msci                 :name "MSCI"}
-   {:code :holdings             :name "Holdings through MSCI"}
-   {:code :ungc                 :name "UNGC problem securities"}
-   {:code :esg-scores           :name "ESG summary report"}
-   {:code :refinitiv            :name "Refinitiv"}
-   {:code :esg-calculator       :name "Green bond calculator (beta)"}
-   {:code :esg-viz              :name "Green bond visualisator (beta)"}
-   {:code :esg-engagements      :name "ESG interactions"}
+  [{:code :msci                       :name "MSCI"}
+   {:code :holdings                   :name "Holdings through MSCI"}
+   {:code :ungc                       :name "UNGC problem securities"}
+   {:code :esg-scores                 :name "ESG summary report"}
+   {:code :refinitiv                  :name "Refinitiv"}
+   {:code :gb-scoring                 :name "Green bond scoring (beta)"}
+   {:code :tf-scoring                 :name "Transition fund scoring (beta)"}
+   {:code :reporting                  :name "Reporting (beta)"}
+   {:code :esg-engagements            :name "ESG interactions"}
    ])
 
 (def ta2022-navigation

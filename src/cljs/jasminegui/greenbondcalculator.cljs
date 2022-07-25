@@ -101,7 +101,7 @@
   )
 
 (def analyst-names-list
-  [{:id "vharling" :label "Vic"} {:id "tlloyd" :label "Tammy"} {:id "sxie" :label "Stacy"} {:id "aalmosni" :label "Alex"} {:id "rbhat" :label "Rahul"}
+  [{:id "vharling" :label "Vic"} {:id "tlloyd" :label "Tammy"} {:id "sxie" :label "Stacy"} {:id "aalmosni" :label "Alex"} {:id "rbhat" :label "Rahul"} {:id "dnaumenko" :label "Daria"}
    {:id "asiow" :label "Alan"} {:id "aluizgomes" :label "Antonio"} {:id "cliang" :label "Chris"} {:id "achan" :label "Adrian"} {:id "ksalisbury" :label  "Kevan"}])
 
 (def project-sub-categories
@@ -125,7 +125,7 @@
   [{:id "second-party-opinion" :label "The bond is certified by an independent second party opinion"} {:id "green-bond-framework"  :label "The bond is certified by an external green bond framework"}
    {:id "external-scoring"  :label "There is an external scoring or rating on the sustainability element"} {:id "none"  :label "None of the above"}])
 
-  (def ringfencing-choices
+(def ringfencing-choices
   [{:id "sub-account" :label "A specific sub account has been created"} {:id "green-account"  :label "A specific green account has been created"}
    {:id "virtual-green"  :label "A virtual green account has been created"} {:id "none"  :label "None of the above"}])
 
@@ -197,7 +197,6 @@
     {:color "Chartreuse" :text "YES"}
     {:color "Red" :text "NO"})))
 
-
 (defn gb-eligible-answer [report]
   (let  [report-selected report]
   (if (and (= (str (:analyst_answer (first (t/chainfilter {:question_description_short "controversies"} report-selected)))) "No")
@@ -217,7 +216,7 @@
     (rf/dispatch [:post-greenbondcalculator-upload summary])
     ))
 
-(defn esg-calculator-display []
+(defn green-bond-scoring-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
     ;(println @esg-calculator-summary)
   [v-box :width "1280px" :gap "5px" :class "element"
@@ -362,7 +361,7 @@
               ]]
     ))
 
-(defn esg-viz-display []
+(defn reporting-display []
   (rf/dispatch [:post-gb-reports-extract @gb-isin @gb-date])
   (let [gb-reports @(rf/subscribe [:gb-reports])
         qt @(rf/subscribe [:quant-model/model-output])
@@ -424,8 +423,154 @@
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are more than 50% of the proceeds spent on green projects?"] [p (str (:analyst_answer (first (t/chainfilter {:question_description_short "half-proceeds-green"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "On a ongoing basis, does the company reconciled proceeds with uses?"] [p (str (:analyst_answer (first (t/chainfilter {:question_description_short "reconciliation"} report-selected))))]]]]
                          )
-
-
                        )]]
      ]
     ))
+
+(def tf-total-score (r/atom 0))
+(def tf-analyst-name (r/atom ""))
+(def tf-identifier (r/atom ""))
+(def is-tf-eligible (r/atom "No"))
+
+(def tf-calculator-summary (r/atom {:tf-eligibility/eligibility1 {:question_id 1 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0},
+                                     :tf-eligibility/eligibility2 {:question_id 2 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0},
+                                     :tf-eligibility/eligibility3 {:question_id 3 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0},
+                                     :tf-eligibility/category {:question_id 4 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0}
+                                     :tf-eligibility/notes {:question_id 5 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0}
+
+                                     :tf-subs/subs1 {:question_id 6 :question_category "tf-subs" :analyst_answer "" :analyst_score 0},
+                                     :tf-subs/subs2 {:question_id 7 :question_category "tf-subs" :analyst_answer "" :analyst_score 0}
+                                     :tf-subs/subs3 {:question_id 8 :question_category "tf-subs" :analyst_answer "" :analyst_score 0},
+                                     }))
+
+(def tf-scoring {:tf-eligibility/eligibility1 {:Yes 10 :No 0}
+                 :tf-eligibility/eligibility2 {:Yes 10 :No 0}
+                 :tf-eligibility/eligibility3 {:Yes 10 :No 0}
+
+                 :tf-subs/subs1 {:choice1 10 :choice2 20 :choice3 30}
+                 :tf-subs/subs2 {:choice1 10 :choice2 20 :choice3 30}
+                 :tf-subs/subs3 {:Yes 10 :No 0}
+                 })
+
+(defn tf-eligible []
+  (let [answers @tf-calculator-summary]
+    (if (and (= (get-in answers [:tf-eligibility/eligibility1 :analyst_answer]) "Yes") (= (get-in answers [:tf-eligibility/eligibility2 :analyst_answer]) "Yes") (= (get-in answers [:tf-eligibility/eligibility3 :analyst_answer]) "Yes"))
+      (reset! is-tf-eligible "Yes")
+      (reset! is-tf-eligible "No"))))
+
+(defn tf-score-calculator []
+  (doseq [a (keys @tf-calculator-summary)] (reset! (r/cursor tf-calculator-summary [a :analyst_score]) (get-in tf-scoring [a (keyword (get-in @tf-calculator-summary [a :analyst_answer]))])))
+  (let [summary @tf-calculator-summary
+        total-score (reduce + (into [] (for [e (keys summary)] (get-in summary [e :analyst_score]))))]
+    (reset! tf-total-score total-score)
+    )
+  )
+
+(defn tf-summary-generator []
+  (let [answers @tf-calculator-summary
+        summary (for [k (keys answers)] {:question_id (get-in answers [k :question_id])
+                                         :analyst_code @tf-analyst-name
+                                         :date today-date
+                                         :security_identifier @tf-identifier
+                                         :analyst_answer (get-in answers [k :analyst_answer])
+                                         :analyst_score (get-in answers [k :analyst_score])})
+        ]
+    (println summary)
+    ;(rf/dispatch [:post-greenbondcalculator-upload summary]) ;need new post request
+    ))
+
+(def tf-category-choices [{:id "cat1" :label "Category 1"} {:id "cat2"  :label "Category 2"} {:id "cat3"  :label "Category 3"}])
+(def tf-sub1-choices [{:id "choice1" :label "Choice 1"} {:id "choice2"  :label "Choice 2"} {:id "choice3"  :label "Choice 3"}])
+(def tf-sub2-choices [{:id "choice1" :label "Choice 1"} {:id "choice2"  :label "Choice 2"} {:id "choice3"  :label "Choice 3"}])
+
+(defn transition-fund-scoring-display []
+  ;(println @tf-total-score)
+  ;(println @tf-calculator-summary)
+    [v-box :width "1280px" :gap "5px" :class "element"
+     :children [[modal-success]
+                [title :label "Transition fund calculator" :level :level1]
+                [h-box :gap "10px" :align :center
+                 :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
+                            [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model tf-identifier :attr {:maxlength 12}
+                             :on-change #(reset! tf-identifier %)]]]
+                [h-box :gap "10px" :align :center
+                 :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
+                            [single-dropdown :width dropdown-width :choices analyst-names-list :model tf-analyst-name
+                             :on-change #(reset! tf-analyst-name %)]
+                            ]]
+                [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Score" :level :level2]] [progress-bar :width categories-list-width-long :model @tf-total-score ]]]
+
+
+                [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Transition Fund eligibility" :level :level2]]
+                                                               [box :width dropdown-width :child [button :label @is-tf-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-tf-eligible "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]]
+                [h-box :gap "10px" :align :center
+                 :children [[label :width question-width :label "Eligibility question 1?"]
+                            [single-dropdown :width dropdown-width :choices yes-no-choice
+                             :model (r/cursor tf-calculator-summary [:tf-eligibility/eligibility1 :analyst_answer])
+                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/eligibility1 :analyst_answer]) %)
+                                             (tf-eligible)
+                                             (tf-score-calculator))]]]
+                [h-box :gap "10px" :align :center
+                 :children [[label :width question-width :label "Eligibility question 2?"]
+                            [single-dropdown :width dropdown-width :choices yes-no-choice
+                             :model (r/cursor tf-calculator-summary [:tf-eligibility/eligibility2 :analyst_answer])
+                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/eligibility2 :analyst_answer]) %)
+                                             (tf-eligible)
+                                             (tf-score-calculator))]]]
+                [h-box :gap "10px" :align :center
+                 :children [[label :width question-width :label "Eligibility question 3?"]
+                            [single-dropdown :width dropdown-width :choices yes-no-choice
+                             :model (r/cursor tf-calculator-summary [:tf-eligibility/eligibility3 :analyst_answer])
+                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/eligibility3 :analyst_answer]) %)
+                                             (tf-eligible)
+                                             (tf-score-calculator))]]]
+                [h-box :gap "10px" :align :center
+                 :children [[label :width question-width :label "Category:"]
+                            [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-category-choices
+                             :model (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer])
+                             :on-change #(reset! (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer]) %)]]]
+                [h-box :gap "10px" :align :start
+                 :children [[label :width question-width :label "Notes:"]
+                            [input-textarea :width categories-list-width-long :rows 5
+                             :model (r/cursor tf-calculator-summary [:tf-eligibility/notes :analyst_answer])
+                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/notes :analyst_answer]) %))]]]
+
+                (if (= @is-tf-eligible "Yes")
+                  (concat
+                    [[v-box  :gap "5px" :children
+                     [[title :label "Subs questions (list should depend on selected category(ies))" :level :level2 ]
+                      [h-box :gap "10px" :align :center
+                      :children [[label :width question-width :label "Sub question 1?"]
+                                [single-dropdown :placeholder "Please select..." :width categories-list-width-long
+                                 :choices tf-sub1-choices
+                                 :model (r/cursor tf-calculator-summary [:tf-subs/subs1 :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs1 :analyst_answer]) %)
+                                                 (tf-score-calculator))]]]
+                      [h-box :gap "10px" :align :center
+                      :children [[label :width question-width :label "Sub question 2?"]
+                                [single-dropdown :placeholder "Please select..." :width categories-list-width-long
+                                 :choices tf-sub2-choices
+                                 :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                                                 (tf-score-calculator))]]]
+
+                      [h-box :gap "10px" :align :center
+                      :children [[label :width question-width :label "Sub question 3?"]
+                                [single-dropdown :width dropdown-width
+                                 :choices yes-no-choice
+                                 :model (r/cursor tf-calculator-summary [:tf-subs/subs3 :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs3 :analyst_answer]) %)
+                                                 (tf-score-calculator))]]]
+                      ]
+                     ]]
+                    )
+                  )
+
+                [gap :size "10px"]
+
+                [h-box :gap "10px" :align :center
+                 :children [[label :width question-width :label ""]
+                            [button :label "Save transition fund report" :class "btn btn-primary btn-block" :on-click #(do (tf-score-calculator) (tf-summary-generator))]]]
+                [gap :size "20px"]
+                ]]
+    )
