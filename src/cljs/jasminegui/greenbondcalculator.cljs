@@ -134,51 +134,49 @@
    {:id "tracked"  :label "The proceeds are ringfenced or otherwise specifically tracked"} {:id "none"  :label "None of the above"}])
 
 
-(def esg-calculator-summary (r/atom {:project-selection/description {:question_id 1 :question_category "project-selection" :analyst_answer "" :analyst_score 0},
-                                   :project-selection/categories {:question_id 2 :question_category "project-selection" :analyst_answer "other" :analyst_score 7},
-                                   :project-selection/categories-other {:question_id 3 :question_category "project-selection" :analyst_answer "" :analyst_score 0},
-                                   :project-evaluation/independent-verification {:question_id 4 :question_category "project-evaluation" :analyst_answer "none" :analyst_score 0},
-                                   :project-evaluation/second-opinion {:question_id 25 :question_category "project-evaluation" :analyst_answer "none" :analyst_score 0}
-                                   :project-evaluation/credibility {:question_id 5 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
-                                   :project-evaluation/materiality {:question_id 6 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
-                                   :project-evaluation/discipline {:question_id 7 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
-                                   :project-evaluation/controversies {:question_id 8 :question_category "project-evaluation" :analyst_answer "Yes" :analyst_score 0},
-                                   :project-evaluation/notes {:question_id 24 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0},
-                                   :project-evaluation/country-framework-list {:question_id 9 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0},
-                                   :project-evaluation/national-framework-best-practice {:question_id 10 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
-                                   :project-evaluation/better-than-national {:question_id 11 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
-                                   ;:project-evaluation/aligned-with-country-sector-pathway {:question_id 12 :question_category "project-evaluation" :analyst_answer "No" :analyst_score 0},
-                                   :project-evaluation/reference-sources {:question_id 13 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0},
-                                   :proceed-management/ringfencing {:question_id 14 :question_category "project-management" :analyst_answer "none" :analyst_score 0},
-                                   :proceed-management/tracked {:question_id 15 :question_category "project-management" :analyst_answer "none" :analyst_score 0},
-                                   :reporting/project-on-track {:question_id 16 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
-                                   :reporting/project-expanded {:question_id 17 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
-                                   :reporting/increased-green-funding {:question_id 18 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
-                                   :reporting/annual-report {:question_id 19 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
-                                   :reporting/project-kpis {:question_id 20 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
-                                   :reporting/half-proceeds-green {:question_id 21 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
-                                   :reporting/reconciliation {:question_id 22 :question_category "reporting" :analyst_answer "No" :analyst_score 0},
-                                   :analyst-evaluation/text {:question_id 23 :question_category "project-evaluation" :analyst_answer "" :analyst_score 0}
+(def esg-calculator-summary (r/atom {:project-selection/description                       {:question_id 1  :analyst_answer ""       :analyst_score 0},
+                                   :project-selection/categories                          {:question_id 2  :analyst_answer "other"  :analyst_score 7},
+                                   :project-selection/categories-other                    {:question_id 3  :analyst_answer ""       :analyst_score 0},
+                                   :project-evaluation/independent-verification           {:question_id 4  :analyst_answer "none"   :analyst_score 0},
+                                   :project-evaluation/second-opinion                     {:question_id 25 :analyst_answer "none"   :analyst_score 0}
+                                   :project-evaluation/credibility                        {:question_id 5  :analyst_answer "No"     :analyst_score 0},
+                                   :project-evaluation/materiality                        {:question_id 6  :analyst_answer "No"     :analyst_score 0},
+                                   :project-evaluation/discipline                         {:question_id 7  :analyst_answer "No"     :analyst_score 0},
+                                   :project-evaluation/controversies                      {:question_id 8  :analyst_answer "Yes"    :analyst_score 0},
+                                   :project-evaluation/notes                              {:question_id 24 :analyst_answer ""       :analyst_score 0},
+                                   :project-evaluation/country-framework-list             {:question_id 9  :analyst_answer ""       :analyst_score 0},
+                                   :project-evaluation/national-framework-best-practice   {:question_id 10 :analyst_answer "No"     :analyst_score 0},
+                                   :project-evaluation/better-than-national               {:question_id 11 :analyst_answer "No"     :analyst_score 0},
+                                   :project-evaluation/reference-sources                  {:question_id 13 :analyst_answer ""       :analyst_score 0},
+                                   :proceed-management/ringfencing                        {:question_id 14 :analyst_answer "none"   :analyst_score 0},
+                                   :proceed-management/tracked                            {:question_id 15 :analyst_answer "none"   :analyst_score 0},
+                                   :reporting/project-on-track                            {:question_id 16 :analyst_answer "No"     :analyst_score 0},
+                                   :reporting/project-expanded                            {:question_id 17 :analyst_answer "No"     :analyst_score 0},
+                                   :reporting/increased-green-funding                     {:question_id 18 :analyst_answer "No"     :analyst_score 0},
+                                   :reporting/annual-report                               {:question_id 19 :analyst_answer "No"     :analyst_score 0},
+                                   :reporting/project-kpis                                {:question_id 20 :analyst_answer "No"     :analyst_score 0},
+                                   :reporting/half-proceeds-green                         {:question_id 21 :analyst_answer "No"     :analyst_score 0},
+                                   :reporting/reconciliation                              {:question_id 22 :analyst_answer "No"     :analyst_score 0},
+                                   :analyst-evaluation/text                               {:question_id 23 :analyst_answer ""       :analyst_score 0}
                                    }))
 
-(def gb-scoring {:project-selection/categories {:climate 14 :renewable 14 :green 14 :energy 14 :clean 14 :pollution 14 :eco 14 :environmentally 14 :terrestrial 14 :sustainable 14 :other 7};1
-                 :project-evaluation/independent-verification {:second-party-opinion 10 :green-bond-framework 8 :external-scoring 6 :none 0} ;;;;;1
-                 :project-evaluation/credibility {:Yes 10 :No 0} ;1
-                 :project-evaluation/materiality {:Yes 10 :No 0};1
-                 :project-evaluation/discipline {:Yes 10 :No 0};1
-                 :project-evaluation/controversies {:Yes 0 :No 10};1
-                 :project-evaluation/national-framework-best-practice {:Yes 6 :No 0};1
-                 :project-evaluation/better-than-national {:Yes 8 :No 0};1
-                 ;:project-evaluation/aligned-with-country-sector-pathway {:Yes 10 :No 0}
-                 :proceed-management/ringfencing {:sub-account 10 :green-account 10 :virtual-account 10 :none 0};1
-                 :proceed-management/tracked {:verified 12 :tracked 9 :none 0};1
-                 :reporting/project-on-track {:Yes 20 :No 0}
-                 :reporting/project-expanded {:Yes 15 :No 0}
-                 :reporting/increased-green-funding {:Yes 15 :No 0}
-                 :reporting/annual-report {:Yes 10 :No 0}
-                 :reporting/project-kpis {:Yes 15 :No 0}
-                 :reporting/half-proceeds-green {:Yes 15 :No 0}
-                 :reporting/reconciliation {:Yes 10 :No 0}})
+(def gb-scoring {:project-selection/categories                        {:climate 14 :renewable 14 :green 14 :energy 14 :clean 14 :pollution 14 :eco 14 :environmentally 14 :terrestrial 14 :sustainable 14 :other 7}
+                 :project-evaluation/independent-verification         {:second-party-opinion 10 :green-bond-framework 8 :external-scoring 6 :none 0}
+                 :project-evaluation/credibility                      {:Yes 10 :No 0}
+                 :project-evaluation/materiality                      {:Yes 10 :No 0}
+                 :project-evaluation/discipline                       {:Yes 10 :No 0}
+                 :project-evaluation/controversies                    {:Yes 0 :No 10}
+                 :project-evaluation/national-framework-best-practice {:Yes 6 :No 0}
+                 :project-evaluation/better-than-national             {:Yes 8 :No 0}
+                 :proceed-management/ringfencing                      {:sub-account 10 :green-account 10 :virtual-account 10 :none 0}
+                 :proceed-management/tracked                          {:verified 12 :tracked 9 :none 0}
+                 :reporting/project-on-track                          {:Yes 20 :No 0}
+                 :reporting/project-expanded                          {:Yes 15 :No 0}
+                 :reporting/increased-green-funding                   {:Yes 15 :No 0}
+                 :reporting/annual-report                             {:Yes 10 :No 0}
+                 :reporting/project-kpis                              {:Yes 15 :No 0}
+                 :reporting/half-proceeds-green                       {:Yes 15 :No 0}
+                 :reporting/reconciliation                            {:Yes 10 :No 0}})
 
 (defn gb-score-calculator []
   (doseq [a (keys @esg-calculator-summary)] (reset! (r/cursor esg-calculator-summary [a :analyst_score]) (case (get-in gb-scoring [a (keyword (get-in @esg-calculator-summary [a :analyst_answer]))])
@@ -432,56 +430,61 @@
 (def tf-identifier (r/atom ""))
 (def is-tf-eligible (r/atom "No"))
 
-(def tf-calculator-summary (r/atom {:tf-eligibility/eligibility1 {:question_id 1 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0},
-                                     :tf-eligibility/eligibility2 {:question_id 2 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0},
-                                     :tf-eligibility/eligibility3 {:question_id 3 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0},
-                                     :tf-eligibility/category {:question_id 4 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0}
-                                     :tf-eligibility/notes {:question_id 5 :question_category "tf-eligibility" :analyst_answer "" :analyst_score 0}
+(def tf-calculator-summary (r/atom {:eligibility/net-zero            {:question_id 50 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/clear-plans         {:question_id 51 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/other-sectors       {:question_id 52 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/ahead-peers         {:question_id 53 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/category            {:question_id 54 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/category-comment    {:question_id 55 :analyst_answer "" :analyst_score 0},
+                                    :subs/activities                 {:question_id 56 :analyst_answer "" :analyst_score 0},
+                                    :subs/avoided-figure             {:question_id 57 :analyst_answer "" :analyst_score 0},
+                                    :subs/paris                      {:question_id 58 :analyst_answer "" :analyst_score 0},
+                                    :subs/target-comment             {:question_id 59 :analyst_answer "" :analyst_score 0},
+                                    :subs/target-year                {:question_id 60 :analyst_answer "" :analyst_score 0},
+                                    :subs/scope-comment              {:question_id 61 :analyst_answer "" :analyst_score 0},
+                                    :subs/emissions-year             {:question_id 62 :analyst_answer "" :analyst_score 0},
+                                    :subs/recent-emissions           {:question_id 63 :analyst_answer "" :analyst_score 0},
+                                    :subs/reduction-target           {:question_id 64 :analyst_answer "" :analyst_score 0},
+                                    :subs/total-emissions            {:question_id 65 :analyst_answer "" :analyst_score 0}}))
 
-                                     :tf-subs/subs1 {:question_id 6 :question_category "tf-subs" :analyst_answer "" :analyst_score 0},
-                                     :tf-subs/subs2 {:question_id 7 :question_category "tf-subs" :analyst_answer "" :analyst_score 0}
-                                     :tf-subs/subs3 {:question_id 8 :question_category "tf-subs" :analyst_answer "" :analyst_score 0},
-                                     }))
-
-(def tf-scoring {:tf-eligibility/eligibility1 {:Yes 10 :No 0}
-                 :tf-eligibility/eligibility2 {:Yes 10 :No 0}
-                 :tf-eligibility/eligibility3 {:Yes 10 :No 0}
-
-                 :tf-subs/subs1 {:choice1 10 :choice2 20 :choice3 30}
-                 :tf-subs/subs2 {:choice1 10 :choice2 20 :choice3 30}
-                 :tf-subs/subs3 {:Yes 10 :No 0}
-                 })
+(def tf-scoring {:eligibility/net-zero      {:Yes 30 :No 0}
+                 :eligibility/clear-plans   {:Yes 10 :No 0}
+                 :eligibility/other-sectors {:Yes 10 :No 0}
+                 :eligibility/ahead-peers   {:Yes 10 :No 0}
+                 :subs/activities           {:avoid 40 :reduce 20 :both 40 :none 0}
+                 :subs/paris                {:Yes 20 :No 0}})
 
 (defn tf-eligible []
   (let [answers @tf-calculator-summary]
-    (if (and (= (get-in answers [:tf-eligibility/eligibility1 :analyst_answer]) "Yes") (= (get-in answers [:tf-eligibility/eligibility2 :analyst_answer]) "Yes") (= (get-in answers [:tf-eligibility/eligibility3 :analyst_answer]) "Yes"))
+    (if (and (= (get-in answers [:tf-eligibility/net-zero :analyst_answer]) "Yes")
+             (or (= (get-in answers [:tf-eligibility/clear-plans :analyst_answer]) "Yes") (= (get-in answers [:tf-eligibility/other-sectors :analyst_answer]) "Yes") (= (get-in answers [:tf-eligibility/ahead-peers :analyst_answer]) "Yes")))
       (reset! is-tf-eligible "Yes")
       (reset! is-tf-eligible "No"))))
 
 (defn tf-score-calculator []
-  (doseq [a (keys @tf-calculator-summary)] (reset! (r/cursor tf-calculator-summary [a :analyst_score]) (get-in tf-scoring [a (keyword (get-in @tf-calculator-summary [a :analyst_answer]))])))
+  (doseq [a (keys @tf-calculator-summary)] (reset! (r/cursor tf-calculator-summary [a :analyst_score]) (case (get-in tf-scoring [a (keyword (get-in @tf-calculator-summary [a :analyst_answer]))])
+                                                                                                         nil 0
+                                                                                                         (get-in tf-scoring [a (keyword (get-in @tf-calculator-summary [a :analyst_answer]))]))))
   (let [summary @tf-calculator-summary
         total-score (reduce + (into [] (for [e (keys summary)] (get-in summary [e :analyst_score]))))]
     (reset! tf-total-score total-score)
     )
   )
 
-(defn tf-summary-generator []
+(defn tf-summary-generator []                               ; same for both reports
   (let [answers @tf-calculator-summary
-        summary (for [k (keys answers)] {:question_id (get-in answers [k :question_id])
-                                         :analyst_code @tf-analyst-name
-                                         :date today-date
-                                         :security_identifier @tf-identifier
-                                         :analyst_answer (get-in answers [k :analyst_answer])
-                                         :analyst_score (get-in answers [k :analyst_score])})
-        ]
-    (println summary)
-    ;(rf/dispatch [:post-greenbondcalculator-upload summary]) ;need new post request
+        summary (for [k (keys answers)] {:question_id (get-in answers [k :question_id]) :analyst_code @tf-analyst-name :date today-date
+                                         :security_identifier @tf-identifier :analyst_answer (get-in answers [k :analyst_answer]) :analyst_score (get-in answers [k :analyst_score])})]
+    ;(println summary)
+    (rf/dispatch [:post-greenbondcalculator-upload summary]) ;need new post request ? need the create the foreign keys in the system table...  => new system table with scores for each questions?
     ))
 
-(def tf-category-choices [{:id "cat1" :label "Category 1"} {:id "cat2"  :label "Category 2"} {:id "cat3"  :label "Category 3"}])
-(def tf-sub1-choices [{:id "choice1" :label "Choice 1"} {:id "choice2"  :label "Choice 2"} {:id "choice3"  :label "Choice 3"}])
-(def tf-sub2-choices [{:id "choice1" :label "Choice 1"} {:id "choice2"  :label "Choice 2"} {:id "choice3"  :label "Choice 3"}])
+(def tf-category-choices [{:id "transitioning" :label "Transitioning"} {:id "committed"  :label "Committed to transition"} {:id "enabler"  :label "Transition enabler"}
+                          {:id "interim"  :label "Interim to phase out"} {:id "aiming"  :label "Aiming to transition"}])
+
+(def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
+
+(def question-width-label "425px")
 
 (defn transition-fund-scoring-display []
   ;(println @tf-total-score)
@@ -499,75 +502,176 @@
                              :on-change #(reset! tf-analyst-name %)]
                             ]]
                 [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Score" :level :level2]] [progress-bar :width categories-list-width-long :model @tf-total-score ]]]
-
-
-                [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Transition Fund eligibility" :level :level2]]
+                [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Transition fund eligibility" :level :level2]]
                                                                [box :width dropdown-width :child [button :label @is-tf-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-tf-eligible "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]]
                 [h-box :gap "10px" :align :center
-                 :children [[label :width question-width :label "Eligibility question 1?"]
+                 :children [[label :width question-width-label :label "Is the company/issuer net-zero committed?"]
+                            [info-button :info "All Transition Investments should have a commitment to achieve carbon neutrality in the future. This includes both an explicit target or a public commitment (without a target date)" :position :left-center]
                             [single-dropdown :width dropdown-width :choices yes-no-choice
-                             :model (r/cursor tf-calculator-summary [:tf-eligibility/eligibility1 :analyst_answer])
-                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/eligibility1 :analyst_answer]) %)
+                             :model (r/cursor tf-calculator-summary [:tf-eligibility/net-zero :analyst_answer])
+                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/net-zero :analyst_answer]) %)
                                              (tf-eligible)
-                                             (tf-score-calculator))]]]
-                [h-box :gap "10px" :align :center
-                 :children [[label :width question-width :label "Eligibility question 2?"]
-                            [single-dropdown :width dropdown-width :choices yes-no-choice
-                             :model (r/cursor tf-calculator-summary [:tf-eligibility/eligibility2 :analyst_answer])
-                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/eligibility2 :analyst_answer]) %)
-                                             (tf-eligible)
-                                             (tf-score-calculator))]]]
-                [h-box :gap "10px" :align :center
-                 :children [[label :width question-width :label "Eligibility question 3?"]
-                            [single-dropdown :width dropdown-width :choices yes-no-choice
-                             :model (r/cursor tf-calculator-summary [:tf-eligibility/eligibility3 :analyst_answer])
-                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/eligibility3 :analyst_answer]) %)
-                                             (tf-eligible)
-                                             (tf-score-calculator))]]]
-                [h-box :gap "10px" :align :center
-                 :children [[label :width question-width :label "Category:"]
-                            [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-category-choices
-                             :model (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer])
-                             :on-change #(reset! (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer]) %)]]]
-                [h-box :gap "10px" :align :start
-                 :children [[label :width question-width :label "Notes:"]
-                            [input-textarea :width categories-list-width-long :rows 5
-                             :model (r/cursor tf-calculator-summary [:tf-eligibility/notes :analyst_answer])
-                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/notes :analyst_answer]) %))]]]
+                                             (tf-score-calculator)
+                                             (if (= % "No") (do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/clear-plans :analyst_answer]) "No")
+                                                                (reset! (r/cursor tf-calculator-summary [:tf-eligibility/other-sectors :analyst_answer]) "No")
+                                                                (reset! (r/cursor tf-calculator-summary [:tf-eligibility/ahead-peers :analyst_answer]) "No")
+                                                                (reset! (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer]) "")))
+                                             )]]]
+                (if (= (get-in @tf-calculator-summary [:tf-eligibility/net-zero :analyst_answer]) "Yes") ;first level eligibility
+                  (concat
+                    [[v-box  :gap "5px" :children [[h-box :gap "10px" :align :center
+                     :children [[label :width question-width :label "Does the company have clear plans to transition?"]
+                                [single-dropdown :width dropdown-width :choices yes-no-choice
+                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/clear-plans :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/clear-plans :analyst_answer]) %)
+                                                 (tf-eligible)
+                                                 (tf-score-calculator))]]]
+                    [h-box :gap "10px" :align :center
+                     :children [[label :width question-width :label "Is the company/asset required to enable the transition to net zero for other sectors?"]
+                                [single-dropdown :width dropdown-width :choices yes-no-choice
+                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/other-sectors :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/other-sectors :analyst_answer]) %)
+                                                 (tf-eligible)
+                                                 (tf-score-calculator))]]]
+                    [h-box :gap "10px" :align :center
+                     :children [[label :width question-width :label "Is the company ahead of its peer group on climate-related metrics?"]
+                                [single-dropdown :width dropdown-width :choices yes-no-choice
+                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/ahead-peers :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/ahead-peers :analyst_answer]) %)
+                                                 (tf-eligible)
+                                                 (tf-score-calculator))]]]
+                    [h-box :gap "10px" :align :center
+                     :children [[label :width question-width :label "What is the most appropriate classification for this transition investment?"]
+                                [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-category-choices
+                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer])
+                                 :on-change #(reset! (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer]) %)]]]
+                    [h-box :gap "10px" :align :start
+                     :children [[label :width question-width :label "Categorisation comment"]
+                                [input-textarea :width categories-list-width-long :rows 5
+                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/category-comment :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/category-comment :analyst_answer]) %))]]]
+                                                  ]]]
+                    )
+                  )
 
                 (if (= @is-tf-eligible "Yes")
                   (concat
                     [[v-box  :gap "5px" :children
-                     [[title :label "Subs questions (list should depend on selected category(ies))" :level :level2 ]
+                     [[title :label "Additional questions" :level :level2 ]
                       [h-box :gap "10px" :align :center
-                      :children [[label :width question-width :label "Sub question 1?"]
+                      :children [[label :width question-width :label "Reduced activities:"]
                                 [single-dropdown :placeholder "Please select..." :width categories-list-width-long
-                                 :choices tf-sub1-choices
-                                 :model (r/cursor tf-calculator-summary [:tf-subs/subs1 :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs1 :analyst_answer]) %)
+                                 :choices tf-reduced-activities-choices
+                                 :model (r/cursor tf-calculator-summary [:tf-subs/activities :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/activities :analyst_answer]) %)
                                                  (tf-score-calculator))]]]
-                      [h-box :gap "10px" :align :center
-                      :children [[label :width question-width :label "Sub question 2?"]
-                                [single-dropdown :placeholder "Please select..." :width categories-list-width-long
-                                 :choices tf-sub2-choices
-                                 :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
-                                                 (tf-score-calculator))]]]
-
-                      [h-box :gap "10px" :align :center
-                      :children [[label :width question-width :label "Sub question 3?"]
-                                [single-dropdown :width dropdown-width
-                                 :choices yes-no-choice
-                                 :model (r/cursor tf-calculator-summary [:tf-subs/subs3 :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs3 :analyst_answer]) %)
-                                                 (tf-score-calculator))]]]
+                      (case (get-in @tf-calculator-summary [:tf-subs/activities :analyst_answer])
+                        "avoid" (concat
+                          [[h-box :gap "10px" :align :center
+                             :children [[label :width question-width :label "What is the annual carbon avoided figure?"]
+                                        [input-text :width categories-list-width-long
+                                         :model (r/cursor tf-calculator-summary [:tf-subs/avoided-figure :analyst_answer])
+                                         :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/avoided-figure :analyst_answer]) %)
+                                                         (tf-score-calculator))]]]])
+                        "reduce" (concat
+                                   [[v-box  :gap "5px" :children
+                                     [[h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"]
+                                                [single-dropdown :width dropdown-width
+                                                 :choices yes-no-choice
+                                                 :model (r/cursor tf-calculator-summary [:tf-subs/paris :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/paris :analyst_answer]) %)
+                                                                 (tf-score-calculator))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Comment on target:"]
+                                                [input-textarea :width categories-list-width-long :rows 5
+                                                 :model (r/cursor tf-calculator-summary [:tf-subs/target-comment :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/target-comment :analyst_answer]) %))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Target base year:"]
+                                                [input-text :width categories-list-width-long
+                                                 :model (r/cursor tf-calculator-summary [:tf-subs/target-year :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/target-year :analyst_answer]) %)
+                                                                 (tf-score-calculator))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Emission scopes included:"]
+                                                [input-textarea :width categories-list-width-long :rows 5
+                                                 :model (r/cursor tf-calculator-summary [:tf-subs/scope-comment :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/scope-comment :analyst_answer]) %))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Base year emissions:"]
+                                                [input-text :width categories-list-width-long
+                                                 :model (r/cursor tf-calculator-summary [:tf-subs/emissions-year :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/emissions-year :analyst_answer]) %)
+                                                                 (tf-score-calculator))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Most recent emissions:"]
+                                                [input-text :width categories-list-width-long
+                                                 :model (r/cursor tf-calculator-summary [:tf-subs/recent-emissions :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/recent-emissions :analyst_answer]) %)
+                                                                 (tf-score-calculator))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Reduction target:"]
+                                                [input-text :width categories-list-width-long
+                                                 :model (r/cursor tf-calculator-summary [:tf-subs/reduction-target :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/reduction-target :analyst_answer]) %)
+                                                                 (tf-score-calculator))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Total absolute emissions reduction:"]
+                                                [input-text :width categories-list-width-long
+                                                 :model (r/cursor tf-calculator-summary [:tf-subs/total-emissions :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/total-emissions :analyst_answer]) %)
+                                                                 (tf-score-calculator))]]]
+                                    ]]])
+                        "both" nil
+                        "none" nil
+                        nil
+                        )
+                      ;(case (get-in @tf-calculator-summary [:tf-subs/subs3 :analyst_answer])
+                      ;  "Yes" (concat
+                      ;          [[v-box  :gap "5px" :children
+                      ;            [[h-box :gap "10px" :align :center
+                      ;              :children [[label :width question-width :label "Target base year, reduction target, base year emissions and scopes included?"]
+                      ;                         [single-dropdown :placeholder "Please select..." :width categories-list-width-long
+                      ;                          :choices tf-sub2-choices
+                      ;                          :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
+                      ;                          :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                      ;                                          (tf-score-calculator))]]]
+                      ;             [h-box :gap "10px" :align :center
+                      ;              :children [[label :width question-width :label "Inferred carbon reduced figure?"]
+                      ;                         [single-dropdown :placeholder "Please select..." :width categories-list-width-long
+                      ;                          :choices tf-sub2-choices
+                      ;                          :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
+                      ;                          :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                      ;                                          (tf-score-calculator))]]]
+                      ;             ]]
+                      ;           ]
+                      ;            )
+                      ;  "No" (concat
+                      ;         [[v-box  :gap "5px" :children
+                      ;           [[h-box :gap "10px" :align :center
+                      ;           :children [[label :width question-width :label "1 or 2?"]
+                      ;                      [single-dropdown :placeholder "Please select..." :width categories-list-width-long
+                      ;                       :choices tf-sub2-choices
+                      ;                       :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
+                      ;                       :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                      ;                                       (tf-score-calculator))]]]
+                      ;          [h-box :gap "10px" :align :center
+                      ;           :children [[label :width question-width :label "Inferred carbon reduced figure?"]
+                      ;                      [single-dropdown :placeholder "Please select..." :width categories-list-width-long
+                      ;                       :choices tf-sub2-choices
+                      ;                       :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
+                      ;                       :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                      ;                                       (tf-score-calculator))]]]
+                      ;          ]]])
+                      ;  nil
+                      ;  )
                       ]
                      ]]
                     )
                   )
 
                 [gap :size "10px"]
-
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label ""]
                             [button :label "Save transition fund report" :class "btn btn-primary btn-block" :on-click #(do (tf-score-calculator) (tf-summary-generator))]]]
