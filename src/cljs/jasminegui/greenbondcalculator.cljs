@@ -456,8 +456,8 @@
 
 (defn tf-eligible []
   (let [answers @tf-calculator-summary]
-    (if (and (= (get-in answers [:tf-eligibility/net-zero :analyst_answer]) "Yes")
-             (or (= (get-in answers [:tf-eligibility/clear-plans :analyst_answer]) "Yes") (= (get-in answers [:tf-eligibility/other-sectors :analyst_answer]) "Yes") (= (get-in answers [:tf-eligibility/ahead-peers :analyst_answer]) "Yes")))
+    (if (and (= (get-in answers [:eligibility/net-zero :analyst_answer]) "Yes")
+             (or (= (get-in answers [:eligibility/clear-plans :analyst_answer]) "Yes") (= (get-in answers [:eligibility/other-sectors :analyst_answer]) "Yes") (= (get-in answers [:eligibility/ahead-peers :analyst_answer]) "Yes")))
       (reset! is-tf-eligible "Yes")
       (reset! is-tf-eligible "No"))))
 
@@ -475,7 +475,7 @@
   (let [answers @tf-calculator-summary
         summary (for [k (keys answers)] {:question_id (get-in answers [k :question_id]) :analyst_code @tf-analyst-name :date today-date
                                          :security_identifier @tf-identifier :analyst_answer (get-in answers [k :analyst_answer]) :analyst_score (get-in answers [k :analyst_score])})]
-    ;(println summary)
+    (println summary)
     (rf/dispatch [:post-greenbondcalculator-upload summary]) ;need new post request ? need the create the foreign keys in the system table...  => new system table with scores for each questions?
     ))
 
@@ -484,7 +484,7 @@
 
 (def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
 
-(def question-width-label "425px")
+(def question-width-label "423px")
 
 (defn transition-fund-scoring-display []
   ;(println @tf-total-score)
@@ -508,48 +508,48 @@
                  :children [[label :width question-width-label :label "Is the company/issuer net-zero committed?"]
                             [info-button :info "All Transition Investments should have a commitment to achieve carbon neutrality in the future. This includes both an explicit target or a public commitment (without a target date)" :position :left-center]
                             [single-dropdown :width dropdown-width :choices yes-no-choice
-                             :model (r/cursor tf-calculator-summary [:tf-eligibility/net-zero :analyst_answer])
-                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/net-zero :analyst_answer]) %)
+                             :model (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer])
+                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %)
                                              (tf-eligible)
                                              (tf-score-calculator)
-                                             (if (= % "No") (do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/clear-plans :analyst_answer]) "No")
-                                                                (reset! (r/cursor tf-calculator-summary [:tf-eligibility/other-sectors :analyst_answer]) "No")
-                                                                (reset! (r/cursor tf-calculator-summary [:tf-eligibility/ahead-peers :analyst_answer]) "No")
-                                                                (reset! (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer]) "")))
+                                             (if (= % "No") (do (reset! (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer]) "No")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer]) "No")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer]) "No")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/category :analyst_answer]) "")))
                                              )]]]
-                (if (= (get-in @tf-calculator-summary [:tf-eligibility/net-zero :analyst_answer]) "Yes") ;first level eligibility
+                (if (= (get-in @tf-calculator-summary [:eligibility/net-zero :analyst_answer]) "Yes") ;first level eligibility
                   (concat
                     [[v-box  :gap "5px" :children [[h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "Does the company have clear plans to transition?"]
                                 [single-dropdown :width dropdown-width :choices yes-no-choice
-                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/clear-plans :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/clear-plans :analyst_answer]) %)
+                                 :model (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer]) %)
                                                  (tf-eligible)
                                                  (tf-score-calculator))]]]
                     [h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "Is the company/asset required to enable the transition to net zero for other sectors?"]
                                 [single-dropdown :width dropdown-width :choices yes-no-choice
-                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/other-sectors :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/other-sectors :analyst_answer]) %)
+                                 :model (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer]) %)
                                                  (tf-eligible)
                                                  (tf-score-calculator))]]]
                     [h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "Is the company ahead of its peer group on climate-related metrics?"]
                                 [single-dropdown :width dropdown-width :choices yes-no-choice
-                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/ahead-peers :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/ahead-peers :analyst_answer]) %)
+                                 :model (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer]) %)
                                                  (tf-eligible)
                                                  (tf-score-calculator))]]]
                     [h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "What is the most appropriate classification for this transition investment?"]
                                 [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-category-choices
-                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer])
-                                 :on-change #(reset! (r/cursor tf-calculator-summary [:tf-eligibility/category :analyst_answer]) %)]]]
+                                 :model (r/cursor tf-calculator-summary [:eligibility/category :analyst_answer])
+                                 :on-change #(reset! (r/cursor tf-calculator-summary [:eligibility/category :analyst_answer]) %)]]]
                     [h-box :gap "10px" :align :start
                      :children [[label :width question-width :label "Categorisation comment"]
                                 [input-textarea :width categories-list-width-long :rows 5
-                                 :model (r/cursor tf-calculator-summary [:tf-eligibility/category-comment :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-eligibility/category-comment :analyst_answer]) %))]]]
+                                 :model (r/cursor tf-calculator-summary [:eligibility/category-comment :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/category-comment :analyst_answer]) %))]]]
                                                   ]]]
                     )
                   )
@@ -562,16 +562,16 @@
                       :children [[label :width question-width :label "Reduced activities:"]
                                 [single-dropdown :placeholder "Please select..." :width categories-list-width-long
                                  :choices tf-reduced-activities-choices
-                                 :model (r/cursor tf-calculator-summary [:tf-subs/activities :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/activities :analyst_answer]) %)
+                                 :model (r/cursor tf-calculator-summary [:subs/activities :analyst_answer])
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/activities :analyst_answer]) %)
                                                  (tf-score-calculator))]]]
-                      (case (get-in @tf-calculator-summary [:tf-subs/activities :analyst_answer])
+                      (case (get-in @tf-calculator-summary [:subs/activities :analyst_answer])
                         "avoid" (concat
                           [[h-box :gap "10px" :align :center
                              :children [[label :width question-width :label "What is the annual carbon avoided figure?"]
                                         [input-text :width categories-list-width-long
-                                         :model (r/cursor tf-calculator-summary [:tf-subs/avoided-figure :analyst_answer])
-                                         :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/avoided-figure :analyst_answer]) %)
+                                         :model (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer])
+                                         :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer]) %)
                                                          (tf-score-calculator))]]]])
                         "reduce" (concat
                                    [[v-box  :gap "5px" :children
@@ -579,70 +579,70 @@
                                      :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"]
                                                 [single-dropdown :width dropdown-width
                                                  :choices yes-no-choice
-                                                 :model (r/cursor tf-calculator-summary [:tf-subs/paris :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/paris :analyst_answer]) %)
+                                                 :model (r/cursor tf-calculator-summary [:subs/paris :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/paris :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Comment on target:"]
                                                 [input-textarea :width categories-list-width-long :rows 5
-                                                 :model (r/cursor tf-calculator-summary [:tf-subs/target-comment :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/target-comment :analyst_answer]) %))]]]
+                                                 :model (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer]) %))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Target base year:"]
                                                 [input-text :width categories-list-width-long
-                                                 :model (r/cursor tf-calculator-summary [:tf-subs/target-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/target-year :analyst_answer]) %)
+                                                 :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Emission scopes included:"]
                                                 [input-textarea :width categories-list-width-long :rows 5
-                                                 :model (r/cursor tf-calculator-summary [:tf-subs/scope-comment :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/scope-comment :analyst_answer]) %))]]]
+                                                 :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Base year emissions:"]
                                                 [input-text :width categories-list-width-long
-                                                 :model (r/cursor tf-calculator-summary [:tf-subs/emissions-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/emissions-year :analyst_answer]) %)
+                                                 :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Most recent emissions:"]
                                                 [input-text :width categories-list-width-long
-                                                 :model (r/cursor tf-calculator-summary [:tf-subs/recent-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/recent-emissions :analyst_answer]) %)
+                                                 :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Reduction target:"]
                                                 [input-text :width categories-list-width-long
-                                                 :model (r/cursor tf-calculator-summary [:tf-subs/reduction-target :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/reduction-target :analyst_answer]) %)
+                                                 :model (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Total absolute emissions reduction:"]
                                                 [input-text :width categories-list-width-long
-                                                 :model (r/cursor tf-calculator-summary [:tf-subs/total-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/total-emissions :analyst_answer]) %)
+                                                 :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     ]]])
                         "both" nil
                         "none" nil
                         nil
                         )
-                      ;(case (get-in @tf-calculator-summary [:tf-subs/subs3 :analyst_answer])
+                      ;(case (get-in @tf-calculator-summary [:tf/subs3 :analyst_answer])
                       ;  "Yes" (concat
                       ;          [[v-box  :gap "5px" :children
                       ;            [[h-box :gap "10px" :align :center
                       ;              :children [[label :width question-width :label "Target base year, reduction target, base year emissions and scopes included?"]
                       ;                         [single-dropdown :placeholder "Please select..." :width categories-list-width-long
                       ;                          :choices tf-sub2-choices
-                      ;                          :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
-                      ;                          :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                      ;                          :model (r/cursor tf-calculator-summary [:tf/subs2 :analyst_answer])
+                      ;                          :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf/subs2 :analyst_answer]) %)
                       ;                                          (tf-score-calculator))]]]
                       ;             [h-box :gap "10px" :align :center
                       ;              :children [[label :width question-width :label "Inferred carbon reduced figure?"]
                       ;                         [single-dropdown :placeholder "Please select..." :width categories-list-width-long
                       ;                          :choices tf-sub2-choices
-                      ;                          :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
-                      ;                          :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                      ;                          :model (r/cursor tf-calculator-summary [:tf/subs2 :analyst_answer])
+                      ;                          :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf/subs2 :analyst_answer]) %)
                       ;                                          (tf-score-calculator))]]]
                       ;             ]]
                       ;           ]
@@ -653,15 +653,15 @@
                       ;           :children [[label :width question-width :label "1 or 2?"]
                       ;                      [single-dropdown :placeholder "Please select..." :width categories-list-width-long
                       ;                       :choices tf-sub2-choices
-                      ;                       :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
-                      ;                       :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                      ;                       :model (r/cursor tf-calculator-summary [:tf/subs2 :analyst_answer])
+                      ;                       :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf/subs2 :analyst_answer]) %)
                       ;                                       (tf-score-calculator))]]]
                       ;          [h-box :gap "10px" :align :center
                       ;           :children [[label :width question-width :label "Inferred carbon reduced figure?"]
                       ;                      [single-dropdown :placeholder "Please select..." :width categories-list-width-long
                       ;                       :choices tf-sub2-choices
-                      ;                       :model (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer])
-                      ;                       :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf-subs/subs2 :analyst_answer]) %)
+                      ;                       :model (r/cursor tf-calculator-summary [:tf/subs2 :analyst_answer])
+                      ;                       :on-change #(do (reset! (r/cursor tf-calculator-summary [:tf/subs2 :analyst_answer]) %)
                       ;                                       (tf-score-calculator))]]]
                       ;          ]]])
                       ;  nil
