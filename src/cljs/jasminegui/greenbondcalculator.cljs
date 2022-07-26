@@ -46,8 +46,8 @@
 
 (def other-disabled? (r/atom false))
 
-(def esg-report-category (r/atom "Green Bond"))
-(def esg-report-selected (r/atom "CONTLE_2022-04-14"))
+;(def esg-report-category (r/atom "gb"))
+(def esg-report-selected (r/atom "GB_CONTLE_2022-04-14"))
 (def gb-isin (r/atom "USY1753QAB87"))
 (def gb-date (r/atom "2022-04-14"))
 
@@ -365,27 +365,24 @@
   (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date])
   (let [esg-reports @(rf/subscribe [:esg-report-list])
         qt @(rf/subscribe [:quant-model/model-output])
-        esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (:Ticker (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
+        esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Ticker (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
         esg-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id esg-reports-clean))))
-        esg-reports-categories [{:id "gb" :label "Green Bond"} {:id "tf" :label "Transition Fund"}]
         report-selected @(rf/subscribe [:esg-report-extract])
+        gb-or-tf (if (= ((first report-selected) :report) "green-bond") "GB" "TF")
         analyst-score (reduce + (map :analyst_score report-selected))
-        report-category (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
+        ;report-category (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
+
+        report-category (case gb-or-tf
+             "TF" "Transition Finance Report"
+             "GB" (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
+             nil
+             )
+
         ]
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
                 [title :label "ESG report" :level :level1]
-                [h-box :gap "10px" :align :center
-                 :children [[label :width question-width :label "Category"]
-                            [single-dropdown :width categories-list-width-long :choices esg-reports-categories :filter-box? true :model esg-report-category
-                             :on-change #(do (reset! esg-report-category %)
-
-
-                                            )]
-                            [gap :size "1"]
-                            [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save report as PDF" :tooltip-position :above-center ] ;:on-click etc...
-                            ]]
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label "Report"]
                             [single-dropdown :width categories-list-width-long :choices esg-reports-clean-input :filter-box? true :model esg-report-selected
@@ -398,7 +395,8 @@
     [v-box :width "1280px" :gap "10px" :class "element"
      :children (concat [[h-box :gap "10px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label report-category :level :level1]]]
                         [gap :size "20px"]]
-                       (if (not= report-category "Follow up reporting")
+                       (case gb-or-tf
+                         "GB" (if (not= report-category "Follow up reporting")
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
                           [title :label "Project description" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Description:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "description"} report-selected))))]]]
@@ -431,6 +429,9 @@
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the company reports detailed projects KPIs?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "project-kpis"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are more than 50% of the proceeds spent on green projects?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "half-proceeds-green"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "On a ongoing basis, does the company reconciled proceeds with uses?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "reconciliation"} report-selected))))]]]]
+                         )
+                         "TF" nil                           ; add transition finance here
+                         nil
                          )
                        )]]
      ]
