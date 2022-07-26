@@ -22,8 +22,8 @@
                  :qt-date                                            ""
                  :attribution-date                                   ""
                  :country-codes                                      nil
-                 :gb-reports                                         []
-                 :gb-report-extract                                  []
+                 :esg-report-list                                     []
+                 :esg-report-extract                                  []
                  :jpm-sectors                                        nil
                  :large-exposures                                    []
 
@@ -328,7 +328,7 @@
            :navigation/show-mounting-modal
            :rating-to-score
            :country-codes
-           :gb-reports
+           :esg-report-list
            :jpm-sectors
            :large-exposures
            ;:pivoted-positions
@@ -875,7 +875,7 @@
    {:get-key :get-portfolio-checks    :url-tail "portfolio-checks" :dis-key :portfolio-checks}
    {:get-key :get-talanx-checks    :url-tail "talanx-checks" :dis-key :talanx-checks}
    {:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
-   {:get-key :get-gb-reports    :url-tail "gb-reports" :dis-key :gb-reports}
+   {:get-key :get-esg-report-list    :url-tail "esg-report-list" :dis-key :esg-report-list}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
    {:get-key :get-ungc-problem-securities :url-tail "ungc-problem-securities" :dis-key :esg/ungc-problem-securities}
    {:get-key :get-top-bottom-price-change :url-tail "top_bottom_price_change" :dis-key  :top-bottom-price-change}
