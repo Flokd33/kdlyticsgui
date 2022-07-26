@@ -89,7 +89,7 @@
    {:code :refinitiv                  :name "Refinitiv"}
    {:code :gb-scoring                 :name "Green bond scoring (beta)"}
    {:code :tf-scoring                 :name "Transition fund scoring (beta)"}
-   {:code :reporting                  :name "Reporting (beta)"}
+   {:code :reporting                  :name "Scoring report (beta)"}
    {:code :esg-engagements            :name "ESG interactions"}
    ])
 
