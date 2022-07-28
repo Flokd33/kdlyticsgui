@@ -370,14 +370,11 @@
         report-selected @(rf/subscribe [:esg-report-extract])
         gb-or-tf (if (= ((first report-selected) :report) "green-bond") "GB" "TF")
         analyst-score (reduce + (map :analyst_score report-selected))
-        ;report-category (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
-
         report-category (case gb-or-tf
              "TF" "Transition Finance Report"
              "GB" (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
              nil
              )
-
         ]
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
@@ -432,10 +429,8 @@
                          )
                          "TF" nil                           ; add transition finance here
                          nil
-                         )
-                       )]]
-     ]
-    ))
+                         ))]]
+     ]))
 
 (def tf-total-score (r/atom 0))
 (def tf-analyst-name (r/atom ""))
