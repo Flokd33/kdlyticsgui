@@ -24,7 +24,6 @@
 
 (rf/dispatch [:get-portfolios])
 (rf/dispatch [:get-rating-to-score])
-(rf/dispatch [:get-time-machine-status])
 
 ;letter v or V, then t or T
 (rf/dispatch [::rp/set-keypress-rules {:event-keys [[[:cycle-shortcut] [{:keyCode 86}] [{:keyCode 118}]]

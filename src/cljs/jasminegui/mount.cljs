@@ -312,6 +312,8 @@
                  :implementation/show-implementation-selector        false
                  :implementation/success-modal                       {:show false :on-close nil :response nil}
 
+                 :allianz-loss-report                                []
+
                  :dummy                                              nil                                 ;can be useful
                  })
 
@@ -536,6 +538,8 @@
            :implementation/portfolio-nav
            :implementation/fx
            :implementation/live-cast-parent-positions
+
+           :allianz-loss-report
 
            :dummy
 
@@ -888,6 +892,8 @@
    ;{:rfk :live-positions-request              :addr "live-positions"              :dk :live-positions}
    {:get-key :live-cast-parent-positions-request  :url-tail "live-parent-positions"       :dis-key :implementation/live-cast-parent-positions}
    {:get-key :get-master-security-fields :url-tail "master-security-fields-list" :dis-key :master-security-fields-list}
+
+   {:get-key :get-allianz-loss-report :url-tail "allianz-loss-report" :dis-key :allianz-loss-report}
 
    ])
 

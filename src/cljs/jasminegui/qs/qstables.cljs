@@ -372,6 +372,7 @@
       "Upside/Downside"
       (concat
         [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :COUPON :FIRST_SETTLE_DT_NO_SHOW])}]
+        (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
         (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
         (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
         [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Current_yield])}

@@ -40,6 +40,7 @@
    {:code :var                 :name "VaR and Beta"}
    {:code :proxies             :name "Bond proxies"}
    {:code :position-history    :name "Position history"}
+   {:code :allianz-loss-report :name "Allianz P&L budget"}
    ])
 
 (def trade-history-navigation

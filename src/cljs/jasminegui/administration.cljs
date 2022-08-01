@@ -19,6 +19,17 @@
   )
 
 (rf/reg-event-fx
+  :refresh-bloomberg-session
+  (fn [{:keys [db]} [_]]
+    {:db (assoc db :navigation/success-modal {:show true :on-close :close-bloomberg-session-refreshed :response nil})
+     :http-post-dispatch {:url (str static/server-address "refresh-bloomberg-session") :edn-params {} :dispatch-key [:bloomberg-session-refreshed]}}))
+
+(rf/reg-event-db :bloomberg-session-refreshed (fn [db [_ data]] (assoc-in db [:navigation/success-modal :response] (:text-response data))))
+(rf/reg-event-db :close-bloomberg-session-refreshed (fn [db [_]] (assoc db :navigation/success-modal {:show false :on-close nil :response nil})))
+
+
+
+(rf/reg-event-fx
   :rebuild
   (fn [{:keys [db]} [_]]
     {:db (assoc db :navigation/success-modal {:show true :on-close :close-rebuild :response nil})
@@ -86,14 +97,10 @@
    :width "400px"
    :class "subbody element"
    :children [[title :label "Debug operations" :level :level1]
-              [h-box  :gap "200px" :align :center
-               :children [[box  :size "1" :child [label :label "Rebuild positions and VaR:"]]
-                          [box  :size "1" :child [button :style {:width "100%"} :label "Do it!" :on-click #(rf/dispatch [:rebuild])]]]]
-              [h-box  :gap "200px" :align :center
-               :children [[box  :size "1" :child [label :label "Rebuild positions and integrity report:"]]
-                          [box  :size "1" :child [button :style {:width "100%"} :label "Do it!" :on-click #(rf/dispatch [:rebuild-pos])]]]]
-              ]]
-  )
+              [button :style {:width "100%"} :label "Rebuild positions and VaR!" :on-click #(rf/dispatch [:rebuild])]
+              [button :style {:width "100%"} :label "Rebuild positions and integrity report!" :on-click #(rf/dispatch [:rebuild-pos])]
+              [button :style {:width "100%"} :label "Refresh Bloomberg session!" :on-click #(rf/dispatch [:refresh-bloomberg-session])]]])
+
 
 ;(rf/reg-event-db
 ;  :rebuild-time-machine
@@ -194,5 +201,5 @@
   [v-box                                                  ;:gap "10px"
    :gap "10px"
    :padding "80px 25px"
-   :children [[modal-success]  [debug-operations] [integrity] [last-updated-logs]]] ;[time-machine]
+   :children [[modal-success] [debug-operations] [integrity] [last-updated-logs]]] ;[time-machine]
   )
