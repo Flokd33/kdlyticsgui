@@ -5,13 +5,13 @@
 (def cms-address "http://iamlfilive:8192/tradeanalyser/cms/")
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
-  (let [home-events [:get-qt-date :get-total-positions :get-naked-positions :get-instruments] ;:get-positions
+  (let [home-events [:get-qt-date :get-total-positions :get-naked-positions :get-instruments]
         attr-events [:get-top-bottom-price-change :get-attribution-date :get-attribution-summary :get-attribution-available-months  [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
         quant-events [:get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         implementation-events (conj home-events :get-quant-model :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :live-cast-parent-positions-request)
         ]
-  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (conj home-events :get-portfolio-checks) :mounting-modal true}
+  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (conj home-events :get-list-dates-position-history :get-portfolio-checks) :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil :load-events (concat home-events [:get-country-codes :get-jpm-sectors :get-model-portfolios :get-quant-model])} ;need load position to identify what we still own among list of trade- not effici
    ;
    ; ~}@:/etn , need to review with Alex
@@ -244,33 +244,7 @@
                   {:id "Event driven"             :label "Event driven"           :group "Other"              :shortcut "Oth event"}
                   ]] [(line :id) (line :shortcut)])))
 
-;(def position-historical-dates ["31Dec18"
-;                                "29Mar19"
-;                                "28Jun19"
-;                                "30Sep19"
-;                                "31Dec19"
-;                                "31Mar20"
-;                                "30Jun20"
-;                                "29Sep20"                            ; "30Sep20"
-;                                "31Dec20"
-;                                "29Jan21"
-;                                "26Feb21"
-;                                "31Mar21"
-;                                "29Apr21"                            ; "30Apr21"
-;                                "28May21"
-;                                "30Jun21"
-;                                "30Jul21"
-;                                "31Aug21"
-;                                "30Sep21"
-;                                "02Nov21"                             ; "29Oct21"
-;                                "30Nov21"
-;                                "31Dec21"
-;                                "31Jan22"
-;                                "28Feb22"
-;                                "31Mar22"
-;                                "30Apr22"])
 
-;(.getValue (.getDayOfWeek yesterday))
 (def position-historical-dates ["20181231"
                                 "20190329"
                                 "20190628"
@@ -291,6 +265,7 @@
                                 "20210930"
                                 "20211102"                             ; "29Oct21"
                                 "20211130"
+
                                 "20211231"
                                 "20220131"
                                 "20220228"
@@ -300,4 +275,6 @@
                                 "20220630"
                                 "20220729"
                                 ])
+
+
 
