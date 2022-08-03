@@ -271,7 +271,7 @@
 ;                                "31Mar22"
 ;                                "30Apr22"])
 
-
+;(.getValue (.getDayOfWeek yesterday))
 (def position-historical-dates ["20181231"
                                 "20190329"
                                 "20190628"
@@ -299,5 +299,6 @@
                                 "20220430"
                                 "20220531"
                                 "20220630"
+                                "20220729"
                                 ])
 
