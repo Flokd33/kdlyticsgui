@@ -24,7 +24,9 @@
 
   )
 
-(defn spot-chart-vega-spec [model ratings issuers rating-curves-key]
+(def n91-color-palette (take 50 (cycle ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])))
+
+(defn spot-chart-vega-spec-quant-model [model chart-type ratings issuers rating-curves-key]
   ;(println @(rf/subscribe [:quant-model/generic-rating-curves]))
   (let [raw-data (@(rf/subscribe [:quant-model/generic-rating-curves]) rating-curves-key)
         data (filter #(contains? ratings (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
@@ -74,6 +76,45 @@
               ]
      :width  1000
      :height 625}))
+
+(defn spot-chart-vega-spec [model chart-type ratings issuers rating-curves-key]
+  (if (= :quant-model chart-type)
+    (spot-chart-vega-spec-quant-model model chart-type ratings issuers rating-curves-key)
+    (let [bonds (filter #(contains? issuers (:Ticker %)) @(rf/subscribe [:quant-model/model-output]))
+          bond-data (map #(select-keys % [:Bond :Used_Duration (if (= chart-type :yield) :Used_YTW :Used_Price) :Ticker]) bonds)
+          min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
+          max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)
+          ]
+      {:title  nil
+       :data   {:values bond-data}
+       :layer  [
+
+                ;{:mark     {:type "text" :dy -10}
+                ; :encoding {:x     {:field "Duration" :type "quantitative"}
+                ;            :y     {:field "spread" :type "quantitative"}
+                ;            :text {:field "txt" :type "nominal"}}}
+
+                {:mark      {:type "point" :filled true}
+                 :selection {:grid {:type "interval" :bind "scales"}}
+                 :encoding  {:x       {:field "Used_Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [min-domain max-domain]}} ;:scale {:domain [0. 30.]}
+                             :y       {:field (name (if (= chart-type :yield) :Used_YTW :Used_Price)) :type "quantitative" :axis {:title (name (if (= chart-type :yield) "YTW" "Price")) :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                             :color   {:field "Ticker" :scale {:range n91-color-palette}}
+                             :tooltip [{:field "Bond" :type "nominal" :title "Bond"}
+                                       {:field "Used_Duration" :type "quantitative", :title "Duration"}
+                                       {:field (name (if (= chart-type :yield) :Used_YTW :Used_Price)) :type "quantitative", :title (name (if (= chart-type :yield) "YTW" "Price"))}
+                                       ]}}
+                {:mark     {:type "text" :dx 6 :align "left"}
+                 :encoding {:x    {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+                            :y    {:field (name (if (= chart-type :yield) :Used_YTW :Used_Price)) :type "quantitative"}
+                            :text {:field "Bond" :type "nominal"}}}
+
+                ]
+       :width  1000
+       :height 625})
+
+
+    )
+  )
 
 (defn advanced-spot-chart-vega-spec [isins model ratings rating-curves-key]
   (let [raw-data (@(rf/subscribe [:quant-model/generic-rating-curves]) rating-curves-key)

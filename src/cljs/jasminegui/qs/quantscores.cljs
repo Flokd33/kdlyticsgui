@@ -75,9 +75,9 @@
                          :dispatch-key [:quant-model/saved-advanced-charts]}}))
 (rf/reg-event-fx
   :quant-model-save-new-chart
-  (fn [{:keys [db]} [_ id model-type rating-curves issuers spot-chart-2d-curves-sov-only]]
+  (fn [{:keys [db]} [_ id model-type plot-type rating-curves issuers spot-chart-2d-curves-sov-only]]
     {:http-post-dispatch {:url (str static/server-address "quant-model-save-new-chart")
-                          :edn-params {:id id :model-type model-type :rating-curves (remove nil? (seq rating-curves)) :issuers (remove nil? (seq issuers)) :rating-curves-sov-only spot-chart-2d-curves-sov-only}
+                          :edn-params {:id id :model-type model-type :plot-type plot-type :rating-curves (remove nil? (seq rating-curves)) :issuers (remove nil? (seq issuers)) :rating-curves-sov-only spot-chart-2d-curves-sov-only}
                           :dispatch-key [:dummy]}}))
 
 (rf/reg-event-fx
@@ -431,6 +431,7 @@
 (def spot-chart-rating-choice (r/atom #{3 6 9 12 15 18}))               ;3 6 9 12 15 18
 (def spot-chart-issuer-choice (r/atom (set nil)))           ;["BRAZIL"]
 (def spot-chart-2d-curves-sov-only (r/atom false))
+(def spot-chart-plot-type (r/atom :quant-model))                  ;one of :quant-model (the default for bookmarks) :gspread :yield :price
 
 (def typeahead-model (atom nil))
 
@@ -439,7 +440,6 @@
 
 (defn spot-chart
   "NEED SOME BOOKMARK LOGIC: Base or Sov only"
-
   []
   (let [data @(rf/subscribe [:quant-model/model-output])
         issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker data)))))]
@@ -449,7 +449,13 @@
        [h-box :gap "50px" :children
         [[v-box :gap "0px" :width "125px" :children
           (into [] (concat
-                      ;(into [[title :label "Model type" :level :level3]]
+                     [[title :label "Chart type" :level :level3]
+                      [radio-button :label "Model (Z-spread)" :value :quant-model :model spot-chart-plot-type :on-change #(reset! spot-chart-plot-type %)]
+                      [radio-button :label "Yield" :value :yield :model spot-chart-plot-type :on-change #(reset! spot-chart-plot-type %)]
+                      [radio-button :label "Price" :value :price :model spot-chart-plot-type :on-change #(reset! spot-chart-plot-type %)]
+                      [gap :size "10px"]]
+
+                     ;(into [[title :label "Model type" :level :level3]]
                       ;      (for [c ["Legacy" "New" "SVR"]] ^{:key c} [radio-button :label c :value c :model spot-chart-model-choice :on-change #(reset! spot-chart-model-choice %)])) ;; key should be unique among siblings
                       [[title :label "Rating curves" :level :level3]
                         [checkbox :model spot-chart-2d-curves-sov-only :label "Sov only?" :on-change #(reset! spot-chart-2d-curves-sov-only %)]
@@ -471,7 +477,7 @@
             :on-change #(swap! spot-chart-issuer-choice (if (contains? @spot-chart-issuer-choice (:id %)) disj conj) (:id %))
             :change-on-blur? true :immediate-model-update? false :rigid? false :disabled? false]]]
          [oz/vega-lite
-          (qscharts/spot-chart-vega-spec @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice (if @spot-chart-2d-curves-sov-only :sov-only :base))]]]]]])) ;@spot-chart-rating-curves-choice
+          (qscharts/spot-chart-vega-spec @spot-chart-model-choice @spot-chart-plot-type @spot-chart-rating-choice @spot-chart-issuer-choice (if @spot-chart-2d-curves-sov-only :sov-only :base))]]]]]])) ;@spot-chart-rating-curves-choice
 
 (def advanced-spot-chart-view (atom nil))
 (def advanced-spot-chart-isins (r/atom []))
@@ -1091,7 +1097,8 @@
       [:div.output "nothing to display"])))
 
 (defn display-saved-chart [line]
-  (reset! spot-chart-model-choice (:model-type line))
+  (reset! spot-chart-model-choice (if-let [x (:model-type line)] x "SVR"))
+  (reset! spot-chart-plot-type (if-let [x (:plot-type line)] (keyword x) :quant-model))
   (reset! spot-chart-rating-choice (set (:rating-curves line)))
   (reset! spot-chart-issuer-choice (set (:issuers line)))
   (reset! spot-chart-2d-curves-sov-only (if-let [x (:rating-curves-sov-only line)] x false)))
@@ -1117,7 +1124,7 @@
                    :children [[title :label "Save chart configuration" :level :level1]
                               [input-text :placeholder "Nickname" :model nickname :on-change #(reset! nickname %)]
                               [label :label "Use same nickname to override existing configuration."]
-                              [h-box :gap "10px" :children [[button :label "Save" :on-click #(do (rf/dispatch [:quant-model-save-new-chart @nickname @spot-chart-model-choice @spot-chart-rating-choice @spot-chart-issuer-choice @spot-chart-2d-curves-sov-only]) (reset! show-chart-modal nil))]
+                              [h-box :gap "10px" :children [[button :label "Save" :on-click #(do (rf/dispatch [:quant-model-save-new-chart @nickname @spot-chart-model-choice @spot-chart-plot-type @spot-chart-rating-choice @spot-chart-issuer-choice @spot-chart-2d-curves-sov-only]) (reset! show-chart-modal nil))]
                                                             [button :label "Cancel" :on-click #(reset! show-chart-modal nil)]]]]]]
           :open
           [modal-panel :backdrop-on-click #(reset! show-chart-modal nil)

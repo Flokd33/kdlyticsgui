@@ -302,11 +302,6 @@
 (defn row-action [action rowInfo] (clj->js {:onClick #(rf/dispatch [action (aget rowInfo "row" "_original" "isin")]) :style {:cursor "pointer"}}))
 (defn go-to-active-trade! [state rowInfo instance] (row-action :ta2022/go-to-active-trade rowInfo))
 
-;(def analyst (r/atom nil))
-;(def sector (r/atom nil))
-;(def country (r/atom nil))
-;(def portfolio (r/atom nil))
-
 (rf/reg-event-db :ta2022/filter-change (fn [db [_ k v]] (-> db (assoc :ta2022/main-table-data []) (assoc-in [:ta2022/filter k] v))))
 (rf/reg-sub :ta2022/filter-value (fn [db [_ k]] (get-in db [:ta2022/filter k])))
 
@@ -327,8 +322,8 @@
         download-columns (flatten
                                 [[:db-id :strategy :isin :uuid :weight :analyst :Country]
                                  [:Bond :Used_Price :Used_YTW :Used_ZTW :Used_Duration :G_SPREAD_MID_CALC :difference_svr :difference_svr_2d :Rating_String]
-                                 (map (fn [k] [(keyword (str k "-alert-description")) (keyword (str k "-alert-distance")) (keyword (str k "-alert-value")) (keyword (str k "-alert-implied-price")) (keyword (str k "-alert-triggered-date"))])
-                                      ["target" "relval" "review"])])
+                                 (map (fn [k] [(keyword (str k "-alert-description")) (keyword (str k "-alert-distance")) (keyword (str k "-alert-value")) (keyword (str k "-alert-implied-price")) (keyword (str k "-alert-triggered-date"))]) ["target" "relval" "review"])
+                                 (map keyword ["target-alert-tr-1y" "relval-alert-tr-1y" "review-alert-tr-1y" "svr4d1yrtn" "svr2d1yrtn" "upside1y" "expected1y" "downside1y"])])
         mtvs (rf/subscribe [:ta2022/main-table-view-selector])
         mtp (rf/subscribe [:ta2022/main-table-pivot])
         is-table (= @mtp "No")]
@@ -409,6 +404,11 @@
 
                                          ])]]))
 
+(def alert-columns-for-amend-trigger-tables
+  (into [] (for [k ["Target" "Relval" "Review"]]
+             {:Header k :columns [(tables/nb-col "Implied price" (str (.toLowerCase k) "-alert-implied-price") 85 #(tables/nb-cell-format "%.1f" 1. %) tables/median)
+                                  (tables/nb-col "Distance" (str (.toLowerCase k) "-alert-distance") 85 distance-fmt tables/median)]})))
+
 (defn journal-table []
   (when-not @(rf/subscribe [:ta2022/journal-data])
     (rf/dispatch [:ta2022/post-journal-data]))
@@ -416,35 +416,18 @@
     [v-box :gap "10px"
      :children [(gt/element-box-generic "trades-amended" element-box-width "Trades amended over the past week" (:trades-changed jd)
                                         [[h-box :children [[:> ReactTable
-                                                            {:data     (tatables/strategy-sort (:trades-changed jd))
-                                                             :columns  [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:analyst :ISIN :strategy :NAME])))} ;:id :strategy-shortcut
-                                                                        {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
-                                                                        {:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                    {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                        {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                    {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                        {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                    {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-
-                                                                        ]
+                                                            {:data       (tatables/strategy-sort (:trades-changed jd))
+                                                             :columns    (concat [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:analyst :ISIN :strategy :NAME])))} ;:id :strategy-shortcut
+                                                                                  {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}]
+                                                                                 alert-columns-for-amend-trigger-tables)
                                                              :filterable true :pageSize 10 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])
                 (gt/element-box-generic "trades-triggered" element-box-width "Trades triggered over the past week" (:trades-triggered jd)
                                         [[h-box :children [[:> ReactTable
                                                             {:data     (tatables/strategy-sort (:trades-triggered jd))
-                                                             :columns  [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:analyst :ISIN :strategy :NAME])))} ;:id :strategy-shortcut
-                                                                        {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}
-                                                                        {:Header "Target" :columns [{:Header "Implied price" :accessor "target-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                    {:Header "Distance" :accessor "target-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                        {:Header "Relval" :columns [{:Header "Implied price" :accessor "relval-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                    {:Header "Distance" :accessor "relval-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}
-                                                                        {:Header "Review" :columns [{:Header "Implied price" :accessor "review-alert-implied-price" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f" 1. %)}
-                                                                                                    {:Header "Distance" :accessor "review-alert-distance" :width 85 :style {:textAlign "right"} :Cell distance-fmt}]}]
-                                                             :filterable true :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]
-
-
-    )
-
-  )
+                                                             :columns  (concat [{:Header "Trade description" :columns (mapv tatables/table-columns (remove nil? (conj [:analyst :ISIN :strategy :NAME])))} ;:id :strategy-shortcut
+                                                                                {:Header "Pricing" :columns (mapv tatables/table-columns [:price :yield :z-spread :g-spread :duration :rating-string :difference_svr :difference_svr_2d])}]
+                                                                               alert-columns-for-amend-trigger-tables)
+                                                             :filterable true :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]))
 
 (defn active-home []
   (let [active-ta2022 @(rf/subscribe [:ta2022/active-home])]
@@ -477,12 +460,7 @@
                :close-trade [taactions/close-trade-modal]
                :morph-trade [taactions/morph-trade-modal]
                :add-attachment [taactions/modal-add-attachment @(rf/subscribe [:ta2022/trade-isin])]
-               nil
-
-               )
-             ]])
-
-  )
+               nil)]]))
 
 ;(defn make-pdf-test []
 ;  (let [

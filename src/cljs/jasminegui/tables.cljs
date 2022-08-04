@@ -39,8 +39,9 @@
 ;COLUMN FORMATTING;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn red-negatives [state rowInfo column]
+(defn red-negatives
   "right align, with red text if negative"
+  [state rowInfo column]
   (if (and (some? rowInfo) (neg? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id")))) ;(aget rowInfo "row" (aget column "id"))
     #js {:style #js {:color "red" :textAlign "right"}}
     #js {:style #js {:textAlign "right"}}))
@@ -51,18 +52,18 @@
 ;    #js {:style #js {:color "Crimson" :backgroundColor "Crimson" :textAlign "center"}}
 ;    #js {:style #js {:color "Chartreuse" :backgroundColor "Chartreuse"  :textAlign "center"}}))
 
-(defn breach-status-color [state rowInfo column]
+(defn breach-status-color
   "if status = 0 green background, if status = 1 orange (warning) background,if status = 2 (breach) red background,"
+  [state rowInfo column]
   (case  (gobj/getValueByKeys rowInfo "row" (gobj/get column "id"))
     0 #js {:style #js {:color "Chartreuse" :backgroundColor "Chartreuse"  :textAlign "center"}}
     1 #js {:style #js {:color "DarkOrange" :backgroundColor "DarkOrange" :textAlign "center"}}
     2 #js {:style #js {:color "Crimson" :backgroundColor "Crimson" :textAlign "center"}}
-    #js {}
-  )
-  )
+    #js {}))
 
-(defn red-negatives-bold-if-a-b [row-header row-name col-name state rowInfo column]
+(defn red-negatives-bold-if-a-b
   "right align, with red text if negative, bold if is row-name and col-name"
+  [row-header row-name col-name state rowInfo column]
   (let [cid (gobj/get column "id")]
     (if (and (some? rowInfo) (neg? (gobj/getValueByKeys rowInfo "row" cid))) ;(aget rowInfo "row" (aget column "id"))
       #js {:style #js {:color "red" :textAlign "right" :fontWeight (if (and (= cid col-name) (= (aget rowInfo "original" row-header) row-name)) "bold" "normal")}}
@@ -103,9 +104,10 @@
 ;      (not (.includes ^js/String (.toLowerCase ^js/String value) (.substring s 1)))
 ;      (.includes ^js/String (.toLowerCase ^js/String value) s))))
 
-(defn text-filter-OR [filterfn row]
+(defn text-filter-OR
   "filterfn is {id: column_name value: text_in_filter_box}
   OR through comma separation, AND through &"
+  [filterfn row]
   (let [id (.toLowerCase ^string (str (aget row (aget filterfn "id"))))]
     (some true?
           (map (fn [line] (every? true? (map #(lower-case-s-in-value? % id) (.split ^js/String line "&"))))
@@ -156,17 +158,19 @@
     "=" (= rowval (* mult (cljs.reader/read-string (subs input 1))))
     (= rowval (* mult (cljs.reader/read-string input)))))
 
-(defn nb-filter-OR-AND [filterfn row]
+(defn nb-filter-OR-AND
   "filterfn is {id: column_name value: text_in_filter_box
   comma separation is OR. Within comma separation, & is AND."
+  [filterfn row]
   (let [compread #(comparator-read (aget row (aget filterfn "id")) 1. %)]
     (some true?
           (map (fn [line] (every? true? (map compread (.split ^js/String line "&"))))
                (.split ^js/String (.toLowerCase ^js/String (aget filterfn "value")) ",")))))
 
-(defn nb-filter-OR-AND-x100 [filterfn row]
+(defn nb-filter-OR-AND-x100
   "filterfn is {id: column_name value: text_in_filter_box
   comma separation is OR. Within comma separation, & is AND."
+  [filterfn row]
   (let [compread #(comparator-read (aget row (aget filterfn "id")) 0.01 %)]
     (some true?
           (map (fn [line] (every? true? (map compread (.split ^js/String line "&"))))
@@ -376,7 +380,8 @@
      :security        {:Header "Security" :accessor "Security" :width 140}
      }))
 
-(defn tree-table-risk-table [data columns is-tree accessors ref table-filter expander get-tr-props-fn]
+(defn tree-table-risk-table
+  [data columns is-tree accessors ref table-filter expander get-tr-props-fn]
   [:> ReactTable
    {:data @(rf/subscribe [data]) :columns columns
     :showPagination (not is-tree) :pageSize (if is-tree 1 18) :showPageSizeOptions false
