@@ -12,6 +12,7 @@
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [goog.string :as gstring]
     [goog.string.format]
+    [jasminegui.tables :as tables]
     [cljs-time.core    :refer [today days minus plus day-of-week before?]]
     )
 
@@ -460,7 +461,7 @@
           [:dispatch [:trade-implementation/check-isin leg-number i]]
           [:dispatch [:trade-implementation/check-pricing leg-number i]]]}))
 
-(defn hb [x] [h-box :gap "10px" :align :center :children x])
+(defn hb [x] [h-box :gap "15px" :align :center :children x])
 
 (defn trade-description []
   (let [fw "150px"
@@ -562,11 +563,57 @@
                                                              [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (g :change)]
                                                              [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (g :final)]]])))]]]]))
 
+
+;(def cash (r/atom nil))
+;(reset! cash (into {} (for [p @(rf/subscribe [:portfolios])] [(keyword p) (gstring/format "%.2f" (get (first (tools/chainfilter {:portfolio p} @(rf/subscribe [:summary-display/table]))) :cash-pct))])))
+
+
+;where full-recalculate-parent-exposure create full-recalculate-cash-change
+(defn cash-impact []
+      (let [
+            ;data @(rf/subscribe [:summary-display/table])
+            ;portfolios @(rf/subscribe [:portfolios])
+            ;;existing-cash (zipmap (map :portfolio @(rf/subscribe [:summary-display/table])) (map :cash-pct @(rf/subscribe [:summary-display/table])))
+            ;trade-implementation (rf/subscribe [:implementation/trade-implementation])
+            ;existing-cash (into {} (for [p portfolios] [(keyword p) (gstring/format "%.2f" (get (first (tools/chainfilter {:portfolio p} data)) :cash-pct))]))
+            ;legs @(r/cursor trade-implementation [:tradeanalyser.implementation/trade-legs])
+            ;clean_legs (for [leg (keys legs)] {(keyword (str "leg_number_" (str leg) "_")) (:allocation (legs leg))})
+            ;aggregated-allocation (into {} (for [p portfolios]
+            ;                                 [(keyword p) {:target (gstring/format "%.2f" (- (reduce + (for [leg clean_legs] (js/parseFloat (if (nil? (get-in leg [(first (first leg)) (keyword p) :target]))
+            ;                                                                                                                                  0
+            ;                                                                                                                                  (get-in leg [(first (first leg)) (keyword p) :target]))
+            ;                                                                                                                                )))))}]))
+            ;final-cash (into {} (for [p portfolios] [(keyword p) {:final (gstring/format "%.2f" (reduce + [(js/parseFloat (get existing-cash (keyword p))) (js/parseFloat (:target ((keyword p) aggregated-allocation)))]))}]))
+            dw "100px"
+            ]
+        ;(println existing-cash)
+        [v-box
+         :gap "10px" :style {:border "solid 1px grey"} :class "element" :width "500px"
+         :children [[title :label (str "Cash impact") :level :level1]
+                    ;[:label "Based on T-1 projected cash  (not physical). Position change is aggregated"]
+                    ;[v-box :gap "10px" :padding "10px" :width "450px" :align :start :style {:border "solid 1px grey"}
+                    ; :children [[hb [[label :width dw :label "Portfolio"]
+                    ;                 [label :width dw :label "Existing Cash (%)"]
+                    ;                 [label :width dw :label "Cash Change (%)"]
+                    ;                 [label :width dw :label "Final Cash (%)"]]]
+                    ;            (doall (for [p portfolios]
+                    ;                     ^{:key p} [hb [[label :width dw :label p]
+                    ;                                    [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (get existing-cash (keyword p))]
+                    ;                                    [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (:target ((keyword p) aggregated-allocation))]
+                    ;                                    [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (:final ((keyword p) final-cash))]]]))]]
+                    ]]
+        )
+  )
+
+
+
+
 (defn trade-implementation-input []
   [v-box :class "rightelement" :gap "20px" :padding "80px 20px" :width default-width
    :children [[trade-description]
               [h-box :gap "10px" :children (into [] (for [i (range (count (:tradeanalyser.implementation/trade-legs @(rf/subscribe [:implementation/trade-implementation]))))] [trade-leg i]))]
-              [parent-id-exposure]]])
+              [h-box :gap "10px" :children [[parent-id-exposure] [cash-impact]]]
+              ]])
 
 (rf/reg-event-fx
   :implementation/show-implementation-selector
