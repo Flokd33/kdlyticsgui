@@ -60,6 +60,7 @@
    :tradeanalyser.implementation/esg-considerations nil
    :tradeanalyser.implementation/trade-legs {0 trade-implementation-leg-template}
    :tradeanalyser.implementation/parent-exposure nil
+   :tradeanalyser.implementation/cash-impact nil
 
    })
 
@@ -86,10 +87,6 @@
                                                        "Final parent NAV" (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/parent-exposure kportfolio :existing])
                                                        0))))
 
-;(defn parent-exposure-impact [db leg-number kportfolio]
-;  (let [leg (get-in db [:implementation/trade-implementation :trade-legs leg-number])]
-;    (- (get-in leg [:allocation kportfolio :target]) (if (= (:final-or-inc leg) "Final NAV") (get-in leg [:allocation kportfolio :existing]) 0))))
-
 (defn recalculate-parent-exposure [db kportfolio]
   (let [cast-parent-id-0 (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs 0 :cast-parent-id])
         good-leg-numbers (keys (filter #(= (:cast-parent-id (second %)) cast-parent-id-0) (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs])))
@@ -98,8 +95,37 @@
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/parent-exposure kportfolio :change] impact)
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/parent-exposure kportfolio :final] (+ (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/parent-exposure kportfolio :existing]) impact)))))
 
+  (defn recalculate-cash-change [db kportfolio]
+  (let [legs (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs])
+        portfolio-cash (* (get-in db [:total-positions kportfolio :cash-pct]) 100)
+        clean_legs (for [leg (keys legs)] {(keyword (str "leg_number_" (str leg) "_")) (:allocation (legs leg)) :type (:final-or-inc (legs leg)) }) ;:name (keyword (str "leg_number_" (str leg) "_"))
+        aggregated-allocation (into {} {kportfolio {:target (gstring/format "%.2f" (- (reduce + (for [leg clean_legs]
+                                                                                                  (let [existing (js/parseFloat (if (nil? (get-in leg [(first (first leg)) kportfolio :target])) 0 (get-in leg [(first (first leg)) kportfolio :target])))
+                                                                                                        target (js/parseFloat (if (nil? (get-in leg [(first (first leg)) kportfolio :existing])) 0 (get-in leg [(first (first leg)) kportfolio :existing])))
+                                                                                                        parent (js/parseFloat (if (nil? (get-in leg [(first (first leg)) kportfolio :trade-parent])) 0 (get-in leg [(first (first leg)) kportfolio :trade-parent])))
+                                                                                                        ]
+                                                                                                    (case (:type leg)
+                                                                                                      "Incremental NAV" existing
+                                                                                                      "Final NAV" (- existing target)
+                                                                                                      "Final parent NAV" parent
+                                                                                                      nil))
+                                                                                                  ))))}})
+        cash-change-portfolio (js/parseFloat (:target (kportfolio aggregated-allocation)))
+        final-cash-portfolio (+ portfolio-cash cash-change-portfolio)
+        ]
+    (-> db
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/cash-impact kportfolio :existing] (gstring/format "%.2f" portfolio-cash))
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/cash-impact kportfolio :change] (gstring/format "%.2f" cash-change-portfolio))
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/cash-impact kportfolio :final] (gstring/format "%.2f" final-cash-portfolio))
+        )
+    ))
+
 (defn full-recalculate-parent-exposure [db]
   (reduce #(recalculate-parent-exposure %1 (keyword %2)) db (:portfolios db)))
+
+(defn full-recalculate-cash-change [db]
+  (reduce #(recalculate-cash-change %1 (keyword %2)) db (:portfolios db)))
+
 
 (defn recalculate-trade-notional [db leg-number kportfolio]
   (let [leg (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number])
@@ -112,7 +138,10 @@
                    0)
         value-usd (* (get-in db [:implementation/fx (keyword (:CRNCY leg))]) value)
         portfolio-nav-usd (* (get-in db [:implementation/fx (keyword (get-in db [:implementation/portfolio-nav kportfolio :ccy]))]) (get-in db [:implementation/portfolio-nav kportfolio :nav]))]
-    (assoc-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation kportfolio :trade-notional] (/ (* 0.01 (- target existing) portfolio-nav-usd) (* 0.01 value-usd)))))
+    (-> db
+        (assoc-in  [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation kportfolio :trade-notional] (/ (* 0.01 (- target existing) portfolio-nav-usd) (* 0.01 value-usd)))
+        (assoc-in  [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation kportfolio :trade-parent] (- target existing)))
+    ))
 
 (defn recalculate-trade-notional-all-portfolios [db leg-number]
   (reduce #(recalculate-trade-notional %1 leg-number (keyword %2)) db (:portfolios db)))
@@ -143,7 +172,9 @@
           (map-target-data leg-number value)
           (recalculate-trade-notional-all-portfolios leg-number)
           (recalculate-full-trade-notional leg-number)
-          (full-recalculate-parent-exposure))
+          (full-recalculate-parent-exposure)
+          (full-recalculate-cash-change)
+          )
       (assoc-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number key] value))))
 
 (rf/reg-event-db
@@ -152,16 +183,28 @@
     (-> db
         (recalculate-trade-notional-all-portfolios leg-number)
         (recalculate-full-trade-notional leg-number)
-        (full-recalculate-parent-exposure))))
+        (full-recalculate-parent-exposure)
+        (full-recalculate-cash-change)
+        )))
 
 (rf/reg-event-db
   :trade-implementation/allocation
   (fn [db [_ leg-number portfolio target]]
-    (full-recalculate-parent-exposure
-      (recalculate-full-trade-notional
-        (recalculate-trade-notional
-          (assoc-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation portfolio :target] target)
-          leg-number portfolio) leg-number))))
+    (-> db
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation portfolio :target] target)
+        (recalculate-trade-notional leg-number portfolio)
+        (recalculate-full-trade-notional leg-number)
+        (full-recalculate-parent-exposure)
+        (full-recalculate-cash-change)
+        )
+
+    ;(full-recalculate-cash-change
+    ;  (full-recalculate-parent-exposure
+    ;    (recalculate-full-trade-notional
+    ;      (recalculate-trade-notional
+    ;        (assoc-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation portfolio :target] target)
+    ;        leg-number portfolio) leg-number)))
+    ))
 
 (rf/reg-event-db
   :trade-implementation/copy-existing-positions
@@ -170,7 +213,9 @@
         (map-target-data leg-number "Final NAV")
         (recalculate-trade-notional-all-portfolios leg-number)
         (recalculate-full-trade-notional leg-number)
-        (full-recalculate-parent-exposure))))
+        (full-recalculate-parent-exposure)
+        (full-recalculate-cash-change)
+        )))
 
 (rf/reg-event-db
   :trade-implementation/target-0
@@ -179,7 +224,9 @@
         (map-target-data leg-number "Incremental NAV")
         (recalculate-trade-notional-all-portfolios leg-number)
         (recalculate-full-trade-notional leg-number)
-        (full-recalculate-parent-exposure))))
+        (full-recalculate-parent-exposure)
+        (full-recalculate-cash-change)
+        )))
 
 (rf/reg-event-db
   :trade-implementation/add-leg
@@ -258,7 +305,6 @@
                                start-db
                                [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation (keyword p) :existing]
                                (if-let [x (get-in (:implementation/live-positions db) [p ISIN])] x 0)))]
-      (println data)
       {:db (reduce f
                    (-> db
                        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :NAME] (if data (:Bond data) "not found"))
@@ -564,43 +610,25 @@
                                                              [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (g :final)]]])))]]]]))
 
 
-;(def cash (r/atom nil))
-;(reset! cash (into {} (for [p @(rf/subscribe [:portfolios])] [(keyword p) (gstring/format "%.2f" (get (first (tools/chainfilter {:portfolio p} @(rf/subscribe [:summary-display/table]))) :cash-pct))])))
-
-
-;where full-recalculate-parent-exposure create full-recalculate-cash-change
 (defn cash-impact []
-      (let [
-            ;data @(rf/subscribe [:summary-display/table])
-            ;portfolios @(rf/subscribe [:portfolios])
-            ;;existing-cash (zipmap (map :portfolio @(rf/subscribe [:summary-display/table])) (map :cash-pct @(rf/subscribe [:summary-display/table])))
-            ;trade-implementation (rf/subscribe [:implementation/trade-implementation])
-            ;existing-cash (into {} (for [p portfolios] [(keyword p) (gstring/format "%.2f" (get (first (tools/chainfilter {:portfolio p} data)) :cash-pct))]))
-            ;legs @(r/cursor trade-implementation [:tradeanalyser.implementation/trade-legs])
-            ;clean_legs (for [leg (keys legs)] {(keyword (str "leg_number_" (str leg) "_")) (:allocation (legs leg))})
-            ;aggregated-allocation (into {} (for [p portfolios]
-            ;                                 [(keyword p) {:target (gstring/format "%.2f" (- (reduce + (for [leg clean_legs] (js/parseFloat (if (nil? (get-in leg [(first (first leg)) (keyword p) :target]))
-            ;                                                                                                                                  0
-            ;                                                                                                                                  (get-in leg [(first (first leg)) (keyword p) :target]))
-            ;                                                                                                                                )))))}]))
-            ;final-cash (into {} (for [p portfolios] [(keyword p) {:final (gstring/format "%.2f" (reduce + [(js/parseFloat (get existing-cash (keyword p))) (js/parseFloat (:target ((keyword p) aggregated-allocation)))]))}]))
-            dw "100px"
-            ]
-        ;(println existing-cash)
+      (let [portfolios @(rf/subscribe [:portfolios])
+            cash-impact @(r/cursor (rf/subscribe [:implementation/trade-implementation]) [:tradeanalyser.implementation/cash-impact])
+            dw "100px"]
+        ;(println cash-impact)
         [v-box
          :gap "10px" :style {:border "solid 1px grey"} :class "element" :width "500px"
          :children [[title :label (str "Cash impact") :level :level1]
-                    ;[:label "Based on T-1 projected cash  (not physical). Position change is aggregated"]
-                    ;[v-box :gap "10px" :padding "10px" :width "450px" :align :start :style {:border "solid 1px grey"}
-                    ; :children [[hb [[label :width dw :label "Portfolio"]
-                    ;                 [label :width dw :label "Existing Cash (%)"]
-                    ;                 [label :width dw :label "Cash Change (%)"]
-                    ;                 [label :width dw :label "Final Cash (%)"]]]
-                    ;            (doall (for [p portfolios]
-                    ;                     ^{:key p} [hb [[label :width dw :label p]
-                    ;                                    [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (get existing-cash (keyword p))]
-                    ;                                    [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (:target ((keyword p) aggregated-allocation))]
-                    ;                                    [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (:final ((keyword p) final-cash))]]]))]]
+                    [:label "Based on T-1 projected cash  (not physical). Position change is aggregated"]
+                    [v-box :gap "10px" :padding "10px" :width "450px" :align :start :style {:border "solid 1px grey"}
+                     :children [[hb [[label :width dw :label "Portfolio"]
+                                     [label :width dw :label "Existing Cash (%)"]
+                                     [label :width dw :label "Cash Change (%)"]
+                                     [label :width dw :label "Final Cash (%)"]]]
+                                (doall (for [p portfolios]
+                                         ^{:key p} [hb [[label :width dw :label p]
+                                                        [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (:existing ((keyword p) cash-impact))]
+                                                        [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (:change ((keyword p) cash-impact))]
+                                                        [label :width dw :style {:display "block" :text-align "center" :width "100%"} :label (:final ((keyword p) cash-impact))]]]))]]
                     ]]
         )
   )
