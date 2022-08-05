@@ -844,12 +844,37 @@
 (def position-history-display-view (atom nil))
 (def position-history-chart-data (r/atom nil))
 
+(def position-historical-dates (vec
+                                 (flatten
+                                   (conj ["20181231"
+                                        "20190329"
+                                        "20190628"
+                                        "20190930"
+                                        "20191231"
+                                        "20200331"
+                                        "20200630"
+                                        "20200929"
+                                        "20201231"
+                                        "20210129"
+                                        "20210226"
+                                        "20210331"
+                                        "20210429"
+                                        "20210528"
+                                        "20210630"
+                                        "20210730"
+                                        "20210831"
+                                        "20210930"
+                                        "20211102"
+                                        "20211130"]
+                                       @(rf/subscribe [:list-dates-position-history])
+                                       ))))
+
 (defn position-history []
   (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
         qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7)))
         qt-date-yyyymmdd-2w (t/gdate->yyyyMMdd (plus qt-date (days -15)))
-        date-map (distinct (into [] (for [k (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
+        date-map (distinct (into [] (for [k (conj position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
         start-period (rf/subscribe [:position-history/start-period])
         end-period (rf/subscribe [:position-history/end-period])
         breakdown-map (into [] (for [k ["Start/End" "All"]] {:id k :label k}))
@@ -868,13 +893,14 @@
            (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str "dt" %) all-dates))
            (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str "deltadt" %) all-dates) ["tdelta"]))
         get-history-dates (fn [bd start end]
-                            (let [all-dates (distinct (conj static/position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd))]
+                            (let [all-dates (distinct (conj position-historical-dates qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd))]
                               (if (= bd "Start/End")
                                 [start end]
                                 (let [a (.indexOf all-dates start)
                                       b (.indexOf all-dates end)]
                                   (take (inc (- b a)) (drop a all-dates))
                                   ))))]
+    (println position-historical-dates)
         [box :class "subbody rightelement" :child
      (gt/element-box-generic "position-history-risk-table" max-width (str "Portfolio history")
                              {:target-id "position-history-risk-table" :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}

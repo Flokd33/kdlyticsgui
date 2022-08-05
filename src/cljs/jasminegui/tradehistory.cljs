@@ -384,7 +384,7 @@
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
         start-date (rf/subscribe [:portfolio-trade-history/start-date])
         end-date (rf/subscribe [:portfolio-trade-history/end-date])
-        download-columns [:TradeDate :NEW_ISSUE	:TransactionTypeName :NAME :ISIN :CRNCY :Quantity :PriceLcl :bps	:counterparty_code :CNTRY_OF_RISK :JPMRegion :JPM_SECTOR :Used_Rating_Score :last-price :total-return :tr-vs-cembi :tr-vs-cembiig :tr-vs-embi :tr-vs-embiig]
+        download-columns [:TradeDate :NEW_ISSUE	:TransactionTypeName :NAME :TICKER :ISIN :CRNCY :Quantity :PriceLcl :bps	:counterparty_code :CNTRY_OF_RISK :JPMRegion :JPM_SECTOR :Used_Rating_Score :last-price :total-return :tr-vs-cembi :tr-vs-cembiig :tr-vs-embi :tr-vs-embiig]
         ]
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start

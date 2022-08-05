@@ -27,6 +27,10 @@
 
 (def max-width "1675px")
 
+
+(defn on-click-context [state rowInfo instance]
+  (clj->js {}))
+
 (defn period-choices []
   (concat static/attribution-period-choices
           (into [] (for [m @(rf/subscribe [:attribution/available-months])] {:id m :label m}))
@@ -366,24 +370,28 @@
 (rf/reg-sub
   :attribution-history/table
   (fn [db]
-    (println (db :attribution-history/data))
+    ;(println (db :attribution-history/data))
     (let [risk-choices (let [rfil (get-in db [:attribution-history/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/attribution-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
-          all-dates (sort (distinct (map :date (db :attribution-history/data))))
+          report-type (rf/subscribe [:attribution-history/report-type])
+          data (get db :attribution-history/data)
+          data-clean (map #(assoc % :date2 (if (= (name @report-type) "yearly") (:date %) (str (:date %) "_" (:period %)))) data)
+          all-dates (sort (distinct (map :date2 data-clean)))
           sorted-data
           (sort-by (apply juxt (concat [(first accessors-k)] (rest accessors-k))) ;first-level-sort
-                   (into [] (for [[k v] (group-by (apply juxt accessors-k) (get db :attribution-history/data))]
+                   (into [] (for [[k v] (group-by (apply juxt accessors-k) data-clean)]
                               (into (select-keys (first v) accessors-k)
                                     (for [dt all-dates]
                                       [(keyword (str "dt" dt))
                                        (reduce + (map #(get % (keyword (get-in tables/attribution-table-columns [(db :attribution-history/field-one) :accessor])) 0.0)
-                                                      (t/chainfilter {:date dt} v)))])))))
+                                                      (t/chainfilter {:date2 dt} v)))])))))
           thfil (fn [line] (not (every? zero? (map line (map #(keyword (str "dt" %)) all-dates)))))
           sorted-data-hide-zero (if (db :attribution-history/hide-zero-holdings) (filter thfil sorted-data) sorted-data)
           sorted-deltas sorted-data-hide-zero
           template (into {} (for [[k v] (first (get db :attribution-history/data))] [k "Total"]))
-          portfolio-total-line (into template (for [dt all-dates] [(keyword (str "dt" dt)) (reduce + (map (keyword (str "dt" dt)) sorted-deltas))]))]
+          portfolio-total-line (into template (for [dt all-dates] [(keyword (str "dt" dt)) (reduce + (map (keyword (str "dt" dt)) sorted-deltas))]))
+          ]
       (clj->js
         (if (= (:attribution-history/display-style db) "Tree")
           (tables/cljs-text-filter-OR (:attribution-history/table-filter db) (mapv #(assoc %1 :totaldummy " ") sorted-deltas))
@@ -406,12 +414,20 @@
         risk-choices (let [rfil @(rf/subscribe [:attribution-history/filter])]  (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/attribution-table-columns r)))
         all-dates (sort (distinct (map :date @(rf/subscribe [:attribution-history/data]))))
+        data-clean (map #(assoc % :date2 (if (= (name @report-type) "yearly")
+                                           (:date %)
+                                           (str (:date %) "_" (:period %))
+                                           )) @(rf/subscribe [:attribution-history/data]) )
+        all-dates2 (sort (distinct (map :date2 data-clean)))
+
         months-this-year (mapv #(js/parseInt (jasminegui.tools/gdate->yyyyMMdd (cljs-time.core/plus (cljs-time.core/local-date (.getYear (cljs-time.core/today)) % 1) (cljs-time.core/days -1)))) (range 2 (inc (inc (.getMonth (cljs-time.core/today))))))
         get-period-fn (fn [k]
                         (case k
                           :yearly {:periodseq ["yearly" "yearly" "ytd"] :fileperiodseq ["yearly_" "yearly_" nil] :dateseq [20201231 20211231 (js/parseInt (t/gdate->yyyyMMdd qt-date))]}
-                          :monthly {:periodseq (conj (vec (repeat (count months-this-year) "monthly")) "mtd") :fileperiodseq (conj (vec (repeat (count months-this-year) "monthly_")) nil) :dateseq (conj months-this-year (js/parseInt (t/gdate->yyyyMMdd qt-date)))}
+                          ;:monthly {:periodseq (conj (vec (repeat (count months-this-year) "monthly")) "mtd") :fileperiodseq (conj (vec (repeat (count months-this-year) "monthly_")) nil) :dateseq (conj months-this-year (js/parseInt (t/gdate->yyyyMMdd qt-date)))}
+                          :monthly {:periodseq (conj (vec (repeat (count months-this-year) "monthly")) "mtd" "ytd") :fileperiodseq (conj (vec (repeat (count months-this-year) "monthly_")) nil nil) :dateseq (conj months-this-year (js/parseInt (t/gdate->yyyyMMdd qt-date)) (js/parseInt (t/gdate->yyyyMMdd qt-date)))}
                           :daily {:periodseq ["yearly" "yearly" "yearly"] :fileperiodseq ["yearly_" "yearly_" nil] :dateseq [20201231 20211231 20220706]}))]
+    ;(println  (first data-clean))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "attribution-history-risk-table" max-width (str "Portfolio history")
                              {:target-id "attribution-history-risk-table" :on-click-action #(tools/react-table-to-csv @attribution-history-display-view @portfolio 0 is-tree)}
@@ -442,7 +458,11 @@
                                                                                                     (get-period-fn @report-type))])]
                                           [button :label "Chart" :disabled? (not is-tree) :class "btn btn-primary btn-block" :on-click #(reset! attribution-history-chart-data
                                                                                                                                                 (->> ((first (js->clj (. (.getResolvedState @attribution-history-display-view) -sortedData))) "_subRows")
-                                                                                                                                                     (map (fn [v] (select-keys v (conj (map (fn [d] (str "dt" d)) all-dates) "_pivotVal"))))
+
+                                                                                                                                                     (map (fn [line] (clojure.set/rename-keys line (zipmap (map (fn [d] (str "dt" d "_monthly")) all-dates) (map (fn [d] (str "dt" d )) all-dates)))))
+                                                                                                                                                     (map (fn [line] (clojure.set/rename-keys line (zipmap (map (fn [d] (str "dt" d "_mtd")) all-dates) (map (fn [d] (str "dt" d )) all-dates)))))
+
+                                                                                                                                                     (map (fn [v] (select-keys v (conj (map (fn [d] (str "dt" d)) all-dates) "_pivotVal")))) ; condition here ?
                                                                                                                                                      (map (fn [line] (clojure.set/rename-keys line (zipmap (map (fn [d] (str "dt" d)) all-dates) all-dates))))
                                                                                                                                                      (map (fn [line] (reduce (fn [a b] (update a b (fn [x] (* x (if (= @field-one :nav) 100. 1.))))) line all-dates)))))]
                                           ]]
@@ -452,15 +472,21 @@
                                 :attribution-history/table
                                 (into [{:Header  (str "Groups (" @(rf/subscribe [:attribution-history/portfolio]) " " @(rf/subscribe [:qt-date]) ") ")
                                         :columns (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns)}]
-                                      (for [dt (map #(keyword (str "dt" %)) all-dates)]
-                                        (tables/nb-col (t/gdate->ddMMMyy (t/int->gdate (str (subs (name dt) 2)))) dt 100 (let [v (get-in tables/attribution-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows)))
+                                      (for [dt (map #(keyword (str "dt" %)) all-dates2)]
+                                        (tables/nb-col (if (= (name @report-type) "yearly")
+                                                          (t/gdate->ddMMMyy (t/int->gdate (str (subs (name dt) 2))))
+                                                        (case (subs (str (name dt)) 11)
+                                                          "mtd" (str (t/gdate->ddMMMyy (t/int->gdate (str (subs (subs (name dt) 2) 0 8)))) "MTD")
+                                                          "ytd" (str (t/gdate->ddMMMyy (t/int->gdate (str (subs (subs (name dt) 2) 0 8)))) "YTD")
+                                                          (t/gdate->ddMMMyy (t/int->gdate (str (subs (subs (name dt) 2) 0 8)))))
+                                                        )
+                                                       dt 100 (let [v (get-in tables/attribution-table-columns [@field-one :Cell])] (case @field-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) tables/sum-rows)))
                                 is-tree
                                 (mapv :accessor grouping-columns)
                                 attribution-history-display-view
                                 :attribution-history/table-filter
                                 :attribution-history/expander
-                                ;on-click-context
-                                nil
+                                on-click-context
                                 ]
                                ]
                               [oz/vega-lite (charting/stacked-vertical-bars @attribution-history-chart-data "attribution history")]
