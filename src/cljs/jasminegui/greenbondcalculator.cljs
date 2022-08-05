@@ -438,9 +438,15 @@
 (def is-tf-eligible (r/atom "No"))
 
 (def tf-calculator-summary (r/atom {:eligibility/net-zero            {:question_id 50 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/sectors             {:question_id 66 :analyst_answer "" :analyst_score 0}, ;;;;;
+                                    :eligibility/sectors-choice      {:question_id 67 :analyst_answer "" :analyst_score 0}, ;;;;;
+                                    :eligibility/sectors-comment     {:question_id 68 :analyst_answer "" :analyst_score 0}, ;;;;;
+                                    :eligibility/intensity           {:question_id 69 :analyst_answer "" :analyst_score 0}, ;;;;;
                                     :eligibility/clear-plans         {:question_id 51 :analyst_answer "" :analyst_score 0},
                                     :eligibility/other-sectors       {:question_id 52 :analyst_answer "" :analyst_score 0},
                                     :eligibility/ahead-peers         {:question_id 53 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/misaligned          {:question_id 70 :analyst_answer "" :analyst_score 0}, ;;;;
+                                    :eligibility/misaligned-comment  {:question_id 71 :analyst_answer "" :analyst_score 0}, ;;;;
                                     :eligibility/category            {:question_id 54 :analyst_answer "" :analyst_score 0},
                                     :eligibility/category-comment    {:question_id 55 :analyst_answer "" :analyst_score 0},
                                     :subs/activities                 {:question_id 56 :analyst_answer "" :analyst_score 0},
@@ -455,6 +461,7 @@
                                     :subs/total-emissions            {:question_id 65 :analyst_answer "" :analyst_score 0}}))
 
 (def tf-scoring {:eligibility/net-zero      {:Yes 30 :No 0}
+                 :eligibility/intensity     {:Yes 10 :No 0}
                  :eligibility/clear-plans   {:Yes 10 :No 0}
                  :eligibility/other-sectors {:Yes 10 :No 0}
                  :eligibility/ahead-peers   {:Yes 10 :No 0}
@@ -464,7 +471,10 @@
 (defn tf-eligible []
   (let [answers @tf-calculator-summary]
     (if (and (= (get-in answers [:eligibility/net-zero :analyst_answer]) "Yes")
-             (or (= (get-in answers [:eligibility/clear-plans :analyst_answer]) "Yes") (= (get-in answers [:eligibility/other-sectors :analyst_answer]) "Yes") (= (get-in answers [:eligibility/ahead-peers :analyst_answer]) "Yes")))
+             (or (= (get-in answers [:eligibility/intensity :analyst_answer]) "Yes")
+                 (= (get-in answers [:eligibility/clear-plans :analyst_answer]) "Yes")
+                 (= (get-in answers [:eligibility/other-sectors :analyst_answer]) "Yes")
+                 (= (get-in answers [:eligibility/ahead-peers :analyst_answer]) "Yes")))
       (reset! is-tf-eligible "Yes")
       (reset! is-tf-eligible "No"))))
 
@@ -482,12 +492,16 @@
   (let [answers @tf-calculator-summary
         summary (for [k (keys answers)] {:question_id (get-in answers [k :question_id]) :analyst_code @tf-analyst-name :date today-date
                                          :security_identifier @tf-identifier :analyst_answer (get-in answers [k :analyst_answer]) :analyst_score (get-in answers [k :analyst_score])})]
-    (println summary)
+    ;(println summary)
     (rf/dispatch [:post-esg-report-upload summary]) ; new system table with scores for each questions?
     ))
 
+(def tf-sectors-choices [{:id "energy" :label "Energy"} {:id "transport"  :label "Transport"} {:id "industry"  :label "Industry"}
+                          {:id "buildings"  :label "Buildings"} {:id "agriculture_forestry"  :label "Agriculture/Forestry"}])
+
 (def tf-category-choices [{:id "transitioning" :label "Transitioning"} {:id "committed"  :label "Committed to transition"} {:id "enabler"  :label "Transition enabler"}
                           {:id "interim"  :label "Interim to phase out"} {:id "aiming"  :label "Aiming to transition"}])
+
 
 (def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
 
@@ -512,21 +526,59 @@
                 [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Transition fund eligibility" :level :level2]]
                                                                [box :width dropdown-width :child [button :label @is-tf-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-tf-eligible "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]]
                 [h-box :gap "10px" :align :center
-                 :children [[label :width question-width-label :label "Is the company/issuer net-zero committed?"]
+                 :children [[label :width question-width-label :label "Is the company/issuer working towards net zero alignment?"]
                             [info-button :info "All Transition Investments should have a commitment to achieve carbon neutrality in the future. This includes both an explicit target or a public commitment (without a target date)" :position :left-center]
                             [single-dropdown :width dropdown-width :choices yes-no-choice
                              :model (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer])
                              :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %)
                                              (tf-eligible)
                                              (tf-score-calculator)
-                                             (if (= % "No") (do (reset! (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer]) "No")
-                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer]) "No")
-                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer]) "No")
-                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/category :analyst_answer]) "")))
+                                             (if (= % "No") (do (reset! (r/cursor tf-calculator-summary [:eligibility/intensity           :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/clear-plans         :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/other-sectors       :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers         :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/category            :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/category-comment    :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/sectors             :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/sectors-comment     :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/sectors-choice      :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned          :analyst_answer]) "")
+                                                                (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned-comment  :analyst_answer]) "")
+                                                                ))
                                              )]]]
+
                 (if (= (get-in @tf-calculator-summary [:eligibility/net-zero :analyst_answer]) "Yes") ;first level eligibility
                   (concat
-                    [[v-box  :gap "5px" :children [[h-box :gap "10px" :align :center
+                    [[v-box  :gap "5px" :children [
+                   [h-box :gap "10px" :align :center
+                    :children [[label :width question-width-label :label "Is the company or activity to be financed supporting one of the five transition sectors?"]
+                               [info-button :info "bla bla " :position :left-center]
+                               [single-dropdown :width dropdown-width :choices yes-no-choice
+                                :model (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer])
+                                :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer]) %)
+                                                (tf-score-calculator)
+                                                )]]]
+                   (case (get-in @tf-calculator-summary [:eligibility/sectors :analyst_answer])
+                     "Yes" [h-box :gap "10px" :align :center
+                      :children [[label :width question-width :label "Select sector:"]
+                                 [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-sectors-choices
+                                  :model (r/cursor tf-calculator-summary [:eligibility/sectors-choice :analyst_answer])
+                                  :on-change #(reset! (r/cursor tf-calculator-summary [:eligibility/sectors-choice :analyst_answer]) %)]]]
+                     "No" [h-box :gap "10px" :align :start
+                      :children [[label :width question-width :label "Sector comment:"]
+                                 [input-textarea :width categories-list-width-long :rows 5
+                                  :model (r/cursor tf-calculator-summary [:eligibility/sectors-comment :analyst_answer])
+                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/sectors-comment :analyst_answer]) %))]]]
+                     nil
+                     )
+                     [h-box :gap "10px" :align :center
+                      :children [[label :width question-width :label "Does the company have emissions intensity close to zero or a large majority (95%) of green revenue?"]
+                                 [single-dropdown :width dropdown-width :choices yes-no-choice
+                                  :model (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer])
+                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer]) %)
+                                                  (tf-eligible)
+                                                  (tf-score-calculator))]]]
+                    [h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "Does the company have clear plans to transition?"]
                                 [single-dropdown :width dropdown-width :choices yes-no-choice
                                  :model (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer])
@@ -547,6 +599,20 @@
                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer]) %)
                                                  (tf-eligible)
                                                  (tf-score-calculator))]]]
+                     [h-box :gap "10px" :align :center
+                      :children [[label :width question-width :label "Is the company/issuer expanding misaligned activities?"]
+                                 [single-dropdown :width dropdown-width :choices yes-no-choice
+                                  :model (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer])
+                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer]) %)
+                                                  (tf-score-calculator))]]]
+                      (if (= (get-in @tf-calculator-summary [:eligibility/misaligned :analyst_answer]) "Yes")
+                        [h-box :gap "10px" :align :start
+                         :children [[label :width question-width :label "Misaligned activities comment:"]
+                                    [input-textarea :width categories-list-width-long :rows 5
+                                     :model (r/cursor tf-calculator-summary [:eligibility/misaligned-comment :analyst_answer])
+                                     :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned-comment :analyst_answer]) %))]]]
+                        nil
+                        )
                     [h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "What is the most appropriate classification for this transition investment?"]
                                 [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-category-choices
@@ -560,7 +626,6 @@
                                                   ]]]
                     )
                   )
-
                 (if (= @is-tf-eligible "Yes")
                   (concat
                     [[v-box  :gap "5px" :children
