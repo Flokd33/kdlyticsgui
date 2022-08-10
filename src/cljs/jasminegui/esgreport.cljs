@@ -1,4 +1,4 @@
-(ns jasminegui.greenbondcalculator
+(ns jasminegui.esgreport
   (:require
     [re-frame.core :as rf]
     [reagent.core :as reagent]
@@ -438,15 +438,15 @@
 (def is-tf-eligible (r/atom "No"))
 
 (def tf-calculator-summary (r/atom {:eligibility/net-zero            {:question_id 50 :analyst_answer "" :analyst_score 0},
-                                    :eligibility/sectors             {:question_id 66 :analyst_answer "" :analyst_score 0}, ;;;;;
-                                    :eligibility/sectors-choice      {:question_id 67 :analyst_answer "" :analyst_score 0}, ;;;;;
-                                    :eligibility/sectors-comment     {:question_id 68 :analyst_answer "" :analyst_score 0}, ;;;;;
-                                    :eligibility/intensity           {:question_id 69 :analyst_answer "" :analyst_score 0}, ;;;;;
+                                    :eligibility/sectors             {:question_id 66 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/sectors-choice      {:question_id 67 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/sectors-comment     {:question_id 68 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/intensity           {:question_id 69 :analyst_answer "" :analyst_score 0},
                                     :eligibility/clear-plans         {:question_id 51 :analyst_answer "" :analyst_score 0},
                                     :eligibility/other-sectors       {:question_id 52 :analyst_answer "" :analyst_score 0},
                                     :eligibility/ahead-peers         {:question_id 53 :analyst_answer "" :analyst_score 0},
-                                    :eligibility/misaligned          {:question_id 70 :analyst_answer "" :analyst_score 0}, ;;;;
-                                    :eligibility/misaligned-comment  {:question_id 71 :analyst_answer "" :analyst_score 0}, ;;;;
+                                    :eligibility/misaligned          {:question_id 70 :analyst_answer "" :analyst_score 0},
+                                    :eligibility/misaligned-comment  {:question_id 71 :analyst_answer "" :analyst_score 0},
                                     :eligibility/category            {:question_id 54 :analyst_answer "" :analyst_score 0},
                                     :eligibility/category-comment    {:question_id 55 :analyst_answer "" :analyst_score 0},
                                     :subs/activities                 {:question_id 56 :analyst_answer "" :analyst_score 0},
