@@ -499,7 +499,7 @@
 (def tf-sectors-choices [{:id "energy" :label "Energy"} {:id "transport"  :label "Transport"} {:id "industry"  :label "Industry"}
                           {:id "buildings"  :label "Buildings"} {:id "agriculture_forestry"  :label "Agriculture/Forestry"}])
 
-(def tf-category-choices [{:id "transitioning" :label "Transitioning"} {:id "committed"  :label "Committed to transition"} {:id "enabler"  :label "Transition enabler"}
+(def tf-category-choices [{:id "transitioned" :label "Transitioned"} {:id "transitioning" :label "Transitioning"} {:id "committed"  :label "Committed to transition"} {:id "enabler"  :label "Transition enabler"}
                           {:id "interim"  :label "Interim to phase out"} {:id "aiming"  :label "Aiming to transition"}])
 
 
@@ -662,6 +662,7 @@
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Target base year:"]
                                                 [input-text :width categories-list-width-long
+                                                 :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
@@ -673,24 +674,28 @@
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Base year emissions:"]
                                                 [input-text :width categories-list-width-long
+                                                 :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Most recent emissions:"]
                                                 [input-text :width categories-list-width-long
+                                                 :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Reduction target:"]
                                                 [input-text :width categories-list-width-long
+                                                 :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Total absolute emissions reduction:"]
                                                 [input-text :width categories-list-width-long
+                                                 :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
