@@ -857,25 +857,13 @@
 (def simple-http-get-events
   [
    {:get-key :get-naked-positions     :url-tail "naked-position-transit-array"           :dis-key :naked-positions :mounting-modal true}
-   {:get-key :get-instruments         :url-tail "instruments"           :dis-key :instruments}
-   ;{:get-key :get-rating-to-score     :url-tail "rating-to-score"     :dis-key :rating-to-score}
-   ;{:get-key :get-portfolios          :url-tail "portfolios"          :dis-key :portfolios}
-   {:get-key :get-total-positions     :url-tail "total-positions"     :dis-key :total-positions}
-   ;{:get-key :get-qt-date             :url-tail "qt-date"             :dis-key :qt-date}
-   ;{:get-key :get-model-date          :url-tail "model-date"          :dis-key :quant-model/model-date}
    {:get-key :get-large-exposures     :url-tail "large-exposures"     :dis-key :large-exposures}
    {:get-key :get-var-proxies         :url-tail "var-proxies"         :dis-key :var/proxies}
    {:get-key :get-var-dates           :url-tail "var-dates"           :dis-key :var/dates}
-   ;{:get-key :get-betas               :url-tail "beta-table"          :dis-key :betas/table}
    {:get-key :get-refinitiv-ids       :url-tail "refinitiv-ids"       :dis-key :esg/refinitiv-ids}
    {:get-key :get-refinitiv-structure :url-tail "refinitiv-structure" :dis-key :esg/refinitiv-structure}
    {:get-key :get-quant-model         :url-tail "quant-model-output-transit-array"  :dis-key :quant-model/model-output :mounting-modal true}
-   ;{:get-key :get-quant-rating-curves :url-tail "quant-rating-curves" :dis-key :quant-model/rating-curves}
-   ;{:get-key :get-quant-rating-curves-sov-only :url-tail "quant-rating-curves-sov-only" :dis-key :quant-model/rating-curves-sov-only}
    {:get-key :get-issuer-coverage               :url-tail "issuer-coverage"              :dis-key :quant-model/issuer-coverage}
-   ;{:get-key :get-generic-rating-curves :url-tail "quant-generic-rating-curves" :dis-key :quant-model/generic-rating-curves}
-   ;{:get-key :get-country-codes       :url-tail "countries"           :dis-key :country-codes}
-   ;{:get-key :get-jpm-sectors     :url-tail "jpm-sectors"     :dis-key :jpm-sectors}
    {:get-key :get-attribution-date    :url-tail "attribution?query-type=attribution-date" :dis-key :attribution-date}
    {:get-key :get-attribution-summary    :url-tail "attribution?query-type=summary" :dis-key :attribution/summary}
    {:get-key :get-attribution-available-months    :url-tail "attribution?query-type=available-months" :dis-key :attribution/available-months}
@@ -885,23 +873,12 @@
    {:get-key :get-integrity    :url-tail "integrity" :dis-key :integrity}
    {:get-key :get-portfolio-checks    :url-tail "portfolio-checks" :dis-key :portfolio-checks}
    {:get-key :get-talanx-checks    :url-tail "talanx-checks" :dis-key :talanx-checks}
-   ;{:get-key :get-analysts    :url-tail "analysts" :dis-key :analysts}
    {:get-key :get-esg-report-list    :url-tail "esg-report-list" :dis-key :esg-report-list}
    {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
    {:get-key :get-ungc-problem-securities :url-tail "ungc-problem-securities" :dis-key :esg/ungc-problem-securities}
    {:get-key :get-top-bottom-price-change :url-tail "top_bottom_price_change" :dis-key  :top-bottom-price-change}
    {:get-key :get-list-dates-position-history :url-tail "list-dates-position-history" :dis-key  :list-dates-position-history}
-
    {:get-key :implementation-list-request         :url-tail "trade-implementation-list"   :dis-key :implementation/implementation-list}
-   ;{:get-key :portfolio-nav-request               :url-tail "portfolio-nav"               :dis-key :implementation/portfolio-nav}
-   ;{:get-key :fx-request                          :url-tail "fx"                          :dis-key :implementation/fx}
-   ;{:rfk :security-to-issuer-map-request      :addr "security-to-issuer-map"      :dk :implementation/security-to-issuer-map}
-   ;{:rfk :live-positions-request              :addr "live-positions"              :dk :live-positions}
-   ;{:get-key :live-cast-parent-positions-request  :url-tail "live-parent-positions"       :dis-key :implementation/live-cast-parent-positions}
-   ;{:get-key :get-master-security-fields :url-tail "master-security-fields-list" :dis-key :master-security-fields-list}
-
-   {:get-key :get-allianz-loss-report :url-tail "allianz-loss-report" :dis-key :allianz-loss-report}
-
    ])
 
 
@@ -913,10 +890,13 @@
    {:get-key :get-master-security-fields :namespace "common.static" :asset "master-security-fields" :dispatch-key [:master-security-fields-list]}
    {:get-key :get-rating-to-score    :namespace "common.static" :asset "rating-to-score-rating"     :dispatch-key [:rating-to-score]}
    {:get-key :fx-request               :namespace "common.static"           :asset "fx"                          :dispatch-key [:implementation/fx]}
+   {:get-key :get-allianz-loss-report :namespace "common.static" :asset  "allianz-pnl-loss" :dispatch-key [:allianz-loss-report]}
 
    {:get-key :portfolio-nav-request       :namespace "jasmine.positions"        :asset "sod-portfolio-nav"               :dispatch-key [:implementation/portfolio-nav]}
    {:get-key :live-cast-parent-positions-request :namespace "jasmine.positions" :asset "live-positions-by-parent-id"       :dispatch-key[ :implementation/live-cast-parent-positions]}
    {:get-key :get-qt-date             :namespace "jasmine.positions" :asset "qt-date-atom"             :dispatch-key [:qt-date]}
+   {:get-key :get-total-positions    :namespace "jasmine.positions" :asset "total-lines"     :dispatch-key [:total-positions]}
+   {:get-key :get-instruments         :namespace "jasmine.positions" :asset "instruments"           :dispatch-key [:instruments]}
 
    {:get-key :get-betas              :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}
 
