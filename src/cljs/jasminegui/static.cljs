@@ -9,7 +9,7 @@
         attr-events [:get-top-bottom-price-change :get-attribution-date :get-attribution-summary :get-attribution-available-months  [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
         quant-events [:get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
-        implementation-events (conj home-events :get-quant-model :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :live-cast-parent-positions-request)
+        implementation-events (conj home-events :get-quant-model :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :get-live-cast-parent-positions)
         ]
   [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (conj home-events :get-list-dates-position-history :get-portfolio-checks) :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil :load-events (concat home-events [:get-country-codes :get-jpm-sectors :get-model-portfolios :get-quant-model])} ;need load position to identify what we still own among list of trade- not effici

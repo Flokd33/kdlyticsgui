@@ -110,6 +110,7 @@
                  :position-history/data                              []
 
 
+
                  ;trade history
                  :trade-history/active-bond                          nil
                  :trade-history/history                              nil
@@ -224,6 +225,7 @@
                  :esg/tamale-body                                    ""
                  :esg/engagement-throbber                            false
                  :esg/ungc-problem-securities                        []
+                 :esg/msci-ccc-weight                                []
 
                  :quant-model/model-output                           []
                  :quant-model/model-js-output                        #js []
@@ -314,6 +316,7 @@
                  :implementation/success-modal                       {:show false :on-close nil :response nil}
 
                  :allianz-loss-report                                []
+                 :ogemigc-nr-bucket                                  []
 
                  :dummy                                              nil                                 ;can be useful
                  })
@@ -470,6 +473,7 @@
            :esg/security-notes
            :esg/tamale-body
            :esg/ungc-problem-securities
+           :esg/msci-ccc-weight
 
            :trade-history/active-home
 
@@ -542,7 +546,7 @@
            :implementation/live-cast-parent-positions
 
            :allianz-loss-report
-
+           :ogemigc-nr-bucket
            :dummy
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -857,46 +861,41 @@
 (def simple-http-get-events
   [
    {:get-key :get-naked-positions     :url-tail "naked-position-transit-array"           :dis-key :naked-positions :mounting-modal true}
-   {:get-key :get-large-exposures     :url-tail "large-exposures"     :dis-key :large-exposures}
    {:get-key :get-var-proxies         :url-tail "var-proxies"         :dis-key :var/proxies}
    {:get-key :get-var-dates           :url-tail "var-dates"           :dis-key :var/dates}
    {:get-key :get-refinitiv-ids       :url-tail "refinitiv-ids"       :dis-key :esg/refinitiv-ids}
    {:get-key :get-refinitiv-structure :url-tail "refinitiv-structure" :dis-key :esg/refinitiv-structure}
    {:get-key :get-quant-model         :url-tail "quant-model-output-transit-array"  :dis-key :quant-model/model-output :mounting-modal true}
-   {:get-key :get-issuer-coverage               :url-tail "issuer-coverage"              :dis-key :quant-model/issuer-coverage}
    {:get-key :get-attribution-date    :url-tail "attribution?query-type=attribution-date" :dis-key :attribution-date}
    {:get-key :get-attribution-summary    :url-tail "attribution?query-type=summary" :dis-key :attribution/summary}
    {:get-key :get-attribution-available-months    :url-tail "attribution?query-type=available-months" :dis-key :attribution/available-months}
    {:get-key :get-model-portfolios    :url-tail "model-portfolios" :dis-key :model-portfolios/trades}
-   {:get-key :get-msci-scores    :url-tail "msci-scores" :dis-key :esg/msci-scores}
    {:get-key :get-last-updated-logs    :url-tail "last-updated" :dis-key :last-updated-logs}
-   {:get-key :get-integrity    :url-tail "integrity" :dis-key :integrity}
-   {:get-key :get-portfolio-checks    :url-tail "portfolio-checks" :dis-key :portfolio-checks}
-   {:get-key :get-talanx-checks    :url-tail "talanx-checks" :dis-key :talanx-checks}
    {:get-key :get-esg-report-list    :url-tail "esg-report-list" :dis-key :esg-report-list}
-   {:get-key :get-esg-summary-report :url-tail "esg-summary-report" :dis-key :esg/summary-report}
-   {:get-key :get-ungc-problem-securities :url-tail "ungc-problem-securities" :dis-key :esg/ungc-problem-securities}
    {:get-key :get-top-bottom-price-change :url-tail "top_bottom_price_change" :dis-key  :top-bottom-price-change}
    {:get-key :get-list-dates-position-history :url-tail "list-dates-position-history" :dis-key  :list-dates-position-history}
-   {:get-key :implementation-list-request         :url-tail "trade-implementation-list"   :dis-key :implementation/implementation-list}
    ])
 
 
 (def simple-http-assets
-  [{:get-key :get-portfolios    :namespace "common.static" :asset "portfolios" :dispatch-key [:portfolios]}
-   {:get-key :get-country-codes :namespace "common.static" :asset "country-codes" :dispatch-key [:country-codes]}
-   {:get-key :get-jpm-sectors :namespace "common.static" :asset "jpm-sectors" :dispatch-key [:jpm-sectors]}
-   {:get-key :get-analysts :namespace "common.static" :asset "analysts" :dispatch-key [:analysts]}
-   {:get-key :get-master-security-fields :namespace "common.static" :asset "master-security-fields" :dispatch-key [:master-security-fields-list]}
-   {:get-key :get-rating-to-score    :namespace "common.static" :asset "rating-to-score-rating"     :dispatch-key [:rating-to-score]}
-   {:get-key :fx-request               :namespace "common.static"           :asset "fx"                          :dispatch-key [:implementation/fx]}
-   {:get-key :get-allianz-loss-report :namespace "common.static" :asset  "allianz-pnl-loss" :dispatch-key [:allianz-loss-report]}
+  [{:get-key :get-portfolios              :namespace "common.static" :asset "portfolios"              :dispatch-key [:portfolios]}
+   {:get-key :get-country-codes           :namespace "common.static" :asset "country-codes"           :dispatch-key [:country-codes]}
+   {:get-key :get-jpm-sectors             :namespace "common.static" :asset "jpm-sectors"             :dispatch-key [:jpm-sectors]}
+   {:get-key :get-analysts                :namespace "common.static" :asset "analysts"                :dispatch-key [:analysts]}
+   {:get-key :get-master-security-fields  :namespace "common.static" :asset "master-security-fields"  :dispatch-key [:master-security-fields-list]}
+   {:get-key :get-rating-to-score         :namespace "common.static" :asset "rating-to-score-rating"  :dispatch-key [:rating-to-score]}
+   {:get-key :fx-request                  :namespace "common.static" :asset "fx"                      :dispatch-key [:implementation/fx]}
+   {:get-key :get-allianz-loss-report     :namespace "common.static" :asset  "allianz-pnl-loss"       :dispatch-key [:allianz-loss-report]}
 
-   {:get-key :portfolio-nav-request       :namespace "jasmine.positions"        :asset "sod-portfolio-nav"               :dispatch-key [:implementation/portfolio-nav]}
-   {:get-key :live-cast-parent-positions-request :namespace "jasmine.positions" :asset "live-positions-by-parent-id"       :dispatch-key[ :implementation/live-cast-parent-positions]}
-   {:get-key :get-qt-date             :namespace "jasmine.positions" :asset "qt-date-atom"             :dispatch-key [:qt-date]}
-   {:get-key :get-total-positions    :namespace "jasmine.positions" :asset "total-lines"     :dispatch-key [:total-positions]}
-   {:get-key :get-instruments         :namespace "jasmine.positions" :asset "instruments"           :dispatch-key [:instruments]}
+   {:get-key :portfolio-nav-request           :namespace "jasmine.positions"  :asset "sod-portfolio-nav"            :dispatch-key [:implementation/portfolio-nav]}
+   {:get-key :get-live-cast-parent-positions  :namespace "jasmine.positions"  :asset "live-positions-by-parent-id"  :dispatch-key [:implementation/live-cast-parent-positions]}
+   {:get-key :get-qt-date                     :namespace "jasmine.positions"  :asset "qt-date-atom"                 :dispatch-key [:qt-date]}
+   {:get-key :get-total-positions             :namespace "jasmine.positions"  :asset "total-lines"                  :dispatch-key [:total-positions]}
+   {:get-key :get-instruments                 :namespace "jasmine.positions"  :asset "instruments"                  :dispatch-key [:instruments]}
+   {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
+   {:get-key :get-ogemigc-nr-bucket           :namespace "jasmine.positions"  :asset "ogemigc-unrated-bucket-list"  :dispatch-key [:ogemigc-nr-bucket]}
+   {:get-key :get-esg-summary-report          :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
+   {:get-key :get-ccc-weight                  :namespace "jasmine.positions"  :asset  "msci-ccc-weight"             :dispatch-key [:esg/msci-ccc-weight]}
 
    {:get-key :get-betas              :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}
 
@@ -904,6 +903,16 @@
    {:get-key :get-quant-rating-curves-sov-only :namespace "jasmine.quantscreen.qsdata" :asset  "rating-curves-sov-only" :dispatch-key [:quant-model/rating-curves-sov-only]}
    {:get-key :get-generic-rating-curves :namespace "jasmine.quantscreen.qsdata" :asset "generic-rating-curves" :dispatch-key [:quant-model/generic-rating-curves]}
    {:get-key :get-model-date   :namespace "jasmine.quantscreen.qsdata" :asset "model-date"          :dispatch-key [:quant-model/model-date]}
+
+   {:get-key :get-integrity         :namespace "jasmine.integrity"  :asset "integrity"        :dispatch-key [:integrity]}
+   {:get-key :get-portfolio-checks  :namespace "jasmine.integrity"  :asset "portfolio-checks" :dispatch-key [:portfolio-checks]}
+   {:get-key :get-talanx-checks     :namespace "jasmine.integrity"  :asset "talanx-checks"    :dispatch-key [:talanx-checks]}
+
+   {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "msci-data-output" :dispatch-key [:esg/msci-scores]}
+   {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
+
+
+   {:get-key :get-issuer-coverage   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
    ])
 
 (doseq [line simple-http-get-events]
@@ -922,6 +931,12 @@
       (if (zero? (count (get-in db [(:dispatch-key line)])))     ;if it wasn't mounted yet we need to load it
         {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
          :http-get-asset line}))))
+
+(rf/reg-event-fx
+  :implementation-list-request
+  (fn [{:keys [db]} [_]]
+    {:db             db
+     :http-get-asset {:namespace "jasmine.implementation" :asset "list-all-implementations" :dispatch-key [:implementation/implementation-list]}}))
 
 (rf/reg-event-fx
   :check-naked-positions-timestamp
