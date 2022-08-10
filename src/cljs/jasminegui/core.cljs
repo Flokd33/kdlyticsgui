@@ -1,16 +1,10 @@
 (ns jasminegui.core
   (:require
-   [reagent.core :as r]
    [reagent.dom :as dom]
-
    [re-frame.core :as rf]
-   [cljs-http.client :as http]
-   [cljs.core.async :refer [<!]]
    [re-pressed.core :as rp]
    [jasminegui.views :as views]
-   [jasminegui.mount :as mount])
-  (:require-macros [cljs.core.async.macros :refer [go]]))
-
+   [jasminegui.mount :as mount]))
 
 (defn ^:dev/after-load mount-root []
   (rf/clear-subscription-cache!)
