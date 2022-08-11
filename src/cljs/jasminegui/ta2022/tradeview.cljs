@@ -177,7 +177,10 @@
                                                                                  {:Header "Index" :accessor :tr-vs-index-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Rating" :accessor :tr-vs-index-rating-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Country" :accessor :tr-vs-index-country-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
-                                                                                 {:Header "Sector" :accessor :tr-vs-index-sector-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]}]
+                                                                                 {:Header "Sector" :accessor :tr-vs-index-sector-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]}
+                                            {:Header "Statpro YTD" :columns [(assoc (tables/nb-col "Bond contrib" :statpro-ytd-contribution 85 #(tables/nb-cell-format "%.2f%" 1 %) tables/sum-rows) :filterable false)
+                                                                             (assoc (tables/nb-col "Ticker effect" :statpro-ytd-issuer-effect 85 #(tables/nb-cell-format "%.2f%" 1 %) tables/sum-rows) :filterable false)]}
+                                            ]
                                :filterable false :showPagination false :pageSize (count cdata) :showPageSizeOptions false :className "-striped -highlight"}]
                              [title :label "Leg by leg performance" :level :level2]
                              [:> ReactTable

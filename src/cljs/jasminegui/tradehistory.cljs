@@ -679,6 +679,7 @@
      ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "isin")))]
      ["Trade history" (fn [] (multiple-bond-trade-history-event-th state rowInfo instance))]         ; <---- the name is a span
      ["Trade history (% NAV)" (fn [] (multiple-bond-trade-history-nav-event-th state rowInfo instance))]         ; <---- the name is a span
+     ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 (aget rowInfo "original" "isin")]))]
      ;["Build ticket" (fn [] (prn "my-fn"))]
      ]))
 
