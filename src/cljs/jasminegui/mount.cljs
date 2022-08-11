@@ -904,9 +904,9 @@
    {:get-key :get-generic-rating-curves :namespace "jasmine.quantscreen.qsdata" :asset "generic-rating-curves" :dispatch-key [:quant-model/generic-rating-curves]}
    {:get-key :get-model-date   :namespace "jasmine.quantscreen.qsdata" :asset "model-date"          :dispatch-key [:quant-model/model-date]}
 
-   {:get-key :get-integrity         :namespace "jasmine.integrity"  :asset "integrity"        :dispatch-key [:integrity]}
-   {:get-key :get-portfolio-checks  :namespace "jasmine.integrity"  :asset "portfolio-checks" :dispatch-key [:portfolio-checks]}
-   {:get-key :get-talanx-checks     :namespace "jasmine.integrity"  :asset "talanx-checks"    :dispatch-key [:talanx-checks]}
+   {:get-key :get-integrity         :namespace "jasmine.integrity"  :asset "integrity-map"        :dispatch-key [:integrity]}
+   {:get-key :get-portfolio-checks  :namespace "jasmine.integrity"  :asset "portfolio-check-map" :dispatch-key [:portfolio-checks]}
+   {:get-key :get-talanx-checks     :namespace "jasmine.integrity"  :asset "talanx-check-map"    :dispatch-key [:talanx-checks]}
 
    {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "msci-data-output" :dispatch-key [:esg/msci-scores]}
    {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
