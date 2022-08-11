@@ -928,7 +928,7 @@
   (rf/reg-event-fx
     (:get-key line)
     (fn [{:keys [db]} [_]]
-      (if (zero? (count (get-in db [(:dispatch-key line)])))     ;if it wasn't mounted yet we need to load it
+      (if (zero? (count (get-in db (:dispatch-key line))))     ;if it wasn't mounted yet we need to load it
         {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
          :http-get-asset line}))))
 
