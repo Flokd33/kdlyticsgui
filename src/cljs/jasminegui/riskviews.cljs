@@ -705,18 +705,19 @@
 
 (defn portfolio-checks-display []
   (when (empty? @(rf/subscribe [:talanx-checks])) (rf/dispatch [:get-talanx-checks]))
+  (when (empty? @(rf/subscribe [:ogemigc-nr-bucket])) (rf/dispatch [:get-ogemigc-nr-bucket]))
   (let [portfolio-checks-data-raw @(rf/subscribe [:portfolio-checks])
         portfolio-checks-data (for [e portfolio-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-status-warning)) (get {false 0 true 1} (e :check-status-breach))])))
         portfolio-checks-data-nav (filter #(and (not= (:check-name %) "MDUR Delta") (not= (:check-name %) "MDUR") (not= (:check-name %) "MDUR vs BM %")) portfolio-checks-data)
         portfolio-checks-data-dur (filter #(or (= (:check-name %) "MDUR Delta") (= (:check-name %) "MDUR") (= (:check-name %) "MDUR vs BM %")) portfolio-checks-data)
         talanx-checks-data-raw @(rf/subscribe [:talanx-checks])
+        ogemigc-nr-list @(rf/subscribe [:ogemigc-nr-bucket])
         talanx-checks-data (for [e talanx-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-warning)) (get {false 0 true 1} (e :check-breach))])))
         talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)
-
         talanx-checks-data-clean-corp (filter #(= (:sov-or-corp %) "corp") talanx-checks-data-clean)
         talanx-checks-data-clean-sov (filter #(= (:sov-or-corp %) "sov") talanx-checks-data-clean)
-
         date @(rf/subscribe [:qt-date])]
+    (println ogemigc-nr-list)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
@@ -730,6 +731,15 @@
                                         {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-nav) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
+        (gt/element-box "checks" "100%" (str "OGEMIGC HY or <= 1 rating list  " date) ogemigc-nr-list
+                        [[:> ReactTable
+                          {:data       ogemigc-nr-list
+                           :columns    [{:Header "Name" :accessor :NAME :width 90 :style {:textAlign "left"}}
+                                        {:Header "Weight" :accessor :weight :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count ogemigc-nr-list) :showPageSizeOptions false :className "-striped -highlight"}]]
+                        )
+
+
         ]]
       [v-box :class "element" :gap "20px" :children
        [(gt/element-box "talanx-checks" "100%" (str "Talanx concentration corp " date) talanx-checks-data-clean-corp
