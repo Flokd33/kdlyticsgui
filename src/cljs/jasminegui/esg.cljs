@@ -186,7 +186,8 @@
 (def msci-cols (concat [:Ticker :Country :Sector :Equity :ISIN :ID_ISIN :NAME] (map #(keyword (str "msci-" %)) server-msci-metrics)))
 
 (defn msci-table []
-  (let [data (vals @(rf/subscribe [:esg/msci-scores]))
+  (println  @(rf/subscribe [:esg/msci-scores]))
+  (let [data (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
     [v-box :gap "20px" :class "element" :width standard-box-width
      :children [

@@ -391,10 +391,9 @@
                                             [checkbox :model hide-zero-risk :label "Hide zero positions? (index won't sum to 100!)" :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]
                                             [gap :size "30px"]]
                                            (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
+                                                             [single-dropdown :width dropdown-width :filter-box? true :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]]
                                                             (filtering-row :single-portfolio-risk/filter)
                                                             [[gap :size "30px"]]))
-                                           ;(shortcut-row :single-portfolio-risk/shortcut)
                                            )]
                               [:div {:id "single-portfolio-risk-table"}
                                [tables/tree-table-risk-table

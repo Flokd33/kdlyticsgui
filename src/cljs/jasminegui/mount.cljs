@@ -218,7 +218,7 @@
                  :esg/data-detailed                                  []
                  :esg/refinitiv-structure                            []
                  :esg/selected-pillars                               (set nil)
-                 :esg/msci-scores                                    []
+                 :esg/msci-scores                                    nil
                  :esg/summary-report                                 []
                  :esg/engagements                                    []
                  :esg/security-notes                                 []
