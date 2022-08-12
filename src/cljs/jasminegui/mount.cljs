@@ -17,6 +17,7 @@
                  :instruments                                        {}
                  :rating-to-score                                    nil
                  :portfolios                                         []
+                 :portfolio-dropdown-map                             {}
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
                  :qt-date                                            ""
@@ -695,6 +696,7 @@
     (assoc db :portfolios portfolios
               :multiple-portfolio-risk/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :cembi)) static/portfolio-alignment-groups)))) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
               :multiple-portfolio-attribution/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :cembi)) static/portfolio-alignment-groups)))) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
+              :portfolio-dropdown-map (into [] (for [p portfolios] {:id p :label p}))
               )))
 
 (doseq [k [:single-portfolio-risk/filter
@@ -703,8 +705,7 @@
            :single-portfolio-attribution/filter
            :multiple-portfolio-attribution/filter
            :position-history/filter
-           :attribution-history/filter
-           ]]
+           :attribution-history/filter]]
   (rf/reg-event-db k (fn [db [_ id f]] (assoc-in db [k id] f))))
 
 (rf/reg-event-db

@@ -640,8 +640,7 @@
   [v-box :class "rightelement" :gap "20px" :padding "80px 20px" :width default-width
    :children [[trade-description]
               [h-box :gap "10px" :children (into [] (for [i (range (count (:tradeanalyser.implementation/trade-legs @(rf/subscribe [:implementation/trade-implementation]))))] [trade-leg i]))]
-              [h-box :gap "10px" :children [[parent-id-exposure] [cash-impact]]]
-              ]])
+              [h-box :gap "10px" :children [[parent-id-exposure] [cash-impact]]]]])
 
 (rf/reg-event-fx
   :implementation/show-implementation-selector

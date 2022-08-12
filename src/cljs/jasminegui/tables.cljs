@@ -270,8 +270,11 @@
 (defn total-txt [row] "Total")
 
 (defn text-col [header accessor width] {:Header header :accessor accessor :width width})
-(defn nb-col [header accessor width cell aggregate]
-  {:Header header :accessor accessor :width width :getProps red-negatives :Cell cell :filterable true :filterMethod nb-filter-OR-AND :aggregate aggregate})
+(defn nb-col
+  ([header accessor width cell aggregate]
+   (assoc (nb-col header accessor width cell) :aggregate aggregate))
+  ([header accessor width cell]
+   {:Header header :accessor accessor :width width :getProps red-negatives :Cell cell :filterable true :filterMethod nb-filter-OR-AND}))
 
 
 (def risk-table-columns

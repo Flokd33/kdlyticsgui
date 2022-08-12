@@ -459,7 +459,9 @@
   (fn [{:keys [db]} [_ portfolio]]
     {:db (assoc db :scorecard/portfolio portfolio)
      :fx [[:dispatch [:ta2022/post-sub-table-data {:portfolio portfolio
-                                                   :isinseq (map :isin (t/chainfilter {:portfolio portfolio :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db)))}]]]}))
+                                                   :isinseq   (map :isin (t/chainfilter {:portfolio portfolio :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db)))}]]
+          [:dispatch [:get-scorecard-attribution portfolio]]
+          ]}))
 
 (rf/reg-event-fx
   :scorecard/change-sector
@@ -485,11 +487,12 @@
         vdisplay @(rf/subscribe [:scorecard-risk/table])
         filtered-tree (tables/cljs-text-filter-OR @fins-pivot-filter @(rf/subscribe [:scorecard-risk/tree]))]
     [v-box :gap "20px" :align :start
-     :children [[h-box :class "element" :gap "20px" :align :center
-                 :children [[box :child [title :level :level1 :label "Portfolio and sector selection"]]
-                            [box :child [single-dropdown :width "250px" :model (rf/subscribe [:scorecard/portfolio]) :choices (into [] (for [x @(rf/subscribe [:portfolios])] {:id x :label x})) :filter-box? true :on-change #(do (rf/dispatch [:get-scorecard-attribution %]) (rf/dispatch [:scorecard/change-portfolio %]))]]
-                            [box :child [single-dropdown :width "250px" :placeholder "Sector" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true
-                                         :on-change #(do (rf/dispatch [:scorecard/change-sector %]) (rf/dispatch [:get-recent-trade-data (t/int->gdate (plus (today) (days -10))) (t/int->gdate (today))]))]]]]
+     :children [[h-box :class "element" :gap "20px"
+                 :children [[title :level :level1 :label "Portfolio and sector selection"]
+                            [box :align-self :center :child (gt/portfolio-dropdown-selector :scorecard/portfolio :scorecard-change-portfolio)]
+                            [box :align-self :center :child [single-dropdown :width "250px" :placeholder "Sector" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true
+                                                      :on-change #(do (rf/dispatch [:scorecard/change-sector %]) (rf/dispatch [:get-recent-trade-data (t/int->gdate (plus (today) (days -10))) (t/int->gdate (today))]))]]
+                            ]]
                 (gt/element-box "scorecard-risk" "100%" (str portfolio " " sector " risk") vdisplay
                              [[:> ReactTable
                                {:data           vdisplay

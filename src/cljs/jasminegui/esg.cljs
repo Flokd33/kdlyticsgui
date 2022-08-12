@@ -16,6 +16,7 @@
     [jasminegui.static :as static]
     [jasminegui.charting :as charting]
     [oz.core :as oz]
+    [jasminegui.guitools :as gt]
     [reagent.core :as r]
     [jasminegui.tools :as tools]
     [jasminegui.riskviews :as riskviews]
@@ -145,17 +146,7 @@
                   :showPagination false
                   :className      "-striped -highlight"}]]]))
 
-(defn nav-esg-bar []
-  (let [active-esg @(rf/subscribe [:esg/active-home])]
-    [h-box
-     :children [[v-box
-                 :gap "20px" :class "leftnavbar"
-                 :children (into []
-                                 (for [item static/esg-navigation]
-                                   [button
-                                    :class (str "btn btn-primary btn-block" (if (and (= active-esg (:code item))) " active"))
-                                    :label (:name item)
-                                    :on-click #(rf/dispatch [:esg/active-home (:code item)])]))]]]))
+
 
 (def server-msci-metrics ["CARBON_EMISSIONS_SCOPE_1"
                           "CARBON_EMISSIONS_SCOPE_2"
@@ -439,5 +430,4 @@
               [:div.output "nothing to display"])]))
 
 (defn esg-view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home] [modal-engagements]]])
-
+  [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/esg-navigation :esg/active-home) [active-home] [modal-engagements]]])

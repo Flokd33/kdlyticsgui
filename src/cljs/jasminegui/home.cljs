@@ -8,23 +8,20 @@
     [jasminegui.riskviews :as riskviews]
     [jasminegui.tradehistory :as tradehistory]
     [jasminegui.var :as var]
-    [reagent-contextmenu.menu :as rcm]))
+    [reagent-contextmenu.menu :as rcm]
+    [jasminegui.guitools :as gt]))
 
 
-(defn nav-home-bar []
-  (let [active-home @(rf/subscribe [:navigation/active-home])]
-    [h-box
-     :children [[v-box
-                 :gap "20px"
-                 :class "leftnavbar"
-                 :children (into (if false                  ;@(rf/subscribe [:time-machine/enabled])
-                                   []                       ;[alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " (subs (str @(rf/subscribe [:time-machine/date])) 0 8))]
-                                   [])
-                                 (for [item static/risk-navigation]
-                                   [button
-                                    :class (str "btn btn-primary btn-block" (if (and (= active-home (:code item))) " active"))
-                                    :label (:name item)
-                                    :on-click #(rf/dispatch [:navigation/active-home (:code item)])]))]]]))
+;(defn nav-home-bar []
+;  [v-box
+;   :gap "20px"
+;   :class "leftnavbar"
+;   :children (into []
+;                   (for [item static/risk-navigation]
+;                     [button
+;                      :class (str "btn btn-primary btn-block" (if (and (= @(rf/subscribe [:navigation/active-home]) (:code item))) " active"))
+;                      :label (:name item)
+;                      :on-click #(rf/dispatch [:navigation/active-home (:code item)])]))])
 
 (defn active-home []
   (let [active-home @(rf/subscribe [:navigation/active-home])]
@@ -47,7 +44,7 @@
 
 (defn home-view []
   [h-box :gap "10px" :padding "0px"
-   :children [[nav-home-bar]
+   :children [[gt/left-nav-bar static/risk-navigation :navigation/active-home]
               [active-home]
               [tradehistory/modal-single-bond-trade-history]
               [tradehistory/modal-single-bond-flat-trade-history]
