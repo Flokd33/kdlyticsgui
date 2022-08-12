@@ -62,11 +62,7 @@
           portfolio-total-line (-> ((:total-positions db) (keyword portfolio))
                                    (assoc :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
                                    (update :weight * 100.) (update :bm-weight * 100.) (update :weight-delta * 100.)
-                                   (update :contrib-yield * 100.) (update :bm-contrib-yield * 100.)
-                                   )
-          ;(assoc ((:total-positions db) (keyword portfolio)) :qt-iam-int-lt-median-rating "Total" :qt-iam-int-lt-median-rating-score "00 Total")
-          ;portfolio-positions (filter #(= (:portfolio %) portfolio) (:positions db))
-          ;viewable-positions (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0) portfolio-positions) portfolio-positions)
+                                   (update :contrib-yield * 100.) (update :bm-contrib-yield * 100.))
           xform (comp
                   (filter #(= (:portfolio %) portfolio))
                   (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0)) identity)
@@ -83,13 +79,11 @@
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) v2)
-          sorted-data2 (into [] (for [r sorted-data] (update r :qt-iam-int-lt-median-rating-score #(str "G" %))))
-          ]                                                 ;viewable-positions
+          sorted-data2 (into [] (for [r sorted-data] (update r :qt-iam-int-lt-median-rating-score #(str "G" %))))]                                                ;viewable-positions
       (clj->js
         (if (= (:single-portfolio-risk/display-style db) "Tree")
           (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data2))
-          (conj sorted-data2 portfolio-total-line)))
-      )))
+          (conj sorted-data2 portfolio-total-line))))))
 
 (rf/reg-sub
   :single-portfolio-attribution/clean-table
@@ -112,37 +106,30 @@
         (conj sorted-data portfolio-total-line)))))
 
 
-;(defn seek [coll] (first (remove nil? coll)))
-
 (defn get-pivoted-data [instrument-definition table portfolios instruments field]
   (let [grp (group-by (juxt :id :portfolio) table)]
     (into [] (for [instrument instruments]
                (into (if-let [d (get instrument-definition instrument)] d {}) ;if server has undefined data u still want a map
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
-(defn get-pivoted-data-with-nominal [instrument-definition table portfolios instruments field]
+(defn get-pivoted-data-with-nominal [instrument-definition accessors-k table portfolios instruments field]
+  (println (first instrument-definition))
   (let [grp (group-by (juxt :id :portfolio) table)
-        kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)]
+        kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)
+        all-fields (conj accessors-k field :isin :description)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
     (into [] (for [instrument instruments]
-               (let [line (into (if-let [d (get instrument-definition instrument)] d {})
+               (let [line (into (if-let [d (select-keys (get instrument-definition instrument) all-fields)] d {})
                                 (for [p portfolios] {(keyword p)                       (reduce + (map field (get-in grp [[instrument p]])))
                                                      (keyword (str p "_totalnominal")) (reduce + (map :original-quantity (get-in grp [[instrument p]])))}))]
                  (assoc line :original-quantity (reduce + (map line kswn))))))))
 ;(apply merge {:a 1 :b 2} (for [i (range 3)] {(str "p" i) i (str "l" i) (* 2 i)}))
 
-;(defn get-pivoted-data [instrument-definition table portfolios instruments field]
-;  (let [grp (group-by (juxt :id :portfolio) table)]
-;    (into [] (for [instrument instruments]
-;               (into (get instrument-definition instrument)
-;                     (for [p portfolios]
-;                       [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]
-;                       ;[(keyword p) (if (seq (get-in grp [[instrument p]])) (reduce + (map field (get-in grp [[instrument p]]))) 0.)]
-;                       ))))))
 
 
 (rf/reg-sub
   :multiple-portfolio-risk/table
   (fn [db]
+
     (let [kselected-portfolios (mapv keyword (:multiple-portfolio-risk/selected-portfolios db))
           hide-zero-risk (:multiple-portfolio-risk/hide-zero-holdings db)
           display-key-one (:multiple-portfolio-risk/field-one db)
@@ -150,7 +137,7 @@
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           pos (t/chainfilter {:portfolio #(some #{%} (:multiple-portfolio-risk/selected-portfolios db))} (:positions db))
-          pivoted-data (get-pivoted-data-with-nominal (get db :instruments) pos (:multiple-portfolio-risk/selected-portfolios db) (distinct (map :id pos)) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
+          pivoted-data (get-pivoted-data-with-nominal (get db :instruments) accessors-k pos (:multiple-portfolio-risk/selected-portfolios db) (distinct (map :id pos)) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
           pivoted-data-hide-zero (if hide-zero-risk (filter thfil pivoted-data) pivoted-data)
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-hide-zero)
@@ -277,15 +264,6 @@
   (clj->js {:onClick #(fnevt state rowInfo instance %) :style {:cursor "pointer"}}))
 
 
-
-;(defn single-bond-trade-flat-history [state rowInfo instance]
-;  (clj->js {:onClick #(rf/dispatch [:get-single-bond-flat-history
-;                                   (aget rowInfo "row" "_original" "NAME")
-;                                   (aget rowInfo "row" "_original" "id")
-;                                   @(rf/subscribe [:portfolios])
-;                                   "01Jan2019"
-;                                   @(rf/subscribe [:qt-date])])
-;            :style {:cursor "pointer"}}))
 
 (def multiple-portfolio-risk-display-view (atom nil))
 

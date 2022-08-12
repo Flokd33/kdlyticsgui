@@ -156,7 +156,7 @@
                                         (some #{(first (.split @bloomberg-request-security-2 " "))} all-isins) (= @bloomberg-request-field-2 "PX_LAST")
                                         (= @operator "-") (= @comparison ">")) (str "> " @comparison-value " px vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
                                    :else "Failed to guess"))]
-    (println  @(rf/subscribe [:ta2022/trade-history]))
+    ;(println  @(rf/subscribe [:ta2022/trade-history]))
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Suggestions:"] [v-box :children (vec (remove nil? (into [] (for [line (sort-by :name (:indexcomps @(rf/subscribe [:ta2022/trade-history])))] [p (str (:name line) "@" (:latest line) "bps, code " (:bbg-code line))]))))]]]
                 [hb [[label :width lw :label "Security 1"]
