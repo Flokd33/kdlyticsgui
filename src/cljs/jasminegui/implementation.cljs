@@ -480,7 +480,7 @@
         [gap :size "10px"]]
        (into [] (apply concat (for [p portfolios :when (not (some #{p} ["OG-LESS-CHRE" "OG-INF-HDG" "OG-EQ-HDG"]))]
                            (let [pos (r/cursor leg [:allocation (keyword p) :target])]
-                             (conj (if (some #{p} ["IALEEMCD" "AIFGLBCD" "OGEMIGC" "IMRAGEMD" "ITLXEMD" "OGEMEMSD" "OGEMHCD" "IMETEMCD" "ITLXEMD4" "WISHLIST"])
+                             (conj (if (some #{p} ["IALEEMCD" "AIFGLBCD" "OGEMIGC" "IMRAGEMD" "ITLXEMD" "OGEMHCD" "IMETEMCD" "ITLXEMD4" "WISHLIST"])
                                      [[gap :size "5px"] [box :align-self :center :width "100%" :child [line :color "#134848" :size "1px"]] [gap :size "5px"]] [])
                                    [h-box :width "100%" :align :center :justify :between
                                     :children [[box :width dw :child [label :label p]]
