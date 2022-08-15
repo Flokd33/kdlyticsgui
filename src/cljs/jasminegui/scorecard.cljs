@@ -252,8 +252,7 @@
         sector-filter (fn [row] (if (= sector "Sector") true (= (second (next (next (next (next row))))) sector)))
         final-data (->> data
                         (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter sector-filter v))])))
-                        (filter empty-filter)
-                        )
+                        (filter empty-filter))
         ]
     (gt/element-box "scorecard-scores" "100%" (str "14 day trade history " sector) final-data
                     (concat
@@ -489,7 +488,7 @@
     [v-box :gap "20px" :align :start
      :children [[h-box :class "element" :gap "20px"
                  :children [[title :level :level1 :label "Portfolio and sector selection"]
-                            [box :align-self :center :child (gt/portfolio-dropdown-selector :scorecard/portfolio :scorecard-change-portfolio)]
+                            [box :align-self :center :child (gt/portfolio-dropdown-selector :scorecard/portfolio :scorecard/change-portfolio)]
                             [box :align-self :center :child [single-dropdown :width "250px" :placeholder "Sector" :model (rf/subscribe [:scorecard/sector]) :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true
                                                       :on-change #(do (rf/dispatch [:scorecard/change-sector %]) (rf/dispatch [:get-recent-trade-data (t/int->gdate (plus (today) (days -10))) (t/int->gdate (today))]))]]
                             ]]

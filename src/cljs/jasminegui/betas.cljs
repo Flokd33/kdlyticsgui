@@ -8,7 +8,6 @@
     [re-com.util :refer [px]]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     ["react-table-v6" :as rt :default ReactTable]
-    [jasminegui.mount :as mount]
     [jasminegui.tables :as tables]
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
@@ -19,7 +18,8 @@
 (defn view []
   (let [data @(rf/subscribe [:betas/table])
         default-beta-line {:width 75 :Cell tables/round2 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}
-        download-columns [:NAME :isin :qt-risk-country-name :qt-jpm-sector :qt-final-maturity-band :qt-yield :qt-govt-spread :qt-libor-spread :qt-modified-duration :total-return-ytd :jensen-ytd :xsr-6m :xsr-9m :xsr-12m :beta-vs-cembi-duration :beta-vs-cembi-sector  :beta-vs-cembi-country  :beta-vs-cembi-up :beta-vs-cembi-dw  :beta-vs-cembi-rating :beta-vs-embi-country :beta-vs-cembi-ig :beta-vs-ust :beta-vs-embi :beta-vs-ushy :beta-vs-blend333333 :beta-vs-blend502525 :beta-vs-gbiem  :beta-vs-blend5050  :cembi-beta-last-year :beta-vs-spx :cembi-beta-previous-year :beta-vs-usig :beta-vs-cembi-hy ]]
+        download-columns [:NAME :isin :qt-risk-country-name :qt-jpm-sector :qt-final-maturity-band :qt-yield :qt-govt-spread :qt-libor-spread :qt-modified-duration :total-return-ytd :jensen-ytd :xsr-6m :xsr-9m :xsr-12m :beta-vs-cembi-duration :beta-vs-cembi-sector  :beta-vs-cembi-country  :beta-vs-cembi-up :beta-vs-cembi-dw  :beta-vs-cembi-rating :beta-vs-embi-country :beta-vs-cembi-ig :beta-vs-ust :beta-vs-embi :beta-vs-ushy :beta-vs-blend333333 :beta-vs-blend502525 :beta-vs-gbiem  :beta-vs-blend5050  :cembi-beta-last-year :beta-vs-spx :cembi-beta-previous-year :beta-vs-usig :beta-vs-cembi-hy ]
+        f (fn [line] (merge line default-beta-line))]
     [box :padding "80px 25px" :child
      [v-box :class "subbody element"  :gap "20px"
       :children [[h-box :align :center :children [[title :label (str "One year betas vs benchmarks") :level :level1]
@@ -36,39 +36,31 @@
 
                                                        (if (@table-checkboxes :Returns?) [{:Header "Total return" :columns (mapv tables/risk-table-columns [:total-return-ytd :jensen-ytd])}
                                                                                           {:Header  "Excess return"
-                                                                                           :columns (into [] (for [line [{:Header "6M" :accessor "xsr-6m"}
-                                                                                                                         {:Header "9M" :accessor "xsr-9m"}
-                                                                                                                         {:Header "12M" :accessor "xsr-12m"}]]
-                                                                                                               (merge line default-beta-line)))}])
+                                                                                           :columns (mapv f [{:Header "6M" :accessor "xsr-6m"}
+                                                                                                             {:Header "9M" :accessor "xsr-9m"}
+                                                                                                             {:Header "12M" :accessor "xsr-12m"}])}])
                                                        (if (@table-checkboxes :CEMBI?) [{:Header  "CEMBI betas"
-                                                                                         :columns (into [] (for [line [{:Header "Broad" :accessor "cembi-beta-last-year"}
-                                                                                                                       {:Header "Broad LY" :accessor "cembi-beta-previous-year"}
-                                                                                                                       {:Header "IG" :accessor "beta-vs-cembi-ig"}
-                                                                                                                       {:Header "HY" :accessor "beta-vs-cembi-hy"}
-                                                                                                                       {:Header "Country" :accessor "beta-vs-cembi-country"}
-                                                                                                                       {:Header "Rating" :accessor "beta-vs-cembi-rating"}
-                                                                                                                       {:Header "Sector" :accessor "beta-vs-cembi-sector"}
-                                                                                                                       {:Header "Duration" :accessor "beta-vs-cembi-duration"}]]
-                                                                                                             (merge line default-beta-line)))}])
+                                                                                         :columns (mapv f [{:Header "Broad" :accessor "cembi-beta-last-year"}
+                                                                                                           {:Header "Broad LY" :accessor "cembi-beta-previous-year"}
+                                                                                                           {:Header "IG" :accessor "beta-vs-cembi-ig"}
+                                                                                                           {:Header "HY" :accessor "beta-vs-cembi-hy"}
+                                                                                                           {:Header "Country" :accessor "beta-vs-cembi-country"}
+                                                                                                           {:Header "Rating" :accessor "beta-vs-cembi-rating"}
+                                                                                                           {:Header "Sector" :accessor "beta-vs-cembi-sector"}
+                                                                                                           {:Header "Duration" :accessor "beta-vs-cembi-duration"}])}])
                                                        (if (@table-checkboxes :EMBI?) [{:Header  "EMBI betas"
-                                                                                        :columns (into [] (for [line [{:Header "Broad" :accessor "beta-vs-embi"}
-                                                                                                                      {:Header "Country" :accessor "beta-vs-embi-country"}]]
-                                                                                                            (merge line default-beta-line)))}])
+                                                                                        :columns (mapv f [{:Header "Broad" :accessor "beta-vs-embi"}
+                                                                                                          {:Header "Country" :accessor "beta-vs-embi-country"}])}])
                                                        (if (@table-checkboxes :Blend?) [{:Header  "Blend betas"
-                                                                                         :columns (into [] (for [line [{:Header "502525" :accessor "beta-vs-blend502525"}
-                                                                                                                       {:Header "5050HCLC" :accessor "beta-vs-blend5050"}
-                                                                                                                       {:Header "333333" :accessor "beta-vs-blend333333"}
-                                                                                                                       {:Header "GBIEM" :accessor "beta-vs-gbiem"}
-                                                                                                                       ]]
-                                                                                                             (merge line default-beta-line)))}])
+                                                                                         :columns (mapv f [{:Header "502525" :accessor "beta-vs-blend502525"}
+                                                                                                           {:Header "5050HCLC" :accessor "beta-vs-blend5050"}
+                                                                                                           {:Header "333333" :accessor "beta-vs-blend333333"}
+                                                                                                           {:Header "GBIEM" :accessor "beta-vs-gbiem"}])}])
                                                        (if (@table-checkboxes :Other?) [{:Header  "Other betas"
-                                                                                         :columns (into [] (for [line [{:Header "USIG" :accessor "beta-vs-usig"}
-                                                                                                                       {:Header "USHY" :accessor "beta-vs-ushy"}
-                                                                                                                       {:Header "UST5-7Y" :accessor "beta-vs-ust"}
-                                                                                                                       {:Header "S&P500" :accessor "beta-vs-spx"}
-                                                                                                                       {:Header "CEMBI UP" :accessor "beta-vs-cembi-up"}
-                                                                                                                       {:Header "CEMBI DW" :accessor "beta-vs-cembi-dw"}
-                                                                                                                       ]]
-                                                                                                             (merge line default-beta-line)))}]))))
-
+                                                                                         :columns (mapv f [{:Header "USIG" :accessor "beta-vs-usig"}
+                                                                                                           {:Header "USHY" :accessor "beta-vs-ushy"}
+                                                                                                           {:Header "UST5-7Y" :accessor "beta-vs-ust"}
+                                                                                                           {:Header "S&P500" :accessor "beta-vs-spx"}
+                                                                                                           {:Header "CEMBI UP" :accessor "beta-vs-cembi-up"}
+                                                                                                           {:Header "CEMBI DW" :accessor "beta-vs-cembi-dw"}])}]))))
                    :showPagination true :defaultPageSize 15 :pageSizeOptions [15 25 50 100] :filterable true :defaultFilterMethod tables/text-filter-OR :className "-striped -highlight"}]]]]))

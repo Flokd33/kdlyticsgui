@@ -227,6 +227,7 @@
                  :esg/engagement-throbber                            false
                  :esg/ungc-problem-securities                        []
                  :esg/msci-ccc-weight                                []
+                 :esg/analyst-commentary                              []
 
                  :quant-model/model-output                           []
                  :quant-model/model-js-output                        #js []
@@ -475,6 +476,7 @@
            :esg/tamale-body
            :esg/ungc-problem-securities
            :esg/msci-ccc-weight
+           :esg/analyst-commentary
 
            :trade-history/active-home
 
@@ -911,6 +913,8 @@
 
    {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "msci-data-output" :dispatch-key [:esg/msci-scores]}
    {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
+
+   {:get-key :get-esg-analyst-commentary :namespace "jasmine.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
 
 
    {:get-key :get-issuer-coverage   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}

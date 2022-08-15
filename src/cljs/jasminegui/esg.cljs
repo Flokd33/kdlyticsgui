@@ -412,6 +412,29 @@
                   :className           "-striped -highlight"}]]]))
 
 
+(defn esg-commentary-table []
+  (let [data @(rf/subscribe [:esg/analyst-commentary])
+        header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
+    (when (zero? (count data)) (rf/dispatch [:get-esg-analyst-commentary]))
+    [v-box :gap "20px" :class "element" :width standard-box-width
+     :children [
+                [h-box :align :center :children [[title :label "ESG analyst commentary" :level :level1]
+                                                 [gap :size "1"]
+                                                 [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (sort-by :Ticker data) "esg-analyst-commentary"  ["Issuer"	"TICKER"	"Sector"	"Reason_for_inclusion_as_a_potential_ESG_risk"	"Comment_Date"	"COMMENT"])]]]
+                [:> ReactTable
+                 {:data                data
+                  :columns             [{:Header "Name" :accessor "Issuer" :width 100}
+                                        {:Header "Ticker" :accessor "TICKER" :width 100}
+                                        {:Header "Sector" :accessor "Sector" :width 55}
+                                        {:Header "Reason for inclusion" :accessor "Reason_for_inclusion_as_a_potential_ESG_risk" :width 120}
+                                        {:Header "Date" :accessor "Comment_Date" :width 65 }
+                                        {:Header "Comment" :accessor "COMMENT" :width 65 }]
+                  :pageSize            20
+                  :showPagination      true
+                  ;:defaultSorted       [{:id :Ticker :desc false}]
+                  :filterable          true
+                  :defaultFilterMethod tables/text-filter-OR
+                  :className           "-striped -highlight"}]]]))
 
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
@@ -420,6 +443,7 @@
      :child (case active-esg
               :msci [msci-table]
               :ungc [ungc-table]
+              :esg-commentary [esg-commentary-table]
               :refinitiv [v-box :gap "20px" :class "body" :children [[refinitiv-find-issuers] [refinitiv-table-top-view] [refinitiv-table-detailed-view]]]
               :gb-scoring [esgreport/green-bond-scoring-display]
               :tf-scoring [esgreport/transition-fund-scoring-display]

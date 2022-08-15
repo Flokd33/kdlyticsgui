@@ -3,14 +3,10 @@
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                          single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
-    [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
-    [re-com.util :refer [px]]
     [re-frame.core :as rf]
     [reagent.core :as r]
     [jasminegui.tools :as t]
-    [jasminegui.static :as static]
-    )
-  )
+    [jasminegui.static :as static]))
 
 (defn element-box-generic
   "opts will have either :download-table or :on-click-action, and can have target-id"
@@ -92,19 +88,21 @@
   (let [risk-filter (rf/subscribe [key])]
     [h-box :gap "10px" :align :center
      :children (into [] (for [i (range 1 4)]
-               [single-dropdown
-                :width "125px"
-                :model (r/cursor risk-filter [i])
-                :choices (if (.includes ^string (str key) "attribution") static/attribution-choice-map static/risk-choice-map)
-                :disabled? (and (= i 3) (some #{key} [:position-history/filter :attribution-history/filter]))
-                :on-change #(rf/dispatch [:filtering-row-change key i %])]))]))
+                          ^{:key (str "filtering" i)}
+                          [single-dropdown
+                           :width "125px"
+                           :model (r/cursor risk-filter [i])
+                           :choices (if (.includes ^string (str key) "attribution") static/attribution-choice-map static/risk-choice-map)
+                           :disabled? (and (= i 3) (some #{key} [:position-history/filter :attribution-history/filter]))
+                           :on-change #(rf/dispatch [:filtering-row-change key i %])]))]))
 
 (defn left-nav-bar
   [choices navigation-key]
   [v-box :gap "20px" :class "leftnavbar"
    :children (into []
                    (for [item choices]
+                     ^{:key item}
                      [button
-                      :class (str "btn btn-primary btn-block" (if (and (= @(rf/subscribe [navigation-key]) (:code item))) " active"))
+                      :class (str "btn btn-primary btn-block" (if (= @(rf/subscribe [navigation-key]) (:code item)) " active"))
                       :label (:name item)
                       :on-click #(rf/dispatch [navigation-key (:code item)])]))])
