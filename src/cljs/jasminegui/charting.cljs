@@ -155,3 +155,20 @@
                 :y       {:field "value", :type "quantitative", :axis {:title nil :labelFontSize chart-text-size}}
                 :tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
                 :color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}}}))
+
+(defn stacked-vertical-bars-2 [data title]
+  (let [data-raw data
+        data-clean (filter #(not (nil? (:original-quantity %))) data-raw)
+
+        ]
+    (println data-clean)
+    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
+     :data     {:values data-clean},
+     :width    700
+     :height   400
+     :mark     "bar"
+     :encoding {:x       {:field "date" :type "ordinal" :axis {:title nil :labelFontSize 15}}
+                :y       {:field "local-value" :type "nominal" :axis {:title nil :labelFontSize 15}}
+                ;:tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
+                ;:color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}
+                }}))

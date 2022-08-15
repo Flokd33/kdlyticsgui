@@ -109,6 +109,8 @@
                  :position-history/breakdown                         "Start/End"
                  :position-history/absdiff                           :absolute
                  :position-history/data                              []
+                 :position-history-nav/data                           nil
+                 :position-history/isin                          ""
 
 
 
@@ -383,6 +385,8 @@
            :position-history/breakdown
            :position-history/field-one
            :position-history/absdiff
+           :position-history-nav/data
+           :position-history/isin
 
            :attribution-history/portfolio
            :attribution-history/hide-zero-holdings
@@ -898,7 +902,7 @@
    {:get-key :get-total-positions             :namespace "jasmine.positions"  :asset "total-lines"                  :dispatch-key [:total-positions]}
    {:get-key :get-instruments                 :namespace "jasmine.positions"  :asset "instruments"                  :dispatch-key [:instruments]}
    {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
-   {:get-key :get-ogemigc-nr-bucket           :namespace "jasmine.positions"  :asset "ogemigc-unrated-bucket-list"  :dispatch-key [:ogemigc-nr-bucket]}
+
    {:get-key :get-esg-summary-report          :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
    {:get-key :get-ccc-weight                  :namespace "jasmine.positions"  :asset  "msci-ccc-weight"             :dispatch-key [:esg/msci-ccc-weight]}
 
@@ -912,6 +916,7 @@
    {:get-key :get-integrity         :namespace "jasmine.integrity"  :asset "integrity-map"        :dispatch-key [:integrity]}
    {:get-key :get-portfolio-checks  :namespace "jasmine.integrity"  :asset "portfolio-check-map" :dispatch-key [:portfolio-checks]}
    {:get-key :get-talanx-checks     :namespace "jasmine.integrity"  :asset "talanx-check-map"    :dispatch-key [:talanx-checks]}
+   {:get-key :get-ogemigc-nr-bucket           :namespace "jasmine.integrity"  :asset "ogemigc-nr-map"  :dispatch-key [:ogemigc-nr-bucket]}
 
    {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "msci-data-output" :dispatch-key [:esg/msci-scores]}
    {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}

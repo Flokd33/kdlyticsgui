@@ -752,6 +752,13 @@
      :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq}
                           :dispatch-key [:position-history/data]}}))
 
+(rf/reg-event-fx
+  :get-position-history-nav
+  (fn [{:keys [db]} [_ portfolio isin dateseq]]
+    {                                                       ;:db                 (assoc db :navigation/show-mounting-modal true)
+     :http-post-dispatch {:url (str static/server-address "position-history-nav") :edn-params {:portfolio portfolio :isin isin :dateseq dateseq}
+                          :dispatch-key [:position-history-nav/data]}}))
+
 (rf/reg-event-db
   :position-history/data
   (fn [db [_ data]] (assoc db :navigation/show-mounting-modal false :position-history/data data)))
@@ -795,32 +802,55 @@
 (def position-history-display-view (atom nil))
 (def position-history-chart-data (r/atom nil))
 
-(defn position-historical-dates [] (vec
-                                 (flatten
-                                   (conj ["20181231"
-                                        "20190329"
-                                        "20190628"
-                                        "20190930"
-                                        "20191231"
-                                        "20200331"
-                                        "20200630"
-                                        "20200929"
-                                        "20201231"
-                                        "20210129"
-                                        "20210226"
-                                        "20210331"
-                                        "20210429"
-                                        "20210528"
-                                        "20210630"
-                                        "20210730"
-                                        "20210831"
-                                        "20210930"
-                                        "20211102"
-                                        "20211130"]
-                                       @(rf/subscribe [:list-dates-position-history])
-                                       ))))
+(defn position-historical-dates [] (concat ["20181231"
+                                            "20190329"
+                                            "20190628"
+                                            "20190930"
+                                            "20191231"
+                                            "20200331"
+                                            "20200630"
+                                            "20200929"
+                                            "20201231"
+                                            "20210129"
+                                            "20210226"
+                                            "20210331"
+                                            "20210429"
+                                            "20210528"
+                                            "20210630"
+                                            "20210730"
+                                            "20210831"
+                                            "20210930"]
+                                           @(rf/subscribe [:list-dates-position-history])
+                                           ))
+(defn position-history-isin []
+  ;(rf/dispatch [:get-position-history-nav "OGEMCORD" "XS2388496247" (position-historical-dates)])
+  (let [data @(rf/subscribe [:position-history-nav/data])
+        portfolio (rf/subscribe [:position-history/portfolio])
+        isin (rf/subscribe [:position-history/isin])
+        portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))]
+    (println @portfolio)
+    (println @isin)
+    (println (position-historical-dates))
+    (println data)
+
+    [box :class "subbody rightelement" :child
+     (gt/element-box-generic "Position history" max-width (str "Position history (security level)")
+                             {:target-id "position-history-risk-table-isin"}
+                             [[h-box :gap " 10px " :align :center
+                               :children [[title :label "Portfolio:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:position-history/portfolio %])]
+                                          [gap :size "10px"]
+                                          [title :label "Isin:" :level :level3]
+                                          [input-text :width "110px" :model isin :attr {:maxlength 12} :change-on-blur? true :on-change #(rf/dispatch [:position-history/isin %])] ;:attr {:maxlength 12}
+                                          [gap :size "10px"]
+                                          [button :label "Fetch" :class "btn btn-primary btn-block"
+                                           :on-click #(rf/dispatch [:get-position-history-nav @portfolio @isin (position-historical-dates)])]
+                                          ]]
+                              [oz/vega-lite (charting/stacked-vertical-bars-2 data "Position history")]
+                              ])]))
 
 (defn position-history []
+  ;(rf/dispatch [:get-position-history-nav "OGEMCORD" :local-value ["20210831" "20210930"]]) ;(position-historical-dates)
   (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
         qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7)))
