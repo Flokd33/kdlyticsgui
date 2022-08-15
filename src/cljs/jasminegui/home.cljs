@@ -39,6 +39,7 @@
       :proxies                        [var/main-proxy-view]
       :position-history               [riskviews/position-history]
       :allianz-loss-report            [riskviews/allianz-loss-report]
+      :position-history-sec           [riskviews/position-history-isin]
       [:div.output "nothing to display"])))
 
 

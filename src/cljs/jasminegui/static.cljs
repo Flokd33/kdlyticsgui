@@ -41,6 +41,7 @@
    {:code :proxies             :name "Bond proxies"}
    {:code :position-history    :name "Position history"}
    {:code :allianz-loss-report :name "Allianz P&L budget"}
+   {:code :position-history-sec :name "Position history 2"}
    ])
 
 (def trade-history-navigation
@@ -267,7 +268,6 @@
                                 "20210930"
                                 "20211102"                             ; "29Oct21"
                                 "20211130"
-
                                 "20211231"
                                 "20220131"
                                 "20220228"
