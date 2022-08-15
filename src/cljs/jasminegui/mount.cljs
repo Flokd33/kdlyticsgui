@@ -319,6 +319,7 @@
 
                  :allianz-loss-report                                []
                  :ogemigc-nr-bucket                                  []
+                 :global-debt-and-equity-levels                       []
 
                  :dummy                                              nil                                 ;can be useful
                  })
@@ -549,6 +550,7 @@
            :implementation/live-cast-parent-positions
 
            :allianz-loss-report
+           :global-debt-and-equity-levels
            :ogemigc-nr-bucket
            :dummy
 
@@ -914,7 +916,8 @@
    {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "msci-data-output" :dispatch-key [:esg/msci-scores]}
    {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
 
-   {:get-key :get-esg-analyst-commentary :namespace "jasmine.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
+   {:get-key :get-esg-analyst-commentary :namespace "common.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
+   {:get-key :get-global-debt-and-equity-levels :namespace "common.xlscsvassets"  :asset "global-debt-and-equity-levels" :dispatch-key [:global-debt-and-equity-levels]}
 
 
    {:get-key :get-issuer-coverage   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}

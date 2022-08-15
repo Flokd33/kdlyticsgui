@@ -658,7 +658,7 @@
         talanx-checks-data-clean-corp (filter #(= (:sov-or-corp %) "corp") talanx-checks-data-clean)
         talanx-checks-data-clean-sov (filter #(= (:sov-or-corp %) "sov") talanx-checks-data-clean)
         date @(rf/subscribe [:qt-date])]
-    (println ogemigc-nr-list)
+    ;(println ogemigc-nr-list)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav

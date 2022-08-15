@@ -41,6 +41,7 @@
    {:code :proxies             :name "Bond proxies"}
    {:code :position-history    :name "Position history"}
    {:code :allianz-loss-report :name "Allianz P&L budget"}
+   {:code :gdel                :name "Global debt levels"}
    ])
 
 (def trade-history-navigation
