@@ -62,8 +62,8 @@
       :large-exposures                [riskviews/large-exposures]
       :var                            [var/main-var-view]
       :proxies                        [var/main-proxy-view]
+      :portfolio-history              [riskviews/portfolio-history]
       :position-history               [riskviews/position-history]
-      :position-history-isin          [riskviews/position-history-2]
       :allianz-loss-report            [riskviews/allianz-loss-report]
       :gdel                           [global-debt-and-equity-levels]
       [:div.output "nothing to display"])))
