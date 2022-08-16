@@ -144,6 +144,7 @@
         xfields (remove #(= % "_pivotVal") (keys (first rt-pivot-data)))
         colors (take (count (keys grp)) performance-colors)
         new-data (into [] (for [g (keys grp) x xfields] {:ygroup g :xgroup (t/gdate->ddMMMyy (t/int->gdate x)) :value (get (first (grp g)) x)}))]
+    (println new-data)
       {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
      :width    (* 30 (count colors)) :height 400
@@ -158,17 +159,17 @@
 
 (defn stacked-vertical-bars-2 [data title]
   (let [data-raw data
-        data-clean (filter #(not (nil? (:original-quantity %))) data-raw)
-
-        ]
-    (println data-clean)
+        data-clean (filter #(not (or (nil? (:original-quantity %)) (zero? (:original-quantity %)))) data-raw)
+        new-data (map #(assoc % :weight (* (% :weight) 100) :date (subs (% :date) 0 6)) data-clean)]
+    (println data-raw)
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
-     :data     {:values data-clean},
-     :width    700
+     :data     {:values new-data},
+     :width    400
      :height   400
-     :mark     "bar"
-     :encoding {:x       {:field "date" :type "ordinal" :axis {:title nil :labelFontSize 15}}
-                :y       {:field "local-value" :type "nominal" :axis {:title nil :labelFontSize 15}}
-                ;:tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
-                ;:color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}
-                }}))
+     :encoding {:x       {:field "date" :type "nominal" :axis {:title nil :labelFontSize 15}}}
+     :layer [{:mark      {:type "bar" :color "#134848"}
+              :encoding {:y       {:field "original-quantity" :type "quantitative" :axis {:title "Nominal" :labelFontSize 15 :titleColor "#134848"}}}}
+              {:mark     {:type "line" :color "#ED1C0B"}
+               :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleColor "#134848"}}}}]
+     :resolve {:scale {:y "independent" }}
+     }))
