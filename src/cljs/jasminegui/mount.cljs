@@ -17,6 +17,7 @@
                  :instruments                                        {}
                  :rating-to-score                                    nil
                  :portfolios                                         []
+                 :portfolio-dropdown-map                             {}
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
                  :qt-date                                            ""
@@ -222,7 +223,7 @@
                  :esg/data-detailed                                  []
                  :esg/refinitiv-structure                            []
                  :esg/selected-pillars                               (set nil)
-                 :esg/msci-scores                                    []
+                 :esg/msci-scores                                    nil
                  :esg/summary-report                                 []
                  :esg/engagements                                    []
                  :esg/security-notes                                 []
@@ -230,6 +231,7 @@
                  :esg/engagement-throbber                            false
                  :esg/ungc-problem-securities                        []
                  :esg/msci-ccc-weight                                []
+                 :esg/analyst-commentary                              []
 
                  :quant-model/model-output                           []
                  :quant-model/model-js-output                        #js []
@@ -321,6 +323,7 @@
 
                  :allianz-loss-report                                []
                  :ogemigc-nr-bucket                                  []
+                 :global-debt-and-equity-levels                       []
 
                  :dummy                                              nil                                 ;can be useful
                  })
@@ -482,6 +485,7 @@
            :esg/tamale-body
            :esg/ungc-problem-securities
            :esg/msci-ccc-weight
+           :esg/analyst-commentary
 
            :trade-history/active-home
 
@@ -554,6 +558,7 @@
            :implementation/live-cast-parent-positions
 
            :allianz-loss-report
+           :global-debt-and-equity-levels
            :ogemigc-nr-bucket
            :dummy
 
@@ -703,6 +708,7 @@
     (assoc db :portfolios portfolios
               :multiple-portfolio-risk/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :cembi)) static/portfolio-alignment-groups)))) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
               :multiple-portfolio-attribution/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :cembi)) static/portfolio-alignment-groups)))) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
+              :portfolio-dropdown-map (into [] (for [p portfolios] {:id p :label p}))
               )))
 
 (doseq [k [:single-portfolio-risk/filter
@@ -711,8 +717,7 @@
            :single-portfolio-attribution/filter
            :multiple-portfolio-attribution/filter
            :position-history/filter
-           :attribution-history/filter
-           ]]
+           :attribution-history/filter]]
   (rf/reg-event-db k (fn [db [_ id f]] (assoc-in db [k id] f))))
 
 (rf/reg-event-db
@@ -920,6 +925,9 @@
    {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "msci-data-output" :dispatch-key [:esg/msci-scores]}
    {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
 
+   {:get-key :get-esg-analyst-commentary :namespace "common.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
+   {:get-key :get-global-debt-and-equity-levels :namespace "common.xlscsvassets"  :asset "global-debt-and-equity-levels" :dispatch-key [:global-debt-and-equity-levels]}
+
 
    {:get-key :get-issuer-coverage   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
    ])
@@ -937,7 +945,7 @@
   (rf/reg-event-fx
     (:get-key line)
     (fn [{:keys [db]} [_]]
-      (if (zero? (count (get-in db [(:dispatch-key line)])))     ;if it wasn't mounted yet we need to load it
+      (if (zero? (count (get-in db (:dispatch-key line))))     ;if it wasn't mounted yet we need to load it
         {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
          :http-get-asset line}))))
 

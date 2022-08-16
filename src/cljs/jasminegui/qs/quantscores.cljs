@@ -86,33 +86,6 @@
     {:http-post-dispatch {:url (str static/server-address "quant-model-save-new-advanced-chart")
                           :edn-params {:id id :model-type model-type :rating-curves (remove nil? (seq rating-curves)) :rating-curves-sov-only spot-chart-2d-curves-sov-only :advanced-filter advanced-filter}
                           :dispatch-key [:dummy]}}))
-(defn nav-qs-bar []
-  (let [active-var @(rf/subscribe [:navigation/active-qs])]
-    [h-box
-     :children [[v-box
-                 :gap "20px" :class "leftnavbar"
-                 :children (into []
-                                 (for [item static/qs-navigation]
-                                   [button
-                                    :class (str "btn btn-primary btn-block" (if (and (= active-var (:code item))) " active"))
-                                    :label (:name item)
-                                    :on-click #(rf/dispatch [:navigation/active-qs (:code item)])]))]]]))
-
-
-
-;(rf/reg-event-db
-;  :model-portfolios/weights
-;  (fn [db [_ m isin weight]] (assoc-in db [:model-portfolios/weights m isin] weight)))
-
-
-;isin_id
-;S&P
-;Moodys
-;Fitch
-;S&P-score
-;Fitch-score
-;Moodys-score
-;
 
 
 (rf/reg-event-fx
@@ -127,7 +100,6 @@
                   ])
      }))
 
-;(rf/dispatch [:ta2022/go-to-active-trade @(rf/subscribe [:ta2022/trade-isin])])
 
 (rf/reg-event-fx
   :quant-screen-to-ta2022
@@ -137,8 +109,7 @@
      :fx [[:dispatch [:ta2022/go-to-active-trade isin]]
           ;[:dispatch [:implementation/on-isin-change 0 isin]]
           ;there will be a second, same event, after positions are loaded. We still need this one to set the ISIN
-          ]
-     }))
+          ]}))
 
 (def qs-table-filter (r/atom []))
 ;USING A NORMAL ATOM INSTEAD OF REAGENT ACCELERATES THINGS - NOT SURE WHY OR IF IT'S RIGHT THING
@@ -1154,4 +1125,4 @@
           )))))
 
 (defn view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-qs-bar] [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio] [issuer-rationale-modal]]])
+  [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/qs-navigation :navigation/active-qs) [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio] [issuer-rationale-modal]]])

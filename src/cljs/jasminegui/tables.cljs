@@ -9,10 +9,7 @@
     [goog.object :as gobj]
     ["react-table-v6" :as rt :default ReactTable])
   (:import (goog.i18n NumberFormat)
-           (goog.i18n.NumberFormat Format)
-           )
-
-    )
+           (goog.i18n.NumberFormat Format)))
 
 ;;;;;;;;;;;;;
 ;AGGREGATION;
@@ -42,15 +39,9 @@
 (defn red-negatives
   "right align, with red text if negative"
   [state rowInfo column]
-  (if (and (some? rowInfo) (neg? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id")))) ;(aget rowInfo "row" (aget column "id"))
+  (if (and (some? rowInfo) (neg? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id"))))
     #js {:style #js {:color "red" :textAlign "right"}}
     #js {:style #js {:textAlign "right"}}))
-
-;(defn red-positive [state rowInfo column]
-;  "right align, with red text if negative"
-;  (if (and (some? rowInfo) (pos? (gobj/getValueByKeys rowInfo "row" (gobj/get column "id")))) ;(aget rowInfo "row" (aget column "id"))
-;    #js {:style #js {:color "Crimson" :backgroundColor "Crimson" :textAlign "center"}}
-;    #js {:style #js {:color "Chartreuse" :backgroundColor "Chartreuse"  :textAlign "center"}}))
 
 (defn breach-status-color
   "if status = 0 green background, if status = 1 orange (warning) background,if status = 2 (breach) red background,"
@@ -270,8 +261,11 @@
 (defn total-txt [row] "Total")
 
 (defn text-col [header accessor width] {:Header header :accessor accessor :width width})
-(defn nb-col [header accessor width cell aggregate]
-  {:Header header :accessor accessor :width width :getProps red-negatives :Cell cell :filterable true :filterMethod nb-filter-OR-AND :aggregate aggregate})
+(defn nb-col
+  ([header accessor width cell aggregate]
+   (assoc (nb-col header accessor width cell) :aggregate aggregate))
+  ([header accessor width cell]
+   {:Header header :accessor accessor :width width :getProps red-negatives :Cell cell :filterable true :filterMethod nb-filter-OR-AND}))
 
 
 (def risk-table-columns

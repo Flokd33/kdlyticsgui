@@ -28,8 +28,7 @@
 (def max-width "1675px")
 
 
-(defn on-click-context [state rowInfo instance]
-  (clj->js {}))
+(defn on-click-context-dummy [state rowInfo instance] #js {})
 
 (defn period-choices []
   (concat static/attribution-period-choices
@@ -59,7 +58,7 @@
       single-portfolio-attribution-display-view
       :single-portfolio-attribution/table-filter
       :single-portfolio-attribution/expander
-      (fn [state rowInfo instance] #js {})]]))
+      on-click-context-dummy]]))
 
 
 (defn multiple-portfolio-attribution-display []
@@ -80,58 +79,19 @@
      multiple-portfolio-attribution-display-view
      :multiple-portfolio-attribution/table-filter
      :multiple-portfolio-attribution/expander
-     (fn [state rowInfo instance] #js {})]]))
+     on-click-context-dummy]]))
 
-
-(defn shortcut-row [key]
-  (let [shortcut (rf/subscribe [key])]
-    (into [] (concat [[title :label "Shortcuts:" :level :level3]]
-                     (into [] (for [i (range 1 5)]
-                                [md-circle-icon-button
-                                 :md-icon-name (str "zmdi-collection-item-" i)
-                                 :class (if (= @shortcut i) "active" "default")
-                                 :on-click #(rf/dispatch [key i])]))))))
-
-(defn filtering-row [key]
-  (let [risk-filter (rf/subscribe [key])]
-    (into [] (for [i (range 1 4)]
-               [single-dropdown :width dropdown-width :disabled? (and (= i 3) (= key :attribution-history/filter)) :model (r/cursor risk-filter [i]) :choices static/attribution-choice-map :on-change #(rf/dispatch [key i %])]))))
-
-;(defn csv-link [data filename]
-;  (tools/download-object-as-csv (clj->js (tools/vector-of-maps->csv data)) (str filename ".csv")))
-
-
-;(defn download-attribution-file [period port]
-;  "cannot download file from drive if not HTTP"
-;  (let [root "file://iamctnfs1.investecam.corp/shared/ATTRIBUTION/FIA/SFI/CREDIT REPORTS (Vic)/"
-;        ;path2 "file://iamctnfs1.investecam.corp/shared/ATTRIBUTION/FIA/SFI/CREDIT REPORTS (Vic)/ytd reports/AIFGLBCD - Credit Report - 20-12-21.xlsx"
-;        ;path3 "//iamlfilive:8192/static/CCY.csv"
-;
-;        folders-map {:ytd "ytd reports/" :mtd "mtd reports/" :Ddy "daily reports/" :wtd "weekly reports/"}
-;        months-map {:Jan "01" :Feb "02" :Mar "03" :Apr "04" :May "05" :Jun "06" :Jul "07" :Aug "08" :Sep "09" :Oct "10" :Nov "11" :Dec "12"}
-;        attribution-date @(rf/subscribe [:attribution-date])
-;        date-file-format (str (subs attribution-date 0 2) "-" (months-map (keyword (subs attribution-date 2 5))) "-" (subs attribution-date 7 9))
-;        path-file (str root (folders-map (keyword period)) port " - Credit Report - " date-file-format ".xlsx")
-;        ;link [:a {:href path-file :download "true"}]
-;        ]
-;    [hyperlink-href :href path3 :label "Download source XLS"]
-;    )
-;  )
 
 
 
 (defn single-portfolio-attribution-controller []
-  (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
-        display-style (rf/subscribe [:single-portfolio-attribution/display-style])
+  (let [display-style (rf/subscribe [:single-portfolio-attribution/display-style])
         is-tree (= @(rf/subscribe [:single-portfolio-attribution/display-style]) "Tree")
         portfolio (rf/subscribe [:single-portfolio-attribution/portfolio])
         period (rf/subscribe [:single-portfolio-attribution/period])
         download-columns ["Security" "Code" "Issuer" "Sector" "Region" "Country" "Duration-Bucket" "Total-Effect" "Fund-Contribution" "Index-Contribution" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"]
-        ;path-download (download-attribution-file @download-period @download-portfolio )
         ]
-    (when (and (= @(rf/subscribe [:single-portfolio-attribution/portfolio]) "OGEMCORD")
-               (= @(rf/subscribe [:single-portfolio-attribution/period]) "ytd")
-               (zero? (count @(rf/subscribe [:single-portfolio-attribution/table]))))
+    (when (and (= @portfolio "OGEMCORD") (= @period "ytd") (zero? (count @(rf/subscribe [:single-portfolio-attribution/table]))))
       (rf/dispatch [:get-single-attribution "OGEMCORD" "ytd"]))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "single-portfolio-attribution" max-width (str "Attribution drill-down " @(rf/subscribe [:attribution-date]))
@@ -148,29 +108,10 @@
                                                                   [single-dropdown :width dropdown-width :model period :choices (period-choices)
                                                                    :on-change #(rf/dispatch [:change-single-attribution-period %])]]]]]
                                           [v-box :gap "10px" :children [[h-box :gap "10px" :children
-                                                                         (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                                                           [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:change-single-attribution-portfolio %])
-                                                                                                                                                                                          ;(reset! download-portfolio %)
-                                                                                                                                                                                          )]]
-                                                                                          (filtering-row :single-portfolio-attribution/filter)))]
-                                                                        ;[h-box :gap "20px" :children (into [] (concat
-                                                                        ;                                        (shortcut-row :single-portfolio-attribution/shortcut)
-                                                                        ;                                        [[gap :size "50px"]
-                                                                        ;                                         [title :label "Download:" :level :level3]
-                                                                        ;                                         [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/react-table-to-csv @single-portfolio-attribution-display-view @portfolio download-columns is-tree)]
-                                                                        ;                                         ;[title :label "Download source file:" :level :level3]
-                                                                        ;                                         ;[download-attribution-file @download-period @download-portfolio]
-                                                                        ;                                         ;[md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(download-attribution-file @download-period @download-portfolio) ;@(rf/subscribe [:change-single-attribution-portfolio])
-                                                                        ;                                         ; ]
-                                                                        ;                                         ]))]
-
-                                                                        ]]]]
+                                                                         [[title :label "Filtering:" :level :level3]
+                                                                          (gt/portfolio-dropdown-selector :single-portfolio-attribution/portfolio :change-single-attribution-portfolio)
+                                                                          (gt/filtering-row :single-portfolio-attribution/filter)]]]]]]
                               [single-portfolio-attribution-display]])]))
-
-;(defn csv-link-multiple-portfolio []
-;  (tools/download-object-as-csv
-;    (clj->js (tools/vector-of-maps->csv @(rf/subscribe [:multiple-portfolio-risk/table])))
-;    "pivot.csv"))
 
 (defn multiple-portfolio-attribution-controller []
   (let [display-style (rf/subscribe [:multiple-portfolio-attribution/display-style])
@@ -191,12 +132,12 @@
                              {:target-id "multiple-portfolio-attribution-table" :on-click-action #(tools/react-table-to-csv @multiple-portfolio-attribution-display-view "attribution_multiple_portfolio" download-columns is-tree)
                               :shortcuts :multiple-portfolio-attribution/shortcut}
                   [[h-box :gap "20px"
-                    :children (concat [[h-box :gap "5px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
-                                       [h-box :gap "5px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
-                                       [h-box :gap "5px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(rf/dispatch [:change-multiple-attribution-target %])]]]
-                                       [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [info-button :info "Note: the filtering is made at bond level, not at issuer level." :position :below-center]
-                                                                    [single-dropdown :width "75px" :model threshold-att :choices static/threshold-choices-attribution :on-change #(rf/dispatch [:multiple-portfolio-attribution/threshold %])]]]
-                                       [title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-attribution/filter))]
+                    :children [[h-box :gap "5px" :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(rf/dispatch [:multiple-portfolio-attribution/display-style %])]]]
+                               [h-box :gap "5px" :children [[title :label "Period:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model period :choices (period-choices) :on-change #(rf/dispatch [:change-multiple-attribution-period %])]]]
+                               [h-box :gap "5px" :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(rf/dispatch [:change-multiple-attribution-target %])]]]
+                               [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [info-button :info "Note: the filtering is made at bond level, not at issuer level." :position :below-center]
+                                                            [single-dropdown :width "75px" :model threshold-att :choices static/threshold-choices-attribution :on-change #(rf/dispatch [:multiple-portfolio-attribution/threshold %])]]]
+                               [title :label "Filtering:" :level :level3] (gt/filtering-row :multiple-portfolio-attribution/filter)]] ;(filtering-row :multiple-portfolio-attribution/filter)
                  [h-box :gap "5px" :children
                   (into [[title :label "Portfolios:" :level :level3]
                          [gap :size "20px"]
@@ -228,8 +169,7 @@
                                          {:Header k1
                                           :columns (into [] (for [[k2 v2] targets] (merge {:Header k2 :accessor (str v1 v2)} fmt)))}))
                  :showPagination false :pageSize (count @(rf/subscribe [:attribution/summary])) :getTrProps go-to-attribution-risk :className "-striped -highlight"}]]
-                             download-columns
-                             )]))
+                             download-columns)]))
 
 (defn index-returns-display []
   (let [original-table (filter (comp pos? :Average-Index-Weight) @(rf/subscribe [:attribution-index-returns/table]))
@@ -276,7 +216,7 @@
 
 
 (defn index-returns-controller []
-  (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+  (let [portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
         x-axis (rf/subscribe [:attribution-index-returns/x-filter])
         y-axis (rf/subscribe [:attribution-index-returns/y-filter])
         portfolio (rf/subscribe [:attribution-index-returns/portfolio])
@@ -370,7 +310,6 @@
 (rf/reg-sub
   :attribution-history/table
   (fn [db]
-    ;(println (db :attribution-history/data))
     (let [risk-choices (let [rfil (get-in db [:attribution-history/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/attribution-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
@@ -406,10 +345,10 @@
   (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:attribution-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
         report-type (rf/subscribe [:attribution-history/report-type])
         field-one (rf/subscribe [:attribution-history/field-one])
-        portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
         display-style (rf/subscribe [:attribution-history/display-style])
         portfolio (rf/subscribe [:attribution-history/portfolio])
-        hide-zero-risk (rf/subscribe [:attribution-history/hide-zero-holdings])
+        ;hide-zero-risk (rf/subscribe [:attribution-history/hide-zero-holdings])
         is-tree (= @(rf/subscribe [:attribution-history/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:attribution-history/filter])]  (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? risk-choices)] (tables/attribution-table-columns r)))
@@ -432,19 +371,19 @@
      (gt/element-box-generic "attribution-history-risk-table" max-width (str "Portfolio history")
                              {:target-id "attribution-history-risk-table" :on-click-action #(tools/react-table-to-csv @attribution-history-display-view @portfolio 0 is-tree)}
                              [[h-box :gap " 10px " :align :center
-                               :children (concat
-                                           [[title :style {:width "85px"} :label "Display:" :level :level3]
-                                            [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:attribution-history/display-style %]) (rf/dispatch [:attribution-history/hide-zero-holdings (= % " Table ")]))]
-                                            [checkbox :model hide-zero-risk :label "Hide zero lines?" :on-change #(rf/dispatch [:attribution-history/hide-zero-holdings %])]
-                                            [title :label "Field:" :level :level3]
-                                            [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(do (rf/dispatch [:attribution-history/field-one %])
-                                                                                                                                                                (rf/dispatch [:attribution-history/data []]))]
-                                            [gap :size "30px"]]
-                                           (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:attribution-history/data []])
-                                                                                                                                                            (rf/dispatch [:attribution-history/portfolio %]))]]
-                                                            (filtering-row :attribution-history/filter)
-                                                            [[gap :size "30px"]])))]
+                               :children [[title :style {:width "85px"} :label "Display:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:attribution-history/display-style %]) (rf/dispatch [:attribution-history/hide-zero-holdings (= % " Table ")]))]
+                                          ;[checkbox :model hide-zero-risk :label "Hide zero lines?" :on-change #(rf/dispatch [:attribution-history/hide-zero-holdings %])]
+                                          [gap :size "30px"]
+                                          [title :label "Field:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model field-one :choices static/attribution-field-choices :on-change #(do (rf/dispatch [:attribution-history/field-one %])
+                                                                                                                                                            (rf/dispatch [:attribution-history/data []]))]
+                                          [gap :size "30px"]
+                                          [title :label "Filtering:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:attribution-history/data []])
+                                                                                                                                         (rf/dispatch [:attribution-history/portfolio %]))]
+                                          (gt/filtering-row :attribution-history/filter)
+                                          ]]
                               [h-box :gap "10px" :align :center
                                :children [[title :style {:width "85px"} :label "Report type:" :level :level3]
                                           ;{:id :daily :label "MTD daily"}
@@ -486,35 +425,11 @@
                                 attribution-history-display-view
                                 :attribution-history/table-filter
                                 :attribution-history/expander
-                                on-click-context
-                                ]
-                               ]
-                              [oz/vega-lite (charting/stacked-vertical-bars @attribution-history-chart-data "attribution history")]
-                              ])]))
+                                on-click-context-dummy]]
+                              [oz/vega-lite (charting/stacked-vertical-bars @attribution-history-chart-data "attribution history")]])]))
 
 ;------------------------------
 
-
-
-(defn nav-attribution-bar []
-  (let [active-home @(rf/subscribe [:navigation/active-attribution])]
-    [h-box
-     ;:align :start
-     :children [
-                [v-box
-                 :gap "20px"
-                 :class "leftnavbar"
-                 :children (into (if false                  ;@(rf/subscribe [:time-machine/enabled])
-                                   []                       ;[alert-box :alert-type :danger :heading "Time machine is ON" :body (str "Date " (subs (str @(rf/subscribe [:time-machine/date])) 0 8))]
-                                   [])
-                                 (for [item static/attribution-navigation]
-                                   [button
-                                    :class (str "btn btn-primary btn-block" (if (and (= active-home (:code item))) " active"))
-                                    ;:style {:font-size "12px"}
-                                    :label (:name item)
-                                    :on-click #(rf/dispatch [:navigation/active-attribution (:code item)])]))]
-                ;[line :color "#CA3E47" :class "separatorvline"]
-                ]]))
 
 (defn active-home []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -532,5 +447,5 @@
   [h-box :gap "10px"
    ;:style {:overflow "hidden"}
    :padding "0px"
-   :children [[nav-attribution-bar] [active-home]]])
+   :children [(gt/left-nav-bar static/attribution-navigation :navigation/active-attribution) [active-home]]])
 

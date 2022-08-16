@@ -29,6 +29,7 @@
 
 
 (def risk-navigation
+
   [{:code :summary                :name "Overview"}
    {:code :single-portfolio       :name "Single portfolio"}
    {:code :all-portfolios         :name "Multiple portfolios"}
@@ -88,6 +89,7 @@
    {:code :holdings                   :name "Holdings through MSCI"}
    {:code :ungc                       :name "UNGC problem securities"}
    {:code :esg-scores                 :name "ESG summary report"}
+   {:code :esg-commentary             :name "ESG analyst commentary"}
    {:code :refinitiv                  :name "Refinitiv"}
    {:code :gb-scoring                 :name "Green bond scoring (beta)"}
    {:code :tf-scoring                 :name "Transition fund scoring (beta)"}
@@ -152,7 +154,7 @@
    {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
    {:id :munichre   :label "Munich Re"  :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
-   {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGEMEMSD" "OGADB"]}
+   {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB"]}
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON"]}
    {:id :dummies    :label "Models"     :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
    ])
@@ -267,6 +269,7 @@
                                 "20210930"
                                 "20211102"                             ; "29Oct21"
                                 "20211130"
+
                                 "20211231"
                                 "20220131"
                                 "20220228"

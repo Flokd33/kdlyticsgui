@@ -845,7 +845,7 @@
 
 (defn nav []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])
-        portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
         portfolio @(rf/subscribe [:portfolio-review/portfolio])]
     [h-box
      :children [[v-box

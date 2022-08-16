@@ -16,6 +16,7 @@
     [jasminegui.static :as static]
     [jasminegui.charting :as charting]
     [oz.core :as oz]
+    [jasminegui.guitools :as gt]
     [reagent.core :as r]
     [jasminegui.tools :as tools]
     [jasminegui.riskviews :as riskviews]
@@ -23,6 +24,7 @@
     [jasminegui.esgreport :as esgreport]
     [cljs-time.core :refer [today]]
     [goog.object :as gobj]
+
     ))
 
 (def standard-box-width "1600px")
@@ -145,17 +147,7 @@
                   :showPagination false
                   :className      "-striped -highlight"}]]]))
 
-(defn nav-esg-bar []
-  (let [active-esg @(rf/subscribe [:esg/active-home])]
-    [h-box
-     :children [[v-box
-                 :gap "20px" :class "leftnavbar"
-                 :children (into []
-                                 (for [item static/esg-navigation]
-                                   [button
-                                    :class (str "btn btn-primary btn-block" (if (and (= active-esg (:code item))) " active"))
-                                    :label (:name item)
-                                    :on-click #(rf/dispatch [:esg/active-home (:code item)])]))]]]))
+
 
 (def server-msci-metrics ["CARBON_EMISSIONS_SCOPE_1"
                           "CARBON_EMISSIONS_SCOPE_2"
@@ -186,7 +178,8 @@
 (def msci-cols (concat [:Ticker :Country :Sector :Equity :ISIN :ID_ISIN :NAME] (map #(keyword (str "msci-" %)) server-msci-metrics)))
 
 (defn msci-table []
-  (let [data (vals @(rf/subscribe [:esg/msci-scores]))
+  ;(println  @(rf/subscribe [:esg/msci-scores]))
+  (let [data (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
     [v-box :gap "20px" :class "element" :width standard-box-width
      :children [
@@ -420,6 +413,27 @@
                   :className           "-striped -highlight"}]]]))
 
 
+(defn esg-commentary-table []
+  (let [data @(rf/subscribe [:esg/analyst-commentary])]
+    (when (zero? (count data)) (rf/dispatch [:get-esg-analyst-commentary]))
+
+    (gt/element-box-with-cols "ESG-analyst-commentary" "100%" "ESG analyst commentary" data
+                              [[:> ReactTable
+                                {:data                (if-not (string? data) data [])
+                                 :columns             [{:Header "Name" :accessor "Issuer" :width 100}
+                                                       {:Header "Ticker" :accessor "TICKER" :width 100}
+                                                       {:Header "Sector" :accessor "Sector" :width 100}
+                                                       {:Header "Reason for inclusion" :accessor "Reason_for_inclusion_as_a_potential_ESG_risk" :width 150 :style {:whiteSpace "unset"}}
+                                                       {:Header "Date" :accessor "Comment_Date" :width 75}
+                                                       {:Header "Comment" :accessor "COMMENT" :width 768 :style {:whiteSpace "break-spaces"}
+                                                        :Cell  (fn [a] (r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget a "value")}}]))}]
+                                 :pageSize            20
+                                 :showPagination      true
+                                 :filterable          true
+                                 :defaultFilterMethod tables/text-filter-OR
+                                 :className           "-striped -highlight"}]]
+                              (keys (first data))
+                              )))
 
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
@@ -428,6 +442,7 @@
      :child (case active-esg
               :msci [msci-table]
               :ungc [ungc-table]
+              :esg-commentary [esg-commentary-table]
               :refinitiv [v-box :gap "20px" :class "body" :children [[refinitiv-find-issuers] [refinitiv-table-top-view] [refinitiv-table-detailed-view]]]
               :gb-scoring [esgreport/green-bond-scoring-display]
               :tf-scoring [esgreport/transition-fund-scoring-display]
@@ -438,5 +453,4 @@
               [:div.output "nothing to display"])]))
 
 (defn esg-view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-esg-bar] [active-home] [modal-engagements]]])
-
+  [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/esg-navigation :esg/active-home) [active-home] [modal-engagements]]])
