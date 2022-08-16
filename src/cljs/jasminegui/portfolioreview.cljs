@@ -165,8 +165,9 @@
                               :text  {:field "value" :format ".0f"}}}]},
      :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}}))
 
-(defn simple-horizontal-bars [data title fmt dc nbcols textdx scale]
+(defn simple-horizontal-bars
   "The data is of the form [{:group TXT :value 0}]"
+  [data title fmt dc nbcols textdx scale]
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         scl (* dc (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40))]
     {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
