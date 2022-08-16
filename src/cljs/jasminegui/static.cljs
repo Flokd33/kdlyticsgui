@@ -29,19 +29,20 @@
 
 
 (def risk-navigation
-  [{:code :summary             :name "Overview"}
-   {:code :single-portfolio    :name "Single portfolio"}
-   {:code :all-portfolios      :name "Multiple portfolios"}
-   {:code :portfolio-checks    :name "Portfolios checks"}
-   {:code :portfolio-alignment :name "Portfolio alignment"}
-   {:code :concentration-risk  :name "Concentration risk"}
-   {:code :irrisk              :name "Interest rate risk"}
-   {:code :large-exposures     :name "Large exposures"}
-   {:code :var                 :name "VaR and Beta"}
-   {:code :proxies             :name "Bond proxies"}
-   {:code :position-history    :name "Position history"}
-   {:code :allianz-loss-report :name "Allianz P&L budget"}
-   {:code :gdel                :name "Global debt levels"}
+
+  [{:code :summary                :name "Overview"}
+   {:code :single-portfolio       :name "Single portfolio"}
+   {:code :all-portfolios         :name "Multiple portfolios"}
+   {:code :portfolio-checks       :name "Portfolios checks"}
+   {:code :portfolio-alignment    :name "Portfolio alignment"}
+   {:code :concentration-risk     :name "Concentration risk"}
+   {:code :irrisk                 :name "Interest rate risk"}
+   {:code :large-exposures        :name "Large exposures"}
+   {:code :var                    :name "VaR and Beta"}
+   {:code :proxies                :name "Bond proxies"}
+   {:code :position-history       :name "Position history"}
+   {:code :position-history-isin  :name "Position history 2"}
+   {:code :allianz-loss-report    :name "Allianz P&L budget"}
    ])
 
 (def trade-history-navigation

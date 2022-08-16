@@ -74,6 +74,7 @@
       :var                            [var/main-var-view]
       :proxies                        [var/main-proxy-view]
       :position-history               [riskviews/position-history]
+      :position-history-isin          [riskviews/position-history-2]
       :allianz-loss-report            [riskviews/allianz-loss-report]
       :gdel                           [global-debt-and-equity-levels]
       [:div.output "nothing to display"])))
