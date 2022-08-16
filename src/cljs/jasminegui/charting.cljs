@@ -1,5 +1,6 @@
 (ns jasminegui.charting
-  (:require [jasminegui.tools :as t])
+  (:require [jasminegui.tools :as t]
+            [re-frame.core :as rf])
   (:require [jasminegui.static :as static]))
 
 ;
@@ -157,14 +158,11 @@
                 :tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
                 :color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}}}))
 
-(defn stacked-vertical-bars-2 [data start-date title]
-  (let [data-raw data
-        ;data-clean (filter #(not (or (nil? (:original-quantity %)) (zero? (:original-quantity %)))) data-raw)
-        data-clean (filter #(> (:date %) (js/parseInt (subs (str @start-date) 0 8))) data-raw)
-        new-data (map #(assoc % :weight (* (% :weight) 100) :date (subs (% :date) 0 6)) data-clean)]
+(defn stacked-vertical-bars-2 [data title]
+  (let [new-data (map #(assoc % :weight (* (% :weight) 100) :date (subs (% :date) 0 6)) data)]
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
-     :width    400
+     :width    550
      :height   400
      :encoding {:x       {:field "date" :type "nominal" :axis {:title nil :labelFontSize 15}}}
      :layer [{:mark      {:type "bar" :color "#134848"}
