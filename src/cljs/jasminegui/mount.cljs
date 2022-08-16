@@ -111,7 +111,8 @@
                  :position-history/data                              []
                  :position-history-isin/portfolio                    "OGEMCORD"
                  :position-history-isin/data                          nil
-                 :position-history-isin/isin                          "XS2280431763"
+                 :position-history-isin/isin                          "XS2311313378"
+                 :position-history-isin/nickname                      "ARACEN26"
                  :position-history-isin/start-date                   (t/int->gdate 20181231)
                  :position-history-ticker/portfolio                   "OGEMCORD"
                  :position-history-ticker/data                        nil
@@ -393,6 +394,7 @@
            :position-history-isin/portfolio
            :position-history-isin/data
            :position-history-isin/isin
+           :position-history-isin/nickname
            :position-history-isin/start-date
            :position-history-ticker/portfolio
            :position-history-ticker/data
@@ -905,7 +907,7 @@
    {:get-key :get-master-security-fields  :namespace "common.static" :asset "master-security-fields"  :dispatch-key [:master-security-fields-list]}
    {:get-key :get-rating-to-score         :namespace "common.static" :asset "rating-to-score-rating"  :dispatch-key [:rating-to-score]}
    {:get-key :fx-request                  :namespace "common.static" :asset "fx"                      :dispatch-key [:implementation/fx]}
-   {:get-key :get-allianz-loss-report     :namespace "common.static" :asset  "allianz-pnl-loss"       :dispatch-key [:allianz-loss-report]}
+   {:get-key :get-allianz-loss-report     :namespace "common.xlscsvassets" :asset  "allianz-pnl-loss"  :dispatch-key [:allianz-loss-report]}
 
    {:get-key :portfolio-nav-request           :namespace "jasmine.positions"  :asset "sod-portfolio-nav"            :dispatch-key [:implementation/portfolio-nav]}
    {:get-key :get-live-cast-parent-positions  :namespace "jasmine.positions"  :asset "live-positions-by-parent-id"  :dispatch-key [:implementation/live-cast-parent-positions]}
