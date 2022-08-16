@@ -30,10 +30,10 @@
 (defn conditional-color [state rowInfo column]
   (if-let [x (gobj/getValueByKeys rowInfo "row" "Nominal_Debt_%_Owned")]
     (condp > x
-           0.05 #js {:style #js {:backgroundColor "yellow"}}
-           0.1 #js {:style #js {:backgroundColor "lightgreen"}}
-           0.251 #js {:style #js {:backgroundColor "lightpink"}}
-           1 #js {:style #js {:backgroundColor "orange"}}
+           0.05 #js {:style #js {:backgroundColor "#FFFF99"}}
+           0.1 #js {:style #js {:backgroundColor "#BCEC90"}}
+           0.251 #js {:style #js {:backgroundColor "#FFCCCC"}}
+           1 #js {:style #js {:backgroundColor "#FFC000"}}
            #js {})
     #js{}))
 
@@ -57,12 +57,7 @@
                                (assoc (tables/nb-col "IAM Risk Parent & Subsidiaries Total % Owned" "IAM_Risk_Parent_&_Subsidiaries_Total_%_Owned" 100 #(tables/nb-cell-format "%.1f" 100 %)) :headerStyle header-style)
                                (assoc (tables/nb-col "IAM Ultimate Parent & Subsidiaries Debt Issued (USDm)" "IAM_Ultimate_Parent_&_Subsidiaries_Debt_Issued_(USDm)" 100 tables/nb-thousand-cell-format) :headerStyle header-style)
                                (assoc (tables/nb-col "IAM Ultimate Parent & Subsidiaries Total % Owned" "IAM_Ultimate_Parent_&_Subsidiaries_Total_%_Owned" 100 #(tables/nb-cell-format "%.1f" 100 %)) :headerStyle header-style)]
-         :pageSize            20
-         :showPagination      true
-         :getTrProps          conditional-color
-         :filterable          true
-         :defaultFilterMethod tables/text-filter-OR
-         :className           "-striped -highlight"}]])]))
+         :defaultPageSize 20 :showPagination true :getTrProps conditional-color :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])]))
 
 (defn active-home []
   (let [active-home @(rf/subscribe [:navigation/active-home])]
