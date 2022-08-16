@@ -43,6 +43,7 @@
    {:code :position-history       :name "Position history"}
    {:code :position-history-isin  :name "Position history 2"}
    {:code :allianz-loss-report    :name "Allianz P&L budget"}
+   {:code :gdel                   :name "Global debt levels"}
    ])
 
 (def trade-history-navigation
