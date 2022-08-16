@@ -109,8 +109,10 @@
                  :position-history/breakdown                         "Start/End"
                  :position-history/absdiff                           :absolute
                  :position-history/data                              []
-                 :position-history-nav/data                           nil
-                 :position-history/isin                          ""
+                 :position-history-isin/data                           nil
+                 :position-history-isin/isin                          "XS2280431763"
+                 :position-history-ticker/data                         nil
+                 :position-history-ticker/ticker                       "LUKOIL"
 
 
 
@@ -385,8 +387,10 @@
            :position-history/breakdown
            :position-history/field-one
            :position-history/absdiff
-           :position-history-nav/data
-           :position-history/isin
+           :position-history-isin/data
+           :position-history-isin/isin
+           :position-history-ticker/data
+           :position-history-ticker/ticker
 
            :attribution-history/portfolio
            :attribution-history/hide-zero-holdings
