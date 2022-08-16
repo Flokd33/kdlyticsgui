@@ -147,13 +147,12 @@
                                 (- (cljs.reader/read-string (subs standard-box-width 0 3)) 150) 550)]]]))
 
 (defn var-controller []
-  (let [portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
-        portfolio (rf/subscribe [:var/portfolio])
+  (let [portfolio (rf/subscribe [:var/portfolio])
         chart-period (rf/subscribe [:var/chart-period])]
      [h-box
       :class "element" :width standard-box-width :gap "20px" :justify :between
       :children [[title :label "Display selection" :level :level1]
-                 [v-box :gap "5px" :children [[title :label "Portfolio:" :level :level3][single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:get-portfolio-var %])]]]
+                 [v-box :gap "5px" :children [[title :label "Portfolio:" :level :level3][single-dropdown :width dropdown-width :model portfolio :choices @(rf/subscribe [:portfolio-dropdown-map]) :on-change #(rf/dispatch [:get-portfolio-var %])]]]
                  [v-box :gap "5px" :children [[title :label "Chart period:" :level :level3][single-dropdown :width dropdown-width :model chart-period :choices static/var-charts-choice-map :on-change #(rf/dispatch [:var/chart-period %])]]]
                  ]]))
 

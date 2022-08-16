@@ -177,7 +177,10 @@
                                                                                  {:Header "Index" :accessor :tr-vs-index-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Rating" :accessor :tr-vs-index-rating-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                                                                  {:Header "Country" :accessor :tr-vs-index-country-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
-                                                                                 {:Header "Sector" :accessor :tr-vs-index-sector-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]}]
+                                                                                 {:Header "Sector" :accessor :tr-vs-index-sector-ytd :width 65 :style {:textAlign "right"} :Cell tables/round1pc}]}
+                                            {:Header "Statpro YTD" :columns [(assoc (tables/nb-col "Bond contrib" :statpro-ytd-contribution 85 #(tables/nb-cell-format "%.2f%" 1 %) tables/sum-rows) :filterable false)
+                                                                             (assoc (tables/nb-col "Ticker effect" :statpro-ytd-issuer-effect 85 #(tables/nb-cell-format "%.2f%" 1 %) tables/sum-rows) :filterable false)]}
+                                            ]
                                :filterable false :showPagination false :pageSize (count cdata) :showPageSizeOptions false :className "-striped -highlight"}]
                              [title :label "Leg by leg performance" :level :level2]
                              [:> ReactTable
@@ -439,17 +442,7 @@
               :journal [journal-table]
               [:div.output "nothing to display"])]))
 
-(defn nav-ta2022-bar []
-  (let [active-esg @(rf/subscribe [:ta2022/active-home])]
-    [h-box
-     :children [[v-box
-                 :gap "20px" :class "leftnavbar"
-                 :children (into []
-                                 (for [item static/ta2022-navigation]
-                                   [button
-                                    :class (str btc (if (and (= active-esg (:code item))) " active"))
-                                    :label (:name item)
-                                    :on-click #(rf/dispatch [:ta2022/active-home (:code item)])]))]]]))
+
 (defn modal-ta2022 []
   (if-let [modal-data @(rf/subscribe [:ta2022/show-modal])]
     [modal-panel
@@ -487,4 +480,4 @@
 ;    (dom/render [viewer] (.getElementById js/document "pdf-placeholder"))))
 
 (defn ta2022-view []
-  [h-box :gap "10px" :padding "0px" :children [[nav-ta2022-bar] [active-home] [modal-ta2022]]])
+  [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/ta2022-navigation :ta2022/active-home) [active-home] [modal-ta2022]]])

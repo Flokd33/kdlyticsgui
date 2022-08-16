@@ -366,19 +366,6 @@
     )
 
 
-(defn nav-trade-history-bar
-  "Create the sidebar"
-  []
-  (let [active-trade-history @(rf/subscribe [:trade-history/active-home])]
-    [h-box
-     :children [[v-box
-                 :gap "20px" :class "leftnavbar"
-                 :children (into []
-                                 (for [item static/trade-history-navigation]
-                                   [button
-                                    :class (str "btn btn-primary btn-block" (if (and (= active-trade-history (:code item))) " active"))
-                                    :label (:name item)
-                                    :on-click #(rf/dispatch [:trade-history/active-home (:code item)])]))]]]))
 
 (defn trade-history []
   (let [portfolio (rf/subscribe [:portfolio-trade-history/portfolio])
@@ -679,6 +666,7 @@
      ["Copy ISIN" (fn [] (tools/copy-to-clipboard (aget rowInfo "original" "isin")))]
      ["Trade history" (fn [] (multiple-bond-trade-history-event-th state rowInfo instance))]         ; <---- the name is a span
      ["Trade history (% NAV)" (fn [] (multiple-bond-trade-history-nav-event-th state rowInfo instance))]         ; <---- the name is a span
+     ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 (aget rowInfo "original" "isin")]))]
      ;["Build ticket" (fn [] (prn "my-fn"))]
      ]))
 
@@ -799,4 +787,6 @@
 (defn trade-history-view
   "Create the full view with sidebar and body"
   []
-  [h-box :gap "10px" :padding "0px" :children [[nav-trade-history-bar] [active-home] [modal-commentary]]])
+  [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/trade-history-navigation :trade-history/active-home) [active-home] [modal-commentary]]])
+
+
