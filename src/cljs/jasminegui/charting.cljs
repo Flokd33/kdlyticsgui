@@ -157,19 +157,19 @@
                 :tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
                 :color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}}}))
 
-(defn stacked-vertical-bars-2 [data title]
+(defn stacked-vertical-bars-2 [data start-date title]
   (let [data-raw data
-        data-clean (filter #(not (or (nil? (:original-quantity %)) (zero? (:original-quantity %)))) data-raw)
+        ;data-clean (filter #(not (or (nil? (:original-quantity %)) (zero? (:original-quantity %)))) data-raw)
+        data-clean (filter #(> (:date %) (js/parseInt (subs (str @start-date) 0 8))) data-raw)
         new-data (map #(assoc % :weight (* (% :weight) 100) :date (subs (% :date) 0 6)) data-clean)]
-    (println data-raw)
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
      :width    400
      :height   400
      :encoding {:x       {:field "date" :type "nominal" :axis {:title nil :labelFontSize 15}}}
      :layer [{:mark      {:type "bar" :color "#134848"}
-              :encoding {:y       {:field "original-quantity" :type "quantitative" :axis {:title "Nominal" :labelFontSize 15 :titleColor "#134848"}}}}
-              {:mark     {:type "line" :color "#ED1C0B"}
-               :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleColor "#134848"}}}}]
+              :encoding {:y       {:field "original-quantity" :type "quantitative" :axis {:title "Nominal" :format "$,.2s" :labelFontSize 15 :titleFontSize 15 :titleColor "#134848"}}}}
+              {:mark     {:type "line" :color "#D83949"}
+               :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleFontSize 15 :titleColor "#134848"}}}}]
      :resolve {:scale {:y "independent" }}
      }))
