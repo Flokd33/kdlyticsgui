@@ -416,7 +416,6 @@
 (defn esg-commentary-table []
   (let [data @(rf/subscribe [:esg/analyst-commentary])]
     (when (zero? (count data)) (rf/dispatch [:get-esg-analyst-commentary]))
-
     (gt/element-box-with-cols "ESG-analyst-commentary" "100%" "ESG analyst commentary" data
                               [[:> ReactTable
                                 {:data                (if-not (string? data) data [])
@@ -426,12 +425,8 @@
                                                        {:Header "Reason for inclusion" :accessor "Reason_for_inclusion_as_a_potential_ESG_risk" :width 150 :style {:whiteSpace "unset"}}
                                                        {:Header "Date" :accessor "Comment_Date" :width 75}
                                                        {:Header "Comment" :accessor "COMMENT" :width 768 :style {:whiteSpace "break-spaces"}
-                                                        :Cell  (fn [a] (r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget a "value")}}]))}]
-                                 :pageSize            20
-                                 :showPagination      true
-                                 :filterable          true
-                                 :defaultFilterMethod tables/text-filter-OR
-                                 :className           "-striped -highlight"}]]
+                                                        :Cell   (fn [a] (gstring/unescapeEntities (aget a "value")))}] ;(fn [a] (r/as-element [:div {:dangerouslySetInnerHTML {:__html (aget a "value")}}]))
+                                 :defaultPageSize 20 :showPagination true :filterable true :defaultFilterMethod tables/text-filter-OR :className "-striped -highlight"}]]
                               (keys (first data))
                               )))
 

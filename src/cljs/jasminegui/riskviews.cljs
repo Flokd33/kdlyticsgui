@@ -129,13 +129,12 @@
 (rf/reg-sub
   :multiple-portfolio-risk/table
   (fn [db]
-
     (let [kselected-portfolios (mapv keyword (:multiple-portfolio-risk/selected-portfolios db))
           hide-zero-risk (:multiple-portfolio-risk/hide-zero-holdings db)
           display-key-one (:multiple-portfolio-risk/field-one db)
           risk-choices (let [rfil (:multiple-portfolio-risk/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
-          accessors-k (mapv keyword (mapv :accessor grouping-columns))
+          accessors-k (map (comp keyword :accessor) grouping-columns)
           pos (t/chainfilter {:portfolio #(some #{%} (:multiple-portfolio-risk/selected-portfolios db))} (:positions db))
           pivoted-data (get-pivoted-data-with-nominal (get db :instruments) accessors-k pos (:multiple-portfolio-risk/selected-portfolios db) (distinct (map :id pos)) (keyword (get-in tables/risk-table-columns [display-key-one :accessor])))
           thfil (fn [line] (not (every? zero? (map line kselected-portfolios))))
@@ -820,8 +819,7 @@
                                             "20210730"
                                             "20210831"
                                             "20210930"]
-                                           @(rf/subscribe [:list-dates-position-history])
-                                           ))
+                                           @(rf/subscribe [:list-dates-position-history])))
 (defn position-history-isin []
   ;(rf/dispatch [:get-position-history-nav "OGEMCORD" "XS2388496247" (position-historical-dates)])
   (let [data @(rf/subscribe [:position-history-nav/data])
@@ -953,4 +951,4 @@
                                                      ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"])
                                                 {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 120}
                                                                           {:Header "ISIN" :accessor "ISIN" :width 120}]})
-                              :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true}]])])
+                              :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])])

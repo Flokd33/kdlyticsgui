@@ -16,24 +16,13 @@
     ["react-table-v6" :as rt :default ReactTable]))
 
 
-;(defn nav-home-bar []
-;  [v-box
-;   :gap "20px"
-;   :class "leftnavbar"
-;   :children (into []
-;                   (for [item static/risk-navigation]
-;                     [button
-;                      :class (str "btn btn-primary btn-block" (if (and (= @(rf/subscribe [:navigation/active-home]) (:code item))) " active"))
-;                      :label (:name item)
-;                      :on-click #(rf/dispatch [:navigation/active-home (:code item)])]))])
-
 (defn conditional-color [state rowInfo column]
   (if-let [x (gobj/getValueByKeys rowInfo "row" "Nominal_Debt_%_Owned")]
-    (condp > x
-           0.05 #js {:style #js {:backgroundColor "#FFFF99"}}
-           0.1 #js {:style #js {:backgroundColor "#BCEC90"}}
-           0.251 #js {:style #js {:backgroundColor "#FFCCCC"}}
-           1 #js {:style #js {:backgroundColor "#FFC000"}}
+    (condp >= x
+           0.05   #js {:style #js {:backgroundColor "#FFFF99"}}
+           0.1    #js {:style #js {:backgroundColor "#BCEC90"}}
+           0.251  #js {:style #js {:backgroundColor "#FFCCCC"}}
+           1      #js {:style #js {:backgroundColor "#FFC000"}}
            #js {})
     #js{}))
 

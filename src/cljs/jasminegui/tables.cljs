@@ -211,13 +211,6 @@
         bx (.indexOf ["Total" "AAA" "AA" "A" "BBB" "BB" "B" "CCC" "NA"] b)]
     (<= ax bx)))
 
-;(defn roundpc [fmt this]
-;  (r/as-element
-;    (if-let [x (aget this "value")]
-;      [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
-;      "-")))
-
-
 (def round0pc #(roundpc "%.0f%" %))
 (def round1pc #(roundpc "%.1f%" %))
 (def round2pc #(roundpc "%.2f%" %))
@@ -226,28 +219,19 @@
 
 (def this-year (str (.getYear (today))))
 
-;(defn ytd-ita [this]
-;  (if (and (some? (aget this "value")) (= (str (subs (aget this "row" "FIRST_SETTLE_DT" ) 0 4)) this-year))
-;    (roundpc-italic "%.2f%" this)
-;    (roundpc "%.2f%" this))
-;  )
-
 (defn ytd-ita [this]
   (r/as-element
     (if-let [x (aget this "value")]
       (if (= (str (subs (aget this "row" "FIRST_SETTLE_DT" ) 0 4)) this-year)
         [:div {:style {:color (if (neg? x) "red" "black") :font-style "italic"}} (str "*" (gstring/format "%.2f%" (* 100 x)))]
         [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format "%.2f%" (* 100 x))])
-      "-"))
-
-  )
+      "-")))
 
 (defn sub-low-level-rating-score-to-string [x]
   (let [i (dec (js/parseInt x))]
     (if (<= 0 i 23)
       (nth ["AAA" "AA+" "AA" "AA-" "A+" "A" "A-" "BBB+" "BBB" "BBB-" "BB+" "BB" "BB-" "B+" "B" "B-" "CCC+" "CCC" "CCC-" "CC" "C" "D" "NM" "NR"] i)
-      "NA"))
-  )
+      "NA")))
 
 (defn low-level-rating-score-to-string
   [this]
@@ -269,13 +253,14 @@
 
 
 (def risk-table-columns
-  (let [round2 #(nb-cell-format "%.2f" 1. %) round1 #(nb-cell-format "%.1f" 1. %) round2pc #(nb-cell-format "%.2f%" 1. %)]
+  (let [round2 #(nb-cell-format "%.2f" 1. %)
+        round1 #(nb-cell-format "%.1f" 1. %)
+        round2pc #(nb-cell-format "%.2f%" 1. %)]
     {:id                               {:Header "ID" :accessor "id" :show false}
      :id-show                          (text-col "ID" "id" 65)
      :region                           (text-col "Region" "jpm-region" 120)
      :emd-region                       (text-col "Region" "emd-region" 120)
      :country                          (text-col "Country" "qt-risk-country-name" 120)
-     ;:qt-risk-country-code             (text-col "Country" "qt-risk-country-name" 120)
      :issuer                           (text-col "Issuer" "TICKER" 120)
      :sector                           (text-col "Sector" "qt-jpm-sector" 120)
      :maturity-band                    (text-col "Maturity" "qt-final-maturity-band" 120)
@@ -287,7 +272,6 @@
 
      :description                      (text-col "thinkFolio ID" "description" 400)
      :nav                              (nb-col "Fund" "weight" 50 round2 sum-rows)
-     ;:weight                           (nb-col "Fund" "weight" 50 round2 sum-rows)
      :bm-weight                        (nb-col "Index" "bm-weight" 50 round2 sum-rows)
      :weight-delta                     (nb-col "Delta" "weight-delta" 50 round2 sum-rows)
      :nominal                          (nb-col "Nominal" "original-quantity" 100 nb-thousand-cell-format sum-rows)
