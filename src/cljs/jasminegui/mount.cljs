@@ -108,11 +108,14 @@
                  :position-history/breakdown                         "Start/End"
                  :position-history/absdiff                           :absolute
                  :position-history/data                              []
-                 :position-history-isin/data                           nil
+                 :position-history-isin/portfolio                    "OGEMCORD"
+                 :position-history-isin/data                          nil
                  :position-history-isin/isin                          "XS2280431763"
-                 :position-history-ticker/data                         nil
-                 :position-history-ticker/ticker                       "LUKOIL"
-
+                 :position-history-isin/start-date                   (t/int->gdate 20181231)
+                 :position-history-ticker/portfolio                   "OGEMCORD"
+                 :position-history-ticker/data                        nil
+                 :position-history-ticker/ticker                      "LUKOIL"
+                 :position-history-ticker/start-date                 (t/int->gdate 20181231)
 
 
                  ;trade history
@@ -384,10 +387,14 @@
            :position-history/breakdown
            :position-history/field-one
            :position-history/absdiff
+           :position-history-isin/portfolio
            :position-history-isin/data
            :position-history-isin/isin
+           :position-history-isin/start-date
+           :position-history-ticker/portfolio
            :position-history-ticker/data
            :position-history-ticker/ticker
+           :position-history-ticker/start-date
 
            :attribution-history/portfolio
            :attribution-history/hide-zero-holdings

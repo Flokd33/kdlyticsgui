@@ -6,7 +6,7 @@
     [goog.string :as gstring]
     [goog.string.format]
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
+                         single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list typeahead md-circle-icon-button
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [re-com.util :refer [px]]
@@ -889,52 +889,77 @@
                                            @(rf/subscribe [:list-dates-position-history])
                                            ))
 
+(def isin-nickname (r/atom ""))
 
-
-(defn position-history-2 []
-  (let [data-isin @(rf/subscribe [:position-history-isin/data])
+(defn position-history []
+  (let [source-data @(rf/subscribe [:quant-model/model-output])
+        bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data)))))
+        data-isin @(rf/subscribe [:position-history-isin/data])
         data-ticker @(rf/subscribe [:position-history-ticker/data])
-        portfolio (rf/subscribe [:position-history/portfolio])
+        portfolio-isin (rf/subscribe [:position-history-isin/portfolio])
+        portfolio-ticker (rf/subscribe [:position-history-ticker/portfolio])
         isin (rf/subscribe [:position-history-isin/isin])
         ticker (rf/subscribe [:position-history-ticker/ticker])
         portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        dates (concat (position-historical-dates) [(str (today))])
+        start-date-isin (rf/subscribe [:position-history-isin/start-date])
+        start-date-ticker (rf/subscribe [:position-history-ticker/start-date])
         ]
-    [h-box :class "subbody rightelement" :gap "20px" :children
-     [[v-box :class "element" :gap "20px" :children
-     [(gt/element-box-generic "Position history" "100%" (str "Position history (isin)")
+    (println portfolio-isin)
+    [h-box :class "subbody rightelement" :gap "10px" :children
+     [[v-box :class "element" :gap "10px" :children
+     [(gt/element-box-generic "Position history" "100%" (str "Position history (issue level)")
                              {:target-id "position-history-risk-table-isin"}
                              [[h-box :gap " 10px " :align :center
                                :children [[title :label "Portfolio:" :level :level3]
-                                          [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:position-history/portfolio %])]
+                                          [single-dropdown :width dropdown-width :model portfolio-isin :choices portfolio-map :on-change #(rf/dispatch [:position-history/portfolio %])]
                                           [gap :size "10px"]
                                           [title :label "Isin:" :level :level3]
                                           [input-text :width "110px" :model isin :attr {:maxlength 12} :change-on-blur? true :on-change #(rf/dispatch [:position-history-isin/isin %])] ;:attr {:maxlength 12}
+                                          ;[typeahead
+                                          ; :width "200px"
+                                          ; :model @isin-nickname
+                                          ; :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
+                                          ; :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
+                                          ; :suggestion-to-string (fn [_] "")
+                                          ; :placeholder "Search here"
+                                          ; :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))]
+                                          ;                   (rf/dispatch [:position-history-isin/isin isin])
+                                          ;                   (reset! isin-nickname (:id %))
+                                          ;                   ))
+                                          ; :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]
+                                          [gap :size "10px"]
+                                          [datepicker-dropdown :model start-date-isin :minimum (tools/int->gdate 20181230) :maximum (today)
+                                           :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:position-history-isin/start-date %])]
                                           [gap :size "10px"]
                                           [button :label "Fetch" :class "btn btn-primary btn-block"
-                                           :on-click #(rf/dispatch [:get-position-history-isin @portfolio @isin (position-historical-dates)])]
+                                           :on-click #(rf/dispatch [:get-position-history-isin @portfolio-isin @isin dates])]
                                           ]]
-                              [oz/vega-lite (charting/stacked-vertical-bars-2 data-isin "Position history")]
+                              [oz/vega-lite (charting/stacked-vertical-bars-2 data-isin start-date-isin "Position history")]
 
                               ])]]
        [v-box :class "element" :gap "20px" :children
-        [(gt/element-box-generic "Position history" "100%" (str "Position history (ticker)")
+        [(gt/element-box-generic "Position history" "100%" (str "Position history (issuer level)")
                               {:target-id "position-history-risk-table-ticker"}
                               [[h-box :gap " 10px " :align :center
                                 :children [[title :label "Portfolio:" :level :level3]
-                                           [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:position-history/portfolio %])]
+                                           [single-dropdown :width dropdown-width :model portfolio-ticker :choices portfolio-map :on-change #(rf/dispatch [:position-history/portfolio %])]
                                            [gap :size "10px"]
                                            [title :label "Ticker:" :level :level3]
                                            [input-text :width "110px" :model ticker :attr {:maxlength 12} :change-on-blur? true :on-change #(rf/dispatch [:position-history-ticker/ticker %])] ;:attr {:maxlength 12}
                                            [gap :size "10px"]
+                                           [datepicker-dropdown :model start-date-ticker :minimum (tools/int->gdate 20181230) :maximum (today)
+                                            :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:position-history-isin/start-date %])]
+                                           [gap :size "10px"]
                                            [button :label "Fetch" :class "btn btn-primary btn-block"
-                                            :on-click #(rf/dispatch [:get-position-history-ticker @portfolio @ticker (position-historical-dates)])]
+                                            :on-click #(rf/dispatch [:get-position-history-ticker @portfolio-ticker @ticker dates])]
                                            ]]
-                               [oz/vega-lite (charting/stacked-vertical-bars-2 data-ticker "Position history")]
+                               [oz/vega-lite (charting/stacked-vertical-bars-2 data-ticker start-date-ticker "Position history")]
                                ])]
       ]]
      ]))
 
-(defn position-history []
+(defn portfolio-history []
   ;(rf/dispatch [:get-position-history-nav "OGEMCORD" :local-value ["20210831" "20210930"]]) ;(position-historical-dates)
   (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
