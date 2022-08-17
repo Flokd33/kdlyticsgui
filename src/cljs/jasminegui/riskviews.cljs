@@ -903,6 +903,7 @@
                                            [title :label "Ticker:" :level :level3]
                                            ;{:country ["BR"] :sector ["Consumer"]}
                                            [input-text :width "150px" :model ticker :attr {:maxlength 200} :change-on-blur? true :on-change #(rf/dispatch [:position-history-ticker/ticker %])] ;:attr {:maxlength 12}
+                                           [info-button :info "Possibility to request a ticker OR a map with specific country and/or sector (e.g. {:country [“BR”] :sector[“Consumer”]} for Brazil Consumer)" :position :left-center]
                                            [gap :size "10px"]
                                            [title :label "Start date" :level :level3]
                                            ;[datepicker-dropdown :model start-date-ticker :minimum (tools/int->gdate 20181230) :maximum (today)
