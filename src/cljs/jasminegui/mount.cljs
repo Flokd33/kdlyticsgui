@@ -113,11 +113,12 @@
                  :position-history-isin/data                          nil
                  :position-history-isin/isin                          "XS2311313378"
                  :position-history-isin/nickname                      "ARACEN26"
-                 :position-history-isin/start-date                   (t/int->gdate 20181231)
+                 :position-history-isin/start-date                     2018   ;(t/int->gdate 20181231)
                  :position-history-ticker/portfolio                   "OGEMCORD"
                  :position-history-ticker/data                        nil
+                 :position-history-ticker/data-2                      nil
                  :position-history-ticker/ticker                      "LUKOIL"
-                 :position-history-ticker/start-date                 (t/int->gdate 20181231)
+                 :position-history-ticker/start-date                  2018    ;(t/int->gdate 20181231)
 
 
                  ;trade history
@@ -398,6 +399,7 @@
            :position-history-isin/start-date
            :position-history-ticker/portfolio
            :position-history-ticker/data
+           :position-history-ticker/data-2
            :position-history-ticker/ticker
            :position-history-ticker/start-date
 
