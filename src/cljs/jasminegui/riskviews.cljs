@@ -113,7 +113,7 @@
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
 (defn get-pivoted-data-with-nominal [instrument-definition accessors-k table portfolios instruments field]
-  (println (first instrument-definition))
+  ;(println (first instrument-definition))
   (let [grp (group-by (juxt :id :portfolio) table)
         kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)
         all-fields (conj accessors-k field :isin :description)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
@@ -275,7 +275,8 @@
                     "01Jan2019"
                     @(rf/subscribe [:qt-date])
                     "nominal"
-                    ])))
+                    ])
+      ))
 
 
 (defn multiple-bond-trade-history-nav-event [state rowInfo instance]
@@ -285,7 +286,8 @@
                     (filter @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]) @(rf/subscribe [:portfolios]))
                     "01Jan2019"
                     @(rf/subscribe [:qt-date])
-                    "nav"])))
+                    "nav"])
+      ))
 
 (defn fnevt-multiple [state rowInfo instance evt]
   (rcm/context!
@@ -841,15 +843,16 @@
         portfolio-ticker (rf/subscribe [:position-history-ticker/portfolio])
         isin (rf/subscribe [:position-history-isin/isin])
         isin-nickname (rf/subscribe [:position-history-isin/nickname])
+        data-price-isin (filter #(= (:ISIN %) @isin) @(rf/subscribe [:quant-model/history-result]))
         ticker (rf/subscribe [:position-history-ticker/ticker])
         portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
+        dates-yyyy-list (into [] (for [p [2018 2019 2020 2021 2022]] {:id p :label p})) ;;;;;
         dates (concat (position-historical-dates) [(str (today))])
-        start-date-isin (rf/subscribe [:position-history-isin/start-date])
-        start-date-ticker (rf/subscribe [:position-history-ticker/start-date])
-        dates-clean-isin (filter #(> % (js/parseInt (subs (str @start-date-isin) 0 8))) dates)
-        dates-clean-ticker (filter #(> % (js/parseInt (subs (str @start-date-ticker) 0 8))) dates)
-        ]
-    ;(println dates-clean-isin)
+        start-date-isin-YYYY (rf/subscribe [:position-history-isin/start-date])
+        start-date-ticker-YYYY (rf/subscribe [:position-history-ticker/start-date])
+        dates-clean-isin (filter #(>= (js/parseInt (subs (str %) 0 4))  (js/parseInt (subs (str @start-date-isin-YYYY) 0 4))) dates)
+        dates-clean-ticker (filter #(>= (js/parseInt (subs (str %) 0 4))  (js/parseInt (subs (str @start-date-ticker-YYYY) 0 4))) dates)]
+    ;(println data-price-isin)
     [h-box :class "subbody rightelement" :gap "10px" :children
      [[v-box :class "element" :gap "10px" :children
      [(gt/element-box-generic "Position history" "100%" (str "Position history (issue level)")
@@ -858,30 +861,32 @@
                                :children [[title :label "Portfolio:" :level :level3]
                                           [single-dropdown :width dropdown-width :model portfolio-isin :choices portfolio-map :on-change #(rf/dispatch [:position-history-isin/portfolio %])]
                                           [gap :size "10px"]
-                                          [title :label "Start date" :level :level3]
-                                          [datepicker-dropdown :model start-date-isin :minimum (tools/int->gdate 20181230) :maximum (today)
-                                           :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:position-history-isin/start-date %]))]
-                                          [gap :size "10px"]
                                           [title :label (str "Bond: " @isin-nickname) :level :level3]
-                                          [typeahead
-                                           :width "200px"
-                                           :style {:z-index 500}
-                                           :model typeahead-bond-nickname
-                                           :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
-                                           :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
-                                           :suggestion-to-string (fn [_] "")
-                                           :placeholder "Search here"
-                                           :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))]
-                                                             (rf/dispatch [:position-history-isin/isin isin])
-                                                             (rf/dispatch [:position-history-isin/nickname (:id %)])))
-                                           :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]
+                                          [box :style {:z-index 2} :child [typeahead
+                                                                           :width "110px"
+                                                                           :model typeahead-bond-nickname
+                                                                           :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
+                                                                           :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
+                                                                           :suggestion-to-string (fn [_] "")
+                                                                           :placeholder "Search here"
+                                                                           :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))]
+                                                                                             (rf/dispatch [:position-history-isin/isin isin])
+                                                                                             (rf/dispatch [:position-history-isin/nickname (:id %)])))
+                                                                           :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]]
+                                          [gap :size "10px"]
+                                          [title :label "Start date" :level :level3]
+                                          ;[datepicker-dropdown :model start-date-isin :minimum (tools/int->gdate 20181230) :maximum (today)
+                                          ; :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:position-history-isin/start-date %]))]
+                                          [single-dropdown :width dropdown-width :model start-date-isin-YYYY :choices dates-yyyy-list :on-change #(rf/dispatch [:position-history-isin/start-date %])]
                                           [gap :size "10px"]
                                           [button :label "Fetch" :class "btn btn-primary btn-block"
-                                           :on-click #(rf/dispatch [:get-position-history-isin @portfolio-isin @isin dates-clean-isin])]
+                                           :on-click #(do (rf/dispatch [:get-position-history-isin @portfolio-isin @isin dates-clean-isin])
+                                                          (rf/dispatch [:post-model-history-pricing :pricing [@isin]]))]
                                           ]]
                               [oz/vega-lite (charting/stacked-vertical-bars-2 data-isin "Position history")]
-
-                              ])]]
+                              [oz/vega-lite (charting/stacked-vertical-bars-3 data-isin data-price-isin "Position history")]
+                              ])
+      ]]
        [v-box :class "element" :gap "20px" :children
         [(gt/element-box-generic "Position history" "100%" (str "Position history (issuer level)")
                               {:target-id "position-history-risk-table-ticker"}
@@ -893,8 +898,9 @@
                                            [input-text :width "110px" :model ticker :attr {:maxlength 12} :change-on-blur? true :on-change #(rf/dispatch [:position-history-ticker/ticker %])] ;:attr {:maxlength 12}
                                            [gap :size "10px"]
                                            [title :label "Start date" :level :level3]
-                                           [datepicker-dropdown :model start-date-ticker :minimum (tools/int->gdate 20181230) :maximum (today)
-                                            :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:position-history-ticker/start-date %])]
+                                           ;[datepicker-dropdown :model start-date-ticker :minimum (tools/int->gdate 20181230) :maximum (today)
+                                           ; :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:position-history-ticker/start-date %])]
+                                           [single-dropdown :width dropdown-width :model start-date-ticker-YYYY :choices dates-yyyy-list :on-change #(rf/dispatch [:position-history-isin/start-date %])]
                                            [gap :size "10px"]
                                            [button :label "Fetch" :class "btn btn-primary btn-block"
                                             :on-click #(rf/dispatch [:get-position-history-ticker @portfolio-ticker @ticker dates-clean-ticker])]
@@ -997,7 +1003,6 @@
 
 (defn allianz-loss-report []
   (when (empty? @(rf/subscribe [:allianz-loss-report])) (rf/dispatch [:get-allianz-loss-report]))
-  (println @(rf/subscribe [:allianz-loss-report]))
   [box :class "subbody rightelement" :child
    (gt/element-box-generic "allianz-loss-report-table" max-width "Allianz P&L budget"
                            {:target-id "allianz-loss-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:allianz-loss-report]) "allianz")}

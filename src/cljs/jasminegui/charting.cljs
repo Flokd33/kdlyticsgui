@@ -145,7 +145,7 @@
         xfields (remove #(= % "_pivotVal") (keys (first rt-pivot-data)))
         colors (take (count (keys grp)) performance-colors)
         new-data (into [] (for [g (keys grp) x xfields] {:ygroup g :xgroup (t/gdate->ddMMMyy (t/int->gdate x)) :value (get (first (grp g)) x)}))]
-    (println new-data)
+    ;(println new-data)
       {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
      :width    (* 30 (count colors)) :height 400
@@ -162,12 +162,27 @@
   (let [new-data (map #(assoc % :weight (* (% :weight) 100) :date (subs (% :date) 0 6)) data)]
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
-     :width    550
+     :width    450
      :height   400
      :encoding {:x       {:field "date" :type "nominal" :axis {:title nil :labelFontSize 15}}}
      :layer [{:mark      {:type "bar" :color "#134848"}
-              :encoding {:y       {:field "original-quantity" :type "quantitative" :axis {:title "Nominal" :format "$,.2s" :labelFontSize 15 :titleFontSize 15 :titleColor "#134848"}}}}
+              :encoding {:y       {:field "original-quantity" :type "quantitative" :axis {:title "Nominal" :format ",.2s" :labelFontSize 15 :titleFontSize 15 :titleColor "#134848"}}}}
               {:mark     {:type "line" :color "#D83949"}
-               :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleFontSize 15 :titleColor "#134848"}}}}]
+               :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleFontSize 15 :titleColor "#D83949"}}}}]
+     :resolve {:scale {:y "independent" }}
+     }))
+
+(defn stacked-vertical-bars-3 [data-weight data-price title]
+  (let [new-data-price (map #(assoc % :date (str (subs (% :date) 0 4) (subs (% :date) 5 7) (subs (% :date) 8 10))) data-price)
+        new-data-weight (map #(assoc % :weight (* (% :weight) 100) :date (subs (% :date) 0 8) :price (:price (first (t/chainfilter {:date (str (subs (% :date) 0 8))} new-data-price)))) data-weight)] ; should index new-data-price rather than chainfilter
+    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
+     :data     {:values new-data-weight},
+     :width    450
+     :height   400
+     :encoding {:x       {:field "date" :type "nominal" :axis {:title nil :labelFontSize 15}}}
+     :layer [{:mark      {:type "line" :color "#7F6EBC"}
+              :encoding {:y       {:field "price" :type "quantitative" :axis {:title "Price" :labelFontSize 15 :titleFontSize 15 :titleColor "#7F6EBC"}}}}
+             {:mark     {:type "line" :color "#D83949"}
+              :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleFontSize 15 :titleColor "#D83949"}}}}]
      :resolve {:scale {:y "independent" }}
      }))
