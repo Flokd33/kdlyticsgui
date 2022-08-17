@@ -768,6 +768,13 @@
      :http-post-dispatch {:url (str static/server-address "position-history-ticker") :edn-params {:portfolio portfolio :ticker ticker :dateseq dateseq}
                           :dispatch-key [:position-history-ticker/data]}}))
 
+(rf/reg-event-fx
+  :get-position-history-ticker-2
+  (fn [{:keys [db]} [_ portfolio ticker dateseq]]
+    {
+     :http-post-dispatch {:url (str static/server-address "position-history-ticker-2") :edn-params {:portfolio portfolio :ticker ticker :dateseq dateseq}
+                          :dispatch-key [:position-history-ticker/data-2]}}))
+
 (rf/reg-event-db
   :position-history/data
   (fn [db [_ data]] (assoc db :navigation/show-mounting-modal false :position-history/data data)))
@@ -838,13 +845,13 @@
   (let [source-data @(rf/subscribe [:quant-model/model-output])
         bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data)))))
         data-isin @(rf/subscribe [:position-history-isin/data])
-        data-ticker @(rf/subscribe [:position-history-ticker/data])
         portfolio-isin (rf/subscribe [:position-history-isin/portfolio])
         portfolio-ticker (rf/subscribe [:position-history-ticker/portfolio])
         isin (rf/subscribe [:position-history-isin/isin])
         isin-nickname (rf/subscribe [:position-history-isin/nickname])
-        data-price-isin (filter #(= (:ISIN %) @isin) @(rf/subscribe [:quant-model/history-result]))
+        data-price-isin @(rf/subscribe [:quant-model/history-result]) ;data-price-isin (filter #(= (:ISIN %) @isin) @(rf/subscribe [:quant-model/history-result]))
         ticker (rf/subscribe [:position-history-ticker/ticker])
+        data-ticker (if (= "{" (subs @ticker 0 1)) @(rf/subscribe [:position-history-ticker/data-2]) @(rf/subscribe [:position-history-ticker/data])) ;data-ticker @(rf/subscribe [:position-history-ticker/data]) ;if map ticker so 2
         portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         dates-yyyy-list (into [] (for [p [2018 2019 2020 2021 2022]] {:id p :label p})) ;;;;;
         dates (concat (position-historical-dates) [(str (today))])
@@ -852,7 +859,6 @@
         start-date-ticker-YYYY (rf/subscribe [:position-history-ticker/start-date])
         dates-clean-isin (filter #(>= (js/parseInt (subs (str %) 0 4))  (js/parseInt (subs (str @start-date-isin-YYYY) 0 4))) dates)
         dates-clean-ticker (filter #(>= (js/parseInt (subs (str %) 0 4))  (js/parseInt (subs (str @start-date-ticker-YYYY) 0 4))) dates)]
-    ;(println data-price-isin)
     [h-box :class "subbody rightelement" :gap "10px" :children
      [[v-box :class "element" :gap "10px" :children
      [(gt/element-box-generic "Position history" "100%" (str "Position history (issue level)")
@@ -863,7 +869,7 @@
                                           [gap :size "10px"]
                                           [title :label (str "Bond: " @isin-nickname) :level :level3]
                                           [box :style {:z-index 2} :child [typeahead
-                                                                           :width "110px"
+                                                                           :width "150px"
                                                                            :model typeahead-bond-nickname
                                                                            :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
                                                                            :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
@@ -895,16 +901,18 @@
                                            [single-dropdown :width dropdown-width :model portfolio-ticker :choices portfolio-map :on-change #(rf/dispatch [:position-history-ticker/portfolio %])]
                                            [gap :size "10px"]
                                            [title :label "Ticker:" :level :level3]
-                                           [input-text :width "110px" :model ticker :attr {:maxlength 12} :change-on-blur? true :on-change #(rf/dispatch [:position-history-ticker/ticker %])] ;:attr {:maxlength 12}
+                                           ;{:country ["BR"] :sector ["Consumer"]}
+                                           [input-text :width "150px" :model ticker :attr {:maxlength 200} :change-on-blur? true :on-change #(rf/dispatch [:position-history-ticker/ticker %])] ;:attr {:maxlength 12}
                                            [gap :size "10px"]
                                            [title :label "Start date" :level :level3]
                                            ;[datepicker-dropdown :model start-date-ticker :minimum (tools/int->gdate 20181230) :maximum (today)
                                            ; :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:position-history-ticker/start-date %])]
-                                           [single-dropdown :width dropdown-width :model start-date-ticker-YYYY :choices dates-yyyy-list :on-change #(rf/dispatch [:position-history-isin/start-date %])]
+                                           [single-dropdown :width dropdown-width :model start-date-ticker-YYYY :choices dates-yyyy-list :on-change #(rf/dispatch [:position-history-ticker/start-date %])]
                                            [gap :size "10px"]
                                            [button :label "Fetch" :class "btn btn-primary btn-block"
-                                            :on-click #(rf/dispatch [:get-position-history-ticker @portfolio-ticker @ticker dates-clean-ticker])]
-                                           ]]
+                                            :on-click #(if (= "{" (subs @ticker 0 1)) @(rf/dispatch [:get-position-history-ticker-2 @portfolio-ticker @ticker dates-clean-ticker]) @(rf/dispatch [:get-position-history-ticker @portfolio-ticker @ticker dates-clean-ticker]))
+                                            ;(rf/dispatch [:get-position-history-ticker @portfolio-ticker @ticker dates-clean-ticker])
+                                            ]]]
                                [oz/vega-lite (charting/stacked-vertical-bars-2 data-ticker "Position history")]
                                ])]
       ]]
