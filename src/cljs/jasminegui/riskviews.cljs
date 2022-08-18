@@ -849,12 +849,12 @@
         portfolio-ticker (rf/subscribe [:position-history-ticker/portfolio])
         isin (rf/subscribe [:position-history-isin/isin])
         isin-nickname (rf/subscribe [:position-history-isin/nickname])
-        data-price-isin @(rf/subscribe [:quant-model/history-result]) ;data-price-isin (filter #(= (:ISIN %) @isin) @(rf/subscribe [:quant-model/history-result]))
+        data-price-isin @(rf/subscribe [:quant-model/history-result])
         ticker (rf/subscribe [:position-history-ticker/ticker])
         data-ticker (if (= "{" (subs @ticker 0 1)) @(rf/subscribe [:position-history-ticker/data-2]) @(rf/subscribe [:position-history-ticker/data])) ;data-ticker @(rf/subscribe [:position-history-ticker/data]) ;if map ticker so 2
         portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
         dates-yyyy-list (into [] (for [p [2018 2019 2020 2021 2022]] {:id p :label p})) ;;;;;
-        dates (position-historical-dates) ;(concat (position-historical-dates) [(str (today))])
+        dates (concat (position-historical-dates) [(subs (str (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date]))) 0 8)]) ;(concat (position-historical-dates) [(subs (str (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date]))) 0 8)])
         start-date-isin-YYYY (rf/subscribe [:position-history-isin/start-date])
         start-date-ticker-YYYY (rf/subscribe [:position-history-ticker/start-date])
         dates-clean-isin (filter #(>= (js/parseInt (subs (str %) 0 4))  (js/parseInt (subs (str @start-date-isin-YYYY) 0 4))) dates)
