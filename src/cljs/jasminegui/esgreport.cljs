@@ -171,8 +171,8 @@
                                     :reporting/reconciliation                              {:question_id 22 :question_category "reporting" :analyst_answer "No"     :analyst_score 0}
                                    }))
 
-(def score-1 (/ 100 7))
-(def score-2 (/ 100 14))
+(def score-1 10)
+(def score-2 5)
 
 (def gb-scoring {:project-evaluation/controversies                    {:Yes1 score-2 :Yes2 0 :No score-1}
                  :independent-verification/independent-verification   {:Yes score-1 :No 0}
@@ -198,7 +198,8 @@
         new_issue-total-score (reduce + (into [] (for [e (keys summary)] (if (not= (get-in summary [e :question_category]) "reporting") (get-in summary [e :analyst_score]) 0))))
         reporting-total-score (reduce + (into [] (for [e (keys summary)] (if (= (get-in summary [e :question_category]) "reporting") (get-in summary [e :analyst_score]) 0))))]
     (reset! gb-score-new-issue new_issue-total-score)
-    (reset! gb-score-follow-up reporting-total-score))
+    (reset! gb-score-follow-up reporting-total-score)
+    )
   )
 
 
@@ -216,7 +217,6 @@
 
 (defn green-bond-scoring-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
-    (println @gb-calculator-summary)
   [v-box :width "1280px" :gap "5px" :class "element"
    :children [[modal-success]
               [title :label "Green bond calculator" :level :level1]
@@ -228,7 +228,7 @@
                :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
                           [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name
                            :on-change #(reset! analyst-name %)]]]
-              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model gb-score-new-issue ]]]
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (* @gb-score-new-issue (/ 100 70)) ]]]
 
               [title :label "Project evaluation" :level :level2]
               [h-box :gap "10px" :align :center
