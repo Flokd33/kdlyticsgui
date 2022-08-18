@@ -44,14 +44,18 @@
 (def today-date (tools/gdate->yyyyMMdd (today)))
 (def analyst-name (r/atom nil))
 
-(def other-disabled? (r/atom false))
+(def other-disabled? (r/atom true))
+(def year-disabled? (r/atom true))
+(def sbti-disabled? (r/atom true))
 
-;(def esg-report-category (r/atom "gb"))
 (def esg-report-selected (r/atom "GB_CONTLE_2022-04-14"))
 (def gb-isin (r/atom "USY1753QAB87"))
 (def gb-date (r/atom "2022-04-14"))
 
 (def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
+(def yes-no-choice-2 [{:id "Yes1" :label "Yes (small)"} {:id "Yes2"  :label "Yes (big)"} {:id "No"  :label "No"}])
+(def yes-no-choice-3 [{:id "Yes" :label "Yes"} {:id "Yes2"  :label "In line"} {:id "No"  :label "No"}])
+
 
 (rf/reg-event-fx
   :post-esg-report-upload
@@ -106,13 +110,13 @@
    {:id "asiow" :label "Alan"} {:id "aluizgomes" :label "Antonio"} {:id "cliang" :label "Chris"} {:id "achan" :label "Adrian"} {:id "ksalisbury" :label  "Kevan"}])
 
 (def project-sub-categories
-  [{:id "climate" :label "Climate change adaptation (including information support systems, such as climate observation and early warning systems)", :group "Climate change adaptation"}
+  [{:id "climate" :label "Climate change adaptation (including efforts to make infrastructure more resilient to impacts of climate change, as well as information support systems, such as climate observation and early warning systems)", :group "Climate change adaptation"}
    {:id "renewable" :label "Renewable energy (including production, transmission, appliances and products)", :group "Climate change adaptation"}
-   {:id "green" :label "Green buildings which meet regional, national or internationally recognised standards or certifications", :group "Climate change adaptation"}
+   {:id "green" :label "Green buildings (buildings that meet regional, national or internationally recognised standards or certifications for environmental performance)", :group "Climate change adaptation"}
    {:id "energy" :label "Energy efficiency (such as in new and refurbished buildings, energy storage, district heating, smart grids, appliances and products)", :group "Climate change adaptation"}
    {:id "clean" :label "Clean transportation (such as electric, hybrid, public, rail, non-motorised, multi-modal transportation, infrastructure for clean energy vehicles and reduction of harmful emissions)", :group "Climate change adaptation"}
    {:id "pollution" :label "Pollution prevention and control (including reduction of air emissions, greenhouse gas control, soil remediation, waste prevention, waste reduction, waste recycling and energy/emission-efficient waste to energy)", :group "Pollution prevention and control"}
-   {:id "eco" :label "Eco-efficient and/or circular economy adapted products, production technologies and processes (such as development and introduction of environmentally", :group "Pollution prevention and control"}
+   {:id "eco" :label "Eco-efficient and/or circular economy adapted products, production technologies and processes (such as the design and introduction of reusable, recyclable and refurbished materials, components and products; circular tools and services", :group "Pollution prevention and control"}
    {:id "environmentally" :label "Environmentally sustainable management of living natural resources and land use (including environmentally sustainable agriculture; environmentally sustainable animal husbandry; climate smart farm inputs such as biological crop protection or drip-irrigation; environmentally sustainable fishery and aquaculture; environmentally-sustainable forestry, including afforestation or reforestation, and preservation or restoration of natural landscapes)", :group "Biodiversity conservation"}
    {:id "terrestrial" :label "Terrestrial and aquatic biodiversity conservation (including the protection of coastal, marine and watershed environments)", :group "Biodiversity conservation"}
    {:id "sustainable" :label "Sustainable water and wastewater management (including sustainable infrastructure for clean and/or drinking water, wastewater treatment, sustainable urban drainage systems and river training and other forms of flooding mitigation)", :group "Biodiversity conservation"}
@@ -134,43 +138,50 @@
   [{:id "verified" :label "The internal tracking will be verified by an auditor"}
    {:id "tracked"  :label "The proceeds are ringfenced or otherwise specifically tracked"} {:id "none"  :label "None of the above"}])
 
+(def existing-choices
+  [{:id "refinancing" :label "Refinancing (add % refinanced if applicable, in summary notes)"}
+   {:id "initial"  :label "Initial"}])
 
-(def gb-calculator-summary (r/atom {:project-selection/description                       {:question_id 1   :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
-                                   :project-selection/categories                          {:question_id 2  :question_category "new-issue" :analyst_answer "other"  :analyst_score 7},
-                                   :project-selection/categories-other                    {:question_id 3  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
-                                   :project-evaluation/independent-verification           {:question_id 4  :question_category "new-issue" :analyst_answer "none"   :analyst_score 0},
-                                   :project-evaluation/second-opinion                     {:question_id 25 :question_category "new-issue" :analyst_answer "none"   :analyst_score 0}
-                                   :project-evaluation/credibility                        {:question_id 5  :question_category "new-issue" :analyst_answer "No"     :analyst_score 0},
-                                   :project-evaluation/materiality                        {:question_id 6  :question_category "new-issue" :analyst_answer "No"     :analyst_score 0},
-                                   :project-evaluation/discipline                         {:question_id 7  :question_category "new-issue" :analyst_answer "No"     :analyst_score 0},
-                                   :project-evaluation/controversies                      {:question_id 8  :question_category "new-issue" :analyst_answer "Yes"    :analyst_score 0},
-                                   :project-evaluation/notes                              {:question_id 24 :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
-                                   :project-evaluation/country-framework-list             {:question_id 9  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
-                                   :project-evaluation/national-framework-best-practice   {:question_id 10 :question_category "new-issue" :analyst_answer "No"     :analyst_score 0},
-                                   :project-evaluation/better-than-national               {:question_id 11 :question_category "new-issue" :analyst_answer "No"     :analyst_score 0},
-                                   :project-evaluation/reference-sources                  {:question_id 13 :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
-                                   :proceed-management/ringfencing                        {:question_id 14 :question_category "new-issue" :analyst_answer "none"   :analyst_score 0},
-                                   :proceed-management/tracked                            {:question_id 15 :question_category "new-issue" :analyst_answer "none"   :analyst_score 0},
-                                   :reporting/project-on-track                            {:question_id 16 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
-                                   :reporting/project-expanded                            {:question_id 17 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
-                                   :reporting/increased-green-funding                     {:question_id 18 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
-                                   :reporting/annual-report                               {:question_id 19 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
-                                   :reporting/project-kpis                                {:question_id 20 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
-                                   :reporting/half-proceeds-green                         {:question_id 21 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
-                                   :reporting/reconciliation                              {:question_id 22 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
-                                   :analyst-evaluation/text                               {:question_id 23 :question_category "new-issue" :analyst_answer ""       :analyst_score 0}
+(def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
+                                    :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
+                                    :project-evaluation/description                        {:question_id 3  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
+                                    :project-evaluation/controversies                      {:question_id 4  :question_category "new-issue" :analyst_answer "Yes2"    :analyst_score 0},
+                                    :independent-verification/independent-verification     {:question_id 5  :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
+                                    :independent-verification/second-opinion               {:question_id 6 :question_category "new-issue" :analyst_answer ""     :analyst_score 0}
+                                    :proceed-management/ringfencing                        {:question_id 7 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
+                                    :proceed-management/tracked                            {:question_id 8 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
+                                    :proceed-management/use                                {:question_id 9 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
+                                    :proceed-management/refi-or-exi                        {:question_id 10 :question_category "new-issue" :analyst_answer nil   :analyst_score 0},
+                                    :country-framework/country-framework-list              {:question_id 11  :question_category "new-issue" :analyst_answer nil       :analyst_score 0},
+                                    :country-framework/better-than-national                {:question_id 12 :question_category "new-issue" :analyst_answer "No"     :analyst_score 0},
+                                    :reporting-ni/reporting                                {:question_id 13 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
+                                    :additional/net-zero                                   {:question_id 14 :question_category "new-issue" :analyst_answer "No"     :analyst_score 0}
+                                    :additional/net-zero-year                              {:question_id 15 :question_category "new-issue" :analyst_answer ""     :analyst_score 0}
+                                    :additional/sbti                                       {:question_id 26 :question_category "new-issue" :analyst_answer "No"     :analyst_score 0}
+                                    :additional/sbti-cat                                   {:question_id 23 :question_category "new-issue" :analyst_answer nil     :analyst_score 0}
+                                    :additional/reference-sources                          {:question_id 24 :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
+                                    :additional/text                                       {:question_id 25 :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
+
+                                    :reporting/project-on-track                            {:question_id 16 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
+                                    :reporting/project-expanded                            {:question_id 17 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
+                                    :reporting/increased-green-funding                     {:question_id 18 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
+                                    :reporting/annual-report                               {:question_id 19 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
+                                    :reporting/project-kpis                                {:question_id 20 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
+                                    :reporting/half-proceeds-green                         {:question_id 21 :question_category "reporting" :analyst_answer "No"     :analyst_score 0},
+                                    :reporting/reconciliation                              {:question_id 22 :question_category "reporting" :analyst_answer "No"     :analyst_score 0}
                                    }))
 
-(def gb-scoring {:project-selection/categories                        {:climate 14 :renewable 14 :green 14 :energy 14 :clean 14 :pollution 14 :eco 14 :environmentally 14 :terrestrial 14 :sustainable 14 :other 7}
-                 :project-evaluation/independent-verification         {:second-party-opinion 10 :green-bond-framework 8 :external-scoring 6 :none 0}
-                 :project-evaluation/credibility                      {:Yes 10 :No 0}
-                 :project-evaluation/materiality                      {:Yes 10 :No 0}
-                 :project-evaluation/discipline                       {:Yes 10 :No 0}
-                 :project-evaluation/controversies                    {:Yes 0 :No 10}
-                 :project-evaluation/national-framework-best-practice {:Yes 6 :No 0}
-                 :project-evaluation/better-than-national             {:Yes 8 :No 0}
-                 :proceed-management/ringfencing                      {:sub-account 10 :green-account 10 :virtual-account 10 :none 0}
-                 :proceed-management/tracked                          {:verified 12 :tracked 9 :none 0}
+(def score-1 10)
+(def score-2 5)
+
+(def gb-scoring {:project-evaluation/controversies                    {:Yes1 score-2 :Yes2 0 :No score-1}
+                 :independent-verification/independent-verification   {:Yes score-1 :No 0}
+                 :proceed-management/use                              {:Yes score-1 :No 0}
+                 :proceed-management/ringfencing                      {:Yes score-1 :No 0}
+                 :proceed-management/tracked                          {:Yes score-1 :No 0}
+                 :reporting-ni/reporting                              {:Yes score-1 :No 0}
+                 :country-framework/better-than-national              {:Yes score-1 :Yes2 score-2 :No 0}
+
                  :reporting/project-on-track                          {:Yes 20 :No 0}
                  :reporting/project-expanded                          {:Yes 15 :No 0}
                  :reporting/increased-green-funding                   {:Yes 15 :No 0}
@@ -187,38 +198,25 @@
         new_issue-total-score (reduce + (into [] (for [e (keys summary)] (if (not= (get-in summary [e :question_category]) "reporting") (get-in summary [e :analyst_score]) 0))))
         reporting-total-score (reduce + (into [] (for [e (keys summary)] (if (= (get-in summary [e :question_category]) "reporting") (get-in summary [e :analyst_score]) 0))))]
     (reset! gb-score-new-issue new_issue-total-score)
-    (reset! gb-score-follow-up reporting-total-score))
+    (reset! gb-score-follow-up reporting-total-score)
+    )
   )
 
-(defn gb-eligible []
-  (let [answers @gb-calculator-summary]
-  (if (and (= (get-in answers [:project-evaluation/controversies :analyst_answer]) "No") (= (get-in answers [:project-evaluation/credibility :analyst_answer]) "Yes") (= (get-in answers [:project-evaluation/materiality :analyst_answer]) "Yes") (= (get-in answers [:project-evaluation/discipline :analyst_answer]) "Yes"))
-    {:color "Chartreuse" :text "YES"}
-    {:color "Red" :text "NO"})))
-
-(defn gb-eligible-answer [report]
-  (let  [report-selected report]
-  (if (and (= (str (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected)))) "No")
-         (= (str (:analyst_answer (first (t/chainfilter {:description_short "materiality"} report-selected)))) "Yes")
-         (= (str (:analyst_answer (first (t/chainfilter {:description_short "discipline"} report-selected)))) "Yes")
-         (= (str (:analyst_answer (first (t/chainfilter {:description_short "credibility"} report-selected)))) "Yes"))
-  {:color "Chartreuse" :text "YES"}
-  {:color "Red" :text "NO"}))
-  )
 
 (defn gb-summary-generator [is-reporting]
   (let [answers @gb-calculator-summary
         answers_clean  (if (= is-reporting true)
                          (into {} (for [[k v] answers :when (= (:question_category v) "reporting")] [k v]))
                          (into {} (for [[k v] answers :when (not= (:question_category v) "reporting")] [k v])))
-        summary (for [k (keys answers_clean)] {:question_id (get-in answers_clean [k :question_id]) :analyst_code @analyst-name :date today-date :security_identifier @identifier :analyst_answer (get-in answers_clean [k :analyst_answer]) :analyst_score (get-in answers_clean [k :analyst_score])})]
+        summary (for [k (keys answers_clean)] {:question_id (get-in answers_clean [k :question_id]) :analyst_code @analyst-name :date today-date :security_identifier @identifier
+                                               :analyst_answer (if (nil? (get-in answers_clean [k :analyst_answer])) "" (get-in answers_clean [k :analyst_answer]))
+                                               :analyst_score (get-in answers_clean [k :analyst_score])})]
     (rf/dispatch [:post-esg-report-upload summary])
     ))
 
 
 (defn green-bond-scoring-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
-    ;(println @gb-calculator-summary)
   [v-box :width "1280px" :gap "5px" :class "element"
    :children [[modal-success]
               [title :label "Green bond calculator" :level :level1]
@@ -229,93 +227,102 @@
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
                           [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name
-                           :on-change #(reset! analyst-name %)]
-                          ]]
-              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model gb-score-new-issue ]]]
-              [title :label "Project description" :level :level2]
-
+                           :on-change #(reset! analyst-name %)]]]
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (js/parseInt (str (* @gb-score-new-issue (/ 100 70)))) ]]]
+              [title :label "Project evaluation" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Category:"]
-                          [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:project-selection/categories :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-selection/categories :analyst_answer])%)
+                          [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])%)
                                            (if (= "other" %) (reset! other-disabled? false) (reset! other-disabled? true))
                                            (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Other:"]
-                          [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:project-selection/categories-other :analyst_answer]) :disabled? other-disabled?
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-selection/categories-other :analyst_answer]) %))]]]
-              [h-box :gap "10px" :align :start
-               :children [[label :width question-width :label "Details:"]
-                          [input-textarea :width categories-list-width-long :rows 10 :model (r/cursor gb-calculator-summary [:project-selection/description :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-selection/description :analyst_answer ]) %))]]]
+                          [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) :disabled? other-disabled?
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) %))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Independent verification:"]
-                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices independent-verification-choices
-                           :model (r/cursor gb-calculator-summary [:project-evaluation/independent-verification :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/independent-verification :analyst_answer ]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Who provides second opinion?"]
-                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices second-opinion-choices
-                           :model (r/cursor gb-calculator-summary [:project-evaluation/second-opinion :analyst_answer ])
-                           :on-change #(reset! (r/cursor gb-calculator-summary [:project-evaluation/second-opinion :analyst_answer ]) %)]]]
-              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility" :level :level2]]
-                                                             [box :width dropdown-width :child [button :label (:text (gb-eligible)) :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (:color (gb-eligible)) :textAlign "center"}]]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Are green projects credible?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:project-evaluation/credibility :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/credibility :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is related spending material?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:project-evaluation/materiality :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/materiality :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Does the green bond fit within a disciplined approach to sustainability?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:project-evaluation/discipline :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/discipline :analyst_answer]) %) (gb-score-calculator))]]]
+               :children [[label :width question-width :label "Project description:"]
+                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer]) %))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
+                          [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :start
-               :children [[label :width question-width :label "Notes:"]
-                          [input-textarea :width categories-list-width-long :rows 5 :model (r/cursor gb-calculator-summary [:project-evaluation/notes :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/notes :analyst_answer ]) %))]]]
-              [title :label "Management of proceeds" :level :level2 ]
+
+              [title :label "Independent verification" :level :level2]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Ringfencing:"]
-                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices ringfencing-choices
-                           :model (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer]) %) (gb-score-calculator))]]]
+               :children [[label :width question-width :label "Does the green bond have independent verification?"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:independent-verification/independent-verification :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:independent-verification/independent-verification :analyst_answer ]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Tracking:"]
-                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tracking-choices
-                           :model (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer]) %) (gb-score-calculator))]]]
+               :children [[label :width question-width :label "Who provides the independent verification?"]
+                          [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:independent-verification/second-opinion :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:independent-verification/second-opinion :analyst_answer]) %))]]]
+
+              [title :label "Use and Management of Proceeds" :level :level2 ]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Are all the proceeds used for financing/refinancing green projects?"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/use :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/use :analyst_answer ]) %) (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Refinancing of an existing project or initial financing? "]
+                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices existing-choices
+                           :model (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer]) %) (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Are the use of proceeds tracked?"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ]) %) (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Are the use of proceeds ringfenced?"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer ]) %) (gb-score-calculator))]]]
+
+              [title :label "Reporting" :level :level2 ]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Is there regular reporting on the impact stemming from the green projects??"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ]) %) (gb-score-calculator))]]]
+
               [title :label "Country framework" :level :level2 ]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Country:"]
-                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices country-names-sorted :filter-box? true :model (r/cursor gb-calculator-summary [:project-evaluation/country-framework-list :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/country-framework-list :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Does the country have a transition plan with ST targets and LT net zero target?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:project-evaluation/national-framework-best-practice :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/national-framework-best-practice :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the company framework better than the national framework?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:project-evaluation/better-than-national :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/better-than-national :analyst_answer]) %) (gb-score-calculator))]]]
-              ;[h-box :gap "10px" :align :center
-              ; :children [[label :width question-width :label "Is the project aligned with the country-specific sector pathway?"]
-              ;            [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer])
-              ;             :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/aligned-with-country-sector-pathway :analyst_answer]) %) (gb-score-calculator))]]]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice-3 :model (r/cursor gb-calculator-summary [:country-framework/better-than-national :analyst_answer])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:country-framework/better-than-national :analyst_answer]) %) (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Country:"]
+                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices country-names-sorted :filter-box? true :model (r/cursor gb-calculator-summary [:country-framework/country-framework-list :analyst_answer])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:country-framework/country-framework-list :analyst_answer]) %) (gb-score-calculator))]]]
+
+              [title :label "Additional Information" :level :level2 ]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Is the company net-zero committed?"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer]) %) (if (= "Yes" %) (reset! year-disabled? false) (reset! year-disabled? true))
+                                           (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "If yes please indicate the year "]
+                          [input-text :width dropdown-width  :model (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) :disabled? year-disabled?
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) %))]]]
+
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Is the company SBTi aligned and if so, which category?"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer]) %) (if (= "Yes" %) (reset! sbti-disabled? false) (reset! sbti-disabled? true))
+                                           (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "If yes please indicate the category"]
+                          [single-dropdown :width categories-list-width-long :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) :disabled? sbti-disabled?
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) %))]]]
+
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Reference sources:"]
-                          [input-textarea  :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/reference-sources :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/reference-sources :analyst_answer]) %) (gb-score-calculator))]]]
+                          [input-textarea  :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
-               :children [[box :width question-width :child [title :label "Analyst summary" :level :level2 ]]
-                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:analyst-evaluation/text :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:analyst-evaluation/text :analyst_answer]) %))]]]
+               :children [[box :width question-width :child [title :label "Analyst summary/notes"]]
+                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/text :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/text :analyst_answer]) %))]]]
               [gap :size "10px"]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
@@ -324,6 +331,7 @@
               [line :size  "2px" :color "black"] ;[gap :size "50px"]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]]
                                                              [progress-bar :width "200px" :model gb-score-follow-up ]]]
+
               [title :label "Reporting" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the project on track?"]
@@ -357,7 +365,6 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
                           [button :label "Extract follow-up report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator) (gb-summary-generator true))]]]
-
               ]]
     ))
 
@@ -400,8 +407,6 @@
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Category:"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected)))} project-sub-categories))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Independent verification:"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} report-selected)))} (map (fn [x] (update x :label #(if (= "None of the above" %) "None" %))) independent-verification-choices)))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Who provides second opinion?"] [p (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "second-opinion"} report-selected)))} (map (fn [x] (update x :label #(if (= "None of the above" %) "None" %))) second-opinion-choices)))))]]]
-                          [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Green bond eligibility" :level :level2]]
-                                                                         [box :width dropdown-width :child [button :label (:text (gb-eligible-answer report-selected)) :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (:color (gb-eligible-answer report-selected))}]]]]
                           [gap :size "1"]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are green projects credible?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "credibility"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is related spending material?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "materiality"} report-selected))))]]]
@@ -508,8 +513,6 @@
 (def question-width-label "423px")
 
 (defn transition-fund-scoring-display []
-  ;(println @tf-total-score)
-  ;(println @tf-calculator-summary)
     [v-box :width "1280px" :gap "5px" :class "element"
      :children [[modal-success]
                 [title :label "Transition fund calculator" :level :level1]
@@ -747,7 +750,6 @@
                      ]]
                     )
                   )
-
                 [gap :size "10px"]
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label ""]
