@@ -5,7 +5,7 @@
 (def cms-address "http://iamlfilive:8192/tradeanalyser/cms/")
 
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
-  (let [home-events [:get-qt-date :get-total-positions :get-naked-positions :get-instruments]
+  (let [home-events [:get-qt-date :get-total-positions :get-naked-positions :get-instruments :get-quant-model]
         attr-events [:get-top-bottom-price-change :get-attribution-date :get-attribution-summary :get-attribution-available-months  [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
         quant-events [:get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
