@@ -48,9 +48,9 @@
 (def year-disabled? (r/atom true))
 (def sbti-disabled? (r/atom true))
 
-(def esg-report-selected (r/atom "GB_CONTLE_2022-04-14"))
+(def esg-report-selected (r/atom "GB_CONTLE_2022-08-18"))
 (def gb-isin (r/atom "USY1753QAB87"))
-(def gb-date (r/atom "2022-04-14"))
+(def gb-date (r/atom "2022-08-18"))
 
 (def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
 (def yes-no-choice-2 [{:id "Yes1" :label "Yes (small)"} {:id "Yes2"  :label "Yes (big)"} {:id "No"  :label "No"}])
@@ -229,7 +229,7 @@
                           [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name
                            :on-change #(reset! analyst-name %)]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (js/parseInt (str (* @gb-score-new-issue (/ 100 70)))) ]]]
-              [title :label "Project evaluation" :level :level2]
+              [title :label "Project Evaluation" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Category:"]
                           [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])
@@ -249,7 +249,7 @@
                           [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %) (gb-score-calculator))]]]
 
-              [title :label "Independent verification" :level :level2]
+              [title :label "Independent Verification" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the green bond have independent verification?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:independent-verification/independent-verification :analyst_answer ])
@@ -284,7 +284,7 @@
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ]) %) (gb-score-calculator))]]]
 
-              [title :label "Country framework" :level :level2 ]
+              [title :label "Country Framework" :level :level2 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the company framework better than the national framework?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice-3 :model (r/cursor gb-calculator-summary [:country-framework/better-than-national :analyst_answer])
@@ -312,8 +312,8 @@
                                            (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "If yes please indicate the category"]
-                          [single-dropdown :width categories-list-width-long :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) :disabled? sbti-disabled?
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) %))]]]
+                          [single-dropdown :width categories-list-width-long :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) :disabled? sbti-disabled?
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) %))]]]
 
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Reference sources:"]
@@ -383,6 +383,7 @@
              nil
              )
         ]
+    ;(println report-selected)
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -402,27 +403,32 @@
                        (case gb-or-tf
                          "GB" (if (not= report-category "Follow up reporting")
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
-                          [title :label "Project description" :level :level2]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Description:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "description"} report-selected))))]]]
+                          [title :label "Project Evaluation" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Category:"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected)))} project-sub-categories))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Independent verification:"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} report-selected)))} (map (fn [x] (update x :label #(if (= "None of the above" %) "None" %))) independent-verification-choices)))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Who provides second opinion?"] [p (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "second-opinion"} report-selected)))} (map (fn [x] (update x :label #(if (= "None of the above" %) "None" %))) second-opinion-choices)))))]]]
-                          [gap :size "1"]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are green projects credible?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "credibility"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is related spending material?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "materiality"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the green bond fit within a disciplined approach to sustainability?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "discipline"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Description:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "description"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Notes:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "notes"} report-selected))))]]]
-                          [title :label "Management of proceeds" :level :level2]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Ringfencing:"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "ringfencing"} report-selected)))} (map (fn [x] (update x :label #(if (= "None of the above" %) "None" %))) ringfencing-choices)))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Tracking:"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected)))} (map (fn [x] (update x :label #(if (= "None of the above" %) "None" %))) tracking-choices)))))]]]
-                          [title :label "Country framework" :level :level2]
+                          [gap :size "1"]
+                          [title :label "Inpedendent Verification" :level :level2]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Who provides second opinion?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "second-opinion"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Independent verification:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} report-selected))))]]]
+                          [title :label "Use and Management of Proceeds" :level :level2]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Refinancing of an existing project or initial financing?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "use"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are all the proceeds used for financing/refinancing green projects?"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "refi-or-exi"} report-selected)))} existing-choices))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds ringfenced?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "ringfencing"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds tracked?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected))))]]]
+                          [title :label "Reporting" :level :level2]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is there regular reporting on the impact stemming from the green projects?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "reporting"} report-selected))))]]]
+                          [title :label "Country Framework" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Country:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "country-framework-list"} report-selected))))]]] ;[:img {:src (str "assets/png100px/mw"  ".png")}]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the country have a transition plan with ST targets and LT net zero target?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "national-framework-best-practice"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company framework better than the national framework?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "better-than-national"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reference sources:"] [hyperlink-href :label (str (:analyst_answer (first (t/chainfilter {:description_short "reference-source"} report-selected)))) :href (str (:analyst_answer (first (t/chainfilter {:description_short "reference-source"} report-selected))))]]]
-                          [title :label "Analyst summary" :level :level2]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]]
+                          [title :label "Additional Information" :level :level2]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company net-zero committed?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the year"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero-year"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company SBTi aligned and if so, which category?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sbti"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the category"] [p {:style {:width "500px" :text-align :justify}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "sbti-cat"} report-selected)))} project-sub-categories))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reference sources:"] [hyperlink-href :label (str (:analyst_answer (first (t/chainfilter {:description_short "reference-sources"} report-selected)))) :href (str (:analyst_answer (first (t/chainfilter {:description_short "reference-sources"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]
+                          ]
                          [[h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Reporting" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the project on track?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "project-on-track"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the green project expanded?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "project-expanded"} report-selected))))]]]
@@ -434,8 +440,10 @@
                          )
                          "TF" nil                           ; add transition finance here
                          nil
-                         ))]]
-     ]))
+                         ))]
+     ]
+     ]
+    ))
 
 (def tf-total-score (r/atom 0))
 (def tf-analyst-name (r/atom ""))
