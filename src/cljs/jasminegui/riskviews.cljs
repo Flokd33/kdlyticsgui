@@ -116,7 +116,7 @@
   ;(println (first instrument-definition))
   (let [grp (group-by (juxt :id :portfolio) table)
         kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)
-        all-fields (conj accessors-k field :isin :description)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
+        all-fields (conj accessors-k field :isin :description :id)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
     (into [] (for [instrument instruments]
                (let [line (into (if-let [d (select-keys (get instrument-definition instrument) all-fields)] d {})
                                 (for [p portfolios] {(keyword p)                       (reduce + (map field (get-in grp [[instrument p]])))
