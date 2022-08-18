@@ -96,29 +96,27 @@
                  :var/chart-period                                   :daily-3y
 
                  ;position-history
-                 :position-history/portfolio                         "OGEMCORD"
-                 :position-history/start-period                      "20211231"
-                 :position-history/end-period                        "20220729"
-                 :position-history/filter                            {1 :region 2 :country 3 :issuer}
-                 :position-history/hide-zero-holdings                true
-                 :position-history/table-filter                      []
-                 :position-history/expander                          {0 {}}
-                 :position-history/shortcut                          1
-                 :position-history/display-style                     "Tree"
-                 :position-history/field-one                         :nav
-                 :position-history/breakdown                         "Start/End"
-                 :position-history/absdiff                           :absolute
-                 :position-history/data                              []
-                 :position-history-isin/portfolio                    "OGEMCORD"
-                 :position-history-isin/data                          nil
-                 :position-history-isin/isin                          "XS2311313378"
-                 :position-history-isin/nickname                      "ARACEN26"
-                 :position-history-isin/start-date                     2018   ;(t/int->gdate 20181231)
-                 :position-history-ticker/portfolio                   "OGEMCORD"
-                 :position-history-ticker/data                        nil
-                 :position-history-ticker/data-2                      nil
-                 :position-history-ticker/ticker                      "LUKOIL"
-                 :position-history-ticker/start-date                  2018    ;(t/int->gdate 20181231)
+                 :portfolio-history/portfolio                         "OGEMCORD"
+                 :portfolio-history/start-period                      "20211231"
+                 :portfolio-history/end-period                        "20220729"
+                 :portfolio-history/filter                            {1 :region 2 :country 3 :issuer}
+                 :portfolio-history/hide-zero-holdings                true
+                 :portfolio-history/table-filter                      []
+                 :portfolio-history/expander                          {0 {}}
+                 :portfolio-history/shortcut                          1
+                 :portfolio-history/display-style                     "Tree"
+                 :portfolio-history/field-one                         :nav
+                 :portfolio-history/breakdown                         "Start/End"
+                 :portfolio-history/absdiff                           :absolute
+                 :portfolio-history/data                              []
+
+                 :position-history/portfolio                    "OGEMCORD"
+                 :position-history/data                          []
+                 :position-history/isin                          ""
+                 :position-history/nickname                      ""
+                 :position-history/start-year                     "2018"
+                 :position-history/view                          :aggregate
+                 :position-history/throbber                       false
 
 
                  ;trade history
@@ -383,27 +381,23 @@
            :portfolio-alignment/table-filter
            :portfolio-alignment/expander
 
+           :portfolio-history/portfolio
+           :portfolio-history/start-period
+           :portfolio-history/end-period
+           :portfolio-history/hide-zero-holdings
+           :portfolio-history/table-filter
+           :portfolio-history/expander
+           :portfolio-history/shortcut
+           :portfolio-history/display-style
+           :portfolio-history/breakdown
+           :portfolio-history/field-one
+           :portfolio-history/absdiff
            :position-history/portfolio
-           :position-history/start-period
-           :position-history/end-period
-           :position-history/hide-zero-holdings
-           :position-history/table-filter
-           :position-history/expander
-           :position-history/shortcut
-           :position-history/display-style
-           :position-history/breakdown
-           :position-history/field-one
-           :position-history/absdiff
-           :position-history-isin/portfolio
-           :position-history-isin/data
-           :position-history-isin/isin
-           :position-history-isin/nickname
-           :position-history-isin/start-date
-           :position-history-ticker/portfolio
-           :position-history-ticker/data
-           :position-history-ticker/data-2
-           :position-history-ticker/ticker
-           :position-history-ticker/start-date
+           :position-history/view
+           :position-history/isin
+           :position-history/nickname
+           :position-history/start-year
+           :position-history/throbber
 
            :attribution-history/portfolio
            :attribution-history/hide-zero-holdings
@@ -730,7 +724,7 @@
            :portfolio-alignment/filter
            :single-portfolio-attribution/filter
            :multiple-portfolio-attribution/filter
-           :position-history/filter
+           :portfolio-history/filter
            :attribution-history/filter]]
   (rf/reg-event-db k (fn [db [_ id f]] (assoc-in db [k id] f))))
 
@@ -738,7 +732,7 @@
   :qt-date
   (fn [db [_ qt-date]] (let [dt (.replace ^string qt-date "\"" "")]
                          (assoc db :qt-date dt
-                                   ;:position-history/end-period (str (subs dt 0 (- (count dt) 4)) (subs dt (- (count dt) 2)))
+                                   ;:portfolio-history/end-period (str (subs dt 0 (- (count dt) 4)) (subs dt (- (count dt) 2)))
                                    ))))
 
 (rf/reg-event-db

@@ -82,7 +82,7 @@
   (fn [db [_ risk-filter-key risk-filter-nb value]]
     (-> db
         (assoc-in [risk-filter-key risk-filter-nb] value)
-        (assoc :position-history/data nil))))
+        (assoc :portfolio-history/data nil))))
 
 (defn filtering-row [key]
   (let [risk-filter (rf/subscribe [key])]
@@ -93,7 +93,7 @@
                            :width "125px"
                            :model (r/cursor risk-filter [i])
                            :choices (if (.includes ^string (str key) "attribution") static/attribution-choice-map static/risk-choice-map)
-                           :disabled? (and (= i 3) (some #{key} [:position-history/filter :attribution-history/filter]))
+                           :disabled? (and (= i 3) (some #{key} [:portfolio-history/filter :attribution-history/filter]))
                            :on-change #(rf/dispatch [:filtering-row-change key i %])]))]))
 
 (defn left-nav-bar
