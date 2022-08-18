@@ -228,8 +228,7 @@
                :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
                           [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name
                            :on-change #(reset! analyst-name %)]]]
-              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (* @gb-score-new-issue (/ 100 70)) ]]]
-
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (js/parseInt (str (* @gb-score-new-issue (/ 100 70)))) ]]]
               [title :label "Project evaluation" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Category:"]
