@@ -369,7 +369,7 @@
     ))
 
 (defn reporting-display []
-  (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date])
+  ;(rf/dispatch [:post-esg-report-extract @gb-isin @gb-date])
   (let [esg-reports @(rf/subscribe [:esg-report-list])
         qt @(rf/subscribe [:quant-model/model-output])
         esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Ticker (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
@@ -383,7 +383,6 @@
              nil
              )
         ]
-    ;(println report-selected)
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
