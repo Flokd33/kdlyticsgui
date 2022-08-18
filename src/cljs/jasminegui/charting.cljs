@@ -159,30 +159,32 @@
                 :color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}}}))
 
 (defn stacked-vertical-bars-2 [data title]
-  (let [new-data (map #(assoc % :weight (* (% :weight) 100) :date (subs (% :date) 0 6)) data)]
+  (let [new-data (->> (sort-by :date data)
+                      (map #(update % :weight * 100))
+                      (map #(assoc % :date-mmm-yy ((comp t/gdate->MMM-yy t/int->gdate :date) %)))) ]
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
-     :width    450
+     :width    800
      :height   400
-     :encoding {:x       {:field "date" :type "nominal" :axis {:title nil :labelFontSize 15}}}
+     :encoding {:x       {:field "date-mmm-yy" :type "nominal" :axis {:title nil :labelFontSize 15} :sort {:field "date"}}}
      :layer [{:mark      {:type "bar" :color "#134848"}
               :encoding {:y       {:field "original-quantity" :type "quantitative" :axis {:title "Nominal" :format ",.2s" :labelFontSize 15 :titleFontSize 15 :titleColor "#134848"}}}}
               {:mark     {:type "line" :color "#D83949"}
                :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleFontSize 15 :titleColor "#D83949"}}}}]
-     :resolve {:scale {:y "independent" }}
-     }))
+     :resolve {:scale {:y "independent" }}}))
 
 (defn stacked-vertical-bars-3 [data-weight data-price title]
-  (let [new-data-price (map #(assoc % :date (str (subs (% :date) 0 4) (subs (% :date) 5 7) (subs (% :date) 8 10))) data-price)
-        new-data-weight (map #(assoc % :weight (* (% :weight) 100) :date (subs (% :date) 0 8) :price (:price (first (t/chainfilter {:date (str (subs (% :date) 0 8))} new-data-price)))) data-weight)] ; should index new-data-price rather than chainfilter
+  (let [new-data (->> data-weight
+                      (map #(update % :weight * 100))
+                      (map #(assoc % :price (:price (first (t/chainfilter {:date (t/gdate->yyyy-MM-dd (t/int->gdate (% :date)))} data-price)))))
+                      (map #(assoc % :date-mmm-yy ((comp t/gdate->MMM-yy t/int->gdate :date) %))))]
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
-     :data     {:values new-data-weight},
-     :width    450
+     :data     {:values new-data},
+     :width    800
      :height   400
-     :encoding {:x       {:field "date" :type "nominal" :axis {:title nil :labelFontSize 15}}}
-     :layer [{:mark      {:type "line" :color "#7F6EBC"}
-              :encoding {:y       {:field "price" :type "quantitative" :axis {:title "Price" :labelFontSize 15 :titleFontSize 15 :titleColor "#7F6EBC"}}}}
+     :encoding {:x       {:field "date-mmm-yy" :type "nominal" :axis {:title nil :labelFontSize 15} :sort {:field "date"}}}
+     :layer [{:mark      {:type "line" :color "#134848"}    ;#7F6EBC
+              :encoding {:y       {:field "price" :type "quantitative" :axis {:title "Price" :labelFontSize 15 :titleFontSize 15 :titleColor "#134848"}}}} ;#7F6EBC
              {:mark     {:type "line" :color "#D83949"}
               :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleFontSize 15 :titleColor "#D83949"}}}}]
-     :resolve {:scale {:y "independent" }}
-     }))
+     :resolve {:scale {:y "independent" }}}))

@@ -74,6 +74,7 @@
    :ISIN-hide                           {:Header "ISIN" :accessor "ISIN" :show false}
    :Country                             {:Header "Country" :accessor "Country" :width 55}
    :Sector                              {:Header "Sector" :accessor "Sector" :width 80}
+   :Sector-long                         {:Header "Sector" :accessor "Sector" :width 120}
    :Ticker                              {:Header "Ticker" :accessor "Ticker" :width 80}
    :Use                                 {:Header "Use" :accessor "Use" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
    :Bond                                {:Header "Bond" :accessor "Bond" :width 120}
@@ -321,6 +322,8 @@
 (defn table-style->qs-table-col [table-style checkboxes]
   (letfn [(c [title col-names] {:Header title :columns (mapv quant-score-table-columns col-names)})]
     (case table-style
+      "PositionHistory"
+      (mapv quant-score-table-columns [:Bond :ISIN :Ticker :Country :Sector-long])
       "Summary"
       [(c "Description" [:Bond :ISIN :Country :Sector :SENIOR])
        ;{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR])}

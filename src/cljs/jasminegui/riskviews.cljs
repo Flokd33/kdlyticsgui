@@ -754,26 +754,25 @@
      :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq}
                           :dispatch-key [:position-history/data]}}))
 
-(rf/reg-event-fx
-  :get-position-history-isin
-  (fn [{:keys [db]} [_ portfolio isin dateseq]]
-    {                                                       ;:db                 (assoc db :navigation/show-mounting-modal true)
-     :http-post-dispatch {:url (str static/server-address "position-history-isin") :edn-params {:portfolio portfolio :isin isin :dateseq dateseq}
-                          :dispatch-key [:position-history-isin/data]}}))
+;(rf/reg-event-fx
+;  :get-position-history-isin
+;  (fn [{:keys [db]} [_ portfolio isin dateseq]]
+;    {                                                       ;:db                 (assoc db :navigation/show-mounting-modal true)
+;     :http-post-dispatch {:url (str static/server-address "position-history-isin") :edn-params {:portfolio portfolio :isin isin :dateseq dateseq}
+;                          :dispatch-key [:position-history-isin/data]}}))
 
 (rf/reg-event-fx
-  :get-position-history-ticker
-  (fn [{:keys [db]} [_ portfolio ticker dateseq]]
-    {
-     :http-post-dispatch {:url (str static/server-address "position-history-ticker") :edn-params {:portfolio portfolio :ticker ticker :dateseq dateseq}
+  :get-position-history-isin-seq
+  (fn [{:keys [db]} [_ portfolio isin-seq dateseq]]
+    {:http-post-dispatch {:url (str static/server-address "position-history-isin-seq") :edn-params {:portfolio portfolio :isin-seq isin-seq :dateseq dateseq}
                           :dispatch-key [:position-history-ticker/data]}}))
-
-(rf/reg-event-fx
-  :get-position-history-ticker-2
-  (fn [{:keys [db]} [_ portfolio ticker dateseq]]
-    {
-     :http-post-dispatch {:url (str static/server-address "position-history-ticker-2") :edn-params {:portfolio portfolio :ticker ticker :dateseq dateseq}
-                          :dispatch-key [:position-history-ticker/data-2]}}))
+;
+;(rf/reg-event-fx
+;  :get-position-history-ticker-2
+;  (fn [{:keys [db]} [_ portfolio ticker dateseq]]
+;    {
+;     :http-post-dispatch {:url (str static/server-address "position-history-ticker-2") :edn-params {:portfolio portfolio :ticker ticker :dateseq dateseq}
+;                          :dispatch-key [:position-history-ticker/data-2]}}))
 
 (rf/reg-event-db
   :position-history/data
@@ -836,88 +835,84 @@
                                             "20210730"
                                             "20210831"
                                             "20210930"]
-                                           @(rf/subscribe [:list-dates-position-history])
-                                           ))
+                                           @(rf/subscribe [:list-dates-position-history])))
 
 (def typeahead-bond-nickname (r/atom nil))
+(def position-history-qs-table-filter (r/atom []))
+(def position-history-qs-table-output (atom nil))
 
 (defn position-history []
-  (let [source-data @(rf/subscribe [:quant-model/model-output])
-        bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data)))))
-        data-isin @(rf/subscribe [:position-history-isin/data])
+  (when (empty? @(rf/subscribe [:quant-model/mini-security-master])) (rf/dispatch [:get-mini-security-master]))
+  (let [source-data (rf/subscribe [:quant-model/mini-security-master])
+        bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond @source-data)))))
+        data-isin @(rf/subscribe [:position-history-ticker/data])
         portfolio-isin (rf/subscribe [:position-history-isin/portfolio])
-        portfolio-ticker (rf/subscribe [:position-history-ticker/portfolio])
         isin (rf/subscribe [:position-history-isin/isin])
         isin-nickname (rf/subscribe [:position-history-isin/nickname])
-        data-price-isin @(rf/subscribe [:quant-model/history-result]) ;data-price-isin (filter #(= (:ISIN %) @isin) @(rf/subscribe [:quant-model/history-result]))
+        data-price-isin @(rf/subscribe [:quant-model/history-result])
         ticker (rf/subscribe [:position-history-ticker/ticker])
         data-ticker (if (= "{" (subs @ticker 0 1)) @(rf/subscribe [:position-history-ticker/data-2]) @(rf/subscribe [:position-history-ticker/data])) ;data-ticker @(rf/subscribe [:position-history-ticker/data]) ;if map ticker so 2
-        portfolio-map (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p}))
-        dates-yyyy-list (into [] (for [p [2018 2019 2020 2021 2022]] {:id p :label p})) ;;;;;
-        dates (position-historical-dates) ;(concat (position-historical-dates) [(str (today))])
+        dates-yyyy-list (into [] (for [p (range 2018 2023)] {:id p :label p})) ;;;;;
+        dates (conj (position-historical-dates) (str (t/gdate->yyyyMMdd (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date]))))) ;(concat (position-historical-dates) [(str (today))])
         start-date-isin-YYYY (rf/subscribe [:position-history-isin/start-date])
         start-date-ticker-YYYY (rf/subscribe [:position-history-ticker/start-date])
-        dates-clean-isin (filter #(>= (js/parseInt (subs (str %) 0 4))  (js/parseInt (subs (str @start-date-isin-YYYY) 0 4))) dates)
+        dates-clean-isin (filter #(>= (js/parseInt (subs (str %) 0 4)) (js/parseInt (subs (str @start-date-isin-YYYY) 0 4))) dates)
         dates-clean-ticker (filter #(>= (js/parseInt (subs (str %) 0 4))  (js/parseInt (subs (str @start-date-ticker-YYYY) 0 4))) dates)]
-    [h-box :class "subbody rightelement" :gap "10px" :children
-     [[v-box :class "element" :gap "10px" :children
-     [(gt/element-box-generic "Position history" "100%" (str "Position history (issue level)")
-                             {:target-id "position-history-risk-table-isin"}
-                             [[h-box :gap " 10px " :align :center
-                               :children [[title :label "Portfolio:" :level :level3]
-                                          [single-dropdown :width dropdown-width :model portfolio-isin :choices portfolio-map :on-change #(rf/dispatch [:position-history-isin/portfolio %])]
-                                          [gap :size "10px"]
-                                          [title :label (str "Bond: " @isin-nickname) :level :level3]
-                                          [box :style {:z-index 2} :child [typeahead
-                                                                           :width "150px"
-                                                                           :model typeahead-bond-nickname
-                                                                           :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
-                                                                           :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
-                                                                           :suggestion-to-string (fn [_] "")
-                                                                           :placeholder "Search here"
-                                                                           :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))]
-                                                                                             (rf/dispatch [:position-history-isin/isin isin])
-                                                                                             (rf/dispatch [:position-history-isin/nickname (:id %)])))
-                                                                           :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]]
-                                          [gap :size "10px"]
-                                          [title :label "Start date" :level :level3]
-                                          ;[datepicker-dropdown :model start-date-isin :minimum (tools/int->gdate 20181230) :maximum (today)
-                                          ; :format "dd/MM/yyyy" :show-today? true :on-change #(do (rf/dispatch [:position-history-isin/start-date %]))]
-                                          [single-dropdown :width dropdown-width :model start-date-isin-YYYY :choices dates-yyyy-list :on-change #(rf/dispatch [:position-history-isin/start-date %])]
-                                          [gap :size "10px"]
-                                          [button :label "Fetch" :class "btn btn-primary btn-block"
-                                           :on-click #(do (rf/dispatch [:get-position-history-isin @portfolio-isin @isin dates-clean-isin])
-                                                          (rf/dispatch [:post-model-history-pricing :pricing [@isin]]))]
-                                          ]]
-                              [oz/vega-lite (charting/stacked-vertical-bars-2 data-isin "Position history")]
-                              [oz/vega-lite (charting/stacked-vertical-bars-3 data-isin data-price-isin "Position history")]
-                              ])
-      ]]
-       [v-box :class "element" :gap "20px" :children
-        [(gt/element-box-generic "Position history" "100%" (str "Position history (issuer level)")
-                              {:target-id "position-history-risk-table-ticker"}
-                              [[h-box :gap " 10px " :align :center
-                                :children [[title :label "Portfolio:" :level :level3]
-                                           [single-dropdown :width dropdown-width :model portfolio-ticker :choices portfolio-map :on-change #(rf/dispatch [:position-history-ticker/portfolio %])]
-                                           [gap :size "10px"]
-                                           [title :label "Ticker:" :level :level3]
-                                           ;{:country ["BR"] :sector ["Consumer"]}
-                                           [input-text :width "150px" :model ticker :attr {:maxlength 200} :change-on-blur? true :on-change #(rf/dispatch [:position-history-ticker/ticker %])] ;:attr {:maxlength 12}
-                                           [info-button :info "Possibility to request a ticker OR a map with specific country and/or sector (e.g. {:country [“BR”] :sector[“Consumer”]} for Brazil Consumer)" :position :left-center]
-                                           [gap :size "10px"]
-                                           [title :label "Start date" :level :level3]
-                                           ;[datepicker-dropdown :model start-date-ticker :minimum (tools/int->gdate 20181230) :maximum (today)
-                                           ; :format "dd/MM/yyyy" :show-today? true :on-change #(rf/dispatch [:position-history-ticker/start-date %])]
-                                           [single-dropdown :width dropdown-width :model start-date-ticker-YYYY :choices dates-yyyy-list :on-change #(rf/dispatch [:position-history-ticker/start-date %])]
-                                           [gap :size "10px"]
-                                           [button :label "Fetch" :class "btn btn-primary btn-block"
-                                            :on-click #(if (= "{" (subs @ticker 0 1)) @(rf/dispatch [:get-position-history-ticker-2 @portfolio-ticker @ticker dates-clean-ticker]) @(rf/dispatch [:get-position-history-ticker @portfolio-ticker @ticker dates-clean-ticker]))
-                                            ;(rf/dispatch [:get-position-history-ticker @portfolio-ticker @ticker dates-clean-ticker])
-                                            ]]]
-                               [oz/vega-lite (charting/stacked-vertical-bars-2 data-ticker "Position history")]
-                               ])]
-      ]]
-     ]))
+    [v-box :class "subbody rightelement" :gap "10px" :children
+     [[box :class "element" :child
+       (gt/element-box-generic "position-history-risk-table-isin" "1024px" (str "Position history: bond level")
+                               {:target-id "position-history-risk-table-isin"}
+                               [[h-box :gap " 10px " :align :center
+                                 :children [[title :label "Portfolio:" :level :level3]
+                                            (gt/portfolio-dropdown-selector :position-history-isin/portfolio)
+                                            [gap :size "10px"]
+                                            [box :width "125px" :child [title :label (str "Bond: " @isin-nickname) :level :level3]]
+                                            [box :style {:z-index 2} :child [typeahead
+                                                                             :width "150px"
+                                                                             :model typeahead-bond-nickname
+                                                                             :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
+                                                                             :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
+                                                                             :suggestion-to-string (fn [_] "")
+                                                                             :placeholder "Search here"
+                                                                             :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) @source-data)))]
+                                                                                               (rf/dispatch [:position-history-ticker/data []] )
+                                                                                               (rf/dispatch [:position-history-isin/isin isin])
+                                                                                               (rf/dispatch [:position-history-isin/nickname (:id %)])))
+                                                                             :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]]
+                                            [gap :size "10px"]
+                                            [title :label "Start date" :level :level3]
+                                            [single-dropdown :width dropdown-width :model start-date-isin-YYYY :choices dates-yyyy-list :on-change #(rf/dispatch [:position-history-isin/start-date %])]
+                                            [gap :size "10px"]
+                                            [button :label "Fetch" :class "btn btn-primary btn-block"
+                                             :on-click #(do (rf/dispatch [:get-position-history-isin-seq @portfolio-isin [@isin] dates-clean-isin])
+                                                            (rf/dispatch [:post-model-history-pricing :pricing [@isin]]))]]]
+                                [oz/vega-lite (charting/stacked-vertical-bars-2 data-isin "Position history")]
+                                [oz/vega-lite (charting/stacked-vertical-bars-3 data-isin data-price-isin "Position history")]])]
+
+      [v-box :class "element" :gap "20px" :children
+       [(gt/element-box-generic "position-history-aggregate-level" "100%" (str "Position history: aggregate level")
+                                {:target-id "position-history-aggregate-level"}
+                                [[h-box :gap "10px" :align :center
+                                  :children [[title :label "Portfolio:" :level :level3]
+                                             (gt/portfolio-dropdown-selector :position-history-ticker/portfolio)
+                                             [gap :size "10px"]
+                                             [title :label "Start year" :level :level3]
+                                             [single-dropdown :width dropdown-width :model start-date-ticker-YYYY :choices dates-yyyy-list :on-change #(rf/dispatch [:position-history-ticker/start-date %])]
+                                             [gap :size "10px"]
+                                             [button :label "Fetch" :class "btn btn-primary btn-block"
+                                              :on-click #(rf/dispatch [:get-position-history-isin-seq @(rf/subscribe [:position-history-ticker/portfolio]) (map (fn [line] (get line "ISIN")) (js->clj (. (.getResolvedState @position-history-qs-table-output) -sortedData))) dates-clean-ticker])]]]
+                                 [h-box :gap "20px" :children [[:> ReactTable
+                                                                {:data            @(rf/subscribe [:quant-model/mini-security-master])
+                                                                 :columns         (qstables/table-style->qs-table-col "PositionHistory" nil)
+                                                                 :pageSize        10 :showPagination true :filterable true :defaultFilterMethod tables/text-filter-OR
+                                                                 :defaultFiltered @position-history-qs-table-filter :onFilteredChange #(do (rf/dispatch [:position-history-ticker/data []]) (reset! position-history-qs-table-filter %))
+                                                                 :ref             #(reset! position-history-qs-table-output %)
+                                                                 :className       "-striped -highlight"}]
+                                                               [v-box :children [[title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude."]
+                                                                                 [title :level :level4 :label "Examples: AR,BR for Argentina or Brazil."]
+                                                                                 [title :level :level4 :label "-Sov to exclude sovereigns, -CN&-HK to exclude both countries."]]]
+                                                               ]]
+                                 [oz/vega-lite (charting/stacked-vertical-bars-2 data-ticker "Position history")]])]]]]))
 
 (defn portfolio-history []
   ;(rf/dispatch [:get-position-history-nav "OGEMCORD" :local-value ["20210831" "20210930"]]) ;(position-historical-dates)

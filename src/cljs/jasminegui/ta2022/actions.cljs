@@ -156,7 +156,6 @@
 (rf/reg-event-fx
   :ta2022/get-attachments
   (fn [{:keys [db]} [_ isin]]
-    (println isin)
     {:db db
      :http-get-dispatch {:url (str static/server-address "ta2022-trade-attachments?isin=" isin) :dispatch-key [:ta2022/trade-attachments]}}))
 

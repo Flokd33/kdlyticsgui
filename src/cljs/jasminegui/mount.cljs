@@ -268,6 +268,7 @@
                  ;:quant-model/history-end-date            (t/int-to-gdate (today))
                  :quant-model/master-security-current-field-db       {:id-choice "ISIN_REGS"}
                  :quant-model/master-security-update-field-db        {}
+                 :quant-model/mini-security-master                   []
 
 
 
@@ -329,6 +330,7 @@
                  :allianz-loss-report                                []
                  :ogemigc-nr-bucket                                  []
                  :global-debt-and-equity-levels                       []
+
 
                  :dummy                                              nil                                 ;can be useful
                  })
@@ -514,6 +516,7 @@
            :quant-model/issuer-coverage
            :quant-model/model-date
            :quant-model/history-start-date
+           :quant-model/mini-security-master
 
            :scorecard/attribution-table
            :scorecard/portfolio
@@ -909,6 +912,7 @@
    {:get-key :get-master-security-fields  :namespace "common.static" :asset "master-security-fields"  :dispatch-key [:master-security-fields-list]}
    {:get-key :get-rating-to-score         :namespace "common.static" :asset "rating-to-score-rating"  :dispatch-key [:rating-to-score]}
    {:get-key :fx-request                  :namespace "common.static" :asset "fx"                      :dispatch-key [:implementation/fx]}
+   {:get-key :get-mini-security-master  :namespace "common.static"  :asset "mini-security-master"              :dispatch-key [:quant-model/mini-security-master]}
    {:get-key :get-allianz-loss-report     :namespace "common.xlscsvassets" :asset  "allianz-pnl-loss"  :dispatch-key [:allianz-loss-report]}
 
    {:get-key :portfolio-nav-request           :namespace "jasmine.positions"  :asset "sod-portfolio-nav"            :dispatch-key [:implementation/portfolio-nav]}
@@ -941,6 +945,7 @@
 
 
    {:get-key :get-issuer-coverage   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
+
    ])
 
 (doseq [line simple-http-get-events]

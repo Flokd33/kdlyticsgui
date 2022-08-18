@@ -13,6 +13,7 @@
 
 (defn ddMMMyyyy->gdate [x] (tf/parse (tf/formatter "dd MMMyyyy") (str (subs x 0 2) " " (subs x 2))))
 (defn gdate->ddMMMyy [x] (tf/unparse (cljs-time.format/formatter "ddMMMyy") x))
+(defn gdate->MMM-yy [x] (tf/unparse (cljs-time.format/formatter "MMM-yy") x))
 ;(defn gdate->yyyyMMdd [x] (tf/unparse (cljs-time.format/formatter "yyyyMMdd") x))
 
 
