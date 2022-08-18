@@ -113,7 +113,6 @@
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
 (defn get-pivoted-data-with-nominal [instrument-definition accessors-k table portfolios instruments field]
-  ;(println (first instrument-definition))
   (let [grp (group-by (juxt :id :portfolio) table)
         kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)
         all-fields (conj accessors-k field :isin :description :id)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
@@ -507,7 +506,6 @@
                                                       "sensitive" ir-sensitive
                                                       "insensitive" ir-insensitive)))
             download-columns [:maturity-band :ust :sensitive :insensitive :total]]
-        ;(println data)
         [box :class "subbody rightelement" :child
          (gt/element-box-with-cols "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
                                    [[h-box :gap "5px" :align :center :children [[title :level :level3 :label "Portfolio:"]
@@ -660,7 +658,6 @@
         talanx-checks-data-clean-corp (filter #(= (:sov-or-corp %) "corp") talanx-checks-data-clean)
         talanx-checks-data-clean-sov (filter #(= (:sov-or-corp %) "sov") talanx-checks-data-clean)
         date @(rf/subscribe [:qt-date])]
-    ;(println ogemigc-nr-list)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
@@ -754,26 +751,11 @@
      :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq}
                           :dispatch-key [:portfolio-history/data]}}))
 
-;(rf/reg-event-fx
-;  :get-position-history-isin
-;  (fn [{:keys [db]} [_ portfolio isin dateseq]]
-;    {                                                       ;:db                 (assoc db :navigation/show-mounting-modal true)
-;     :http-post-dispatch {:url (str static/server-address "position-history-isin") :edn-params {:portfolio portfolio :isin isin :dateseq dateseq}
-;                          :dispatch-key [:position-history-isin/data]}}))
-
 (rf/reg-event-fx
   :get-position-history-isin-seq
   (fn [{:keys [db]} [_ portfolio isin-seq dateseq]]
-    (println portfolio isin-seq dateseq)
     {:http-post-dispatch {:url (str static/server-address "position-history-isin-seq") :edn-params {:portfolio portfolio :isin-seq isin-seq :dateseq dateseq}
                           :dispatch-key [:position-history/data]}}))
-;
-;(rf/reg-event-fx
-;  :get-position-history-ticker-2
-;  (fn [{:keys [db]} [_ portfolio ticker dateseq]]
-;    {
-;     :http-post-dispatch {:url (str static/server-address "position-history-ticker-2") :edn-params {:portfolio portfolio :ticker ticker :dateseq dateseq}
-;                          :dispatch-key [:position-history-ticker/data-2]}}))
 
 (rf/reg-event-db
   :portfolio-history/data
@@ -811,8 +793,7 @@
                                         (into template (for [dt all-dates] [(keyword (str "dt" dt)) (reduce + (map (keyword (str "dt" dt)) sorted-deltas))]))
                                         (for [i (range (dec (count all-dates)))]
                                           [(keyword (str "deltadt" (nth all-dates (inc i)))) (reduce + (map (keyword (str "deltadt" (nth all-dates (inc i)))) sorted-deltas))]))
-                                 :tdelta (reduce + (map :tdelta sorted-deltas)))
-          ]
+                                 :tdelta (reduce + (map :tdelta sorted-deltas)))]
       (clj->js
         (if (= (:portfolio-history/display-style db) "Tree")
           (tables/cljs-text-filter-OR (:portfolio-history/table-filter db) (mapv #(assoc %1 :totaldummy " ") sorted-deltas))
@@ -858,23 +839,16 @@
           isin (db :position-history/isin)
           all-dates (conj (position-historical-dates) (str (t/gdate->yyyyMMdd (t/ddMMMyyyy->gdate (db :qt-date)))))
           dates (filter #(>= (js/parseInt (subs (str %) 0 4)) (js/parseInt (db :position-history/start-year))) all-dates)]
-      (println all-dates dates)
       {:db (assoc db :position-history/throbber true)
        :fx (if (= :aggregate (db :position-history/view))
              [[:dispatch [:get-position-history-isin-seq portfolio (map (fn [line] (get line "ISIN")) (js->clj (. (.getResolvedState @position-history-qs-table-output) -sortedData))) dates]]]
              [[:dispatch [:get-position-history-isin-seq portfolio [isin] dates]]
-              [:dispatch [:post-model-history-pricing :pricing [isin]]]])})
-    ))
+              [:dispatch [:post-model-history-pricing :pricing [isin]]]])})))
 
 (defn position-history []
   (when (empty? @(rf/subscribe [:quant-model/mini-security-master])) (rf/dispatch [:get-mini-security-master]))
   (let [view (rf/subscribe [:position-history/view])
-        source-data (rf/subscribe [:quant-model/mini-security-master])
-        bond-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond @source-data)))))
-        data @(rf/subscribe [:position-history/data])
-        isin-nickname (rf/subscribe [:position-history/nickname])
-        data-price-isin @(rf/subscribe [:quant-model/history-result])]
-    (println data)
+        source-data @(rf/subscribe [:quant-model/mini-security-master])]
     [v-box :class "subbody rightelement" :gap "10px" :children
      [[box :class "element" :child
        (gt/element-box-generic "position-history-risk-table-isin" "1024px" (str "Position history")
@@ -902,25 +876,26 @@
                                                                                   [title :level :level4 :label "Examples: AR,BR for Argentina or Brazil."]
                                                                                   [title :level :level4 :label "-Sov to exclude sovereigns, -CN&-HK to exclude both countries."]]]]]
                                   [h-box :gap "10px" :align :center
-                                   :children [[box :width "200px" :child [title :label (str "Bond: " @isin-nickname) :level :level3]]
+                                   :children [[box :width "150px" :child [title :label (str "Bond: " @(rf/subscribe [:position-history/nickname])) :level :level3]]
                                               [box :style {:z-index 2} :child [typeahead
                                                                                :width "150px"
                                                                                :model typeahead-bond-nickname
-                                                                               :data-source (fn [s] (into [] (take 8 (for [n bond-choices :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
+                                                                               :data-source (fn [s] (into [] (take 8 (for [n (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Bond source-data))))) :when (re-find (re-pattern (str "(?i)" s)) (:label n))] n))))
                                                                                :render-suggestion (fn [{:keys [label]}] [:span [:i {:style {:width "40px"}}] label])
                                                                                :suggestion-to-string (fn [_] "")
                                                                                :placeholder "Search here"
-                                                                               :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) @source-data)))]
+                                                                               :on-change #(do (let [isin (:ISIN (first (filter (fn [line] (= (:Bond line) (:id %))) source-data)))]
                                                                                                  (rf/dispatch [:position-history/data []] )
                                                                                                  (rf/dispatch [:position-history/isin isin])
                                                                                                  (rf/dispatch [:position-history/nickname (:id %)])))
                                                                                :change-on-blur? true :immediate-model-update? false :rigid? true :disabled? false]]]])
                                 (if @(rf/subscribe [:position-history/throbber])
                                   [throbber :size :large]
-                                  (if (= @view :aggregate)
-                                    [oz/vega-lite (charting/stacked-vertical-bars-2 data "Position history")]
-                                    [v-box :gap "10px" :children [[oz/vega-lite (charting/stacked-vertical-bars-2 data "Position history")]
-                                                                  [oz/vega-lite (charting/stacked-vertical-bars-3 data data-price-isin "Position history")]]])
+                                  (let [data @(rf/subscribe [:position-history/data])]
+                                    (if (= @view :aggregate)
+                                      [oz/vega-lite (charting/stacked-vertical-bars-2 data "Position history")]
+                                      [v-box :gap "10px" :children [[oz/vega-lite (charting/stacked-vertical-bars-2 data "Position history")]
+                                                                    [oz/vega-lite (charting/stacked-vertical-bars-3 data @(rf/subscribe [:quant-model/history-result]) "Position history")]]]))
                                   )
 
 
