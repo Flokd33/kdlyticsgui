@@ -229,7 +229,7 @@
         display (reverse (sort-by :date (remove #(some #{(:trade %)} ["Coupon Payment" "Scrip Transfer"]) modal-data)))
         nominal (> (Math/abs (first (vals (dissoc (first display) :date :trade :price)))) 100000) ;if bigger than 100k, it's a nominal, otherwise bps
         ]
-    ;(println modal-data)
+    (println modal-data)
     (if show-modal
       [modal-panel
        :wrap-nicely? true

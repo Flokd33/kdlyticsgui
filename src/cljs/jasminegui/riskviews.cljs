@@ -116,7 +116,7 @@
   ;(println (first instrument-definition))
   (let [grp (group-by (juxt :id :portfolio) table)
         kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)
-        all-fields (conj accessors-k field :isin :description)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
+        all-fields (conj accessors-k field :isin :description :id)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
     (into [] (for [instrument instruments]
                (let [line (into (if-let [d (select-keys (get instrument-definition instrument) all-fields)] d {})
                                 (for [p portfolios] {(keyword p)                       (reduce + (map field (get-in grp [[instrument p]])))
@@ -920,7 +920,7 @@
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
         qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7)))
         qt-date-yyyymmdd-2w (t/gdate->yyyyMMdd (plus qt-date (days -15)))
-        date-map (distinct (into [] (for [k (conj (position-historical-dates) qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
+        date-map (distinct (into [] (for [k (conj (vec (position-historical-dates)) qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
         start-period (rf/subscribe [:position-history/start-period])
         end-period (rf/subscribe [:position-history/end-period])
         breakdown-map (into [] (for [k ["Start/End" "All"]] {:id k :label k}))
