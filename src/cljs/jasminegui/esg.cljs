@@ -271,6 +271,59 @@
                 :showPagination true :sortable true :filterable true :pageSize 20
                 :className      "-striped -highlight"}]]])
 
+
+(defn esg-carbon []
+  (when (zero? (count @(rf/subscribe [:esg/carbon-jasmine]))) (rf/dispatch [:get-esg-carbon-jasmine]))
+  (let [data (first @(rf/subscribe [:esg/carbon-jasmine]))]
+    (println data)
+
+  [v-box :gap "20px" :class "element" :width standard-box-width
+   :children [
+              [h-box :align :center :children [[title :label "Carbon data (Jasmine)" :level :level1]
+                                               [gap :size "1"]
+                                               [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (rf/subscribe [:esg/summary-report]) "esgscores")]]]
+              [:> ReactTable
+               {:data           data
+                :columns        [{:Header "Description" :columns [{:Header "Isin" :accessor "isin" :width 100 }
+                                                                  {:Header "BO id" :accessor "sec_id" :width 100}
+                                                                  {:Header "Ticker" :accessor "ticker" :width 80}
+                                                                  {:Header "Bond" :accessor "bond" :width 100}
+                                                                  {:Header "Sector" :accessor "sector" :width 100}
+                                                                  {:Header "Country" :accessor "country" :width 70}
+                                                                  ]}
+                                 {:Header "Fundamentals USD" :columns [{:Header "EV (mils)" :accessor "amt_ev_usd" :Cell tables/round0 :style {:textAlign "right"} :width 80}
+                                                                       {:Header "Date evic" :accessor "dt_asofdate_evic" :width 100}
+                                                                       {:Header "Mkt cap (mils)" :accessor "amt_marketcap_usd" :Cell tables/round0 :style {:textAlign "right"} :width 80}
+                                                                       {:Header "Revenues (mils)" :accessor "amt_revenue_usd" :Cell tables/round0 :style {:textAlign "right"} :width 100}
+                                                                       {:Header "Date revenues" :accessor "dt_asofdate_revenue" :width 90}]}
+                                 {:Header "Scope 1" :columns [{:Header "Year" :accessor "cat_scope_1_year" :width 80 :style {:textAlign "center"}}
+                                                              {:Header "Method" :accessor "cat_scope_1_method" :width 150}
+                                                              {:Header "Source" :accessor "cat_scope_1_src" :width 80}
+                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_1" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                 {:Header "Scope 2" :columns [{:Header "Year"   :accessor "cat_scope_2_year" :width 80 :style {:textAlign "center"}}
+                                                              {:Header "Method" :accessor "cat_scope_2_method" :width 150}
+                                                              {:Header "Source" :accessor "cat_scope_2_src" :width 80}
+                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_2" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                 {:Header "Scope 1-2" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope12" :width 90 :style {:textAlign "center"}}
+                                                                {:Header "Intensity" :accessor "amt_carbon_intensity_1_2" :width 80 :Cell tables/round0}
+                                                                {:Header "Revenues (mils)" :accessor "amt_revenue_scope12" :Cell tables/round0 :width 100}
+                                                                {:Header "Emissions" :accessor "amt_carbon_emissions_1_2" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                 {:Header "Scope 3 up" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope3_up" :width 90 :style {:textAlign "center"}}
+                                                              {:Header "Revenues (mils)" :accessor "amt_revenue_scope3_up" :Cell tables/round0 :width 100}
+                                                              {:Header "Method" :accessor "cat_scope_3_up_method" :width 150}
+                                                              {:Header "Source" :accessor "cat_scope_3_down_src" :width 80}
+                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_3_up" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                 {:Header "Scope 3 down" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope3_down" :width 90 :style {:textAlign "center"}}
+                                                              {:Header "Revenues (mils)" :accessor "amt_revenue_scope3_down" :Cell tables/round0 :width 100}
+                                                              {:Header "Method" :accessor "cat_scope_3_down_method" :width 150}
+                                                              {:Header "Source" :accessor "cat_scope_3_down_src" :width 80}
+                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_3_down" :Cell tables/round0 :style {:textAlign "right"} :width 80}]
+                                  }
+                                 ]
+                :showPagination true :sortable true :filterable true :pageSize 20
+                :className      "-striped -highlight"}]]]
+  ))
+
 (rf/reg-event-fx
   :esg/get-tamale-body
   (fn [{:keys [db]} [_ note-id]]
@@ -444,6 +497,7 @@
               :reporting [esgreport/reporting-display]
               :holdings [holdings]
               :esg-scores [esg-scores]
+              :esg-carbon [esg-carbon]
               :esg-engagements [esg-engagements]
               [:div.output "nothing to display"])]))
 

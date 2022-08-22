@@ -20,7 +20,7 @@
    {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
    {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events quant-events :mounting-modal true}
    {:code :scorecard        :name "Scorecard"         :dispatch :scorecard        :subs nil :load-events (concat [:get-attribution-date [:get-scorecard-attribution "OGEMCORD"]] quant-events home-events) :mounting-modal true}
-   {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-esg-report-list  [:post-esg-report-extract "USY1753QAB87" "2022-08-18"]  :get-analysts :get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores :get-quant-model])}
+   {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-esg-carbon-jasmine :get-esg-report-list  [:post-esg-report-extract "USY1753QAB87" "2022-08-18"]  :get-analysts :get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores :get-quant-model])}
    ;{:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :ta2022           :name "TA2022"            :dispatch :ta2022           :subs nil :load-events quant-events :mounting-modal true}
    {:code :implementation   :name "Implementation"    :dispatch :implementation   :subs nil :load-events implementation-events :mounting-modal true}
@@ -91,6 +91,7 @@
    {:code :ungc                       :name "UNGC problem securities"}
    {:code :esg-scores                 :name "ESG summary report"}
    {:code :esg-commentary             :name "ESG analyst commentary"}
+   {:code :esg-carbon                 :name "Carbon data (Beta)"}
    {:code :refinitiv                  :name "Refinitiv"}
    {:code :gb-scoring                 :name "Green bond scoring (beta)"}
    {:code :tf-scoring                 :name "Transition fund scoring (beta)"}
