@@ -236,7 +236,8 @@
                  :esg/engagement-throbber                            false
                  :esg/ungc-problem-securities                        []
                  :esg/msci-ccc-weight                                []
-                 :esg/analyst-commentary                              []
+                 :esg/analyst-commentary                             []
+                 :esg/carbon-jasmine                                 []
 
                  :quant-model/model-output                           []
                  :quant-model/model-js-output                        #js []
@@ -499,6 +500,7 @@
            :esg/ungc-problem-securities
            :esg/msci-ccc-weight
            :esg/analyst-commentary
+           :esg/carbon-jasmine
 
            :trade-history/active-home
 
@@ -922,8 +924,9 @@
    {:get-key :get-instruments                 :namespace "jasmine.positions"  :asset "instruments"                  :dispatch-key [:instruments]}
    {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
 
-   {:get-key :get-esg-summary-report          :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
-   {:get-key :get-ccc-weight                  :namespace "jasmine.positions"  :asset  "msci-ccc-weight"             :dispatch-key [:esg/msci-ccc-weight]}
+   {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
+   {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi"  :asset    "esg-jasmine"                   :dispatch-key [:esg/carbon-jasmine]}
+   {:get-key :get-ccc-weight                 :namespace "jasmine.positions"  :asset  "msci-ccc-weight"              :dispatch-key [:esg/msci-ccc-weight]}
 
    {:get-key :get-betas              :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}
 
