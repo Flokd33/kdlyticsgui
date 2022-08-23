@@ -278,7 +278,7 @@
         data2 (group-by :ticker data)
         data3 (for [t data2]  (first (val t)))
         ]
-    (println data3)
+    ;(println data3)
   [v-box :gap "20px" :class "element" :width standard-box-width
    :children [
               [h-box :align :center :children [[title :label "Carbon data (Jasmine)" :level :level1]
