@@ -137,9 +137,15 @@
                    "Final parent NAV" (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/parent-exposure kportfolio :existing])
                    0)
         value-usd (* (get-in db [:implementation/fx (keyword (:CRNCY leg))]) value)
-        portfolio-nav-usd (* (get-in db [:implementation/fx (keyword (get-in db [:implementation/portfolio-nav kportfolio :ccy]))]) (get-in db [:implementation/portfolio-nav kportfolio :nav]))]
+        portfolio-nav-usd (* (get-in db [:implementation/fx (keyword (get-in db [:implementation/portfolio-nav kportfolio :ccy]))]) (get-in db [:implementation/portfolio-nav kportfolio :nav]))
+        position (first (tools/chainfilter {:portfolio (name kportfolio) :NAME (:NAME leg)} (get db :positions)))
+        nominal (case final-or-inc
+                "Final NAV" (if (and (not (zero? existing)) (zero? (parse-double (get-in leg [:allocation kportfolio :target]))))
+                                (- (position :original-quantity))
+                                (/ (* 0.01 (- target existing) portfolio-nav-usd) (* 0.01 value-usd)))
+                  (/ (* 0.01 (- target existing) portfolio-nav-usd) (* 0.01 value-usd)))]
     (-> db
-        (assoc-in  [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation kportfolio :trade-notional] (/ (* 0.01 (- target existing) portfolio-nav-usd) (* 0.01 value-usd)))
+        (assoc-in  [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation kportfolio :trade-notional] nominal)
         (assoc-in  [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :allocation kportfolio :trade-parent] (- target existing)))
     ))
 
