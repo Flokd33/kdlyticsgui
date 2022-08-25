@@ -940,8 +940,10 @@
    {:get-key :get-esg-analyst-commentary :namespace "common.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
    {:get-key :get-global-debt-and-equity-levels :namespace "common.xlscsvassets"  :asset "global-debt-and-equity-levels" :dispatch-key [:global-debt-and-equity-levels]}
 
-
    {:get-key :get-issuer-coverage   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
+
+   {:get-key :get-refresh-attribution   :namespace "jasmine.core"  :asset "build-attribution!"              :dispatch-key [:dummy]}
+
 
    ])
 
