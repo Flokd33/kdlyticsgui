@@ -97,7 +97,8 @@
    :children [[title :label "Debug operations" :level :level1]
               [button :style {:width "100%"} :label "Rebuild positions and VaR!" :on-click #(rf/dispatch [:rebuild])]
               [button :style {:width "100%"} :label "Rebuild positions and integrity report!" :on-click #(rf/dispatch [:rebuild-pos])]
-              [button :style {:width "100%"} :label "Refresh Bloomberg session!" :on-click #(rf/dispatch [:refresh-bloomberg-session])]]])
+              [button :style {:width "100%"} :label "Refresh Bloomberg session!" :on-click #(rf/dispatch [:refresh-bloomberg-session])]
+              [button :style {:width "100%"} :label "Refresh Attribution!" :on-click #(rf/dispatch [:get-refresh-attribution])]]])
 
 (defn last-updated-logs []
   ;(println (keys @(rf/subscribe [:last-updated-logs])))
