@@ -564,6 +564,7 @@
               [p (js/decodeURIComponent @show-issuer-rationale-modal)]]]]))
 
 (defn issuer-coverage []
+  (when (zero? (count @(rf/subscribe [:quant-model/analyst-coverage]))) (rf/dispatch [:get-analyst-coverage]))
   (let [data @(rf/subscribe [:quant-model/model-output])
         issuer-choices (into [] (map (fn [i] {:id i :label i}) (sort (distinct (map :Ticker (filter #(not= (:Sector %) "Sovereign") data))))))
         analyst (r/atom nil)
@@ -575,7 +576,24 @@
         on-click-issuer-coverage (fn [state rowInfo instance] (clj->js {:onClick #(reset! show-issuer-rationale-modal (aget rowInfo "original" "rationale")) :style {:cursor "pointer"}}))]
     (fn []
       [v-box :padding "80px 10px" :gap "20px" :class "rightelement" :children
-       [[v-box :class "element" :gap "10px"
+       [
+        [v-box :class "element" :gap "10px"
+         :children [[title :level :level1 :label "Analyst coverage"]
+                    [:> ReactTable
+                     {:data           @(rf/subscribe [:quant-model/analyst-coverage])
+                      :columns        [{:Header "Ticker" :accessor "Ticker" :width 150}
+                                       {:Header "Analyst" :accessor "Analyst" :width 200}
+                                       {:Header "Focus" :accessor "Focus" :width 100}]
+                      :showPagination false :pageSize 2
+                      :pivotBy ["Focus" "Analyst"]
+                      :filterable     true :defaultFilterMethod tables/text-filter-OR
+                      :className "-striped -highlight"}]
+
+
+
+                    ]]
+
+        [v-box :class "element" :gap "10px"
          :children [[title :level :level1 :label "Add issuer note"]
                     [h-box :gap "5px" :align :center
                      :children [

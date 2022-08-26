@@ -253,6 +253,7 @@
                  :quant-model/saved-charts                           {}
                  :quant-model/saved-advanced-charts                  {}
                  :quant-model/issuer-coverage                        []
+                 :quant-model/analyst-coverage                        []
                  :quant-model/model-date                             ""
 
 
@@ -510,6 +511,7 @@
            :quant-model/saved-charts
            :quant-model/saved-advanced-charts
            :quant-model/issuer-coverage
+           :quant-model/analyst-coverage
            :quant-model/model-date
            :quant-model/history-start-date
            :quant-model/mini-security-master
@@ -910,6 +912,7 @@
    {:get-key :fx-request                  :namespace "common.static" :asset "fx"                      :dispatch-key [:implementation/fx]}
    {:get-key :get-mini-security-master  :namespace "common.static"  :asset "mini-security-master"              :dispatch-key [:quant-model/mini-security-master]}
    {:get-key :get-allianz-loss-report     :namespace "common.xlscsvassets" :asset  "allianz-pnl-loss"  :dispatch-key [:allianz-loss-report]}
+   {:get-key :get-analyst-coverage     :namespace "common.xlscsvassets" :asset  "analyst-coverage"  :dispatch-key [:quant-model/analyst-coverage]}
 
    {:get-key :portfolio-nav-request           :namespace "jasmine.positions"  :asset "sod-portfolio-nav"            :dispatch-key [:implementation/portfolio-nav]}
    {:get-key :get-live-cast-parent-positions  :namespace "jasmine.positions"  :asset "live-positions-by-parent-id"  :dispatch-key [:implementation/live-cast-parent-positions]}
