@@ -191,41 +191,39 @@
 (rf/reg-sub
   :summary-display/table
   (fn [db]
-    (into [] (for [p (:portfolios db)]
-
-               (reduce #(update %1 %2 * 100.)
-                       (merge
-                         {:portfolio p}
-                         (into {} (for [k [:cash-pct
-                                           :base-value
-                                           :contrib-yield
-                                           :contrib-zspread
-                                           :contrib-gspread
-                                           :contrib-mdur
-                                           :mdur-delta
-                                           :qt-iam-int-lt-median-rating
-                                           :qt-iam-int-lt-median-rating-score
-                                           :contrib-beta-1y-daily
-                                           :quant-value-4d
-                                           :quant-value-2d
-                                           :ESG
-                                           :raw-esg-over-50
-                                           :final-esg-over-50
-                                           :SUBORDINATED
-                                           :HYBRID
-                                           :INTERNATIONAL_SUKUK
-                                           :HYBRIDNONFINS
-                                           :HY
-                                           :COCOS
-                                           :ad-hoc
-                                           :downgrade-candidates
-                                           :contrib-BBG_CEMBI_D1Y_BETA
-                                           :bm-contrib-BBG_CEMBI_D1Y_BETA
-                                           :contrib-delta-BBG_CEMBI_D1Y_BETA]]
-                                    [k (get-in (:total-positions db) [(keyword p) k])]))
-                         {:contrib-bond-yield (- (get-in (:total-positions db) [(keyword p) :contrib-yield]) (reduce + (map :contrib-yield (filter #(and (= (:portfolio %) p) (not= (:asset-class %) "BONDS")) (:positions db)))))})
-                       [:cash-pct :contrib-yield :contrib-bond-yield]
-                       )))))
+    (let [grp (group-by :portfolio (filter #(not= (:asset-class %) "BONDS") (get db :positions)))]
+      (into [] (for [p (:portfolios db)]
+                 (reduce #(update %1 %2 * 100.)
+                         (merge
+                           {:portfolio p}
+                           (select-keys (get-in db [:total-positions (keyword p)]) [:cash-pct
+                                                                                    :base-value
+                                                                                    :contrib-yield
+                                                                                    :contrib-zspread
+                                                                                    :contrib-gspread
+                                                                                    :contrib-mdur
+                                                                                    :mdur-delta
+                                                                                    :qt-iam-int-lt-median-rating
+                                                                                    :qt-iam-int-lt-median-rating-score
+                                                                                    :contrib-beta-1y-daily
+                                                                                    :quant-value-4d
+                                                                                    :quant-value-2d
+                                                                                    :ESG
+                                                                                    :raw-esg-over-50
+                                                                                    :final-esg-over-50
+                                                                                    :SUBORDINATED
+                                                                                    :HYBRID
+                                                                                    :INTERNATIONAL_SUKUK
+                                                                                    :HYBRIDNONFINS
+                                                                                    :HY
+                                                                                    :COCOS
+                                                                                    :ad-hoc
+                                                                                    :downgrade-candidates
+                                                                                    :contrib-BBG_CEMBI_D1Y_BETA
+                                                                                    :bm-contrib-BBG_CEMBI_D1Y_BETA
+                                                                                    :contrib-delta-BBG_CEMBI_D1Y_BETA])
+                           {:contrib-bond-yield (- (get-in db [:total-positions (keyword p) :contrib-yield]) (reduce + (map :contrib-yield (grp p))))})
+                         [:cash-pct :contrib-yield :contrib-bond-yield]))))))
 
 ;;;;;;;;;
 ;; GUI ;;

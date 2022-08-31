@@ -580,10 +580,8 @@
     (fn []
       [v-box :width "800px" :gap "20px" :class "subbody rightelement"
        :children [(gt/element-box "analyst-coverage" "700px" "Analyst coverage" @(rf/subscribe [:quant-model/analyst-coverage])
-                                  [[h-box :gap "10px" :children [[radio-button :label "Focus/Analyst" :value ["Focus" "Analyst"] :model pivot :on-change #(reset! pivot %)]
-                                                                 [radio-button :label "Analyst/Focus" :value ["Analyst" "Focus"] :model pivot :on-change #(reset! pivot %)]
-                                                                 [radio-button :label "Focus/Country" :value ["Focus" "Country"] :model pivot :on-change #(reset! pivot %)]
-                                                                 [radio-button :label "Country/Focus" :value ["Country" "Focus"] :model pivot :on-change #(reset! pivot %)]]]
+                                  [[h-box :gap "10px" :children (into [] (for [x [["Focus" "Analyst"] ["Analyst" "Focus"] ["Focus" "Country"] ["Country" "Focus"]]]
+                                                                           ^{:key x} [radio-button :label (clojure.string/join "/" x) :value x :model pivot :on-change #(reset! pivot %)]))]
                                    [:> ReactTable
                                     {:data     (sort-by (juxt (keyword (first @pivot)) (keyword (second @pivot))) final-analyst-coverage-data)
                                      :columns  [{:Header "Ticker" :accessor "Ticker" :width 150}
@@ -598,8 +596,7 @@
                   (gt/element-box "issuer-coverage" "700px" "Issuer coverage" @(rf/subscribe [:quant-model/issuer-coverage])
                                   [[title :level :level2 :label "Add issuer note"]
                                    [h-box :gap "5px" :align :center
-                                    :children [
-                                               [single-dropdown :width "175px" :model ticker :placeholder "Issuer" :on-change #(reset! ticker %) :choices issuer-choices :filter-box? true]
+                                    :children [[single-dropdown :width "175px" :model ticker :placeholder "Issuer" :on-change #(reset! ticker %) :choices issuer-choices :filter-box? true]
                                                [single-dropdown :placeholder "Analyst" :width "175px" :model analyst :choices (into [] (for [k @(rf/subscribe [:analysts])] {:id k :label k})) :filter-box? true :on-change #(reset! analyst %)]
                                                [single-dropdown :placeholder "Decision" :width "175px" :model idecision :choices (into [] (for [k ["Investable" "Uninvestable - financials" "Uninvestable - ESG" "No time to review"]] {:id k :label k})) :on-change #(reset! idecision %)]
                                                [datepicker-dropdown :model date :start-of-week 0 :format "dd/MM/yyyy" :show-today? true :on-change #(reset! date %)]]]
