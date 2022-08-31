@@ -170,6 +170,12 @@
                  :attribution-history/report-type                       :yearly
                  :attribution-history/data                              []
 
+                 :attribution-analytics/portfolio                       "OGEMCORD"
+                 :attribution-analytics/month-end                       "20220731"
+                 :attribution-analytics/period                          "monthly"
+                 :attribution-analytics/data                            []
+                 :list-dates-month-end-calendar                        []
+
                  :top-bottom-price-change                            []
                  :list-dates-position-history                        []
 
@@ -409,6 +415,9 @@
            :attribution-history/display-style
            :attribution-history/field-one
            :attribution-history/report-type
+           :attribution-analytics/portfolio
+           :attribution-analytics/month-end
+           :attribution-analytics/period
 
            :single-portfolio-attribution/portfolio
            :single-portfolio-attribution/display-style
@@ -432,6 +441,7 @@
 
            :attribution/summary
            :attribution/available-months
+           :list-dates-month-end-calendar
 
            :attribution-index-returns/portfolio
            :attribution-index-returns/period
@@ -899,6 +909,8 @@
    {:get-key :get-esg-report-list    :url-tail "esg-report-list" :dis-key :esg-report-list}
    {:get-key :get-top-bottom-price-change :url-tail "top_bottom_price_change" :dis-key  :top-bottom-price-change}
    {:get-key :get-list-dates-position-history :url-tail "list-dates-position-history" :dis-key  :list-dates-position-history}
+   {:get-key :get-list-dates-month-end-calendar :url-tail "list-dates-month-end-calendar" :dis-key  :list-dates-month-end-calendar}
+
    ])
 
 

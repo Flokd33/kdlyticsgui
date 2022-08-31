@@ -307,6 +307,18 @@
   :attribution-history/data
   (fn [db [_ data]] (assoc db :navigation/show-mounting-modal false :attribution-history/data data)))
 
+(rf/reg-event-fx
+  :get-attribution-analytics
+  (fn [{:keys [db]} [_ m]]
+    {:db                 (assoc db :navigation/show-mounting-modal true)
+     :http-post-dispatch {:url (str static/server-address "attribution-analytics") :edn-params m
+                          :dispatch-key [:attribution-analytics/data]}}))
+
+(rf/reg-event-db
+  :attribution-analytics/data
+  (fn [db [_ data]] (assoc db :navigation/show-mounting-modal false :attribution-analytics/data data)))
+
+
 (rf/reg-sub
   :attribution-history/table
   (fn [db]
@@ -429,7 +441,79 @@
                               [oz/vega-lite (charting/stacked-vertical-bars @attribution-history-chart-data "attribution history")]])]))
 
 ;------------------------------
+(def  attribution-view-atom (atom nil))
 
+(defn attribution-analytics-display []
+  (let [data @(rf/subscribe [:attribution-analytics/data])
+        data-clean (for [sec data] (assoc sec :Average-Index-Weight (/ (sec :Average-Index-Weight) 100)
+                                              :Average-Fund-Weight (/ (sec :Average-Fund-Weight) 100)
+                                              :Average-Excess-Weight (/ (sec :Average-Excess-Weight) 100)
+                                              :Used_YTW (/ (sec :Used_YTW) 100)
+                                              :Fund-Contribution (/ (sec :Fund-Contribution) 100)
+                                              :Index-Contribution (/ (sec :Index-Contribution) 100)
+                                              :Total-Effect (/ (sec :Total-Effect) 100)
+                                              ))
+
+        header-style {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}]
+    ;(println (sort (keys (second data))))
+    [:div {:id "attribution-analytics-table"}
+     [:> ReactTable
+      {:data data-clean
+       :columns [{:Header  "Description" :headerStyle header-style :columns
+                  [{:Header "Bond" :accessor "Bond" :width 100} {:Header "Isin" :accessor "ISIN" :width 100}
+                   {:Header "Region" :accessor "Region" :width 100} {:Header "Country" :accessor "Country" :width 80}
+                   {:Header "Sector" :accessor "Sector" :width 80} {:Header "Rating" :accessor "Rating" :width 80}
+                   {:Header "Rating Grp" :accessor "RatingGroup" :width 80}]}
+                 {:Header  "Weights" :headerStyle header-style :columns
+                  [{:Header "Start" :accessor "start-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "End" :accessor "end-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "Avg. fund " :accessor "Average-Fund-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "Avg. index " :accessor "Average-Index-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "Avg. excess " :accessor "Average-Excess-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}]}
+                  {:Header  "Returns" :headerStyle header-style :columns
+                   [{:Header "Fund" :accessor "Fund-Contribution" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
+                    {:Header "Index" :accessor "Index-Contribution" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}
+                    {:Header "Total Effect" :accessor "Total-Effect" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}]}
+                 {:Header  "Analytics (as of month end)" :headerStyle header-style :columns
+                  [{:Header "Duration" :accessor "Duration" :width 90  :style {:textAlign "right"} :Cell tables/round2}
+                   {:Header "Yield (YTW)" :accessor "Used_YTW" :width 90  :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "Spread (ZTW)" :accessor "Used_ZTW" :width 90  :style {:textAlign "right"} :Cell tables/round0}]}]
+       :showPagination true :sortable true :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"
+       :ref #(reset! attribution-view-atom %)
+           }]]
+    ))
+
+
+(defn attribution-analytics []
+  (let [portfolio-choices @(rf/subscribe [:portfolio-dropdown-map])
+        month-end-choices (distinct (into [] (for [k @(rf/subscribe [:list-dates-month-end-calendar])] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
+        period-choices [{:id "monthly" :label "Monthly"} {:id "quarterly" :label "Quarterly"} {:id "ytd" :label "YTD"}]
+        portfolio @(rf/subscribe [:attribution-analytics/portfolio])
+        period @(rf/subscribe [:attribution-analytics/period])
+        month-end @(rf/subscribe [:attribution-analytics/month-end])
+        download-columns ["Bond" "Region" "Sector" "RatingGroup" "start-weight" "end-weight" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"
+                          "Fund-Contribution" "Index-Contribution" "Total-Effect" "Duration" "Used_YTW" "Used_ZTW"]
+        ;data @(rf/subscribe [:attribution-analytics/data])
+        ]
+    [box :class "subbody rightelement" :child
+     (gt/element-box-generic "attribution-analytics-table" max-width (str "Attribution analytics")
+                             {:target-id "attribution-analytics-table" :on-click-action #(tools/react-table-to-csv @attribution-view-atom portfolio download-columns)}
+                             [[h-box :gap " 10px " :align :center
+                               :children [[title :label "Portfolio:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model portfolio :choices portfolio-choices :on-change #(rf/dispatch [:attribution-analytics/portfolio %])]
+                                          [gap :size "30px"]
+                                          [title :label "Period:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model period :choices period-choices :on-change #(rf/dispatch [:attribution-analytics/period %])]
+                                          [gap :size "30px"]
+                                          [title :label "Month end:" :level :level3]
+                                          [single-dropdown :width dropdown-width :model month-end :choices month-end-choices :on-change #(rf/dispatch [:attribution-analytics/month-end %])]
+                                          [gap :size "30px"]
+                                          [button :label "Fetch" :class "btn btn-primary btn-block"
+                                           :on-click #(rf/dispatch [:get-attribution-analytics {:portfolio  portfolio :period period :month-end month-end}])]]]
+                              [attribution-analytics-display]
+                              ])
+     ]
+    ))
 
 (defn active-home []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -438,6 +522,7 @@
     :single-portfolio               [single-portfolio-attribution-controller]
     :all-portfolios                 [multiple-portfolio-attribution-controller]
     :history                        [attribution-history]
+    :analytics                      [attribution-analytics]
     :index-returns                  [index-returns-controller]
     :top-bottom-pr                  [top-bottom-pr]
     [:div.output "nothing to display"]))
