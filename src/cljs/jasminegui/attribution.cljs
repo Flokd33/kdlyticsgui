@@ -496,19 +496,16 @@
                           "Fund-Contribution" "Index-Contribution" "Total-Effect" "Duration" "Used_YTW" "Used_ZTW"]
         month-end-choices-raw @(rf/subscribe [:list-dates-month-end-calendar])
         month-end-choices-clean  (if (= "quarterly" period)
-                                   ["20220331" "20220630"]
+                                   ["20220331" "20220630"]  ;ADD QUARTERS
                                    (rest month-end-choices-raw)
                                    )
-        month-end-choices (distinct (into [] (for [k month-end-choices-clean] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
-        ;data @(rf/subscribe [:attribution-analytics/data])
-        ]
-    (println period)
+        month-end-choices (distinct (into [] (for [k month-end-choices-clean] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))]
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "attribution-analytics-table" max-width (str "Attribution analytics")
                              {:target-id "attribution-analytics-table" :on-click-action #(tools/react-table-to-csv @attribution-view-atom portfolio download-columns)}
                              [[h-box :gap " 10px " :align :center
                                :children [[title :label "Portfolio:" :level :level3]
-                                          [single-dropdown :width dropdown-width :model portfolio :choices portfolio-choices :on-change #(rf/dispatch [:attribution-analytics/portfolio %])]
+                                          (gt/portfolio-dropdown-selector :attribution-analytics/portfolio)
                                           [gap :size "30px"]
                                           [title :label "Period:" :level :level3]
                                           [single-dropdown :width dropdown-width :model period :choices period-choices :on-change #(rf/dispatch [:attribution-analytics/period %])]
@@ -519,9 +516,7 @@
                                           [button :label "Fetch" :class "btn btn-primary btn-block"
                                            :on-click #(rf/dispatch [:get-attribution-analytics {:portfolio  portfolio :period period :month-end month-end}])]]]
                               [attribution-analytics-display]
-                              ])
-     ]
-    ))
+                              ])]))
 
 (defn active-home []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
