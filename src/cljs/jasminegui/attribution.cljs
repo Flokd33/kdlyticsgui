@@ -464,20 +464,22 @@
                    {:Header "Region" :accessor "Region" :width 100} {:Header "Country" :accessor "Country" :width 80}
                    {:Header "Sector" :accessor "Sector" :width 80} {:Header "Rating" :accessor "Rating" :width 80}
                    {:Header "Rating Grp" :accessor "RatingGroup" :width 80}]}
-                 {:Header  "Weights" :headerStyle header-style :columns
+                 {:Header  "Actual Weights" :headerStyle header-style :columns
                   [{:Header "Start" :accessor "start-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
-                   {:Header "End" :accessor "end-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
-                   {:Header "Avg. fund " :accessor "Average-Fund-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
-                   {:Header "Avg. index " :accessor "Average-Index-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
-                   {:Header "Avg. excess " :accessor "Average-Excess-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}]}
-                  {:Header  "Returns" :headerStyle header-style :columns
+                   {:Header "End" :accessor "end-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}]}
+                 {:Header  "Average Weights" :headerStyle header-style :columns
+                  [{:Header "Excess " :accessor "Average-Excess-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "Fund " :accessor "Average-Fund-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "Index " :accessor "Average-Index-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}]}
+                 {:Header  "Effect" :headerStyle header-style :columns
+                  [{:Header "Fund" :accessor "Total-Effect" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}]}
+                 {:Header  "Contribution" :headerStyle header-style :columns
                    [{:Header "Fund" :accessor "Fund-Contribution" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
-                    {:Header "Index" :accessor "Index-Contribution" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}
-                    {:Header "Total Effect" :accessor "Total-Effect" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}]}
+                    {:Header "Index" :accessor "Index-Contribution" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}]}
                  {:Header  "Analytics (as of month end)" :headerStyle header-style :columns
                   [{:Header "Duration" :accessor "Duration" :width 90  :style {:textAlign "right"} :Cell tables/round2}
-                   {:Header "Yield (YTW)" :accessor "Used_YTW" :width 90  :style {:textAlign "right"} :Cell tables/round2pc}
-                   {:Header "Spread (ZTW)" :accessor "Used_ZTW" :width 90  :style {:textAlign "right"} :Cell tables/round0}]}]
+                   {:Header "YTW" :accessor "Used_YTW" :width 90  :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "ZTW" :accessor "Used_ZTW" :width 90  :style {:textAlign "right"} :Cell tables/zspread-format}]}]
        :showPagination true :sortable true :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"
        :ref #(reset! attribution-view-atom %)
            }]]
@@ -486,15 +488,21 @@
 
 (defn attribution-analytics []
   (let [portfolio-choices @(rf/subscribe [:portfolio-dropdown-map])
-        month-end-choices (distinct (into [] (for [k @(rf/subscribe [:list-dates-month-end-calendar])] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
         period-choices [{:id "monthly" :label "Monthly"} {:id "quarterly" :label "Quarterly"} {:id "ytd" :label "YTD"}]
         portfolio @(rf/subscribe [:attribution-analytics/portfolio])
         period @(rf/subscribe [:attribution-analytics/period])
         month-end @(rf/subscribe [:attribution-analytics/month-end])
         download-columns ["Bond" "Region" "Sector" "RatingGroup" "start-weight" "end-weight" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"
                           "Fund-Contribution" "Index-Contribution" "Total-Effect" "Duration" "Used_YTW" "Used_ZTW"]
+        month-end-choices-raw @(rf/subscribe [:list-dates-month-end-calendar])
+        month-end-choices-clean  (if (= "quarterly" period)
+                                   ["20220331" "20220630"]
+                                   (rest month-end-choices-raw)
+                                   )
+        month-end-choices (distinct (into [] (for [k month-end-choices-clean] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
         ;data @(rf/subscribe [:attribution-analytics/data])
         ]
+    (println period)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "attribution-analytics-table" max-width (str "Attribution analytics")
                              {:target-id "attribution-analytics-table" :on-click-action #(tools/react-table-to-csv @attribution-view-atom portfolio download-columns)}
