@@ -455,15 +455,15 @@
                                               ))
 
         header-style {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}]
-    ;(println (sort (keys (second data))))
+    ;(println (sort (keys (first data))))
     [:div {:id "attribution-analytics-table"}
      [:> ReactTable
       {:data data-clean
        :columns [{:Header  "Description" :headerStyle header-style :columns
                   [{:Header "Bond" :accessor "Bond" :width 100} {:Header "Isin" :accessor "ISIN" :width 100}
-                   {:Header "Region" :accessor "Region" :width 100} {:Header "Country" :accessor "Country" :width 80}
-                   {:Header "Sector" :accessor "Sector" :width 80} {:Header "Rating" :accessor "Rating" :width 80}
-                   {:Header "Rating Grp" :accessor "RatingGroup" :width 80}]}
+                   {:Header "Ticker" :accessor "Ticker" :width 100} {:Header "Region" :accessor "Region" :width 100}
+                   {:Header "Country" :accessor "Country" :width 80} {:Header "Sector" :accessor "Sector" :width 80}
+                   {:Header "Rating" :accessor "Rating" :width 80} {:Header "Rating Grp" :accessor "RatingGroup" :width 80}]}
                  {:Header  "Actual Weights" :headerStyle header-style :columns
                   [{:Header "Start" :accessor "start-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
                    {:Header "End" :accessor "end-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}]}
@@ -487,12 +487,11 @@
 
 
 (defn attribution-analytics []
-  (let [portfolio-choices @(rf/subscribe [:portfolio-dropdown-map])
-        period-choices [{:id "monthly" :label "Monthly"} {:id "quarterly" :label "Quarterly"} {:id "ytd" :label "YTD"}]
+  (let [period-choices [{:id "monthly" :label "Monthly"} {:id "quarterly" :label "Quarterly"} {:id "ytd" :label "YTD"}]
         portfolio @(rf/subscribe [:attribution-analytics/portfolio])
         period @(rf/subscribe [:attribution-analytics/period])
         month-end @(rf/subscribe [:attribution-analytics/month-end])
-        download-columns ["Bond" "Region" "Sector" "RatingGroup" "start-weight" "end-weight" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"
+        download-columns ["Bond" "Region" "Sector" "Ticker" "RatingGroup" "start-weight" "end-weight" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"
                           "Fund-Contribution" "Index-Contribution" "Total-Effect" "Duration" "Used_YTW" "Used_ZTW"]
         month-end-choices-raw @(rf/subscribe [:list-dates-month-end-calendar])
         month-end-choices-clean  (if (= "quarterly" period)
