@@ -245,7 +245,7 @@
   [v-box :gap "20px" :class "element" :width standard-box-width
    :children [[title :level :level2 :label "MSCI NAV across portfolios"]
               (let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
-                                    {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-not0}))]
+                                    {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}))]
                 [:> ReactTable
                  {:data                @(rf/subscribe [:esg-risk/multiple-tree])
                   :columns             (concat (mapv tables/risk-table-columns [:msci-rating :issuer]) cols)

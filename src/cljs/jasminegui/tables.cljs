@@ -194,6 +194,12 @@
       [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
       "-")))
 
+(defn roundpc-no-mult [fmt this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt x)]
+      "-")))
+
 (defn roundpc-no-color [fmt this]
   (r/as-element
     (if-let [x (aget this "value")]
@@ -214,6 +220,7 @@
 (def round0pc #(roundpc "%.0f%" %))
 (def round1pc #(roundpc "%.1f%" %))
 (def round2pc #(roundpc "%.2f%" %))
+(def round2pc-no-mult #(roundpc-no-mult "%.2f%" %))
 (def round2pc-no-red #(roundpc-no-color "%.2f%" %))
 (def round3pc #(roundpc "%.3f%" %))
 
@@ -301,8 +308,8 @@
      :bm-contrib-BBG_CEMBI_D1Y_BETA    (nb-col "Index Bbg" "bm-contrib-BBG_CEMBI_D1Y_BETA" 65 round2 sum-rows)
      :contrib-delta-BBG_CEMBI_D1Y_BETA (nb-col "Delta Bbg" "contrib-delta-BBG_CEMBI_D1Y_BETA" 65 round2 sum-rows)
 
-     :total-return-ytd                 (nb-col "YTD TR" "total-return-ytd" 50 round1 median)
-     :jensen-ytd                       (nb-col "Jensen" "jensen-ytd" 50 round1 median)
+     :total-return-ytd                 (nb-col "YTD TR" "total-return-ytd" 50 #(nb-cell-format "%.1f%" 100. %) median)
+     :jensen-ytd                       (nb-col "Jensen" "jensen-ytd" 50 #(nb-cell-format "%.1f%" 100. %) median)
 
      :quant-value-2d                   (nb-col "2D" "quant-value-2d" 50 round2 sum-rows)
      :quant-value-4d                   (nb-col "4D" "quant-value-4d" 50 round2 sum-rows)

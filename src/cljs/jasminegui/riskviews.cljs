@@ -66,14 +66,15 @@
           xform (comp
                   (filter #(= (:portfolio %) portfolio))
                   (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0)) identity)
-                  (map #(update % :weight * 100.))
-                  (map #(update % :bm-weight * 100.))
-                  (map #(update % :weight-delta * 100.))
-                  (map #(update % :qt-yield * 100.))
-                  (map #(update % :total-return-ytd * 100.))
-                  (map #(update % :jensen-ytd * 100.))
-                  (map #(update % :contrib-yield * 100.))
-                  (map #(update % :bm-contrib-yield * 100.)))
+                  ;(map #(update % :weight * 100.))
+                  ;(map #(update % :bm-weight * 100.))
+                  ;(map #(update % :weight-delta * 100.))
+                  ;(map #(update % :qt-yield * 100.))
+                  ;(map #(update % :total-return-ytd * 100.))
+                  ;(map #(update % :jensen-ytd * 100.))
+                  ;(map #(update % :contrib-yield * 100.))
+                  ;(map #(update % :bm-contrib-yield * 100.))
+                  )
           v2 (into [] xform (:positions db))
           risk-choices (let [rfil (:single-portfolio-risk/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
@@ -308,7 +309,7 @@
         base-portfolio (first group)
         portfolios (rest group)
         display-key @(rf/subscribe [:portfolio-alignment/field])
-        cell-one (let [v (get-in tables/risk-table-columns [display-key :Cell])] (case display-key :nav tables/round2*100-if-not0 :contrib-mdur tables/round2-if-not0 v)) ;(get-in tables/risk-table-columns [display-key :Cell])
+        cell-one (let [v (get-in tables/risk-table-columns [display-key :Cell])] (case display-key :nav tables/round2-if-not0 :weight-delta tables/round2-if-not0 :contrib-yield tables/round2pc-no-mult :contrib-mdur tables/round2-if-not0 v)) ;(get-in tables/risk-table-columns [display-key :Cell])
         width-one 80
         is-tree (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
@@ -424,7 +425,7 @@
                                     grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
                                     cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
                                                     {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
-                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2*100-if-not0 :weight-delta tables/round2*100-if-not0 :contrib-yield tables/round2pc :contrib-mdur tables/round2-if-not0 v))}))]
+                                                     :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2-if-not0 :weight-delta tables/round2-if-not0 :contrib-yield tables/round2pc-no-mult :contrib-mdur tables/round2-if-not0 v))}))]
                                 [:div {:id "multiple-portfolio-risk-table"}
                                  [tables/tree-table-risk-table
                                   :multiple-portfolio-risk/table
@@ -557,7 +558,7 @@
                                    )]))))
 
 (defn concentration-risk []
-  (let [index-cut-off 0.01 overweight-multiplier 2 breakdown (r/atom :country-sector)
+  (let [index-cut-off 1. overweight-multiplier 2 breakdown (r/atom :country-sector)
         download-columns [:bucket :weight-multiplier :mdur-multiplier :weight :bm-weight :contrib-mdur :bm-contrib-eir-duration]]
     (fn []
       (let [portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
@@ -591,8 +592,8 @@
                                       :columns        [{:Header "Bucket overweight" :columns [{:Header "Bucket" :accessor "bucket" :width 240}
                                                                                               (assoc (tables/nb-col "Maturity multiplier" "weight-multiplier" 120 tables/round1 nil) :filterable false)
                                                                                               (assoc (tables/nb-col "Duration multiplier" "mdur-multiplier" 120 tables/round1 nil) :filterable false)]}
-                                                       {:Header "NAV" :columns [(assoc (tables/nb-col "Fund" "weight" 120 tables/round2pc nil) :filterable false)
-                                                                                (assoc (tables/nb-col "Index" "bm-weight" 120 tables/round2pc nil) :filterable false)]}
+                                                       {:Header "NAV" :columns [(assoc (tables/nb-col "Fund" "weight" 120 tables/round2pc-no-mult nil) :filterable false)
+                                                                                (assoc (tables/nb-col "Index" "bm-weight" 120 tables/round2pc-no-mult nil) :filterable false)]}
                                                        {:Header "Duration" :columns [(assoc (tables/nb-col "Fund" "contrib-mdur" 120 tables/round2 nil) :filterable false)
                                                                                      (assoc (tables/nb-col "Index" "bm-contrib-eir-duration" 120 tables/round2 nil) :filterable false)]}]
                                       :showPagination false :pageSize (count display) :className "-striped -highlight"}]
@@ -738,8 +739,6 @@
                                   :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize 20 :showPageSizeOptions false :className "-striped -highlight"}]]
                                download-columns
                                )]))
-
-
 
 
 (rf/reg-event-fx
@@ -900,7 +899,6 @@
                                 ])]]]))
 
 (defn portfolio-history []
-  ;(rf/dispatch [:get-position-history-nav "OGEMCORD" :local-value ["20210831" "20210930"]]) ;(position-historical-dates)
   (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
         qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7)))
@@ -931,7 +929,6 @@
                                       b (.indexOf all-dates end)]
                                   (take (inc (- b a)) (drop a all-dates))
                                   ))))]
-    ;(println position-historical-dates)
         [box :class "subbody rightelement" :child
      (gt/element-box-generic "position-history-risk-table" max-width (str "Portfolio history")
                              {:target-id "position-history-risk-table" :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}

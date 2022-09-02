@@ -50,12 +50,6 @@
   (fn [{:keys [db]} [_ sector]]
     {:http-get-dispatch {:url (str qdb-server "sectors?sectors=" sector "&include_inactive=False") :dispatch-key [:get-qdb-scores]}}))
 
-;old request
-;(rf/reg-event-fx
-;  :get-qdb-securities
-;  (fn [{:keys [db]} [_ sector]]
-;    {:http-get-dispatch {:url (str qdb-server "securities?sectors=" sector) :dispatch-key [:get-qdb-scores]}}))
-
 (rf/reg-event-fx
   ;TODO THIS NEEDS TO REVERT TO PREVIOUS DATE = 1
   :get-qdb-scores
@@ -296,15 +290,17 @@
   (fn [db]
     (let [qm (:quant-model/model-output db)
           ta (:scorecard/trade-analyser-data db)
-          viewable-positions (into [] (comp
-                                        (map #(update % :weight * 100.))
-                                        (map #(update % :bm-weight * 100.))
-                                        (map #(update % :weight-delta * 100.))
-                                        (map #(update % :qt-yield * 100.))
-                                        (map #(update % :total-return-ytd * 100.))
-                                        (map #(update % :jensen-ytd * 100.))
-                                        (map #(update % :contrib-yield * 100.))
-                                        (map #(update % :bm-contrib-yield * 100.)))
+          viewable-positions (into []
+                                   ;(comp
+                                   ;     (map #(update % :weight * 100.))
+                                   ;     (map #(update % :bm-weight * 100.))
+                                   ;     (map #(update % :weight-delta * 100.))
+                                   ;     (map #(update % :qt-yield * 100.))
+                                   ;     (map #(update % :total-return-ytd * 100.))
+                                   ;     (map #(update % :jensen-ytd * 100.))
+                                   ;     (map #(update % :contrib-yield * 100.))
+                                   ;     (map #(update % :bm-contrib-yield * 100.))
+                                   ;     )
                                    (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db) :original-quantity pos?} (:positions db)))
           grouping-columns (into [] (for [r [:name :sector]] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
@@ -316,15 +312,16 @@
 (rf/reg-sub
   :scorecard-risk/tree
   (fn [db]
-    (let [viewable-positions (into [] (comp
-                                        (map #(update % :weight * 100.))
-                                        (map #(update % :bm-weight * 100.))
-                                        (map #(update % :weight-delta * 100.))
-                                        (map #(update % :qt-yield * 100.))
-                                        (map #(update % :total-return-ytd * 100.))
-                                        (map #(update % :jensen-ytd * 100.))
-                                        (map #(update % :contrib-yield * 100.))
-                                        (map #(update % :bm-contrib-yield * 100.)))
+    (let [viewable-positions (into []
+                                   ;(comp
+                                   ;     (map #(update % :weight * 100.))
+                                   ;     (map #(update % :bm-weight * 100.))
+                                   ;     (map #(update % :weight-delta * 100.))
+                                   ;     (map #(update % :qt-yield * 100.))
+                                   ;     (map #(update % :total-return-ytd * 100.))
+                                   ;     (map #(update % :jensen-ytd * 100.))
+                                   ;     (map #(update % :contrib-yield * 100.))
+                                   ;     (map #(update % :bm-contrib-yield * 100.)))
                                    (t/chainfilter {:portfolio (:scorecard/portfolio db) :qt-jpm-sector (:scorecard/sector db)} (:positions db)))
           risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
@@ -510,7 +507,7 @@
                                      :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}]]))
                 (gt/element-box "scorecard-nav-portfolios" "100%" (str sector " NAV across portfolios, grouped by issuer") @(rf/subscribe [:scorecard-risk/multiple-tree])
                                 [(let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
-                                                       {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2*100-if-not0}))]
+                                                       {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}))]
                                    [:> ReactTable
                                     {:data                @(rf/subscribe [:scorecard-risk/multiple-tree])
                                      :columns             (concat (mapv tables/risk-table-columns [:issuer :name]) cols)
