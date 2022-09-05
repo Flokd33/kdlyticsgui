@@ -455,7 +455,7 @@
                                               ))
 
         header-style {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}]
-    ;(println (sort (keys (first data))))
+    (println (sort (keys (first data))))
     [:div {:id "attribution-analytics-table"}
      [:> ReactTable
       {:data data-clean
@@ -491,11 +491,11 @@
         portfolio @(rf/subscribe [:attribution-analytics/portfolio])
         period @(rf/subscribe [:attribution-analytics/period])
         month-end @(rf/subscribe [:attribution-analytics/month-end])
-        download-columns ["Bond" "Region" "Sector" "Ticker" "RatingGroup" "start-weight" "end-weight" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"
+        download-columns ["Bond" "ISIN" "Region" "Sector" "Ticker" "RatingGroup" "start-weight" "end-weight" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"
                           "Fund-Contribution" "Index-Contribution" "Total-Effect" "Duration" "Used_YTW" "Used_ZTW"]
         month-end-choices-raw @(rf/subscribe [:list-dates-month-end-calendar])
         month-end-choices-clean  (if (= "quarterly" period)
-                                   ["20220331" "20220630"]  ;ADD QUARTERS
+                                   ["20220331" "20220630"]  ;ADD QUARTERS END
                                    (rest month-end-choices-raw)
                                    )
         month-end-choices (distinct (into [] (for [k month-end-choices-clean] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))]
