@@ -456,12 +456,14 @@
                                               ))
 
         header-style {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}]
-    ;(println (sort (keys (first data))))
+    (println (sort (keys (first data))))
+    (println (second (t/chainfilter {:Region "Cash"} data-clean)))
     [:div {:id "attribution-analytics-table"}
      [:> ReactTable
       {:data data-clean
        :columns [{:Header  "Description" :headerStyle header-style :columns
-                  [{:Header "Bond" :accessor "Bond" :width 100} {:Header "Isin" :accessor "ISIN" :width 100}
+                  [{:Header "Bond" :accessor "Bond" :width 100}
+                   {:Header "Isin" :accessor "ISIN" :width 100}
                    {:Header "Ticker" :accessor "Ticker" :width 100} {:Header "Region" :accessor "Region" :width 100}
                    {:Header "Country" :accessor "Country" :width 80} {:Header "Sector" :accessor "Sector" :width 80}
                    {:Header "Rating" :accessor "Rating" :width 80} {:Header "Rating Grp" :accessor "RatingGroup" :width 80}]}
