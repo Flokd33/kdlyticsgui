@@ -144,6 +144,10 @@
    {:id "initial"  :label "Initial"}
    {:id "both"  :label "Both"}])
 
+(def categories-if-yes [{:id "commited" :label "Commited"} {:id "verified" :label "Verified"}])
+
+
+
 (def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
                                     :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
                                     :project-evaluation/description                        {:question_id 3  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
@@ -321,7 +325,7 @@
                                            (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "If yes please indicate the category"]
-                          [single-dropdown :width categories-list-width-long :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) :disabled? sbti-disabled?
+                          [single-dropdown :width categories-list-width-long :placeholder "Please select..." :choices categories-if-yes :model (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) :disabled? sbti-disabled?
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) %))]]]
 
               [h-box :gap "10px" :align :center
@@ -433,7 +437,7 @@
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company net-zero committed?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the year"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero-year"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company SBTi aligned and if so, which category?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sbti"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the category"] [p {:style {:width "500px" :text-align :justify}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "sbti-cat"} report-selected)))} project-sub-categories))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the category"] [p {:style {:width "500px" :text-align :justify}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "sbti-cat"} report-selected)))} categories-if-yes))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reference sources:"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "reference-sources"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]
                           ]
@@ -474,8 +478,6 @@
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduction target:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Total absolute emissions reduction:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected))))]]]
                           ]
-
-
                          nil
                          ))]
      ]
