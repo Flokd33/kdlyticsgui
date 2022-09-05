@@ -360,6 +360,7 @@
 
 (defn tree-table-risk-table
   [data columns is-tree accessors ref table-filter expander get-tr-props-fn]
+  ;(println (first @(rf/subscribe [data])))
   [:> ReactTable
    {:data @(rf/subscribe [data]) :columns columns
     :showPagination (not is-tree) :pageSize (if is-tree 1 18) :showPageSizeOptions false

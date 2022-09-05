@@ -51,6 +51,7 @@
 (def esg-report-selected (r/atom "GB_CONTLE_2022-08-18"))
 (def gb-isin (r/atom "USY1753QAB87"))
 (def gb-date (r/atom "2022-08-18"))
+(def report-type (r/atom "green-bond"))
 
 (def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
 (def yes-no-choice-2 [{:id "Yes1" :label "Yes (small)"} {:id "Yes2"  :label "Yes (big)"} {:id "No"  :label "No"}])
@@ -79,9 +80,9 @@
 
 (rf/reg-event-fx
   :post-esg-report-extract
-  (fn [{:keys [db]} [_ isin date]]
+  (fn [{:keys [db]} [_ isin date report-type]]
     { :http-post-dispatch {:url (str static/server-address "post-esg-report-extract")
-                          :edn-params {:isin isin :date date}
+                          :edn-params {:isin isin :date date :type report-type}
                           :dispatch-key [:esg-report-extract]}}))
 
 (rf/reg-event-db
@@ -140,7 +141,8 @@
 
 (def existing-choices
   [{:id "refinancing" :label "Refinancing (add % refinanced if applicable, in summary notes)"}
-   {:id "initial"  :label "Initial"}])
+   {:id "initial"  :label "Initial"}
+   {:id "both"  :label "Both"}])
 
 (def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
                                     :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
@@ -382,11 +384,10 @@
         esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Ticker (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
         esg-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id esg-reports-clean))))
         report-selected @(rf/subscribe [:esg-report-extract])
-        gb-or-tf (if (= ((first report-selected) :report) "green-bond") "GB" "TF")
         analyst-score (reduce + (map :analyst_score report-selected))
-        report-category (case gb-or-tf
-             "TF" "Transition Finance Report"
-             "GB" (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
+        report-category (case @report-type
+             "transition-fund" "Transition Finance Report"
+             "green-bond" (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
              nil
              )
         ]
@@ -400,19 +401,20 @@
                              :on-change #(do (reset! esg-report-selected %)
                                              (reset! gb-isin (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean))))
                                              (reset! gb-date (:date2 (first (t/chainfilter {:unique_id %} esg-reports-clean))))
-                                             (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date]))]
+                                             (reset! report-type (:report (first (t/chainfilter {:unique_id %} esg-reports-clean))))
+                                             (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date @report-type]))]
                             ]]
                 ]]
     [v-box :width "1280px" :gap "10px" :class "element"
      :children (concat [[h-box :gap "10px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label report-category :level :level1]]]
                         [gap :size "20px"]]
-                       (case gb-or-tf
-                         "GB" (if (not= report-category "Follow up reporting")
-                         [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (/ analyst-score 0.7)]]]
+                       (case @report-type
+                         "green-bond" (if (not= report-category "Follow up reporting")
+                         [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (Math/round (/ analyst-score 0.7))]]]
                           [title :label "Project Evaluation" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Category:"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected)))} project-sub-categories))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Description:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "description"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"] [p (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected)))} yes-no-choice-2))))]]] ;(str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected)))} yes-no-choice-2))))
                           [gap :size "1"]
                           [title :label "Inpedendent Verification" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Who provides second opinion?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "second-opinion"} report-selected))))]]]
@@ -444,10 +446,10 @@
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are more than 50% of the proceeds spent on green projects?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "half-proceeds-green"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "On a ongoing basis, does the company reconciled proceeds with uses?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "reconciliation"} report-selected))))]]]]
                          )
-                         "TF"
+                         "transition-fund"
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "Transition fund score" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
                           [title :label "Eligibility" :level :level2]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/issuer working towards net zero alignment?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/issuer working towards net zero alignment?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected)))) ]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company or activity to be financed supporting one of the five transition sectors?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Sector:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors-choice"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Comment:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors-comment"} report-selected))))]]]
