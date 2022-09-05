@@ -452,10 +452,11 @@
                                               :Fund-Contribution (/ (sec :Fund-Contribution) 100)
                                               :Index-Contribution (/ (sec :Index-Contribution) 100)
                                               :Total-Effect (/ (sec :Total-Effect) 100)
+                                              :RatingGroup (str "'" (sec :RatingGroup))
                                               ))
 
         header-style {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}]
-    (println (sort (keys (first data))))
+    ;(println (sort (keys (first data))))
     [:div {:id "attribution-analytics-table"}
      [:> ReactTable
       {:data data-clean
