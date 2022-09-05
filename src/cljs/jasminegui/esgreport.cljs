@@ -388,6 +388,12 @@
         esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Ticker (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
         esg-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id esg-reports-clean))))
         report-selected @(rf/subscribe [:esg-report-extract])
+        isin ((first report-selected) :security_identifier)
+        ticker (:Ticker (first (t/chainfilter {:ISIN isin} qt)))
+        country (:LongName (first (t/chainfilter {:CountryCode (:Country (first (t/chainfilter {:ISIN isin} qt)))} @(rf/subscribe [:country-codes]))))
+        sector (:Sector (first (t/chainfilter {:ISIN isin} qt)))
+        name (:Bond (first (t/chainfilter {:ISIN isin} qt)))
+        coupon (:COUPON (first (t/chainfilter {:ISIN isin} qt)))
         analyst-score (reduce + (map :analyst_score report-selected))
         report-category (case @report-type
              "transition-fund" "Transition Finance Report"
@@ -395,6 +401,7 @@
              nil
              )
         ]
+    ;(println @(rf/subscribe [:country-codes]))
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -409,19 +416,30 @@
                                              (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date @report-type]))]
                             ]]
                 ]]
-    [v-box :width "1280px" :gap "10px" :class "element"
+    [v-box :width "1280px" :gap "5px" :class "element"
      :children (concat [[h-box :gap "10px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label report-category :level :level1]]]
-                        [gap :size "20px"]]
+                        [gap :size "20px"]
+                        [title :label "Issue Information" :level :level2]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Name"] [p {:style {:width "500px" :text-align :justify}} name]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Isin"] [p {:style {:width "500px" :text-align :justify}} isin]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Ticker"] [p {:style {:width "500px" :text-align :justify}} ticker]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Country"] [p {:style {:width "500px" :text-align :justify}} country]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Sector"] [p {:style {:width "500px" :text-align :justify}} sector]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Coupon"] [p {:style {:width "500px" :text-align :justify}} coupon]]]
+                        [gap :size "1"]]
                        (case @report-type
                          "green-bond" (if (not= report-category "Follow up reporting")
-                         [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (Math/round (/ analyst-score 0.7))]]]
+                         [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New Issue Score" :level :level2]] [progress-bar :width categories-list-width-long :model (Math/round (/ analyst-score 0.7))]]]
+                          [title :label "Summary" :level :level2]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Analyst summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]
+                          [gap :size "1"]
                           [title :label "Project Evaluation" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Category:"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected)))} project-sub-categories))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Description:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "description"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"] [p (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected)))} yes-no-choice-2))))]]] ;(str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected)))} yes-no-choice-2))))
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Controversies comment:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "controversies-comment"} report-selected))))]]]
                           [gap :size "1"]
-                          [title :label "Inpedendent Verification" :level :level2]
+                          [title :label "Independent Verification" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Who provides second opinion?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "second-opinion"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Independent verification:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} report-selected))))]]]
                           [title :label "Use and Management of Proceeds" :level :level2]
@@ -440,7 +458,6 @@
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company SBTi aligned and if so, which category?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sbti"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the category"] [p {:style {:width "500px" :text-align :justify}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "sbti-cat"} report-selected)))} categories-if-yes))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reference sources:"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "reference-sources"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]
                           ]
                          [[h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Reporting" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the project on track?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "project-on-track"} report-selected))))]]]
