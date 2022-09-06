@@ -536,9 +536,9 @@
                                     :subs/target-year                {:question_id 60 :analyst_answer "" :analyst_score 0},
                                     :subs/scope-comment              {:question_id 61 :analyst_answer "" :analyst_score 0},
                                     :subs/emissions-year             {:question_id 62 :analyst_answer "" :analyst_score 0},
-                                    ;:subs/recent-emissions-year      {:question_id 72 :analyst_answer "" :analyst_score 0},
+                                    :subs/recent-emissions-year      {:question_id 72 :analyst_answer "" :analyst_score 0},
                                     :subs/recent-emissions           {:question_id 63 :analyst_answer "" :analyst_score 0},
-                                    ;:subs/reduction-target-year      {:question_id 73 :analyst_answer "" :analyst_score 0},
+                                    :subs/reduction-target-year      {:question_id 73 :analyst_answer "" :analyst_score 0},
                                     :subs/reduction-target           {:question_id 64 :analyst_answer "" :analyst_score 0},
                                     :subs/total-emissions            {:question_id 65 :analyst_answer "" :analyst_score 0}}))
 
@@ -737,18 +737,18 @@
                                                  :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
+                                      [h-box :gap "10px" :align :center
+                                       :children [[label :width question-width :label "Base year emissions:"]
+                                                  [input-text :width categories-list-width-long
+                                                   :validation-regex #"^[0-9]*$"
+                                                   :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
+                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
+                                                                   (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Emission scopes included:"]
                                                 [input-textarea :width categories-list-width-long :rows 5
                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Base year emissions:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
                                       [h-box :gap "10px" :align :center
                                        :children [[label :width question-width :label "Most recent emissions year:"]
                                                   [input-text :width categories-list-width-long
@@ -812,17 +812,18 @@
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Emission scopes included:"]
-                                                [input-textarea :width categories-list-width-long :rows 5
-                                                 :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Base year emissions:"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Emission scopes included:"]
+                                                [input-textarea :width categories-list-width-long :rows 5
+                                                 :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
+
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Most recent emissions year:"]
                                                 [input-text :width categories-list-width-long
