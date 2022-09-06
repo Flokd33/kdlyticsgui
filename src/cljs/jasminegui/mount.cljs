@@ -336,6 +336,7 @@
                  :allianz-loss-report                                []
                  :ogemigc-nr-bucket                                  []
                  :global-debt-and-equity-levels                       []
+                 :backtest-output                                   []
 
 
                  :dummy                                              nil                                 ;can be useful
@@ -582,6 +583,7 @@
            :allianz-loss-report
            :global-debt-and-equity-levels
            :ogemigc-nr-bucket
+           :backtest-output
            :dummy
 
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -960,6 +962,8 @@
    {:get-key :get-refresh-attribution   :namespace "jasmine.core"                 :asset "build-attribution!"              :dispatch-key [:dummy]}
    {:get-key :get-refresh-sedols        :namespace "jasmine.quantscreen.blpload"  :asset "refresh-sedols-sm!"              :dispatch-key [:dummy]}
    {:get-key :get-refresh-tf-ids        :namespace "jasmine.quantscreen.blpload"  :asset "refresh-tf-ids-sm!"              :dispatch-key [:dummy]}
+
+   {:get-key :get-backtest-output        :namespace "jasmine.backtesting.momentum"  :asset "backtest-output"              :dispatch-key [:backtest-output]}
 
 
    ])
