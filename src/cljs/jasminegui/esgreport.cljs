@@ -409,7 +409,6 @@
              nil
              )
         ]
-    ;(println report-selected)
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -424,7 +423,6 @@
                                              (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date @report-type]))]
                             ]]
                 ]]
-     (println (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected)))))
     [v-box :width "1280px" :gap "5px" :class "element"
      :children (concat [[h-box :gap "10px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label report-category :level :level1]]]
                         [gap :size "20px"]

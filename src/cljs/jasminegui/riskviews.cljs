@@ -834,7 +834,10 @@
                                             "20210630"
                                             "20210730"
                                             "20210831"
-                                            "20210930"]
+                                            "20210930"
+                                            "20211030"
+                                            "20211130"
+                                            ]
                                            @(rf/subscribe [:list-dates-position-history])))
 
 (def typeahead-bond-nickname (r/atom nil))
@@ -946,7 +949,7 @@
                                       b (.indexOf all-dates end)]
                                   (take (inc (- b a)) (drop a all-dates))
                                   ))))]
-    ;(println position-historical-dates)
+    ;(println (position-historical-dates))
         [box :class "subbody rightelement" :child
      (gt/element-box-generic "position-history-risk-table" max-width (str "Portfolio history")
                              {:target-id "position-history-risk-table" :on-click-action #(tools/react-table-to-csv @position-history-display-view @portfolio download-columns is-tree)}
