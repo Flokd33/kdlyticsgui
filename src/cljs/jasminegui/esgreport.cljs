@@ -146,7 +146,13 @@
 
 (def categories-if-yes [{:id "commited" :label "Commited"} {:id "verified" :label "Verified"}])
 
+(def tf-sectors-choices [{:id "energy" :label "Energy"} {:id "transport"  :label "Transport"} {:id "industry"  :label "Industry"}
+                         {:id "buildings"  :label "Buildings"} {:id "agriculture_forestry"  :label "Agriculture/Forestry"}])
 
+(def tf-category-choices [{:id "transitioned" :label "Transitioned"} {:id "transitioning" :label "Transitioning"} {:id "committed"  :label "Committed to transition"} {:id "enabler"  :label "Transition enabler"}
+                          {:id "interim"  :label "Interim to phase out"} {:id "aiming"  :label "Aiming to transition"}])
+
+(def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
 
 (def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
                                     :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
@@ -401,7 +407,7 @@
              nil
              )
         ]
-    ;(println @(rf/subscribe [:country-codes]))
+    ;(println (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "category"} report-selected)))} tf-category-choices)))))
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -454,9 +460,9 @@
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company framework better than the national framework?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "better-than-national"} report-selected))))]]]
                           [title :label "Additional Information" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company net-zero committed?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the year"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero-year"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the year:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero-year"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company SBTi aligned and if so, which category?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sbti"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the category"] [p {:style {:width "500px" :text-align :justify}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "sbti-cat"} report-selected)))} categories-if-yes))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "If yes please indicate the category:"] [p {:style {:width "500px" :text-align :justify}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "sbti-cat"} report-selected)))} categories-if-yes))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reference sources:"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "reference-sources"} report-selected))))]]]
                           ]
                          [[h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Reporting" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
@@ -473,19 +479,19 @@
                           [title :label "Eligibility" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/issuer working towards net zero alignment?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected)))) ]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company or activity to be financed supporting one of the five transition sectors?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Sector:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors-choice"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Sector:"] [p {:style {:width "500px" :text-align :justify}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "sectors-choice"} report-selected)))} tf-sectors-choices))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Comment:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors-comment"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the company have emissions intensity close to zero or a large majority (95%) of green revenue?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the company have clear plans to transition??"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/asset required to enable the transition to net zero for other sectors?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company ahead of its peer group on climate-related metrics?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/issuer expanding misaligned activities?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "misaligned"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Misaligned activities comment"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "misaligned-comment"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "What is the most appropriate classification for this transition investment?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "category"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Categorisation comment"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "category-comment"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Misaligned activities comment:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "misaligned-comment"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "What is the most appropriate classification for this transition investment?"] [p (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "category"} report-selected)))} tf-category-choices))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Categorisation comment:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "category-comment"} report-selected))))]]]
                           [gap :size "1"]
                           [title :label "Additional questions" :level :level2]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduced activities:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "activities"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduced activities:"] [p (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "activities"} report-selected)))} tf-reduced-activities-choices))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "What is the annual carbon avoided figure?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "paris"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Comment on target:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-comment"} report-selected))))]]]
@@ -562,18 +568,8 @@
   (let [answers @tf-calculator-summary
         summary (for [k (keys answers)] {:question_id (get-in answers [k :question_id]) :analyst_code @tf-analyst-name :date today-date
                                          :security_identifier @tf-identifier :analyst_answer (get-in answers [k :analyst_answer]) :analyst_score (get-in answers [k :analyst_score])})]
-    ;(println summary)
     (rf/dispatch [:post-esg-report-upload summary]) ; new system table with scores for each questions?
     ))
-
-(def tf-sectors-choices [{:id "energy" :label "Energy"} {:id "transport"  :label "Transport"} {:id "industry"  :label "Industry"}
-                          {:id "buildings"  :label "Buildings"} {:id "agriculture_forestry"  :label "Agriculture/Forestry"}])
-
-(def tf-category-choices [{:id "transitioned" :label "Transitioned"} {:id "transitioning" :label "Transitioning"} {:id "committed"  :label "Committed to transition"} {:id "enabler"  :label "Transition enabler"}
-                          {:id "interim"  :label "Interim to phase out"} {:id "aiming"  :label "Aiming to transition"}])
-
-
-(def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
 
 (def question-width-label "423px")
 
