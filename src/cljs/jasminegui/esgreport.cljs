@@ -48,9 +48,9 @@
 (def year-disabled? (r/atom true))
 (def sbti-disabled? (r/atom true))
 
-(def esg-report-selected (r/atom "GB_CONTLE_2022-08-18"))
-(def gb-isin (r/atom "USY1753QAB87"))
-(def gb-date (r/atom "2022-08-18"))
+(def esg-report-selected (r/atom "GB_AYDEMT_2022-09-02"))
+(def gb-isin (r/atom "XS2368781477"))
+(def gb-date (r/atom "2022-09-02"))
 (def report-type (r/atom "green-bond"))
 
 (def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
@@ -395,11 +395,13 @@
         esg-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id esg-reports-clean))))
         report-selected @(rf/subscribe [:esg-report-extract])
         isin ((first report-selected) :security_identifier)
-        ticker (:Ticker (first (t/chainfilter {:ISIN isin} qt)))
-        country (:LongName (first (t/chainfilter {:CountryCode (:Country (first (t/chainfilter {:ISIN isin} qt)))} @(rf/subscribe [:country-codes]))))
-        sector (:Sector (first (t/chainfilter {:ISIN isin} qt)))
-        name (:Bond (first (t/chainfilter {:ISIN isin} qt)))
-        coupon (:COUPON (first (t/chainfilter {:ISIN isin} qt)))
+        qt-isin (first (t/chainfilter {:ISIN isin} qt))
+        ticker (:Ticker qt-isin)
+        country (:LongName (first (t/chainfilter {:CountryCode (:Country qt-isin)} @(rf/subscribe [:country-codes]))))
+        sector (:Sector qt-isin)
+        name (:Bond qt-isin)
+        coupon (:COUPON qt-isin)
+        amt-out (:AMT_OUTSTANDING qt-isin)
         analyst-score (reduce + (map :analyst_score report-selected))
         report-category (case @report-type
              "transition-fund" "Transition Finance Report"
@@ -407,7 +409,7 @@
              nil
              )
         ]
-    ;(println (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "category"} report-selected)))} tf-category-choices)))))
+    ;(println report-selected)
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -422,6 +424,7 @@
                                              (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date @report-type]))]
                             ]]
                 ]]
+     (println (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected)))))
     [v-box :width "1280px" :gap "5px" :class "element"
      :children (concat [[h-box :gap "10px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label report-category :level :level1]]]
                         [gap :size "20px"]
@@ -431,6 +434,7 @@
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Ticker"] [p {:style {:width "500px" :text-align :justify}} ticker]]]
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Country"] [p {:style {:width "500px" :text-align :justify}} country]]]
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Sector"] [p {:style {:width "500px" :text-align :justify}} sector]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Amount outstanding"] [p {:style {:width "500px" :text-align :justify} } (tools/tnfmt amt-out)]]] ;:Cell tables/nfcell2 (tools/tnfmt (:total-trade @leg))
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Coupon"] [p {:style {:width "500px" :text-align :justify}} coupon]]]
                         [gap :size "1"]]
                        (case @report-type
@@ -492,15 +496,17 @@
                           [gap :size "1"]
                           [title :label "Additional questions" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduced activities:"] [p (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "activities"} report-selected)))} tf-reduced-activities-choices))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "What is the annual carbon avoided figure?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "What is the annual carbon avoided figure?"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected))))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "paris"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Comment on target:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-comment"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Target base year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-year"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Emission scopes included:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "scope-comment"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Base year emissions:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Most recent emissions:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduction target:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Total absolute emissions reduction:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Base year emissions:"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Most recent emissions year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions-year"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Most recent emissions:"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions"} report-selected))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduction target year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "reduction-target-year"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduction target:"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Total absolute emissions reduction:"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected))))))]]]
                           ]
                          nil
                          ))]
@@ -532,7 +538,9 @@
                                     :subs/target-year                {:question_id 60 :analyst_answer "" :analyst_score 0},
                                     :subs/scope-comment              {:question_id 61 :analyst_answer "" :analyst_score 0},
                                     :subs/emissions-year             {:question_id 62 :analyst_answer "" :analyst_score 0},
+                                    ;:subs/recent-emissions-year      {:question_id 72 :analyst_answer "" :analyst_score 0},
                                     :subs/recent-emissions           {:question_id 63 :analyst_answer "" :analyst_score 0},
+                                    ;:subs/reduction-target-year      {:question_id 73 :analyst_answer "" :analyst_score 0},
                                     :subs/reduction-target           {:question_id 64 :analyst_answer "" :analyst_score 0},
                                     :subs/total-emissions            {:question_id 65 :analyst_answer "" :analyst_score 0}}))
 
@@ -743,6 +751,12 @@
                                                  :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
+                                      [h-box :gap "10px" :align :center
+                                       :children [[label :width question-width :label "Most recent emissions year:"]
+                                                  [input-text :width categories-list-width-long
+                                                   :validation-regex #"^[0-9]*$"
+                                                   :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
+                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Most recent emissions:"]
                                                 [input-text :width categories-list-width-long
@@ -750,6 +764,12 @@
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
+                                      [h-box :gap "10px" :align :center
+                                       :children [[label :width question-width :label "Reduction target year:"]
+                                                  [input-text :width categories-list-width-long
+                                                   :validation-regex #"^[0-9]*$"
+                                                   :model (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer])
+                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer]) %))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Reduction target:"]
                                                 [input-text :width categories-list-width-long
@@ -806,12 +826,24 @@
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Most recent emissions year:"]
+                                                [input-text :width categories-list-width-long
+                                                 :validation-regex #"^[0-9]*$"
+                                                 :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
+                                    [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Most recent emissions:"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Reduction target year:"]
+                                                [input-text :width categories-list-width-long
+                                                 :validation-regex #"^[0-9]*$"
+                                                 :model (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer]) %))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Reduction target:"]
                                                 [input-text :width categories-list-width-long
