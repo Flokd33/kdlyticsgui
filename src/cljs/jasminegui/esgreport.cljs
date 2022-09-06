@@ -577,6 +577,10 @@
     (rf/dispatch [:post-esg-report-upload summary]) ; new system table with scores for each questions?
     ))
 
+(defn clean-report! []
+  (doseq [q @tf-calculator-summary] (reset! (r/cursor tf-calculator-summary [(key q) :analyst_answer]) ""))
+  )
+
 (def question-width-label "423px")
 
 (defn transition-fund-scoring-display []
@@ -586,7 +590,10 @@
                 [h-box :gap "10px" :align :center
                  :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
                             [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model tf-identifier :attr {:maxlength 12}
-                             :on-change #(reset! tf-identifier %)]]]
+                             :on-change #(do (reset! tf-identifier %)
+                                             (clean-report!)
+                                             (reset! is-tf-eligible "No"))
+                             ]]]
                 [h-box :gap "10px" :align :center
                  :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
                             [single-dropdown :width dropdown-width :choices analyst-names-list :model tf-analyst-name
