@@ -27,7 +27,6 @@
 (def n91-color-palette (take 50 (cycle ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])))
 
 (defn spot-chart-vega-spec-quant-model [model chart-type ratings issuers rating-curves-key]
-  ;(println @(rf/subscribe [:quant-model/generic-rating-curves]))
   (let [raw-data (@(rf/subscribe [:quant-model/generic-rating-curves]) rating-curves-key)
         data (filter #(contains? ratings (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
         target (case model "Legacy" "predicted_spread_legacy" "New" "predicted_spread_new" "SVR" "predicted_spread_svr")
@@ -45,8 +44,7 @@
         ]
     {:title  nil
      :data   {:values (concat bond-data data rating-text-data)}
-     :layer  [
-              {:selection {:grid {:type "interval" :bind "scales"}}
+     :layer  [{:selection {:grid {:type "interval" :bind "scales"}}
                :mark     {:type "line" :clip true}
                :encoding {:x     {:field "Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [min-domain max-domain]}} ;:scale {:domain [0. 30.]}
                           :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
@@ -71,9 +69,7 @@
               {:mark     {:type "text" :dx 6 :align "left"}
                :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
                           :y     {:field "Used_ZTW" :type "quantitative"}
-                          :text {:field "Bond" :type "nominal"}}}
-
-              ]
+                          :text {:field "Bond" :type "nominal"}}}]
      :width  1000
      :height 625}))
 
@@ -83,32 +79,21 @@
     (let [bonds (filter #(contains? issuers (:Ticker %)) @(rf/subscribe [:quant-model/model-output]))
           bond-data (map #(select-keys % [:Bond :Used_Duration (if (= chart-type :yield) :Used_YTW :Used_Price) :Ticker]) bonds)
           min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
-          max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)
-          ]
+          max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)]
       {:title  nil
        :data   {:values bond-data}
-       :layer  [
-
-                ;{:mark     {:type "text" :dy -10}
-                ; :encoding {:x     {:field "Duration" :type "quantitative"}
-                ;            :y     {:field "spread" :type "quantitative"}
-                ;            :text {:field "txt" :type "nominal"}}}
-
-                {:mark      {:type "point" :filled true}
+       :layer  [{:mark      {:type "point" :filled true}
                  :selection {:grid {:type "interval" :bind "scales"}}
                  :encoding  {:x       {:field "Used_Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [min-domain max-domain]}} ;:scale {:domain [0. 30.]}
                              :y       {:field (name (if (= chart-type :yield) :Used_YTW :Used_Price)) :type "quantitative" :axis {:title (name (if (= chart-type :yield) "YTW" "Price")) :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
                              :color   {:field "Ticker" :scale {:range n91-color-palette}}
                              :tooltip [{:field "Bond" :type "nominal" :title "Bond"}
                                        {:field "Used_Duration" :type "quantitative", :title "Duration"}
-                                       {:field (name (if (= chart-type :yield) :Used_YTW :Used_Price)) :type "quantitative", :title (name (if (= chart-type :yield) "YTW" "Price"))}
-                                       ]}}
+                                       {:field (name (if (= chart-type :yield) :Used_YTW :Used_Price)) :type "quantitative", :title (name (if (= chart-type :yield) "YTW" "Price"))}]}}
                 {:mark     {:type "text" :dx 6 :align "left"}
                  :encoding {:x    {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
                             :y    {:field (name (if (= chart-type :yield) :Used_YTW :Used_Price)) :type "quantitative"}
-                            :text {:field "Bond" :type "nominal"}}}
-
-                ]
+                            :text {:field "Bond" :type "nominal"}}}]
        :width  1000
        :height 625})
 
@@ -142,26 +127,18 @@
                           :y     {:field target :type "quantitative" :axis {:title "Spread" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
                           :color {:field "Rating" :type "quantitative" :legend nil}}}
               {:mark     {:type "text" :dy -10}
-               :encoding {:x     {:field "Duration" :type "quantitative"}
-                          :y     {:field "spread" :type "quantitative"}
-                          :text {:field "txt" :type "nominal"}}}
+               :encoding {:x {:field "Duration" :type "quantitative"} :y {:field "spread" :type "quantitative"} :text {:field "txt" :type "nominal"}}}
               {:mark     {:type "rule"}
-               :encoding {:x       {:field "Used_Duration" :type "quantitative"}
-                          :y       {:field "rule-min" :type "quantitative"}
-                          :y2      {:field "rule-max" :type "quantitative"}
+               :encoding {:x {:field "Used_Duration" :type "quantitative"} :y {:field "rule-min" :type "quantitative"} :y2 {:field "rule-max" :type "quantitative"}
                           :color   {:field "cheap" :type "nominal" :scale {:domain ["cheap" "expensive"] :range ["#134848" "#FDAA94"]} :legend {:title nil :labelFontSize 14}}}}
               {:mark     {:type "point" :filled true}
-               :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
-                          :y     {:field "Used_ZTW" :type "quantitative"}
-                          :color {:value "black"}
+               :encoding {:x     {:field "Used_Duration" :type "quantitative"} :y     {:field "Used_ZTW" :type "quantitative"} :color {:value "black"}
                           :tooltip [{:field "Bond" :type "nominal" :title "Bond"}
                                     {:field "Used_Duration" :type "quantitative", :title "Duration"}
                                     {:field "Used_ZTW" :type "quantitative", :title "Spread"}
                                     {:field target :type "quantitative", :title "Model"}]}}
               {:mark     {:type "text" :dx 6 :align "left"}
-               :encoding {:x     {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
-                          :y     {:field "Used_ZTW" :type "quantitative"}
-                          :text {:field "Bond" :type "nominal"}}}
+               :encoding {:x     {:field "Used_Duration" :type "quantitative"} :y     {:field "Used_ZTW" :type "quantitative"} :text {:field "Bond" :type "nominal"}}}
 
               ]
      :width  1000
@@ -222,123 +199,6 @@
 
 
 
-;(defn quant-isin-history-chart [data-pricing start-date-yyyymmdd-int price? ytw? ztw? duration? rating? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph rectangle-dates]
-;  (let [two-bonds? (= nb-bond 2)
-;        mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
-;        ;data-pricing @(rf/subscribe [:quant-model/history-result])
-;        grp (group-by :ISIN data-pricing)                   ;faster than 2 filters
-;        data-pricing-1 (grp isin1)
-;        data-pricing-2 (grp isin2)
-;        first-date-isin1-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-1)))] x "0") "-" ""))
-;        first-date-isin2-yyyymmdd-int (js/parseInt (clojure.string/replace (if-let [x (first (sort (map :date data-pricing-2)))] x "0") "-" ""))
-;        ;start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
-;
-;        by-date (group-by :date data-pricing)
-;        clean-by-date (if two-bonds? (into {} (for [[d v] by-date :when (= (count v) 2)] [d v])) by-date)
-;
-;        final-data (cond
-;                     (not two-bonds?) data-pricing-1
-;                     (= choice-historical-graph "absolute") data-pricing
-;                     :else (let [                           ;by-date-clean (t/chainfilter {: } by-date)                           ;clean
-;                                 data-pricing-clean (sort-by :date
-;                                                             (into [] (for [[d g] clean-by-date]
-;                                                                        (let [h (sort-by :ISIN g)]
-;                                                                          (reduce #(assoc %1 %2 (- (%2 (first h)) (%2 (second h)))) {:date d} [:price :ytw :ztw :duration :rating_score])))))]
-;                             (if (= choice-historical-graph "relative1")
-;                               data-pricing-clean
-;                               (update-keyseq-to-opposite data-pricing-clean [:price :ytw :ztw :duration :rating_score]))))
-;        final-start-date (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int) ;0 by default
-;
-;        data-pricing-filtered (filter #(> (js/parseInt (clojure.string/replace (:date %) "-" "")) final-start-date) final-data)
-;        lbl (if two-bonds?                      ; for legend when a-b or b-a
-;              (case choice-historical-graph
-;                "relative1" (let [r (vals (sort-by key mapping))] (str (first r) " - " (second r)))
-;                "relative2" (let [r (vals (sort-by key mapping))] (str (second r) " - " (first r)))
-;                "absolute" "nthg")
-;              (mapping (keyword (get (first data-pricing-filtered) :ISIN "nthg"))))
-;        data-to-plot (map (if
-;                            (and two-bonds? (= choice-historical-graph "absolute"))
-;                            #(assoc % :Bond (mapping (keyword (% :ISIN))))
-;                            #(assoc % :Bond lbl))
-;                          data-pricing-filtered)
-;        ]
-;    ;(println data-to-plot)
-;    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
-;     :resolve {:scale {:color "independent"}}
-;     :title   nil
-;     :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
-;     :vconcat (remove nil? [(if price? (graph "price" "Price" :price data-to-plot rectangle-dates))
-;                            (if ytw? (graph "ytw" "YTW" :ytw data-to-plot rectangle-dates))
-;                            (if ztw? (graph "ztw" "ZTW" :ztw data-to-plot rectangle-dates))
-;                            (if duration? (graph "duration" "Duration" :duration data-to-plot rectangle-dates))
-;                            (if rating? (graph "rating_score" "Rating" :rating_score data-to-plot rectangle-dates))])}))
-
-
-
-;(defn quant-isin-history-chart-prediction [show-2d? show-4d? isin1 isin2 ticker1 ticker2 nb-bond choice-historical-graph]
-;  (let [mapping (into {(keyword isin1) (str ticker1) (keyword isin2) (str ticker2)})
-;        data-pricing @(rf/subscribe [:quant-model/history-result])
-;        data-prediction @(rf/subscribe [:quant-model/history-result-prediction])
-;        data-pricing-1 (filter #(= (:ISIN %) isin1) data-pricing)
-;        data-pricing-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-pricing) nil)
-;        first-date-isin1-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-1)) :date)) "-" "")"-" ""))
-;        first-date-isin2-yyyymmdd-int (js/parseInt(.replace (.replace (str (get (first (sort-by :date data-pricing-2)) :date)) "-" "")"-" ""))
-;        start-date-yyyymmdd-int (js/parseInt (t/gdate-to-yyyymmdd @(rf/subscribe [:quant-model/history-start-date])))
-;        data-prediction-1 (filter #(= (:ISIN %) isin1) data-prediction)
-;        data-prediction-2 (if (= nb-bond 2) (filter #(= (:ISIN %) isin2) data-prediction) nil)
-;        ;----------------------------------------------------ISIN1--------------------------------------------
-;        cheapness-one-2d (map #(- (:ztw %1) (:pred2d %2)) (sort-by :date (filter #(= (:ISIN %) isin1) data-pricing-1)) (sort-by :date (filter #(= (:ISIN %) isin1) data-prediction-1)))
-;        data-cheapness-one-2d (map #(assoc %1 :cheapness2D %2) data-prediction-1 cheapness-one-2d)
-;        cheapness-one-4d (map #(- (:ztw %1) (:pred4d %2)) (sort-by :date (filter #(= (:ISIN %) isin1) data-pricing-1)) (sort-by :date (filter #(= (:ISIN %) isin1) data-prediction-1)))
-;        data-cheapness-one-4d (map #(assoc %1 :cheapness4D %2) data-prediction-1 cheapness-one-4d)
-;        ;---------------------------------------------------ISIN2--------------------------------------------
-;        cheapness-two-2d (map #(- (:ztw %1) (:pred2d %2)) (sort-by :date (filter #(= (:ISIN %) isin2) data-pricing-2)) (sort-by :date (filter #(= (:ISIN %) isin2) data-prediction-2)))
-;        data-cheapness-two-2d (map #(assoc %1 :cheapness2D %2) data-prediction-2 cheapness-two-2d)
-;        cheapness-two-4d (map #(- (:ztw %1) (:pred4d %2)) (sort-by :date (filter #(= (:ISIN %) isin2) data-pricing-2)) (sort-by :date (filter #(= (:ISIN %) isin2) data-prediction-2)))
-;        data-cheapness-two-4d (map #(assoc %1 :cheapness4D %2) data-prediction-2 cheapness-two-4d)
-;        ;---------------------------------------------------AGGREGATE 2D and 4D--------------------------------------------
-;        cheapness-one (map #(assoc %1 :cheapness4D (:cheapness4D %2)) data-cheapness-one-2d data-cheapness-one-4d)
-;        cheapness-two (map #(assoc %1 :cheapness4D (:cheapness4D %2)) data-cheapness-two-2d data-cheapness-two-4d)
-;        ;---------------------------------------------------AGGREGATE ISIN1 and ISIN2 (if one)--------------------------------------------
-;        cheapness-all (if (= nb-bond 2) (concat cheapness-one cheapness-two) cheapness-one)
-;        ;------------------------------------------------------------------------------------------------
-;        by-date (group-by :date cheapness-all)
-;        step1 (into [] (for [[d g] by-date] (let [h (sort-by :ISIN g)] {:date   d
-;                                                                        :cheapness2D (- (:cheapness2D (first h)) (:cheapness2D (second h)))
-;                                                                        :cheapness4D (- (:cheapness4D (first h)) (:cheapness4D (second h)))})))
-;        data-prediction-clean (sort-by :date step1)
-;        ;opposite (->> data-prediction-clean
-;        ;              (map #(update % :cheapness2D (fn [x] (* -1 x))))
-;        ;              (map #(update % :cheapness4D (fn [x] (* -1 x)))))
-;        data-prediction-clean-final (if (= nb-bond 2)
-;                                 (case choice-historical-graph
-;                                   "relative1" data-prediction-clean
-;                                   "relative2" (update-keyseq-to-opposite data-prediction-clean [:cheapness2D :cheapness4D]) ; opposite
-;                                   "absolute" cheapness-all)
-;                                 (filter #(= (:ISIN %) isin1) cheapness-all))
-;
-;        final-start-date (if (= nb-bond 2)
-;                           (max first-date-isin1-yyyymmdd-int first-date-isin2-yyyymmdd-int start-date-yyyymmdd-int)
-;                           (max first-date-isin1-yyyymmdd-int start-date-yyyymmdd-int))
-;
-;        data-prediction-filtered (filter #(> (int (.replace (.replace (:date %) "-" "") "-" "")) final-start-date) data-prediction-clean-final)
-;
-;        data-to-plot (if (= nb-bond 2)                      ; for legend when a-b or b-a
-;          (case choice-historical-graph
-;            "relative1" (for [e data-prediction-filtered] (assoc e :Bond (let [r (vals (sort-by key mapping))] (str (first r) " - " (second r))) ))
-;            "relative2" (for [e data-prediction-filtered] (assoc e :Bond (let [r (vals (sort-by key mapping))] (str (second r) " - " (first r))) ))
-;            "absolute" (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
-;          (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN))))))
-;        ;data-to-plot (for [e data-prediction-filtered] (assoc e :Bond (mapping (keyword (e :ISIN)))))
-;        ]
-;
-;    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
-;     :resolve {:scale {:color "independent"}}
-;     :title    nil
-;     :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :cheapness2D "quantitative" :cheapness4D "quantitative"}}}
-;     :vconcat (remove nil? [(if show-2d? (graph "cheapness2D" "2D cheapness" :cheapness2D data-to-plot))
-;                            (if show-4d? (graph "cheapness4D" "4D cheapness" :cheapness4D data-to-plot))])}
-;    ))
 
 (defn quant-isin-history-chart-map [data start-date-yyyymmdd-int which? bond-isin-names choice extras]
   (let [two-bonds? (= (count (remove (comp nil? :bond) bond-isin-names)) 2)
@@ -429,8 +289,7 @@
                                         "relative1-curves" data-curves-clean
                                         "relative2-curves" opposite
                                         "absolute-curves" data-to-plot)
-                                      data-to-plot
-                                      )
+                                      data-to-plot)
         final-start-date (if (= nb-curve 2)
                            (case serie-2
                              "curve" (max first-date-curve1-yyyymmdd-int first-date-curve2-yyyymmdd-int start-date)
@@ -456,23 +315,19 @@
                                            "relative2-curves" (for [e data-to-plot-2] (assoc e :Curve (str ticker1 " - "  model-curve-1 " " (if (not= model-curve-1 "4D") (qstables/get-implied-rating (str selection-curve-1)) selection-curve-1) " " tenor-curve-1)))
                                            "absolute-curves" data-to-plot-2)
                                   )
-                         data-to-plot-2)
-        ]
+                         data-to-plot-2)]
 
     {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
      :resolve {:scale {:color "independent"}}
-     :title    nil
-     :data    {:values data-to-plot-2 :format {:parse {:Curve "nominal" :date "date:'%Y-%m-%d'" :tenor-choice "quantitative" }}}
+     :title   nil
+     :data    {:values data-to-plot-2 :format {:parse {:Curve "nominal" :date "date:'%Y-%m-%d'" :tenor-choice "quantitative"}}}
      :vconcat [
-                              {:mark "line" :width 1000 :height 400
-                               :selection {:grid {:type "interval" :bind "scales"}}
-                               :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
-                                          :y {:field "tenor-choice" :type "quantitative" :axis {:title "Spread"}
-                                              :scale {:domain [(dec (apply min (map :tenor-choice data-to-plot-2))) (inc (apply max (map :tenor-choice data-to-plot-2)))]}
-                                              }
-                                          :color {:field "Curve" :type "nominal"  :scale {:range ["#134848" "#FDAA94"]}}}}
-                            ]}
-    ))
+               {:mark      "line" :width 1000 :height 400
+                :selection {:grid {:type "interval" :bind "scales"}}
+                :encoding  {:x     {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
+                            :y     {:field "tenor-choice" :type "quantitative" :axis {:title "Spread"}
+                                    :scale {:domain [(dec (apply min (map :tenor-choice data-to-plot-2))) (inc (apply max (map :tenor-choice data-to-plot-2)))]}}
+                            :color {:field "Curve" :type "nominal" :scale {:range ["#134848" "#FDAA94"]}}}}]}))
 
 (defn stacked-vertical-bars [data colour-universe]
   (let [groups (distinct (mapv :group data))
@@ -511,25 +366,12 @@
                                          {:field "d2" :type "quantitative", :title "2D value"}
                                          {:field "d4" :type "quantitative", :title "4D value"}]}}]
                   [{:mark     {:type "text" :dx 6 :align "left"}
-                    :encoding {:x    {:field "d2" :type "quantitative"}
-                               :y    {:field "d4" :type "quantitative"}
-                               :text {:field "txt" :type "nominal"}}}]
+                    :encoding {:x    {:field "d2" :type "quantitative"} :y {:field "d4" :type "quantitative"} :text {:field "txt" :type "nominal"}}}]
                   [{:mark "line"
-                    :encoding {:x {:field "x" :type "quantitative"}
-                               :y {:field "y" :type "quantitative"}
-                               :order {:field "r1", :type "quantitative"}
-                               :color {:value "lightgrey"}
-                               }}]
+                    :encoding {:x {:field "x" :type "quantitative"} :y {:field "y" :type "quantitative"} :order {:field "r1", :type "quantitative"} :color {:value "lightgrey"}}}]
                   [{:mark "line"
-                    :encoding {:x {:field "x2" :type "quantitative"}
-                               :y {:field "y2" :type "quantitative"}
-                               :order {:field "r1", :type "quantitative"}
-                               :color {:value "lightgrey"}
-                               }}]
-                  )
-   :width  1000
-   :height 500}
-  )
+                    :encoding {:x {:field "x2" :type "quantitative"} :y {:field "y2" :type "quantitative"} :order {:field "r1", :type "quantitative"} :color {:value "lightgrey"}}}])
+   :width  1000 :height 500})
 
 (defn median-z-spread-error-bar [data]
   {:data  {:values (filter #(>= (:Used_Large_Rating_Score %) 1) data)},
