@@ -401,6 +401,8 @@
         sector (:Sector qt-isin)
         name (:Bond qt-isin)
         coupon (:COUPON qt-isin)
+        maturity (str (subs (:MATURITY qt-isin) 6 8) "-" (subs (:MATURITY qt-isin) 4 6) "-" (subs (:MATURITY qt-isin) 0 4))
+        nxt-call-dt (str (subs (:NXT_CALL_DT qt-isin) 6 8) "-" (subs (:NXT_CALL_DT qt-isin) 4 6) "-" (subs (:NXT_CALL_DT qt-isin) 0 4))
         amt-out (:AMT_OUTSTANDING qt-isin)
         analyst-score (reduce + (map :analyst_score report-selected))
         report-category (case @report-type
@@ -409,6 +411,7 @@
              nil
              )
         ]
+    (println (sort (keys (first qt))))
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -432,6 +435,8 @@
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Ticker"] [p {:style {:width "500px" :text-align :justify}} ticker]]]
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Country"] [p {:style {:width "500px" :text-align :justify}} country]]]
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Sector"] [p {:style {:width "500px" :text-align :justify}} sector]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Maturity"] [p {:style {:width "500px" :text-align :justify}} maturity]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Mext call date"] [p {:style {:width "500px" :text-align :justify}} nxt-call-dt]]]
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Amount outstanding"] [p {:style {:width "500px" :text-align :justify} } (tools/tnfmt amt-out)]]] ;:Cell tables/nfcell2 (tools/tnfmt (:total-trade @leg))
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Coupon"] [p {:style {:width "500px" :text-align :justify}} coupon]]]
                         [gap :size "1"]]
