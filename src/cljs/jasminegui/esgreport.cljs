@@ -436,7 +436,7 @@
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Country"] [p {:style {:width "500px" :text-align :justify}} country]]]
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Sector"] [p {:style {:width "500px" :text-align :justify}} sector]]]
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Maturity"] [p {:style {:width "500px" :text-align :justify}} maturity]]]
-                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Mext call date"] [p {:style {:width "500px" :text-align :justify}} nxt-call-dt]]]
+                        [h-box :gap "10px" :align :center :children [[label :width question-width :label "Next call date"] [p {:style {:width "500px" :text-align :justify}} nxt-call-dt]]]
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Amount outstanding"] [p {:style {:width "500px" :text-align :justify} } (tools/tnfmt amt-out)]]] ;:Cell tables/nfcell2 (tools/tnfmt (:total-trade @leg))
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Coupon"] [p {:style {:width "500px" :text-align :justify}} coupon]]]
                         [gap :size "1"]]
