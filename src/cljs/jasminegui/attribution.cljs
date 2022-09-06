@@ -454,10 +454,9 @@
                                               :Total-Effect (/ (sec :Total-Effect) 100)
                                               :RatingGroup (str "'" (sec :RatingGroup))
                                               ))
-
         header-style {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}]
-    (println (sort (keys (first data))))
-    (println (second (t/chainfilter {:Region "Cash"} data-clean)))
+    ;(println (sort (keys (first data))))
+    ;(println (second (t/chainfilter {:Region "Cash"} data-clean)))
     [:div {:id "attribution-analytics-table"}
      [:> ReactTable
       {:data data-clean
