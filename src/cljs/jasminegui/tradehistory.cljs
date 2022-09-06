@@ -77,12 +77,8 @@
           portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
           res (->> data
                    (map #(select-keys % (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name :TICKER] portfolios)))
-                   (filter #(not= 0.0 (reduce + (map % portfolios)))))
-          ;data-clean1 (into []  (for [trade data] (select-keys trade (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name] portfolios))))
-          ;data-clean2 (filter #(not= 0.0 (reduce + (map % portfolios))) data-clean1)
-          ]
-      res
-      )))
+                   (filter #(not= 0.0 (reduce + (map % portfolios)))))]
+      res)))
 
 (rf/reg-event-fx
   :get-recent-trade-data
@@ -301,14 +297,9 @@
                                         (if (= @(rf/subscribe [:portfolio-trade-history/fwd-return]) "Yes")
                                           [{:Header "1Y fwd return (predicted)"
                                             :columns [{:Header "4D" :accessor "svr4d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                                      {:Header "2D" :accessor "svr2d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                                      ]
-                                            }
+                                                      {:Header "2D" :accessor "svr2d1yrtn" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}]}
                                            {:Header "Bond TR"
-                                            :columns [{:Header "YTD %" :accessor "ytd-return" :width 80 :style {:textAlign "right"} :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                                      ]
-                                            }
-                                           ])
+                                            :columns [{:Header "YTD %" :accessor "ytd-return" :width 80 :style {:textAlign "right"} :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}]}])
                                         (if (= @(rf/subscribe [:portfolio-trade-history/comments]) "Yes")
                                           [{:Header "Comments"
                                             :columns [{:Header "< 1st settle?" :accessor "NEW_ISSUE" :width 80 :style {:textAlign "center"}}
@@ -318,17 +309,12 @@
                                                       {:Header "Trader" :accessor "trader" :width 110}
                                                       {:Header "Trader Comment" :accessor "trader_comments" :width 300 :style {:whiteSpace "unset"}}
                                                       {:Header "PM" :accessor "portfolio_manager" :width 120}
-                                                      {:Header "PM Instruction" :accessor "pm_instruction" :width 150}
-                                                      ]
-                                            }
-                                           ])
+                                                      {:Header "PM Instruction" :accessor "pm_instruction" :width 150}]}])
                                         (if (= @(rf/subscribe [:portfolio-trade-history/performance]) "Yes")
                                           [{:Header "TR of the trade" :columns
-                                            (into [{:Header "Last price" :accessor "last-price" :width 70 :style {:textAlign "right"} :Cell tables/round2}
-                                                   ]
+                                            (into [{:Header "Last price" :accessor "last-price" :width 70 :style {:textAlign "right"} :Cell tables/round2}]
                                                   (for [[h a] [["Gross" "total-return"] ["CEMBI" "tr-vs-cembi"] ["CEMBIHY" "tr-vs-cembihy"] ["CEMBIIG" "tr-vs-cembiig"] ["EMBI" "tr-vs-embi"] ["EMBIIG" "tr-vs-embiig"]]]
-                                                    {:Header h :accessor a :width 70 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))}])
-                                        )
+                                                    {:Header h :accessor a :width 70 :getProps tables/red-negatives :Cell #(tables/nb-cell-format "%.2f%" 100. %)}))}]))
            :showPagination      (> (count data) 50)
            :defaultPageSize     (min 50 (count data))
            :pivotBy             []
@@ -757,7 +743,6 @@
 
 (defn modal-commentary []
   (if (:show @show-modal-commentary)
-    ;(println @(rf/subscribe show-modal-commentary [:txt]))
     [modal-panel
      :wrap-nicely? true
      :backdrop-on-click #(reset! show-modal-commentary [:show false])
@@ -766,12 +751,8 @@
       :children [[h-box :gap "20px" :align :center :width "400px"
                   :children [[v-box :gap "20px" :align :center
                               :children [[title :label "Trader Comments" :level :level2]
-                                         [label :width "350px" :label (:txt @show-modal-commentary)] ;(rf/subscribe show-modal-commentary [:txt])
-                                         ]]
-                             [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(reset! show-modal-commentary [:show false])]
-                             ]]
-                 ]]])
-  )
+                                         [label :width "350px" :label (:txt @show-modal-commentary)]]]
+                             [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(reset! show-modal-commentary [:show false])]]]]]]))
 
 (defn active-home
   "Create the body with trade-history"
