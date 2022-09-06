@@ -152,7 +152,7 @@
 (def tf-category-choices [{:id "transitioned" :label "Transitioned"} {:id "transitioning" :label "Transitioning"} {:id "committed"  :label "Committed to transition"} {:id "enabler"  :label "Transition enabler"}
                           {:id "interim"  :label "Interim to phase out"} {:id "aiming"  :label "Aiming to transition"}])
 
-(def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
+(def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "reduce2"  :label "Carbon reduced (intensity)"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
 
 (def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
                                     :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
@@ -716,7 +716,7 @@
                                          :model (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer])
                                          :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer]) %)
                                                          (tf-score-calculator))]]]])
-                        "reduce" (concat
+                        (or "reduce" "reduce2") (concat
                                    [[v-box  :gap "5px" :children
                                      [[h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"]
@@ -738,7 +738,7 @@
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                       [h-box :gap "10px" :align :center
-                                       :children [[label :width question-width :label "Base year emissions:"]
+                                       :children [[label :width question-width :label "Base year emissions/intensity:"]
                                                   [input-text :width categories-list-width-long
                                                    :validation-regex #"^[0-9]*$"
                                                    :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
@@ -757,7 +757,7 @@
                                                    :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
                                     [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Most recent emissions:"]
+                                     :children [[label :width question-width :label "Most recent emissions/intensity:"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
@@ -813,7 +813,7 @@
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Base year emissions:"]
+                                     :children [[label :width question-width :label "Base year emissions/intensity:"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
@@ -832,7 +832,7 @@
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
                                     [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Most recent emissions:"]
+                                     :children [[label :width question-width :label "Most recent emissions/intensity:"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
