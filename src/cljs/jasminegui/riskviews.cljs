@@ -817,7 +817,10 @@
                                             "20210630"
                                             "20210730"
                                             "20210831"
-                                            "20210930"]
+                                            "20210930"
+                                            "20211030"
+                                            "20211130"
+                                            ]
                                            @(rf/subscribe [:list-dates-position-history])))
 
 (def typeahead-bond-nickname (r/atom nil))
