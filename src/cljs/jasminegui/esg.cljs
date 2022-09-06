@@ -178,20 +178,28 @@
 (def msci-cols (concat [:Ticker :Country :Sector :Equity :ISIN :ID_ISIN :NAME] (map #(keyword (str "msci-" %)) server-msci-metrics)))
 
 (defn msci-table []
+  (when (zero? (count @(rf/subscribe [:esg/carbon-jasmine]))) (rf/dispatch [:get-esg-carbon-jasmine]))
   (let [data (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
+
+        data-jasmine (first @(rf/subscribe [:esg/carbon-jasmine]))
+        data2-jasmine (group-by :ticker data-jasmine)
+        data3-jasmine (for [t data2-jasmine]  (first (val t)))
+        data4-jasmine  (map #(clojure.set/rename-keys % {:ticker :Ticker} ) data3-jasmine)                               ; rename key for outer join
+        join-data (map #(apply merge %) (vals (group-by :Ticker (concat data data4-jasmine))))
         header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
+    ;(println (sort (keys (first join-data))))
     [v-box :gap "20px" :class "element" :width standard-box-width
      :children [
-                [h-box :align :center :children [[title :label "MSCI scores for quant universe" :level :level1]
+                [h-box :align :center :children [[title :label "MSCI/Jasmine scores for quant universe" :level :level1] ;"MSCI scores for quant universe"
                                                  [gap :size "1"]
                                                  [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (sort-by :Ticker data) "msci"  msci-cols "\t")]]]
                 [:> ReactTable
-                 {:data                data
+                 {:data                join-data
                   :columns             [
                                         {:Header  "Description" :headerStyle header-style
-                                         :columns [{:Header "Ticker" :accessor "Ticker" :width 80} {:Header "Country" :accessor "Country" :width 55} {:Header "Sector" :accessor "Sector" :width 80}]}
+                                         :columns [{:Header "Ticker" :accessor "Ticker" :width 80} {:Header "Country" :accessor "country" :width 55} {:Header "Sector" :accessor "sector" :width 80}]}
                                         {:Header  "Symbology" :headerStyle header-style
-                                         :columns [{:Header "Bond ISIN" :accessor "ISIN" :width 100} {:Header "Equity" :accessor "Equity" :width 80} {:Header "Equity ISIN" :accessor "ID_ISIN" :width 100} {:Header "Name" :accessor "NAME" :width 180}]}
+                                         :columns [{:Header "Bond ISIN" :accessor "isin" :width 100} {:Header "Equity" :accessor "Equity" :width 80} {:Header "Equity ISIN" :accessor "ID_ISIN" :width 100} {:Header "Name" :accessor "NAME" :width 180}]}
                                         {:Header  "MSCI scoring" :headerStyle header-style
                                          :columns [{:Header "Rating" :accessor "msci-IVA_COMPANY_RATING" :width 50 :style {:textAlign "center"}}
                                                    {:Header "E" :accessor "msci-ENVIRONMENTAL_PILLAR_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 35 :filterMethod tables/nb-filter-OR-AND}
@@ -219,7 +227,41 @@
                                                    {:Header "1+2 key" :accessor "msci-CARBON_EMISSIONS_SCOPE_12_KEY_FY19" :width 150 :filterMethod tables/nb-filter-OR-AND}
                                                    {:Header "Scope 3" :accessor "msci-CARBON_EMISSIONS_SCOPE_3_FY19" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                    ]}
-                                        ]
+                                        {:Header "Description" :columns [{:Header "Isin" :accessor "isin" :width 100 }
+                                                                          {:Header "BO id" :accessor "sec_id" :width 100}
+                                                                          {:Header "Ticker" :accessor "ticker" :width 80}
+                                                                          {:Header "Bond" :accessor "bond" :width 100}
+                                                                          {:Header "Sector" :accessor "sector" :width 100}
+                                                                          {:Header "Country" :accessor "country" :width 70}]}
+                                         {:Header "Fundamentals USD" :columns [{:Header "EV (mils)" :accessor "amt_ev_usd" :Cell tables/round0 :style {:textAlign "right"} :width 80}
+                                                                               {:Header "Date evic" :accessor "dt_asofdate_evic" :width 100}
+                                                                               {:Header "Mkt cap (mils)" :accessor "amt_marketcap_usd" :Cell tables/round0 :style {:textAlign "right"} :width 90}
+                                                                               {:Header "Revenues (mils)" :accessor "amt_revenue_usd" :Cell tables/round0 :style {:textAlign "right"} :width 100}
+                                                                               {:Header "Date revenues" :accessor "dt_asofdate_revenue" :width 90}]}
+                                         {:Header "Scope 1" :columns [{:Header "Year" :accessor "cat_scope_1_year" :width 80 :style {:textAlign "center"}}
+                                                                      {:Header "Method" :accessor "cat_scope_1_method" :width 150}
+                                                                      {:Header "Source" :accessor "cat_scope_1_src" :width 80}
+                                                                      {:Header "Emissions" :accessor "amt_carbon_emissions_1" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                         {:Header "Scope 2" :columns [{:Header "Year"   :accessor "cat_scope_2_year" :width 80 :style {:textAlign "center"}}
+                                                                      {:Header "Method" :accessor "cat_scope_2_method" :width 150}
+                                                                      {:Header "Source" :accessor "cat_scope_2_src" :width 80}
+                                                                      {:Header "Emissions" :accessor "amt_carbon_emissions_2" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                         {:Header "Scope 1-2" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope12" :width 90 :style {:textAlign "center"}}
+                                                                        {:Header "Intensity" :accessor "amt_carbon_intensity_1_2" :width 80 :Cell tables/round0}
+                                                                        {:Header "Revenues (mils)" :accessor "amt_revenue_scope12" :Cell tables/round0 :width 100}
+                                                                        {:Header "Emissions" :accessor "amt_carbon_emissions_1_2" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                         {:Header "Scope 3 up" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope3_up" :width 90 :style {:textAlign "center"}}
+                                                                         {:Header "Revenues (mils)" :accessor "amt_revenue_scope3_up" :Cell tables/round0 :width 100}
+                                                                         {:Header "Method" :accessor "cat_scope_3_up_method" :width 150}
+                                                                         {:Header "Source" :accessor "cat_scope_3_down_src" :width 80}
+                                                                         {:Header "Emissions" :accessor "amt_carbon_emissions_3_up" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                         {:Header "Scope 3 down" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope3_down" :width 90 :style {:textAlign "center"}}
+                                                                           {:Header "Revenues (mils)" :accessor "amt_revenue_scope3_down" :Cell tables/round0 :width 100}
+                                                                           {:Header "Method" :accessor "cat_scope_3_down_method" :width 150}
+                                                                           {:Header "Source" :accessor "cat_scope_3_down_src" :width 80}
+                                                                           {:Header "Emissions" :accessor "amt_carbon_emissions_3_down" :Cell tables/round0 :style {:textAlign "right"} :width 80}]}
+                                         ]
+
                   :pageSize            20
                   :showPagination      true
                   :defaultSorted       [{:id :Ticker :desc false}]
@@ -277,7 +319,7 @@
         data2 (group-by :ticker data)
         data3 (for [t data2]  (first (val t)))
         ]
-    ;(println data3)
+    ;(println (count data3))
   [v-box :gap "20px" :class "element" :width standard-box-width
    :children [
               [h-box :align :center :children [[title :label "Carbon data (Jasmine)" :level :level1]
