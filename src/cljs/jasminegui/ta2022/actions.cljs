@@ -228,11 +228,8 @@
         ]
     (fn []
       [v-box :width "850px" :height "750px" :gap "10px" :padding "20px"
-       :children [
-
-                  [h-box :align :center :children [(if morph? [title :label (if last-leg-uuid "Morph trade" "New trade") :level :level1] [title :label "Amend latest trade" :level :level1]) [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
+       :children [[h-box :align :center :children [(if morph? [title :label (if last-leg-uuid "Morph trade" "New trade") :level :level1] [title :label "Amend latest trade" :level :level1]) [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
                   [gap :size "20px"]
-
                   (if (and morph? last-leg-uuid) [label :label "Exit rationale"])
                   (if (and morph? last-leg-uuid) [input-textarea :model exit-rationale :status (if (zero? (count @exit-rationale)) :error) :on-change #(reset! exit-rationale %) :width "600px" :rows 5])
                   [h-box :align :center :children [[label :width "125px" :label "New analyst"]
@@ -256,8 +253,7 @@
                                                   )
 
                                                 [button :class btc :label "Cancel" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/close-modal]))]]]
-                  ]]))
-  )
+                  ]])))
 
 (defn morph-trade-modal [] (morph-or-amend-trade-modal true))
 

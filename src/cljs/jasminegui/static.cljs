@@ -58,9 +58,11 @@
    {:code :single-portfolio    :name "Single portfolio"}
    {:code :all-portfolios      :name "Multiple portfolios"}
    {:code :history             :name "History"}
-   {:code :analytics             :name "Analytics"}
+   {:code :analytics           :name "Analytics"}
    {:code :index-returns       :name "Index returns"}
-   {:code :top-bottom-pr       :name "Top/bottom universe"}])
+   {:code :top-bottom-pr       :name "Top/bottom universe"}
+   {:code :strategies          :name "Strategies"}
+   ])
 
 (def var-navigation
   [{:code :overview            :name "Overview"}
