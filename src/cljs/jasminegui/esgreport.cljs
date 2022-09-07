@@ -619,7 +619,8 @@
                              :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %)
                                              (tf-eligible)
                                              (tf-score-calculator)
-                                             (if (= % "No") (do (clean-report!)))
+                                             (if (= % "No") (do (clean-report!)
+                                                              (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %)))
                                              )]]]
 
                 (if (= (get-in @tf-calculator-summary [:eligibility/net-zero :analyst_answer]) "Yes") ;first level eligibility
@@ -758,7 +759,7 @@
                                                                    (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Emission scopes included:"]
-                                                [input-textarea :width categories-list-width-long :rows 5
+                                                [input-textarea :width categories-list-width-long :rows 2
                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
                                       [h-box :gap "10px" :align :center
