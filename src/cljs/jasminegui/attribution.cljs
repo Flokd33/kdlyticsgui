@@ -532,7 +532,7 @@
                                                      {:Header "Period" :accessor "period" :width 75 :style {:textAlign "right"}}
                                                      ]
                                                     (for [y (range 2016 2023)]
-                                                      (tables/nb-col y (str "y" y) 75 #(tables/nb-cell-format "%.1f" 100 %))))
+                                                      (tables/nb-col y (str "y" y) 75 #(tables/nb-cell-format "%.1f%" 100 %))))
                               :showPagination true :sortable false :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"}]
 
                             ])])
