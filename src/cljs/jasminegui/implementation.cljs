@@ -12,6 +12,7 @@
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [goog.string :as gstring]
     [goog.string.format]
+    [clojure.string :as cstr]
     [jasminegui.tables :as tables]
     [cljs-time.core    :refer [today days minus plus day-of-week before?]]
     )
@@ -343,21 +344,10 @@
 (defn fill-static [db leg-number qmd]
   (if (and (zero? leg-number) (some? qmd))
     (-> db
-        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/analyst] (case (:Sector qmd)
-                                                                                  "Sovereign" "Thys"
-                                                                                  "TMT" "Rahul"
-                                                                                  "Utilities" "Rahul"
-                                                                                  "Metals & Mining" "Rahul"
-                                                                                  "Oil & Gas" "Kevan"
-                                                                                  "Financial" "Stacy"
-                                                                                  "Real Estate" "Alan"
-                                                                                  "Industrial" "Antonio"
-                                                                                  "Pulp & Paper" "Rahul"
-                                                                                  "Consumer" "Antonio"
-                                                                                  "Infrastructure" "Antonio"
-                                                                                  "Diversified" "Rahul"
-                                                                                  "Transport" "Antonio"
-                                                                                  ""))
+        (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/analyst]
+                  (if-let [x (:Analyst (first (tools/filterkey= :Ticker (:Ticker qmd) (db :quant-model/analyst-coverage))))]
+                    (first (cstr/split x #" "))
+                    (if (= (:Sector qmd) "Sovereign") "Thys" "")))
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/sector] (:Sector qmd))
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/country] (:Country qmd))
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/IGHY] (if (<= (:Used_Rating_Score qmd) 10) "IG" "HY")))
@@ -469,7 +459,7 @@
         leg (r/cursor trade-implementation [:tradeanalyser.implementation/trade-legs leg-number])
         portfolios @(rf/subscribe [:portfolios])
         dw "100px"]
-    (println leg)
+    ;(println leg)
 
     [v-box  :gap "0px" :padding "10px" :width "450px" :align :start :style {:border "solid 1px grey"}
      :children
