@@ -180,13 +180,7 @@
 (defn msci-table []
   (when (zero? (count @(rf/subscribe [:esg/carbon-jasmine]))) (rf/dispatch [:get-esg-carbon-jasmine]))
   (let [data-msci (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
-        ;data-jasmine (first @(rf/subscribe [:esg/carbon-jasmine]))
-        ;data2-jasmine (group-by :ticker data-jasmine)
-        ;data3-jasmine (for [t data2-jasmine] (first (val t)))
-        ;data4-jasmine  (map #(clojure.set/rename-keys % {:ticker :Ticker} ) data3-jasmine)                               ; rename key for outer join
-        ;join-data (map #(apply merge %) (vals (group-by :Ticker (concat data-msci data4-jasmine))))
         header-style {:overflow nil :white-space "pre-line" :word-wrap "break-word"}]
-    ;(println (sort (keys (first join-data))))
     [v-box :gap "20px" :class "element" :width standard-box-width
      :children [
                 [h-box :align :center :children [[title :label "MSCI scores for quant universe" :level :level1] ;"MSCI scores for quant universe"
@@ -321,13 +315,28 @@
         data4-jasmine  (map #(clojure.set/rename-keys % {:ticker :Ticker} ) data3-jasmine)                               ; rename key for outer join
         tickers-jasmine (distinct (map :Ticker data4-jasmine))
         tickers-msci (distinct (map :Ticker data-msci))
-        diff (clojure.set/difference (set tickers-msci) (set tickers-jasmine)) ; tickers in msci but not in jasmine
-        data-msci-filtered nil
+        tickers-missing (seq (clojure.set/difference (set tickers-msci) (set tickers-jasmine))) ; tickers in msci but not in jasmine => adding off BM names excluded in Jamsine scope
+        data-msci-filtered  (t/chainfilter {:Ticker  #(some #{%} tickers-missing)} data-msci)
+        data-msci-filtered-clean nil                        ;rename keys ?
+
+
+
+        ;:msci-CARBON_EMISSIONS_SOURCE
+        ;:msci-CARBON_EMISSIONS_YEAR
+        ;:msci-CARBON_EMISSIONS_SCOPE_1
+        ;:msci-CARBON_EMISSIONS_SCOPE_2
+        ;
+        ;:msci-CARBON_EMISSIONS_SCOPE_12
+        ;:msci-CARBON_EMISSIONS_SCOPE_12_KEY
+        ;
+        ;:msci-CARBON_EMISSIONS_SCOPE_3
+
+
         join-data (map #(apply merge %) (vals (group-by :Ticker (concat data-msci-filtered data4-jasmine))))
         ]
-    (println (count tickers-jasmine))
-    (println (count tickers-msci))
-    (println (count diff))
+    (println (sort (keys (first data-msci-filtered))))
+    (println (first data-msci-filtered))
+    ;(println (count join-data))
   [v-box :gap "20px" :class "element" :width standard-box-width
    :children [
               [h-box :align :center :children [[title :label "Carbon data (Jasmine)" :level :level1]
