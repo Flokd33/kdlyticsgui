@@ -142,7 +142,7 @@
    {:id "initial"  :label "Initial"}
    {:id "both"  :label "Both"}])
 
-(def categories-if-yes [{:id "commited" :label "Committed"} {:id "verified" :label "Verified"}])
+(def categories-if-yes [{:id "committed" :label "Committed"} {:id "verified" :label "Verified"}])
 
 (def tf-sectors-choices [{:id "energy" :label "Energy"} {:id "transport"  :label "Transport"} {:id "industry"  :label "Industry"}
                          {:id "buildings"  :label "Buildings"} {:id "agriculture_forestry"  :label "Agriculture/Forestry"}])
