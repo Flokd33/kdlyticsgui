@@ -356,10 +356,12 @@
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
         download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
     [box :class "subbody rightelement" :child
-     (gt/element-box-generic "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
-                             {:target-id "single-portfolio-risk-table" :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @(rf/subscribe [:single-portfolio-risk/portfolio]) download-columns is-tree)
-                              :shortcuts :single-portfolio-risk/shortcut}
-                             [[h-box :gap "10px" :align :center
+     (gt/element-box-generic-new "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
+                                 {:target-id       "single-portfolio-risk-table"
+                                  :on-click-action #(tools/react-table-to-csv @single-portfolio-risk-display-view @(rf/subscribe [:single-portfolio-risk/portfolio]) download-columns is-tree)
+                                  :download-table-fn  #(clojure.set/join (js->clj @(rf/subscribe [:single-portfolio-risk/table])) @(rf/subscribe [:quant-model/model-output]) {"isin" :ISIN})
+                                  :shortcuts       :single-portfolio-risk/shortcut}
+                                 [[h-box :gap "10px" :align :center
                                :children [[title :label "Display:" :level :level3]
                                           (gt/tree-table-selector "single-portfolio-risk")
                                           [gap :size "30px"]

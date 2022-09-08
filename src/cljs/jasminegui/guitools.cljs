@@ -9,7 +9,10 @@
     [jasminegui.static :as static]))
 
 (defn element-box-generic
-  "opts will have either :download-table or :on-click-action, and can have target-id"
+  "opts will have either :download-table or :on-click-action, and can have target-id
+  "
+  ;TODO DIV ID MAY OR MAY NOT BE THERE
+  ;NEED ABILITY TO ADD EXTRA TABLE DOWNLOAD (FULL OR VIEW)
   [id width title-str opts children]
   [:div {:id id}
    [v-box :class "element" :align-self :center :justify :center :gap "20px" :width width
@@ -23,6 +26,25 @@
                                             [[md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab (if-let [tid (:target-id opts)] tid id))]
                                              [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image (if-let [tid (:target-id opts)] tid id))]
                                              [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click (if-let [ocl (:on-click-action opts)] ocl #(t/csv-link (:download-table opts) (str id "-" (t/gdate->yyyyMMdd (cljs-time.core/today)))))]]))]]
+                      children)]])
+
+(defn element-box-generic-new
+  "opts will have either :download-table-fn or :on-click-action, and can have target-id
+  it can also have :cols and :shortcuts and :no-icons"
+  [id width title-str opts children]
+  [:div {:id id}
+   [v-box :class "element" :align-self :center :justify :center :gap "20px" :width width
+    :children (concat [[h-box :gap "10px" :align :center
+                        :children (concat [[title :label title-str :level :level1]
+                                           [gap :size "1"]]
+                                          (if (:shortcuts opts)
+                                            (mapv (fn [i] [md-circle-icon-button :md-icon-name (str "zmdi-collection-item-" i) :tooltip (str "Saved view " i) :tooltip-position :above-center :class (if (= @(rf/subscribe [(:shortcuts opts)]) i) "active" "default") :on-click #(rf/dispatch [(:shortcuts opts) i])])
+                                                  (range 1 5)))
+                                          (if-not (:no-icons opts)
+                                            [[md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab (if-let [tid (:target-id opts)] tid id))]
+                                             [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image (if-let [tid (:target-id opts)] tid id))]
+                                             (if-let [ocl (:on-click-action opts)] [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click ocl])
+                                             (if-let [x (:download-table-fn opts)] [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click (if-let [c (:cols opts)] #(t/csv-link (x) (str id "-" (t/gdate->yyyyMMdd (cljs-time.core/today))) c) #(t/csv-link (x) (str id "-" (t/gdate->yyyyMMdd (cljs-time.core/today)))))])]))]]
                       children)]])
 
 (defn element-box
