@@ -98,7 +98,7 @@
                  ;position-history
                  :portfolio-history/portfolio                         "OGEMCORD"
                  :portfolio-history/start-period                      "20211231"
-                 :portfolio-history/end-period                        "20220729"
+                 :portfolio-history/end-period                        "20220831"
                  :portfolio-history/filter                            {1 :region 2 :country 3 :issuer}
                  :portfolio-history/hide-zero-holdings                true
                  :portfolio-history/table-filter                      []
@@ -299,6 +299,7 @@
                  :talanx-checks                                      {}
 
                  :analysts                                           nil
+                 :analysts-emcd                                      nil
 
                  :master-security-fields-list                        nil
 
@@ -551,6 +552,7 @@
            :talanx-checks
 
            :analysts
+           :analysts-emcd
 
            :master-security-fields-list
            :quant-model/master-security-current-field-db
@@ -921,6 +923,7 @@
    {:get-key :get-country-codes           :namespace "common.static" :asset "country-codes"           :dispatch-key [:country-codes]}
    {:get-key :get-jpm-sectors             :namespace "common.static" :asset "jpm-sectors"             :dispatch-key [:jpm-sectors]}
    {:get-key :get-analysts                :namespace "common.static" :asset "analysts"                :dispatch-key [:analysts]}
+   {:get-key :get-analysts-emcd           :namespace "common.static" :asset "analysts-emcd"           :dispatch-key [:analysts-emcd]}
    {:get-key :get-master-security-fields  :namespace "common.static" :asset "master-security-fields"  :dispatch-key [:master-security-fields-list]}
    {:get-key :get-rating-to-score         :namespace "common.static" :asset "rating-to-score-rating"  :dispatch-key [:rating-to-score]}
    {:get-key :fx-request                  :namespace "common.static" :asset "fx"                      :dispatch-key [:implementation/fx]}

@@ -908,7 +908,7 @@
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
         qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7)))
         qt-date-yyyymmdd-2w (t/gdate->yyyyMMdd (plus qt-date (days -15)))
-        date-map (distinct (into [] (for [k (conj (position-historical-dates) qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
+        date-map (distinct (into [] (for [k (sort (conj (position-historical-dates) qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd))] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
         start-period (rf/subscribe [:portfolio-history/start-period])
         end-period (rf/subscribe [:portfolio-history/end-period])
         breakdown-map (into [] (for [k ["Start/End" "All"]] {:id k :label k}))
@@ -927,7 +927,7 @@
            (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str "dt" %) all-dates))
            (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str "deltadt" %) all-dates) ["tdelta"]))
         get-history-dates (fn [bd start end]
-                            (let [all-dates (distinct (conj (position-historical-dates) qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd))]
+                            (let [all-dates (sort (distinct (conj (position-historical-dates) qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd)))]
                               (if (= bd "Start/End")
                                 [start end]
                                 (let [a (.indexOf all-dates start)

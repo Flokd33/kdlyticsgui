@@ -48,7 +48,7 @@
 (def year-disabled? (r/atom true))
 (def sbti-disabled? (r/atom true))
 
-(def esg-report-selected (r/atom "GB_AYDEMT_2022-09-02"))
+(def esg-report-selected (r/atom "GB_AYDEMT27_2022-09-02"))
 (def gb-isin (r/atom "XS2368781477"))
 (def gb-date (r/atom "2022-09-02"))
 (def report-type (r/atom "green-bond"))
@@ -106,9 +106,7 @@
     )
   )
 
-(def analyst-names-list
-  [{:id "vharling" :label "Vic"} {:id "tlloyd" :label "Tammy"} {:id "sxie" :label "Stacy"} {:id "aalmosni" :label "Alex"} {:id "rbhat" :label "Rahul"} {:id "dnaumenko" :label "Daria"}
-   {:id "asiow" :label "Alan"} {:id "aluizgomes" :label "Antonio"} {:id "cliang" :label "Chris"} {:id "achan" :label "Adrian"} {:id "ksalisbury" :label  "Kevan"}])
+(def analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)}))
 
 (def project-sub-categories
   [{:id "climate" :label "Climate change adaptation (including efforts to make infrastructure more resilient to impacts of climate change, as well as information support systems, such as climate observation and early warning systems)", :group "Climate change adaptation"}
@@ -144,7 +142,7 @@
    {:id "initial"  :label "Initial"}
    {:id "both"  :label "Both"}])
 
-(def categories-if-yes [{:id "commited" :label "Commited"} {:id "verified" :label "Verified"}])
+(def categories-if-yes [{:id "committed" :label "Committed"} {:id "verified" :label "Verified"}])
 
 (def tf-sectors-choices [{:id "energy" :label "Energy"} {:id "transport"  :label "Transport"} {:id "industry"  :label "Industry"}
                          {:id "buildings"  :label "Buildings"} {:id "agriculture_forestry"  :label "Agriculture/Forestry"}])
@@ -227,7 +225,6 @@
     (rf/dispatch [:post-esg-report-upload summary])
     ))
 
-
 (defn green-bond-scoring-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
   [v-box :width "1280px" :gap "5px" :class "element"
@@ -242,6 +239,11 @@
                           [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name
                            :on-change #(reset! analyst-name %)]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (js/parseInt (str (* @gb-score-new-issue (/ 100 70)))) ]]]
+              [title :label "Summary" :level :level2]
+              [h-box :gap "10px" :align :center
+               :children [[box :width question-width :child [title :label "Analyst summary/notes"]]
+                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/text :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/text :analyst_answer]) %))]]]
               [title :label "Project Evaluation" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Category:"]
@@ -260,7 +262,9 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %) (gb-score-calculator))]]]
+                           :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) "") )
+                                            (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %)
+                                           (gb-score-calculator))]]]
               (case (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                             "No" nil
                              [h-box :gap "10px" :align :center
@@ -338,10 +342,7 @@
                :children [[label :width question-width :label "Reference sources:"]
                           [input-textarea  :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[box :width question-width :child [title :label "Analyst summary/notes"]]
-                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/text :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/text :analyst_answer]) %))]]]
+
               [gap :size "10px"]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
@@ -388,22 +389,21 @@
     ))
 
 (defn reporting-display []
-  ;(rf/dispatch [:post-esg-report-extract @gb-isin @gb-date])
   (let [esg-reports @(rf/subscribe [:esg-report-list])
         qt @(rf/subscribe [:quant-model/model-output])
-        esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Ticker (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
+        esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
         esg-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id esg-reports-clean))))
         report-selected @(rf/subscribe [:esg-report-extract])
         isin ((first report-selected) :security_identifier)
         qt-isin (first (t/chainfilter {:ISIN isin} qt))
         ticker (:Ticker qt-isin)
-        country (:LongName (first (t/chainfilter {:CountryCode (:Country qt-isin)} @(rf/subscribe [:country-codes]))))
-        sector (:Sector qt-isin)
-        name (:Bond qt-isin)
-        coupon (:COUPON qt-isin)
-        maturity (str (subs (:MATURITY qt-isin) 6 8) "-" (subs (:MATURITY qt-isin) 4 6) "-" (subs (:MATURITY qt-isin) 0 4))
+        country (if (nil? (:Country qt-isin)) "NA" (:LongName (first (t/chainfilter {:CountryCode (:Country qt-isin)} @(rf/subscribe [:country-codes])))))
+        sector (if (nil? (:Sector qt-isin)) "NA" (:Sector qt-isin))
+        name (if (nil? (:Bond qt-isin)) "NA" (:Bond qt-isin))
+        coupon (if (nil? (:COUPON qt-isin)) "NA" (:COUPON qt-isin))
+        maturity (if (nil? (:MATURITY qt-isin)) "NA" (str (subs (:MATURITY qt-isin) 6 8) "-" (subs (:MATURITY qt-isin) 4 6) "-" (subs (:MATURITY qt-isin) 0 4)))
         nxt-call-dt (if (nil? (:NXT_CALL_DT qt-isin)) "NA" (str (subs (:NXT_CALL_DT qt-isin) 6 8) "-" (subs (:NXT_CALL_DT qt-isin) 4 6) "-" (subs (:NXT_CALL_DT qt-isin) 0 4)))
-        amt-out (:AMT_OUTSTANDING qt-isin)
+        amt-out (if (nil? (:AMT_OUTSTANDING qt-isin)) "NA" (:AMT_OUTSTANDING qt-isin))
         analyst-score (reduce + (map :analyst_score report-selected))
         report-category (case @report-type
              "transition-fund" "Transition Finance Report"
@@ -411,7 +411,6 @@
              nil
              )
         ]
-    ;(println (:NXT_CALL_DT qt-isin))
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -459,8 +458,8 @@
                           [title :label "Use and Management of Proceeds" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Refinancing of an existing project or initial financing?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "use"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are all the proceeds used for financing/refinancing green projects?"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "refi-or-exi"} report-selected)))} existing-choices))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds ringfenced?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "ringfencing"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds tracked?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds ringfenced?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "ringfencing"} report-selected))))]]]
                           [title :label "Reporting" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is there regular reporting on the impact stemming from the green projects?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "reporting"} report-selected))))]]]
                           [title :label "Country Framework" :level :level2]
@@ -500,17 +499,60 @@
                           [gap :size "1"]
                           [title :label "Additional questions" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduced activities:"] [p (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "activities"} report-selected)))} tf-reduced-activities-choices))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "What is the annual carbon avoided figure?"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "What is the annual carbon avoided figure?"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected)))
+                                                                                                                                                                  "" ""
+                                                                                                                                                                  nil ""
+                                                                                                                                                                  (if (= (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected)))) "0")
+                                                                                                                                                                    0
+                                                                                                                                                                    (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected)))))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "paris"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Comment on target:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-comment"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Target base year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-year"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Emission scopes included:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "scope-comment"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Base year emissions:"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Target base year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-year"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Base year emissions:"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected)))
+                                                                                                                                             "" ""
+                                                                                                                                             nil ""
+                                                                                                                                             (if (= (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected)))) "0")
+                                                                                                                                               0
+                                                                                                                                               (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected)))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Base year emissions intensity (if applicable):"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "emissions-year-intensity"} report-selected)))
+                                                                                                                                                                       "" ""
+                                                                                                                                                                       nil ""
+                                                                                                                                                                       (if (= (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "emissions-year-intensity"} report-selected)))) "0")
+                                                                                                                                                                         0
+                                                                                                                                                                         (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "emissions-year-intensity"} report-selected)))))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Most recent emissions year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions-year"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Most recent emissions:"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions"} report-selected))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Most recent emissions:"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions"} report-selected)))
+                                                                                                                                               "" ""
+                                                                                                                                               nil ""
+                                                                                                                                               (if (= (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions"} report-selected)))) "0")
+                                                                                                                                                 0
+                                                                                                                                                 (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions"} report-selected)))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Most recent emissions intensity (if applicable):"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions-intensity"} report-selected)))
+                                                                                                                                                                         "" ""
+                                                                                                                                                                         nil ""
+                                                                                                                                                                         (if (= (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions-intensity"} report-selected)))) "0")
+                                                                                                                                                                           0
+                                                                                                                                                                           (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "recent-emissions-intensity"} report-selected)))))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduction target year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "reduction-target-year"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduction target:"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected))))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Total absolute emissions reduction:"] [p (str (if (= (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected)))) "0") "" (tools/tnfmt (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduction target:"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected)))
+                                                                                                                                          "" ""
+                                                                                                                                          nil ""
+                                                                                                                                          (if (= (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected)))) "0")
+                                                                                                                                            0
+                                                                                                                                            (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "reduction-target"} report-selected)))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Reduction target intensity (if applicable):"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "reduction-target-intensity"} report-selected)))
+                                                                                                                                                                    "" ""
+                                                                                                                                                                    nil ""
+                                                                                                                                                                    (if (= (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "reduction-target-intensity"} report-selected)))) "0")
+                                                                                                                                                                    0
+                                                                                                                                                                    (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "reduction-target-intensity"} report-selected)))))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Total absolute emissions reduction (2030):"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected)))
+                                                                                                                                                                   "" ""
+                                                                                                                                                                   nil ""
+                                                                                                                                                                   (if (= (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected)))) "0")
+                                                                                                                                                                     0
+                                                                                                                                                                     (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected)))))))]]]
                           ]
                          nil
                          ))]
@@ -520,9 +562,9 @@
 
 (def tf-total-score (r/atom 0))
 (def tf-analyst-name (r/atom ""))
+
 (def tf-identifier (r/atom ""))
 (def is-tf-eligible (r/atom "No"))
-
 (def tf-calculator-summary (r/atom {:eligibility/net-zero            {:question_id 50 :analyst_answer "" :analyst_score 0},
                                     :eligibility/sectors             {:question_id 66 :analyst_answer "" :analyst_score 0},
                                     :eligibility/sectors-choice      {:question_id 67 :analyst_answer "" :analyst_score 0},
@@ -759,7 +801,7 @@
                                                                    (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Emission scopes included:"]
-                                                [input-textarea :width categories-list-width-long :rows 2
+                                                [input-textarea :width categories-list-width-long :rows 1
                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
                                       [h-box :gap "10px" :align :center
@@ -803,7 +845,7 @@
                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %)
                                                                    (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Total absolute emissions reduction:"]
+                                     :children [[label :width question-width :label "Total absolute emissions reduction (2030):"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
@@ -854,7 +896,7 @@
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Emission scopes included:"]
-                                                [input-textarea :width categories-list-width-long :rows 5
+                                                [input-textarea :width categories-list-width-long :rows 1
                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
 
@@ -865,18 +907,18 @@
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
                                     [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Most recent emissions intensity (if applicable):"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Most recent emissions:"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %)
+                                                                 (tf-score-calculator))]]]
+                                    [h-box :gap "10px" :align :center
+                                     :children [[label :width question-width :label "Most recent intensity (if applicable):"]
+                                                [input-text :width categories-list-width-long
+                                                 :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                                                 :model (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Reduction target year:"]
@@ -899,7 +941,7 @@
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %)
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Total absolute emissions reduction:"]
+                                     :children [[label :width question-width :label "Total absolute emissions reduction (2030):"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
