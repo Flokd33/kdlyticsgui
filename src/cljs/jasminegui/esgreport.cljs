@@ -799,7 +799,7 @@
                                                                    (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Emission scopes included:"]
-                                                [input-textarea :width categories-list-width-long :rows 2
+                                                [input-textarea :width categories-list-width-long :rows 1
                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
                                       [h-box :gap "10px" :align :center
@@ -894,7 +894,7 @@
                                                                  (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Emission scopes included:"]
-                                                [input-textarea :width categories-list-width-long :rows 5
+                                                [input-textarea :width categories-list-width-long :rows 1
                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
 
