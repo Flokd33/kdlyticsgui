@@ -106,9 +106,7 @@
     )
   )
 
-(def analyst-names-list
-  [{:id "vharling" :label "Vic"} {:id "tmapplebeck" :label "Tessa"} {:id "sxie" :label "Stacy"} {:id "aalmosni" :label "Alex"} {:id "rbhat" :label "Rahul"} {:id "dnaumenko" :label "Daria"}
-   {:id "asiow" :label "Alan"} {:id "aluizgomes" :label "Antonio"} {:id "cliang" :label "Chris"} {:id "achan" :label "Adrian"} {:id "ksalisbury" :label  "Kevan"}])
+(def analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)}))
 
 (def project-sub-categories
   [{:id "climate" :label "Climate change adaptation (including efforts to make infrastructure more resilient to impacts of climate change, as well as information support systems, such as climate observation and early warning systems)", :group "Climate change adaptation"}
@@ -226,7 +224,6 @@
                                                :analyst_score (get-in answers_clean [k :analyst_score])})]
     (rf/dispatch [:post-esg-report-upload summary])
     ))
-
 
 (defn green-bond-scoring-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
@@ -390,7 +387,6 @@
     ))
 
 (defn reporting-display []
-  ;(rf/dispatch [:post-esg-report-extract @gb-isin @gb-date])
   (let [esg-reports @(rf/subscribe [:esg-report-list])
         qt @(rf/subscribe [:quant-model/model-output])
         esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
@@ -413,11 +409,6 @@
              nil
              )
         ]
-    (println @gb-isin)
-    (println @gb-date)
-    (println @report-type)
-    (println report-selected)
-    ;(println isin)
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
