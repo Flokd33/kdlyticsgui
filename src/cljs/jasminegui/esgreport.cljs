@@ -262,7 +262,9 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %) (gb-score-calculator))]]]
+                           :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) "") )
+                                            (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %)
+                                           (gb-score-calculator))]]]
               (case (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                             "No" nil
                              [h-box :gap "10px" :align :center
