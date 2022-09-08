@@ -307,39 +307,49 @@
 
 
 (defn esg-carbon []
+  "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
   (when (zero? (count @(rf/subscribe [:esg/carbon-jasmine]))) (rf/dispatch [:get-esg-carbon-jasmine]))
   (let [data-msci (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         data-jasmine (first @(rf/subscribe [:esg/carbon-jasmine]))
         data2-jasmine (group-by :ticker data-jasmine)
+        tt (for [ticker data2-jasmine] [ (key ticker) (- (/ (reduce + (map #(:amt_carbon_emissions_1_2 %) (val ticker))) (count (val ticker))) (:amt_carbon_emissions_1_2 (first (val ticker))))])
+
         data3-jasmine (for [t data2-jasmine]  (first (val t)))
+
         data4-jasmine  (map #(clojure.set/rename-keys % {:ticker :Ticker} ) data3-jasmine)                               ; rename key for outer join
-        tickers-jasmine (distinct (map :Ticker data4-jasmine))
-        tickers-msci (distinct (map :Ticker data-msci))
-        tickers-missing (seq (clojure.set/difference (set tickers-msci) (set tickers-jasmine))) ; tickers in msci but not in jasmine => adding off BM names excluded in Jamsine scope
-        data-msci-filtered  (t/chainfilter {:Ticker  #(some #{%} tickers-missing)} data-msci)
-        data-msci-filtered-clean nil                        ;rename keys ?
-
-
-
-        ;:msci-CARBON_EMISSIONS_SOURCE
-        ;:msci-CARBON_EMISSIONS_YEAR
-        ;:msci-CARBON_EMISSIONS_SCOPE_1
-        ;:msci-CARBON_EMISSIONS_SCOPE_2
-        ;
-        ;:msci-CARBON_EMISSIONS_SCOPE_12
-        ;:msci-CARBON_EMISSIONS_SCOPE_12_KEY
-        ;
-        ;:msci-CARBON_EMISSIONS_SCOPE_3
-
-
-        join-data (map #(apply merge %) (vals (group-by :Ticker (concat data-msci-filtered data4-jasmine))))
+        data-msci-esg-scores (map #(select-keys % [:Ticker :msci-IVA_COMPANY_RATING :msci-ENVIRONMENTAL_PILLAR_SCORE :msci-SOCIAL_PILLAR_SCORE
+                                                   :msci-GOVERNANCE_PILLAR_SCORE :msci-WEIGHTED_AVERAGE_SCORE :msci-UNGC_COMPLIANCE]) data-msci)
+        first-merge-esg-score (map #(apply merge %) (vals (group-by :Ticker (concat data-msci-esg-scores data4-jasmine))))
+        tickers-missing-from-jasmine (seq (clojure.set/difference (set (distinct (map :Ticker data-msci))) (set (distinct (map :Ticker data4-jasmine))))) ; tickers in msci but not in jasmine => adding off BM names excluded in Jamsine scope
+        data-msci-filtered  (t/chainfilter {:Ticker  #(some #{%} tickers-missing-from-jasmine)} data-msci)
+        data-msci-filtered-clean (map #(select-keys % [:msci-CARBON_EMISSIONS_SCOPE_1 :msci-CARBON_EMISSIONS_SCOPE_2 :msci-CARBON_EMISSIONS_SCOPE_3 :msci-CARBON_EMISSIONS_SCOPE_12
+                                                       :msci-CARBON_EMISSIONS_YEAR :msci-CARBON_EMISSIONS_SOURCE :msci-CARBON_EMISSIONS_SCOPE_1_KEY :msci-CARBON_EMISSIONS_SCOPE_2_KEY
+                                                       :msci-CARBON_EMISSIONS_SCOPE_3_CALCULATION_DATE :msci-CARBON_EMISSIONS_SCOPE_3_DOWN :msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM
+                                                       :msci-CARBON_EMISSIONS_SCOPE_3_DOWNSTREAM_YEAR :msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM_YEAR :msci-IVA_COMPANY_RATING]
+                                                    ) data-msci-filtered)
+        data-msci-filtered-ready  (map #(clojure.set/rename-keys % {:msci-CARBON_EMISSIONS_SCOPE_1              :amt_carbon_emissions_1
+                                                                    :msci-CARBON_EMISSIONS_SCOPE_2              :amt_carbon_emissions_2
+                                                                    :msci-CARBON_EMISSIONS_SCOPE_3              :amt_carbon_emissions_3
+                                                                    :msci-CARBON_EMISSIONS_SCOPE_12             :amt_carbon_emissions_1_2
+                                                                    :msci-CARBON_EMISSIONS_YEAR                 :cat_scope_1_year
+                                                                    :msci-CARBON_EMISSIONS_SOURCE               :cat_scope_1_src
+                                                                    :msci-CARBON_EMISSIONS_SCOPE_1_KEY          :cat_scope_1_method
+                                                                    :msci-CARBON_EMISSIONS_SCOPE_2_KEY          :cat_scope_2_method
+                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_CALCULATION_DATE
+                                                                    :msci-CARBON_EMISSIONS_SCOPE_3_DOWN          :amt_carbon_emissions_3_down
+                                                                    :msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM      :amt_carbon_emissions_3_up
+                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_DOWNSTREAM_YEAR
+                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM_YEAR
+                                                                    }
+                                                                 ) data-msci-filtered-clean)
+        final-data  (map #(apply merge %) (vals (group-by :Ticker (concat first-merge-esg-score data-msci-filtered-ready))))
+        final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "Yes" "No")))
         ]
-    (println (sort (keys (first data-msci-filtered))))
-    (println (first data-msci-filtered))
-    ;(println (count join-data))
+    (println (t/chainfilter {:ticker "TTMTIN"} data-jasmine))
+    (println (first data-jasmine))
   [v-box :gap "20px" :class "element" :width standard-box-width
    :children [
-              [h-box :align :center :children [[title :label "Carbon data (Jasmine)" :level :level1]
+              [h-box :align :center :children [[title :label "ESG data (Carbon from Jasmine)" :level :level1]
                                                [gap :size "1"]
                                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (rf/subscribe [:esg/summary-report]) "esgscores")]]]
               [:> ReactTable
@@ -349,7 +359,8 @@
                                                                   {:Header "Ticker" :accessor "ticker" :width 80}
                                                                   {:Header "Bond" :accessor "bond" :width 100}
                                                                   {:Header "Sector" :accessor "sector" :width 100}
-                                                                  {:Header "Country" :accessor "country" :width 70}]}
+                                                                  {:Header "Country" :accessor "country" :width 70}
+                                                                  {:Header "Off Jasmine" :accessor "off-jasmine" :width 70}]}
                                  {:Header "Fundamentals USD" :columns [{:Header "EV (mils)" :accessor "amt_ev_usd" :Cell tables/round0 :style {:textAlign "right"} :width 80}
                                                                        {:Header "Date evic" :accessor "dt_asofdate_evic" :width 100}
                                                                        {:Header "Mkt cap (mils)" :accessor "amt_marketcap_usd" :Cell tables/round0 :style {:textAlign "right"} :width 90}
