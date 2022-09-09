@@ -306,13 +306,14 @@
                 :className      "-striped -highlight"}]]])
 
 
-(defn esg-carbon []
+(defn esg-data []
   "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
   (when (zero? (count @(rf/subscribe [:esg/carbon-jasmine]))) (rf/dispatch [:get-esg-carbon-jasmine]))
   (let [data-msci (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         data-jasmine (group-by :ticker (first @(rf/subscribe [:esg/carbon-jasmine])))
-        check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-12 (- (/ (reduce + (map #(:amt_carbon_emissions_1 %) (val ticker))) (count (val ticker))) (:amt_carbon_emissions_1 (first (val ticker))))})
-        list-check-diff (map :ticker (t/chainfilter {:diff-in-emissions-12 #(not (zero? %))} check-diff))
+        ;check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-12 (- (/ (reduce + (map #(:amt_carbon_emissions_1 %) (val ticker))) (count (val ticker))) (:amt_carbon_emissions_1 (first (val ticker))))})
+        check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-1 (apply = (remove nil? (map #(:amt_carbon_emissions_1 %) (val ticker))))})
+        list-check-diff (map :ticker (t/chainfilter {:diff-in-emissions-1 #(false? %)} check-diff))
         data3-jasmine (for [t data-jasmine] (first (val t)))
         data4-jasmine  (map #(clojure.set/rename-keys % {:ticker :Ticker} ) data3-jasmine)                               ; rename key for outer join
         data-msci-esg-scores (map #(select-keys % [:ISIN :Ticker :msci-IVA_COMPANY_RATING :msci-ENVIRONMENTAL_PILLAR_SCORE :msci-SOCIAL_PILLAR_SCORE
@@ -349,10 +350,9 @@
         final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "Yes" "No") ;in msci data output but not in jasmine
                                                           :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
         ]
-    (println list-check-diff)
-    ;(println (map :amt_carbon_emissions_1 (t/chainfilter {:ticker "AIA"} (first @(rf/subscribe [:esg/carbon-jasmine])))))
-    ;(println (map #(:amt_carbon_emissions_1 %) (remove nil? (vec (t/chainfilter {:ticker "AIA"} (first @(rf/subscribe [:esg/carbon-jasmine])))))))
-    (println (count list-check-diff))
+    ;(println list-check-diff)
+    (println (map #(select-keys %  [:isin :bond :ticker :amt_carbon_emissions_1]) (t/chainfilter {:ticker "TELEFO"} (first @(rf/subscribe [:esg/carbon-jasmine])))))
+    ;(println (count list-check-diff))
   [v-box :gap "20px" :class "element" :width standard-box-width
    :children [
               [h-box :align :center :children [[title :label "ESG data" :level :level1]
@@ -583,7 +583,7 @@
               :reporting [esgreport/reporting-display]
               :holdings [holdings]
               :esg-scores [esg-scores]
-              :esg-carbon [esg-carbon]
+              :esg-data [esg-data]
               :esg-engagements [esg-engagements]
               [:div.output "nothing to display"])]))
 
