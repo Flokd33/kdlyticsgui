@@ -317,7 +317,7 @@
         data3-jasmine (for [t data-jasmine] (first (val t)))
         data4-jasmine  (map #(clojure.set/rename-keys % {:ticker :Ticker} ) data3-jasmine)                               ; rename key for outer join
         data-msci-esg-scores (map #(select-keys % [:ISIN :Ticker :msci-IVA_COMPANY_RATING :msci-ENVIRONMENTAL_PILLAR_SCORE :msci-SOCIAL_PILLAR_SCORE
-                                                   :msci-GOVERNANCE_PILLAR_SCORE :msci-WEIGHTED_AVERAGE_SCORE :msci-UNGC_COMPLIANCE]) data-msci)
+                                                   :msci-GOVERNANCE_PILLAR_SCORE :msci-WEIGHTED_AVERAGE_SCORE :msci-UNGC_COMPLIANCE :msci-ESG_HEADLINE]) data-msci)
         first-merge-esg-score (map #(apply merge %) (vals (group-by :Ticker (concat data-msci-esg-scores data4-jasmine))))
         tickers-missing-from-jasmine (seq (clojure.set/difference (set (distinct (map :Ticker data-msci))) (set (distinct (map :Ticker data4-jasmine))))) ; tickers in msci but not in jasmine => adding off BM names excluded in Jamsine scope
         data-msci-filtered  (t/chainfilter {:Ticker  #(some #{%} tickers-missing-from-jasmine)} data-msci)
@@ -347,11 +347,11 @@
                                                                     }
                                                                  ) data-msci-filtered-clean)
         final-data  (map #(apply merge %) (vals (group-by :Ticker (concat first-merge-esg-score data-msci-filtered-ready))))
-        final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "Yes" "No") ;in msci data output but not in jasmine
+        final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "No" "Yes") ;in msci data output but not in jasmine
                                                           :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
         ]
-    ;(println list-check-diff)
-    (println (map #(select-keys %  [:isin :bond :ticker :amt_carbon_emissions_1]) (t/chainfilter {:ticker "TELEFO"} (first @(rf/subscribe [:esg/carbon-jasmine])))))
+    (println data-msci)
+    ;(println (map #(select-keys %  [:isin :bond :ticker :amt_carbon_emissions_1]) (t/chainfilter {:ticker "TELEFO"} (first @(rf/subscribe [:esg/carbon-jasmine])))))
     ;(println (count list-check-diff))
   [v-box :gap "20px" :class "element" :width standard-box-width
    :children [
@@ -360,14 +360,16 @@
                                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (rf/subscribe [:esg/summary-report]) "esgscores")]]]
               [:> ReactTable
                {:data           final-data-clean
-                :columns        [{:Header "Description" :columns [{:Header "Isin" :accessor "isin" :width 100 }
-                                                                  {:Header "BO id" :accessor "sec_id" :width 100}
+                :columns        [{:Header "Description" :columns [
+                                                                  ;{:Header "Isin" :accessor "isin" :width 100 }
+                                                                  ;{:Header "BO id" :accessor "sec_id" :width 100}
                                                                   {:Header "Ticker" :accessor "Ticker" :width 80}
-                                                                  {:Header "Bond" :accessor "bond" :width 100}
+                                                                  ;{:Header "Bond" :accessor "bond" :width 100}
                                                                   {:Header "Sector" :accessor "sector" :width 100}
                                                                   {:Header "Country" :accessor "country" :width 70}]}
-                                 {:Header "Checks" :columns [{:Header "Off Jasmine?" :accessor "off-jasmine" :width 100}
-                                                                  {:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100}]}
+                                 {:Header "Checks" :columns [{:Header "In Jasmine?" :accessor "off-jasmine" :width 100}
+                                                             ;{:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100}
+                                                             ]}
                                  {:Header "Fundamentals USD" :columns [{:Header "EV (mils)" :accessor "amt_ev_usd" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                                        {:Header "Date evic" :accessor "dt_asofdate_evic" :width 100}
                                                                        {:Header "Mkt cap (mils)" :accessor "amt_marketcap_usd" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
@@ -378,7 +380,8 @@
                                                                    {:Header "S" :accessor "msci-SOCIAL_PILLAR_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
                                                                    {:Header "G" :accessor "msci-GOVERNANCE_PILLAR_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
                                                                    {:Header "Final" :accessor "msci-WEIGHTED_AVERAGE_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
-                                                                   {:Header "UNGC" :accessor "msci-UNGC_COMPLIANCE" :style {:textAlign "center"} :width 80}]}
+                                                                   {:Header "UNGC" :accessor "msci-UNGC_COMPLIANCE" :style {:textAlign "center"} :width 80}
+                                                                   {:Header "Note" :accessor "msci-ESG_HEADLINE" :style {:textAlign "center"} :width 150}]}
                                  {:Header "Scope 1" :columns [{:Header "Year" :accessor "cat_scope_1_year" :width 80 :style {:textAlign "center"}}
                                                               {:Header "Method" :accessor "cat_scope_1_method" :width 150}
                                                               {:Header "Source" :accessor "cat_scope_1_src" :width 80}
