@@ -308,7 +308,7 @@
 
 (defn esg-data []
   "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
-  (when (zero? (count @(rf/subscribe [:esg/carbon-jasmine]))) (rf/dispatch [:get-esg-carbon-jasmine]))
+  (rf/dispatch [:get-esg-carbon-jasmine])
   (let [data-msci (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         data-jasmine (group-by :ticker (first @(rf/subscribe [:esg/carbon-jasmine])))
         ;check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-12 (- (/ (reduce + (map #(:amt_carbon_emissions_1 %) (val ticker))) (count (val ticker))) (:amt_carbon_emissions_1 (first (val ticker))))})
@@ -350,7 +350,7 @@
         final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "No" "Yes") ;in msci data output but not in jasmine
                                                           :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
         ]
-    (println data-msci)
+    (println (first (val (first data-jasmine))))
     ;(println (map #(select-keys %  [:isin :bond :ticker :amt_carbon_emissions_1]) (t/chainfilter {:ticker "TELEFO"} (first @(rf/subscribe [:esg/carbon-jasmine])))))
     ;(println (count list-check-diff))
   [v-box :gap "20px" :class "element" :width standard-box-width
@@ -385,25 +385,32 @@
                                  {:Header "Scope 1" :columns [{:Header "Year" :accessor "cat_scope_1_year" :width 80 :style {:textAlign "center"}}
                                                               {:Header "Method" :accessor "cat_scope_1_method" :width 150}
                                                               {:Header "Source" :accessor "cat_scope_1_src" :width 80}
-                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_1" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
+                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_1" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                              {:Header "Emissions/evic" :accessor "emissions_evic_1" :Cell tables/round2*100 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                              ]}
+
                                  {:Header "Scope 2" :columns [{:Header "Year"   :accessor "cat_scope_2_year" :width 80 :style {:textAlign "center"}}
                                                               {:Header "Method" :accessor "cat_scope_2_method" :width 150}
                                                               {:Header "Source" :accessor "cat_scope_2_src" :width 80}
-                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_2" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
+                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_2" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                              {:Header "Emissions/evic" :accessor "emissions_evic_2" :Cell tables/round2*100 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
                                  {:Header "Scope 1-2" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope12" :width 90 :style {:textAlign "center"}}
                                                                 {:Header "Revenues (mils)" :accessor "amt_revenue_scope12" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                                 {:Header "Intensity" :accessor "amt_carbon_intensity_1_2" :width 80 :Cell tables/round0}
-                                                                {:Header "Emissions" :accessor "amt_carbon_emissions_1_2" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
+                                                                {:Header "Emissions" :accessor "amt_carbon_emissions_1_2" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                {:Header "Emissions/evic" :accessor "emissions_evic_1_2" :Cell tables/round2*100 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
                                  {:Header "Scope 3 up" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope3_up" :width 90 :style {:textAlign "center"}}
                                                               {:Header "Revenues (mils)" :accessor "amt_revenue_scope3_up" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                               {:Header "Method" :accessor "cat_scope_3_up_method" :width 150}
                                                               {:Header "Source" :accessor "cat_scope_3_down_src" :width 80}
-                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_3_up" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
+                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_3_up" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                 {:Header "Emissions/evic" :accessor "emissions_evic_3_up" :Cell tables/round2*100 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}  ]}
                                  {:Header "Scope 3 down" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope3_down" :width 90 :style {:textAlign "center"}}
                                                               {:Header "Revenues (mils)" :accessor "amt_revenue_scope3_down" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                               {:Header "Method" :accessor "cat_scope_3_down_method" :width 150}
                                                               {:Header "Source" :accessor "cat_scope_3_down_src" :width 80}
-                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_3_down" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
+                                                              {:Header "Emissions" :accessor "amt_carbon_emissions_3_down" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                   {:Header "Emissions/evic" :accessor "emissions_evic_3_down" :Cell tables/round2*100 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
                                  ]
                 :showPagination true
                 :sortable true
