@@ -176,6 +176,7 @@
 (def yield-format   #(txt-format "%.2f%" 1. %))
 (def yield-format*100 #(txt-format "%.2f%" 100. %))
 (def zspread-format #(txt-format "%.0fbps" 1. %))
+(def round0*1000000 #(txt-format "%.0f" 1000000. %))
 (def round2*100     #(txt-format "%.2f" 100. %))
 (def round1*100     #(txt-format "%.1f" 100. %))
 (defn round2-if-nb [this] (if-let [x (aget this "value")] (if (number? x) (gstring/format "%.2f" x) x) "-")) ;(r/as-element (if-let [x (aget this "value")] (if (number? x) (gstring/format "%.2f" x) x) "-"))
