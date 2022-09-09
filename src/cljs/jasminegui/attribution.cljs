@@ -33,6 +33,7 @@
 (defn period-choices []
   (concat static/attribution-period-choices
           (into [] (for [m @(rf/subscribe [:attribution/available-months])] {:id m :label m}))
+          (into [] (for [m @(rf/subscribe [:attribution/available-months])] {:id (str "YTD-" m) :label (str "YTD-" m)}))
           (into [] (for [y (range 2021 2017 -1)] (let [k (str "FY" y)] {:id k :label k})))))
 
 (def dropdown-width "150px")
@@ -123,6 +124,7 @@
         download-columns (concat ["Security" "Code" "Issuer" "Region" "Country" "Rating" "Duration-Bucket"] (filter @selected-portfolios portfolios))
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         threshold-att (rf/subscribe [:multiple-portfolio-attribution/threshold])]
+    ;(println (period-choices))
     (when (and (= @(rf/subscribe [:multiple-portfolio-attribution/field-one]) :total-effect)
                (= @(rf/subscribe [:multiple-portfolio-attribution/period]) "ytd")
                (zero? (count @(rf/subscribe [:multiple-portfolio-attribution/table]))))
