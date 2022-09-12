@@ -510,6 +510,7 @@
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
+    (println (first @(rf/subscribe [:traded-since-date-output/flat-data])))
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history with performance") :level :level1]
@@ -544,7 +545,7 @@
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-traded-since-date-output @start-date @end-date])]
                                                      [gap :size "20px"]
-                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:traded-since-date-output/flat-data]) "multi-port-recent-trades-perf" [:portfolio :TransactionTypeName :NAME :TradeDate :JPM_SECTOR :bps :PriceLcl :last-price :total-return :tr-vs-cembi :beta-vs-cembi :beta-vs-cembi-contri :pm_instruction :order-reason :trader_comments])]
+                                                     [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link @(rf/subscribe [:traded-since-date-output/flat-data]) "multi-port-recent-trades-perf" [:portfolio :CNTRY_OF_RISK  :TransactionTypeName :NAME :ISIN :TradeDate :JPM_SECTOR :bps :PriceLcl :last-price :total-return :tr-vs-cembi :beta-vs-cembi :beta-vs-cembi-contri :pm_instruction :order_reason])]
                                                      ]]]]]]
                  [trade-history-recent-perf-table]
                  [p "(*) bps of NAV calculated vs latest NAV, not at time of trade. Rating is latest, not at time of trade."]

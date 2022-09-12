@@ -106,8 +106,6 @@
     )
   )
 
-(def analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)}))
-
 (def project-sub-categories
   [{:id "climate" :label "Climate change adaptation (including efforts to make infrastructure more resilient to impacts of climate change, as well as information support systems, such as climate observation and early warning systems)", :group "Climate change adaptation"}
    {:id "renewable" :label "Renewable energy (including production, transmission, appliances and products)", :group "Climate change adaptation"}
@@ -226,7 +224,8 @@
     ))
 
 (defn green-bond-scoring-display []
-  (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))]
+  (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))
+        analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)})]
   [v-box :width "1280px" :gap "5px" :class "element"
    :children [[modal-success]
               [title :label "Green bond calculator" :level :level1]
@@ -635,7 +634,8 @@
 (def question-width-label "423px")
 
 (defn transition-fund-scoring-display []
-    [v-box :width "1280px" :gap "5px" :class "element"
+    (let [analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)})]
+      [v-box :width "1280px" :gap "5px" :class "element"
      :children [[modal-success]
                 [title :label "Transition fund calculator" :level :level1]
                 [h-box :gap "10px" :align :center
@@ -955,5 +955,5 @@
                  :children [[label :width question-width :label ""]
                             [button :label "Save transition fund report" :class "btn btn-primary btn-block" :on-click #(do (tf-score-calculator) (tf-summary-generator))]]]
                 [gap :size "20px"]
-                ]]
+                ]])
     )
