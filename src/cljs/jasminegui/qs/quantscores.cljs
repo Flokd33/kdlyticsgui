@@ -23,6 +23,10 @@
     [jasminegui.guitools :as gt]
     [goog.object :as gobj]))
 
+
+
+;;
+(def trade-finder-isin (r/atom nil))
 ;;
 (def show-chart-modal (r/atom nil))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -135,6 +139,7 @@
                                       (rf/dispatch [:post-model-history-pricing :pricing (remove nil? [ISIN])])
                                       (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [ISIN])])
                                       (rf/dispatch [:navigation/active-qs :historical-charts])))]
+         ["Trade finder" (fn [] (do (reset! trade-finder-isin ISIN) (rf/dispatch [:navigation/active-qs :trade-finder])))]
          ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
          ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]]))))
 
@@ -599,7 +604,7 @@
                                        :filterable     true :defaultFilterMethod tables/text-filter-OR
                                        :getTrProps     on-click-issuer-coverage :className "-striped -highlight"}]])]]))))
 
-(def trade-finder-isin (r/atom nil))
+
 (defn trade-finder []
   (let [data @(rf/subscribe [:quant-model/model-output])
         bond-data (first (filter #(= (:ISIN %) @trade-finder-isin) data))

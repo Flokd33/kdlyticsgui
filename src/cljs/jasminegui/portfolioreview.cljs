@@ -496,7 +496,7 @@
     (reset! current-page 0)                                 ;HACK WHEN CHANGING PORTFOLIO
     (portfolio-review-box-template [[title :level :level2 :label (str "MTD, " portfolio " returned " (f (get-in data [:mtd :portfolio])) " vs " (f (get-in data [:mtd :index])) " for the index, " (f (get-in data [:mtd :alpha])) " of alpha.")]
                                     [title :level :level2 :label (str "YTD, " portfolio " returned " (f (get-in data [:ytd :portfolio])) " vs " (f (get-in data [:ytd :index])) " for the index, " (f (get-in data [:ytd :alpha])) " of alpha.")]
-                                    [title :level :level2 :label (str "The portfolio yield is " (g (* 100 (reduce + (map :contrib-yield positions)))) "% vs " (g (* 100 (reduce + (map :bm-contrib-yield positions)))) "% for the index.")]
+                                    [title :level :level2 :label (str "The portfolio yield is " (g (* 1 (reduce + (map :contrib-yield positions)))) "% vs " (g (* 1 (reduce + (map :bm-contrib-yield positions)))) "% for the index.")]
                                     [title :level :level2 :label (str "Our duration is " (h (reduce + (map :contrib-mdur positions))) " vs " (h (reduce + (map :bm-contrib-eir-duration positions))) " for the index.")]
                                     [title :level :level2 :label (str "We currently run a beta of "
                                                                       (g (get-in data [:beta :total]))

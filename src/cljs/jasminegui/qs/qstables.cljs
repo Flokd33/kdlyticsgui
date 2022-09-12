@@ -76,6 +76,7 @@
    :Sector                              {:Header "Sector" :accessor "Sector" :width 80}
    :Sector-long                         {:Header "Sector" :accessor "Sector" :width 120}
    :Ticker                              {:Header "Ticker" :accessor "Ticker" :width 80}
+   :Analyst                             {:Header "Analyst" :accessor "Analyst" :width 80}
    :Use                                 {:Header "Use" :accessor "Use" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
    :Bond                                {:Header "Bond" :accessor "Bond" :width 120}
    :SENIOR                              {:Header "Snr" :accessor "SENIOR" :width 35}
@@ -392,7 +393,7 @@
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
                {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta ])}
-               {:Header "91" :columns (mapv quant-score-table-columns [:n91heldvisible])}])
+               {:Header "91" :columns (mapv quant-score-table-columns [:n91heldvisible :Analyst])}])
       "TA2022"
       (concat [{:Header "Description" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON]))}]
               ;[{:Header "Index inclusion" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci]))}]
