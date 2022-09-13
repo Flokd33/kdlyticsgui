@@ -486,10 +486,10 @@
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "Transition fund score" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
                           [title :label "Eligibility" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/issuer working towards net zero alignment?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected)))) ]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company or activity to be financed supporting one of the five transition sectors?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/financed activity supporting one of the five transition sectors?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Sector:"] [p {:style {:width "500px" :text-align :justify}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "sectors-choice"} report-selected)))} tf-sectors-choices))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Comment:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors-comment"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the company have emissions intensity close to zero or a large majority (95%) of green revenue?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is emissions intensity close to zero/green revenue a large majority?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the company have clear plans to transition??"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/asset required to enable the transition to net zero for other sectors?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company ahead of its peer group on climate-related metrics?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} report-selected))))]]]
@@ -671,7 +671,7 @@
                   (concat
                     [[v-box  :gap "5px" :children [
                    [h-box :gap "10px" :align :center
-                    :children [[label :width question-width-label :label "Is the company or activity to be financed supporting one of the five transition sectors?"]
+                    :children [[label :width question-width-label :label "Is the company/financed activity supporting one of the five transition sectors?"]
                                [info-button :info "bla bla " :position :left-center]
                                [single-dropdown :width dropdown-width :choices yes-no-choice
                                 :model (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer])
@@ -692,7 +692,7 @@
                      nil
                      )
                      [h-box :gap "10px" :align :center
-                      :children [[label :width question-width :label "Does the company have emissions intensity close to zero or a large majority (95%) of green revenue?"]
+                      :children [[label :width question-width :label "Is emissions intensity close to zero/green revenue a large majority?"]
                                  [single-dropdown :width dropdown-width :choices yes-no-choice
                                   :model (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer])
                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer]) %)
