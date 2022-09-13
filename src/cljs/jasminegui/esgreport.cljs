@@ -302,7 +302,7 @@
 
               [title :label "Reporting" :level :level2 ]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is there regular reporting on the impact stemming from the green projects??"]
+               :children [[label :width question-width :label "Is there regular reporting on the impact stemming from the green projects?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ]) %) (gb-score-calculator))]]]
 
