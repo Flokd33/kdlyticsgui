@@ -320,7 +320,8 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the company net-zero committed?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer]) %) (if (= "Yes" %) (reset! year-disabled? false) (reset! year-disabled? true))
+                           :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) "") )
+                                         (reset! (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer]) %) (if (= "Yes" %) (reset! year-disabled? false) (reset! year-disabled? true))
                                            (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "If yes please indicate the year "]
@@ -330,7 +331,8 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the company SBTi aligned and if so, which category?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer]) %) (if (= "Yes" %) (reset! sbti-disabled? false) (reset! sbti-disabled? true))
+                           :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) "") )
+                                           (reset! (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer]) %) (if (= "Yes" %) (reset! sbti-disabled? false) (reset! sbti-disabled? true))
                                            (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "If yes please indicate the category"]
