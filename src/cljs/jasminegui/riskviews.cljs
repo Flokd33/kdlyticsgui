@@ -944,7 +944,7 @@
                                             [gap :size "30px"]
                                             [checkbox :model hide-zero-risk :label "Hide zero lines?" :on-change #(rf/dispatch [:portfolio-history/hide-zero-holdings %])]
                                             [title :label "Field:" :level :level3]
-                                            [single-dropdown :width dropdown-width :model field-one :choices (take 6 static/risk-field-choices) :on-change #(do (rf/dispatch [:portfolio-history/field-one %])
+                                            [single-dropdown :width dropdown-width :model field-one :choices (take 7 static/risk-field-choices) :on-change #(do (rf/dispatch [:portfolio-history/field-one %])
                                                                                                                                                                 (rf/dispatch [:portfolio-history/data []]))]
                                             [gap :size "30px"]]
                                            (into [] (concat [[title :label "Filtering:" :level :level3]

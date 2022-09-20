@@ -172,6 +172,7 @@
    {:id :mdur-delta                       :label "M dur delta"}
    {:id :contrib-beta                     :label "EMCD Beta"}
    {:id :nominal                          :label "Nominal"}
+   {:id :duration-times-spread-weight     :label "DTS"}
    {:id :value                            :label "Value"}
    {:id :contrib-yield                    :label "Yield contribution"}
    {:id :contrib-zspread                  :label "Z-spread contribution"}

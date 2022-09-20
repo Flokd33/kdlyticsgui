@@ -296,6 +296,7 @@
      :contrib-mdur                     (nb-col "Fund" "contrib-mdur" 50 round2 sum-rows)
      :bm-contrib-yield                 (nb-col "Index" "bm-contrib-yield" 50 round2pc sum-rows)
      :bm-contrib-eir-duration          (nb-col "Index" "bm-contrib-eir-duration" 50 round2 sum-rows)
+     :duration-times-spread-weight     (nb-col "DTS" "duration-times-spread-weight" 45 round0 sum-rows)
 
      :cash-pct                         (nb-col "Cash" "cash-pct" 50 round2pc sum-rows)
      :contrib-bond-yield               (nb-col "Bond yield" "contrib-bond-yield" 70 round2pc sum-rows)
