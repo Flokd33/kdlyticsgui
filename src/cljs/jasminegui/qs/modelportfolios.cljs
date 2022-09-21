@@ -48,8 +48,10 @@
           res (mapv #(assoc % :jpm-region (cntry->region (:Country %))
                               :cembi-dur (* 0.01 (:Used_Duration %) (:cembi %))
                               :cembi-ig-dur (* 0.01 (:Used_Duration %) (:cembi-ig %))
+                              :cembi-hy-dur (* 0.01 (:Used_Duration %) (:cembi-hy %))
                               :cembi-dur-x-sp (* 0.0001 (:Used_Duration %) (:cembi %) (:Used_ZTW %))
                               :cembi-ig-dur-x-sp (* 0.0001 (:Used_Duration %) (:cembi-ig %) (:Used_ZTW %))
+                              :cembi-hy-dur-x-sp (* 0.0001 (:Used_Duration %) (:cembi-hy %) (:Used_ZTW %))
                               ) smallqm)]
       [db res])))
 
@@ -75,7 +77,6 @@
                  :Transition-model-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model]) (:Used_ZTW %))
                  :Transition-model-rebased-dur          (* 0.01 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model-rebased]))
                  :Transition-model-rebased-dur-x-sp     (* 0.0001 (:Used_Duration %) (get-in positions [(:ISIN %) :Transition-model-rebased]) (:Used_ZTW %))
-
                  )
                (assoc %
                  :CEMBI-model-dur       0
@@ -107,7 +108,7 @@
   (fn [] (rf/subscribe [:simple-quant-model]))     ;; <-- these inputs are provided to the computation function
   ;; computation function
   (fn [data]                  ;; input values supplied in a vector
-    (filter #(some pos? (map % (conj (keys model-portfolio-universe) :cembi :cembi-ig))) data)))
+    (filter #(some pos? (map % (conj (keys model-portfolio-universe) :cembi :cembi-ig :cembi-hy))) data)))
 
 (rf/reg-sub
   :model-portfolios/analytics
@@ -115,7 +116,7 @@
   (fn [] (rf/subscribe [:simple-quant-model-positions-and-cembi-index-only])) ;; <-- these inputs are provided to the computation function
   ;; computation function
   (fn [data]                  ;; input values supplied in a vector
-    (into [] (for [[k v] (assoc model-portfolio-universe :cembi "JPM CEMBI"  :cembi-ig "JPM CEMBI IG")]
+    (into [] (for [[k v] (assoc model-portfolio-universe :cembi "JPM CEMBI"  :cembi-ig "JPM CEMBI IG"  :cembi-hy "JPM CEMBI HY")]
                {:portfolio         v
                 :nav               (reduce + (map k data))
                 :Used_YTW          (/ (reduce + (map #(* (k %) (:Used_YTW %)) data)) 100.)
@@ -129,6 +130,7 @@
                 :hybrid            (reduce + (map k (t/chainfilter {:HYBRID "Y"} data)))
                 :cembi             (reduce + (map k (t/chainfilter {:cembi pos?} data)))
                 :cembi-ig          (reduce + (map k (t/chainfilter {:cembi-ig pos?} data)))
+                :cembi-hy          (reduce + (map k (t/chainfilter {:cembi-hy pos?} data)))
                 :sov               (reduce + (map k (t/chainfilter {:Sector "Sovereign"} data)))
                 :nusd              (reduce + (map k (t/chainfilter {:CRNCY #(not= % "USD")} data)))
                 :esg               (reduce + (map k (t/chainfilter {:ESG #(not= % "N")} data)))
@@ -233,9 +235,9 @@
                                                                                 {:Header "Ticker" :accessor "Ticker" :width 80}]}
                                                      {:Header "Position" :columns
                                                               (case metric
-                                                                "NAV" (mapv qstables/quant-score-table-columns (concat (keys model-portfolio-universe) [:cembi :cembi-ig]))
-                                                                "Duration" (mapv qstables/quant-score-table-columns (concat (mapv #(keyword (str (name %) "-dur")) (keys model-portfolio-universe)) [:cembi-dur :cembi-ig-dur]))
-                                                                "Duration x Spread" (mapv qstables/quant-score-table-columns (concat (mapv #(keyword (str (name %) "-dur-x-sp")) (keys model-portfolio-universe)) [:cembi-dur-x-sp :cembi-ig-dur-x-sp]))
+                                                                "NAV" (mapv qstables/quant-score-table-columns (concat (keys model-portfolio-universe) [:cembi :cembi-ig :cembi-hy]))
+                                                                "Duration" (mapv qstables/quant-score-table-columns (concat (mapv #(keyword (str (name %) "-dur")) (keys model-portfolio-universe)) [:cembi-dur :cembi-ig-dur :cembi-hy-dur]))
+                                                                "Duration x Spread" (mapv qstables/quant-score-table-columns (concat (mapv #(keyword (str (name %) "-dur-x-sp")) (keys model-portfolio-universe)) [:cembi-dur-x-sp :cembi-ig-dur-x-sp :cembi-hy-dur-x-sp]))
                                                                 )}
                                                      tail-col])
                       :showPagination  false :pageSize 1 :filterable true :defaultFilterMethod tables/text-filter-OR
@@ -321,6 +323,7 @@
 
 (defn analytics []
   (let [data @(rf/subscribe [:model-portfolios/analytics])]
+    ;(println (map :portfolio @(rf/subscribe [:model-portfolios/analytics])))
     [v-box :class "element" :gap "20px" :width "1690px"
      :children [[title :label "Analytics" :level :level1]
                 [:> ReactTable
@@ -332,18 +335,19 @@
                                    {:Header "ZTW" :accessor "Used_ZTW" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format}
                                    {:Header "G" :accessor "G_SPREAD_MID_CALC" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format}
                                    {:Header "DurXSp" :accessor "dur_x_sp" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell #(tables/nb-cell-format "%.0f" 1 %)}
-                                    {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1}
-                                            {:Header "HY" :accessor "hy" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                    {:Header "Not $" :accessor "nusd" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                            {:Header "Sub" :accessor "sub" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                    {:Header "Hybrid" :accessor "hybrid" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                            {:Header "CEMBI" :accessor "cembi" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                    {:Header "CEMBIIG" :accessor "cembi-ig" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                            {:Header "Sov" :accessor "sov" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                    {:Header "ESG" :accessor "esg" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
-                                            {:Header "Issuers" :accessor "issuers" :width 65 :style {:textAlign "right"}}
+                                   {:Header "Rating" :accessor "Used_Rating_Score" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1}
+                                   {:Header "HY" :accessor "hy" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "Not $" :accessor "nusd" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "Sub" :accessor "sub" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "Hybrid" :accessor "hybrid" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "CEMBI" :accessor "cembi" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "CEMBIIG" :accessor "cembi-ig" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "CEMBIHY" :accessor "cembi-hy" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "Sov" :accessor "sov" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "ESG" :accessor "esg" :width 65 :Cell tables/round2 :style {:textAlign "right"}}
+                                   {:Header "Issuers" :accessor "issuers" :width 65 :style {:textAlign "right"}}
                                    ]
-                  :showPagination false :defaultPageSize (+ (count model-portfolio-universe) 2) :filterable false :className "-striped -highlight"}]]]))
+                  :showPagination false :defaultPageSize (+ (count model-portfolio-universe) 3) :filterable false :className "-striped -highlight"}]]]))
 
 (defn model-portfolio-view []
   [v-box  :class "subbody rightelement" :gap "50px"
