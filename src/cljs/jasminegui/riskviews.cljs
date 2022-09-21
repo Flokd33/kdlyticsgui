@@ -906,8 +906,8 @@
 (defn portfolio-history []
   (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
-        qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7))) ;;;;
-        qt-date-yyyymmdd-2w (t/gdate->yyyyMMdd (plus qt-date (days -12))) ;;;;
+        qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7)))
+        qt-date-yyyymmdd-2w (t/gdate->yyyyMMdd (plus qt-date (days -12)))
         date-map (distinct (into [] (for [k (sort (conj (position-historical-dates) qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd))] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
         start-period (rf/subscribe [:portfolio-history/start-period])
         end-period (rf/subscribe [:portfolio-history/end-period])
