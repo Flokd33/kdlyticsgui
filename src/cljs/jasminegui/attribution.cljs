@@ -533,11 +533,10 @@
                              {:data           @(rf/subscribe [:backtest-output])
                               :columns        (into [{:Header "Strategy" :accessor "strategy" :width 150}
                                                      {:Header "Index" :accessor "index" :width 125}
-                                                     {:Header "Period" :accessor "period" :width 75 :style {:textAlign "right"}}
-                                                     ]
+                                                     {:Header "Period" :accessor "period" :width 75 :style {:textAlign "right"}}]
                                                     (for [y (range 2016 2023)]
-                                                      (tables/nb-col y (str "y" y) 75 #(tables/nb-cell-format "%.1f" 100 %))))
-                              :showPagination true :sortable false :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"}]
+                                                      (tables/nb-col y (str "y" y) 75 #(tables/nb-cell-format "%.1f%" 100 %))))
+                              :showPagination true :sortable true :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"}]
 
                             ])])
 
