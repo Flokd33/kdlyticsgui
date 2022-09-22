@@ -505,6 +505,8 @@
                                                       "sensitive" ir-sensitive
                                                       "insensitive" ir-insensitive)))
             download-columns [:maturity-band :ust :sensitive :insensitive :total]]
+        ;(println (t/chainfilter {:isin "XS2056723468"} positions))
+        ;(println (select-keys (first (t/chainfilter {:isin "XS2056723468"} positions)) [:mdur-delta :contrib-mdur]))
         [box :class "subbody rightelement" :child
          (gt/element-box-with-cols "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
                                    [[h-box :gap "5px" :align :center :children [[title :level :level3 :label "Portfolio:"]
