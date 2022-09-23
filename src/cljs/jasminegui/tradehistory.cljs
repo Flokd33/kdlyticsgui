@@ -225,7 +225,7 @@
         display (reverse (sort-by :date (remove #(some #{(:trade %)} ["Coupon Payment" "Scrip Transfer"]) modal-data)))
         nominal (> (Math/abs (first (vals (dissoc (first display) :date :trade :price)))) 100000) ;if bigger than 100k, it's a nominal, otherwise bps
         ]
-    (println modal-data)
+    ;(println modal-data)
     (if show-modal
       [modal-panel
        :wrap-nicely? true
@@ -510,7 +510,7 @@
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
-    (println (first @(rf/subscribe [:traded-since-date-output/flat-data])))
+    ;(println (first @(rf/subscribe [:traded-since-date-output/flat-data])))
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history with performance") :level :level1]

@@ -469,7 +469,7 @@
         leg (r/cursor trade-implementation [:tradeanalyser.implementation/trade-legs leg-number])
         portfolios @(rf/subscribe [:portfolios])
         dw "100px"]
-    (println leg)
+    ;(println leg)
 
     [v-box  :gap "0px" :padding "10px" :width "450px" :align :start :style {:border "solid 1px grey"}
      :children

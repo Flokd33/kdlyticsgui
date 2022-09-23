@@ -994,15 +994,26 @@
 
 (defn allianz-loss-report []
   (when (empty? @(rf/subscribe [:allianz-loss-report])) (rf/dispatch [:get-allianz-loss-report]))
-  [box :class "subbody rightelement" :child
+  (let [data (sort-by :Bond @(rf/subscribe [:allianz-loss-report]))
+        positions_raw @(rf/subscribe [:positions])
+        positions_IAKLEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAKLEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAKLEMCD"} positions_raw))
+        positions_IALEEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IALEEMCD"} positions_raw)) (t/chainfilter {:portfolio "IALEEMCD"} positions_raw))
+        positions_IAUNEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAUNEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAUNEMCD"} positions_raw))
+        positions_IAPKEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAPKEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAPKEMCD"} positions_raw))
+        data-clean (for [isin data]
+                       (assoc isin :IAKLEMCD_loss_budget_norm  (/ (isin :IAKLEMCD_loss_budget_pct) (:weight (positions_IAKLEMCD (isin :ISIN) )))    )
+          )
+        ]
+    (println (last data-clean))
+    [box :class "subbody rightelement" :child
    (gt/element-box-generic "allianz-loss-report-table" max-width "Allianz P&L budget"
                            {:target-id "allianz-loss-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:allianz-loss-report]) "allianz")}
                            [[:> ReactTable
-                             {:data           (sort-by :Bond @(rf/subscribe [:allianz-loss-report]))
+                             {:data           data
                               :columns        (conj
                                                 (map (fn [x] {:Header x :columns [(tables/nb-col "Loss budget %" (str x "_loss_budget_pct") 120 #(tables/nb-cell-format "%.1f%" 1. %) tables/sum-rows)
                                                                                   (tables/nb-col "EUR gross P&L" (str x "_eur_gross_pnl") 120 tables/nb-thousand-cell-format tables/sum-rows)]})
                                                      ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"])
                                                 {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 120}
                                                                           {:Header "ISIN" :accessor "ISIN" :width 120}]})
-                              :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])])
+                              :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])]))
