@@ -1003,7 +1003,15 @@
         positions_IAUNEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAUNEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAUNEMCD"} positions_raw))
         positions_IAPKEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAPKEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAPKEMCD"} positions_raw))
         data-clean (for [isin data]
-                       (assoc isin :IAKLEMCD_loss_budget_norm  (/ (isin :IAKLEMCD_loss_budget_pct) (:weight (positions_IAKLEMCD (isin :ISIN) )))    )
+                       (assoc isin :IAKLEMCD_loss_budget_norm  (/ (isin :IAKLEMCD_loss_budget_pct) (:weight (positions_IAKLEMCD (isin :ISIN))))
+                                   :IAKLEMCD_weight (:weight (positions_IAKLEMCD (isin :ISIN)))
+                                   :IALEEMCD_loss_budget_norm (/ (isin :IALEEMCD_loss_budget_pct) (:weight (positions_IALEEMCD (isin :ISIN))))
+                                   :IALEEMCD_weight (:weight (positions_IALEEMCD (isin :ISIN)))
+                                   :IAUNEMCD_loss_budget_norm (/ (isin :IAUNEMCD_loss_budget_pct) (:weight (positions_IAUNEMCD (isin :ISIN))))
+                                   :IAUNEMCD_weight (:weight (positions_IAUNEMCD (isin :ISIN)))
+                                   :IAPKEMCD_loss_budget_norm (/ (isin :IAPKEMCD_loss_budget_pct) (:weight (positions_IAPKEMCD (isin :ISIN))))
+                                   :IAPKEMCD_weight (:weight (positions_IAPKEMCD (isin :ISIN)))
+                                   )
           )
         ]
     (println (last data-clean))
@@ -1011,11 +1019,15 @@
    (gt/element-box-generic "allianz-loss-report-table" max-width "Allianz P&L budget"
                            {:target-id "allianz-loss-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:allianz-loss-report]) "allianz")}
                            [[:> ReactTable
-                             {:data           data
+                             {:data           data-clean
                               :columns        (conj
-                                                (map (fn [x] {:Header x :columns [(tables/nb-col "Loss budget %" (str x "_loss_budget_pct") 120 #(tables/nb-cell-format "%.1f%" 1. %) tables/sum-rows)
-                                                                                  (tables/nb-col "EUR gross P&L" (str x "_eur_gross_pnl") 120 tables/nb-thousand-cell-format tables/sum-rows)]})
+                                                (map (fn [x] {:Header x :columns [(tables/nb-col "Loss budget %" (str x "_loss_budget_pct") 100 #(tables/nb-cell-format "%.1f%" 1. %) tables/sum-rows)
+                                                                                  (tables/nb-col "EUR gross P&L" (str x "_eur_gross_pnl") 100 tables/nb-thousand-cell-format tables/sum-rows)
+                                                                                  (tables/nb-col "Weight" (str x "_weight") 80 #(tables/nb-cell-format "%.1f%" 1. %)  tables/sum-rows)
+                                                                                  (tables/nb-col "Loss budget nor." (str x "_loss_budget_norm") 110 #(tables/nb-cell-format "%.1f%" 1. %)  tables/sum-rows)
+                                                                                  ]})
                                                      ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"])
-                                                {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 120}
-                                                                          {:Header "ISIN" :accessor "ISIN" :width 120}]})
+                                                {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 90}
+                                                                          {:Header "ISIN" :accessor "ISIN" :width 100}]})
                               :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])]))
+
