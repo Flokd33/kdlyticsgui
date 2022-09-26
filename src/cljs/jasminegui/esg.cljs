@@ -548,7 +548,6 @@
                                                    {:Header "P8 environment" :headerStyle header-style :accessor "principle_8_environment" :width 90 :style {:textAlign "center"}}
                                                    {:Header "P9 environment" :headerStyle header-style :accessor "principle_9_environment" :width 90 :style {:textAlign "center"}}
                                                    {:Header "P10 anti corruption" :headerStyle header-style :accessor "principle_10_anti_corruption" :width 90 :style {:textAlign "center"}}
-
                                                    ]}
 
                                         ]
@@ -595,5 +594,5 @@
               :esg-engagements [esg-engagements]
               [:div.output "nothing to display"])]))
 
-(defn esg-view []
+(defn gb-calculator-summary []
   [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/esg-navigation :esg/active-home) [active-home] [modal-engagements]]])

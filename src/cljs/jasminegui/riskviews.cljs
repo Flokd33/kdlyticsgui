@@ -1015,7 +1015,7 @@
                                    )
           )
         ]
-    (println (last data-clean))
+    ;(println (last data-clean))
     [box :class "subbody rightelement" :child
    (gt/element-box-generic "allianz-loss-report-table" max-width "Allianz P&L budget"
                            {:target-id "allianz-loss-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:allianz-loss-report]) "allianz")}

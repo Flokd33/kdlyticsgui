@@ -14,6 +14,7 @@
     [oz.core :as oz]
     [goog.string :as gstring]
     [cljs-time.core :refer [today]]
+    [jasminegui.esgreport :as esg]
     [goog.string.format]
     [reagent-contextmenu.menu :as rcm]
     [jasminegui.qs.qstables :as qstables]
@@ -141,7 +142,18 @@
                                       (rf/dispatch [:navigation/active-qs :historical-charts])))]
          ["Trade finder" (fn [] (do (reset! trade-finder-isin ISIN) (rf/dispatch [:navigation/active-qs :trade-finder])))]
          ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
-         ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]]))))
+         ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
+         ["ESG Report" (fn [] (do (reset! esg/gb-isin (:security_identifier (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
+                                  (reset! esg/gb-date (:date2 (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
+                                  (reset! esg/report-type (:report (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
+                                  (reset! esg/esg-report-selected (str (case @esg/report-type "green-bond" "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN ISIN} @(rf/subscribe [:quant-model/model-output])))) "_" @esg/gb-date))
+                                  ;(println @esg/gb-isin)
+                                  ;(println @esg/gb-date)
+                                  ;(println @esg/report-type)
+                                  (rf/dispatch [:post-esg-report-extract @esg/gb-isin @esg/gb-date @esg/report-type])
+                                  (rf/dispatch [:navigation/active-view :esg])
+                                  (rf/dispatch [:esg/active-home :reporting]) ; change focus
+                                  ))]]))))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
 
@@ -161,7 +173,7 @@
 
 (defn qs-table [mytitle data]
   (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
-    ;(println @(rf/subscribe [:quant-model/model-js-output]))
+    ;(println (first @(rf/subscribe [:quant-model/model-js-output])))
      [v-box :class "element"  :gap "10px" :width "1690px"
       :children [[h-box :align :center :gap "10px" :children [[title :label mytitle :level :level1]
                                                               [gap :size "1"]

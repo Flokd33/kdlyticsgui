@@ -409,9 +409,17 @@
               ]]
     ))
 
+(def esg-reports-raw (r/atom @(rf/subscribe [:esg-report-list])))
+(def qt-raw (r/atom @(rf/subscribe [:quant-model/model-output])))
+(def esg-reports-clean (r/atom (for [i @esg-reports-raw] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} @qt-raw))) "_" (i :date2))))))
+
+;(def esg-reports @(rf/subscribe [:esg-report-list]))
+;(def qt @(rf/subscribe [:quant-model/model-output]))
+;(def esg-reports-clean (for [i esg-reports-raw] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} qt-raw))) "_" (i :date2)))))
+
 (defn reporting-display []
-  (let [esg-reports @(rf/subscribe [:esg-report-list])
-        qt @(rf/subscribe [:quant-model/model-output])
+  (let [esg-reports @esg-reports-raw
+        qt @qt-raw
         esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
         esg-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id esg-reports-clean))))
         report-selected @(rf/subscribe [:esg-report-extract])
