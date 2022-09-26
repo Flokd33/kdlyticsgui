@@ -507,6 +507,8 @@
                                                       "sensitive" ir-sensitive
                                                       "insensitive" ir-insensitive)))
             download-columns [:maturity-band :ust :sensitive :insensitive :total]]
+        ;(println (t/chainfilter {:isin "XS2056723468"} positions))
+        ;(println (select-keys (first (t/chainfilter {:isin "XS2056723468"} positions)) [:mdur-delta :contrib-mdur]))
         [box :class "subbody rightelement" :child
          (gt/element-box-with-cols "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
                                    [[h-box :gap "5px" :align :center :children [[title :level :level3 :label "Portfolio:"]
@@ -907,8 +909,8 @@
 (defn portfolio-history []
   (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
-        qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7))) ;;;;
-        qt-date-yyyymmdd-2w (t/gdate->yyyyMMdd (plus qt-date (days -12))) ;;;;
+        qt-date-yyyymmdd-1w (t/gdate->yyyyMMdd (plus qt-date (days -7)))
+        qt-date-yyyymmdd-2w (t/gdate->yyyyMMdd (plus qt-date (days -12)))
         date-map (distinct (into [] (for [k (sort (conj (position-historical-dates) qt-date-yyyymmdd-2w qt-date-yyyymmdd-1w qt-date-yyyymmdd))] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))
         start-period (rf/subscribe [:portfolio-history/start-period])
         end-period (rf/subscribe [:portfolio-history/end-period])
@@ -995,15 +997,38 @@
 
 (defn allianz-loss-report []
   (when (empty? @(rf/subscribe [:allianz-loss-report])) (rf/dispatch [:get-allianz-loss-report]))
-  [box :class "subbody rightelement" :child
+  (let [data (sort-by :Bond @(rf/subscribe [:allianz-loss-report]))
+        positions_raw @(rf/subscribe [:positions])
+        positions_IAKLEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAKLEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAKLEMCD"} positions_raw))
+        positions_IALEEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IALEEMCD"} positions_raw)) (t/chainfilter {:portfolio "IALEEMCD"} positions_raw))
+        positions_IAUNEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAUNEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAUNEMCD"} positions_raw))
+        positions_IAPKEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAPKEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAPKEMCD"} positions_raw))
+        data-clean (for [isin data]
+                       (assoc isin :IAKLEMCD_loss_budget_norm  (/ (isin :IAKLEMCD_loss_budget_pct) (:weight (positions_IAKLEMCD (isin :ISIN))))
+                                   :IAKLEMCD_weight (:weight (positions_IAKLEMCD (isin :ISIN)))
+                                   :IALEEMCD_loss_budget_norm (/ (isin :IALEEMCD_loss_budget_pct) (:weight (positions_IALEEMCD (isin :ISIN))))
+                                   :IALEEMCD_weight (:weight (positions_IALEEMCD (isin :ISIN)))
+                                   :IAUNEMCD_loss_budget_norm (/ (isin :IAUNEMCD_loss_budget_pct) (:weight (positions_IAUNEMCD (isin :ISIN))))
+                                   :IAUNEMCD_weight (:weight (positions_IAUNEMCD (isin :ISIN)))
+                                   :IAPKEMCD_loss_budget_norm (/ (isin :IAPKEMCD_loss_budget_pct) (:weight (positions_IAPKEMCD (isin :ISIN))))
+                                   :IAPKEMCD_weight (:weight (positions_IAPKEMCD (isin :ISIN)))
+                                   )
+          )
+        ]
+    (println (last data-clean))
+    [box :class "subbody rightelement" :child
    (gt/element-box-generic "allianz-loss-report-table" max-width "Allianz P&L budget"
                            {:target-id "allianz-loss-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:allianz-loss-report]) "allianz")}
                            [[:> ReactTable
-                             {:data           (sort-by :Bond @(rf/subscribe [:allianz-loss-report]))
+                             {:data           data-clean
                               :columns        (conj
-                                                (map (fn [x] {:Header x :columns [(tables/nb-col "Loss budget %" (str x "_loss_budget_pct") 120 #(tables/nb-cell-format "%.1f%" 1. %) tables/sum-rows)
-                                                                                  (tables/nb-col "EUR gross P&L" (str x "_eur_gross_pnl") 120 tables/nb-thousand-cell-format tables/sum-rows)]})
+                                                (map (fn [x] {:Header x :columns [(tables/nb-col "Loss budget %" (str x "_loss_budget_pct") 100 #(tables/nb-cell-format "%.1f%" 1. %) tables/sum-rows)
+                                                                                  (tables/nb-col "EUR gross P&L" (str x "_eur_gross_pnl") 100 tables/nb-thousand-cell-format tables/sum-rows)
+                                                                                  (tables/nb-col "Weight" (str x "_weight") 80 #(tables/nb-cell-format "%.1f%" 1. %)  tables/sum-rows)
+                                                                                  (tables/nb-col "Loss budget nor." (str x "_loss_budget_norm") 110 #(tables/nb-cell-format "%.1f%" 1. %)  tables/sum-rows)
+                                                                                  ]})
                                                      ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"])
-                                                {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 120}
-                                                                          {:Header "ISIN" :accessor "ISIN" :width 120}]})
-                              :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])])
+                                                {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 90}
+                                                                          {:Header "ISIN" :accessor "ISIN" :width 100}]})
+                              :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])]))
+

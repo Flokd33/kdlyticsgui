@@ -223,6 +223,19 @@
     (rf/dispatch [:post-esg-report-upload summary])
     ))
 
+(def is-gb-eligible (r/atom "No"))
+
+(defn gb-eligible []
+  (let [answers @gb-calculator-summary]
+    (if (and (not= (get-in answers [:project-evaluation/controversies :analyst_answer]) "Yes2")
+             (and (not= (get-in answers [:project-evaluation/categories :analyst_answer]) "other") (some? (get-in answers [:project-evaluation/categories :analyst_answer])))
+             (= (get-in answers [:proceed-management/use :analyst_answer]) "Yes")
+             (= (get-in answers [:proceed-management/tracked :analyst_answer]) "Yes")
+             (= (get-in answers [:reporting-ni/reporting :analyst_answer]) "Yes")
+             (= (get-in answers [:independent-verification/independent-verification :analyst_answer]) "Yes"))
+      (reset! is-gb-eligible "Yes")
+      (reset! is-gb-eligible "No"))))
+
 (defn green-bond-scoring-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))
         analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)})]
@@ -232,12 +245,17 @@
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
                           [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12}
-                                                                      :on-change #(reset! identifier %)]]]
+                                                                      :on-change #(do (reset! identifier %) (reset! is-gb-eligible "No"))]]]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
                           [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name
                            :on-change #(reset! analyst-name %)]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (js/parseInt (str (* @gb-score-new-issue (/ 100 70)))) ]]]
+
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "SFRD Sustainable Investment Eligibility" :level :level2]]
+                                                             [box :width dropdown-width :child [button :label @is-gb-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-gb-eligible "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]]
+
+
               [title :label "Summary" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "Analyst summary/notes"]]
@@ -249,6 +267,7 @@
                           [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])%)
                                            (if (= "other" %) (reset! other-disabled? false) (reset! other-disabled? true))
+                                           (gb-eligible)
                                            (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Other:"]
@@ -263,6 +282,7 @@
                           [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                            :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) "") )
                                             (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %)
+                                           (gb-eligible)
                                            (gb-score-calculator))]]]
               (case (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                             "No" nil
@@ -275,7 +295,7 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the green bond have independent verification?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:independent-verification/independent-verification :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:independent-verification/independent-verification :analyst_answer ]) %) (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:independent-verification/independent-verification :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Who provides the independent verification?"]
                           [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:independent-verification/second-opinion :analyst_answer ])
@@ -285,7 +305,7 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are all the proceeds used for financing/refinancing green projects?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/use :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/use :analyst_answer ]) %) (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/use :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Refinancing of an existing project or initial financing? "]
                           [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices existing-choices
@@ -294,7 +314,7 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are the use of proceeds tracked?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ]) %) (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are the use of proceeds ringfenced?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer ])
@@ -304,7 +324,7 @@
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is there regular reporting on the impact stemming from the green projects?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ]) %) (gb-score-calculator))]]]
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
 
               [title :label "Country Framework" :level :level2 ]
               [h-box :gap "10px" :align :center
