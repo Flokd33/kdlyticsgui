@@ -309,7 +309,7 @@
 
    :n91held                             {:Header "Held?" :accessor "n91held" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show false}
    :n91heldvisible                      {:Header "Held?" :accessor "n91held" :width 70 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show true}
-   :esg-report                          {:Header "Exist?" :accessor "esg-report" :width 70 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show true}
+   :esg-report                          {:Header "Report(s)" :accessor "esg-report" :width 70 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :show true}
 
 
    :BBG_CEMBI_D1Y_BETA                  {:Header "vs CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 60 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}

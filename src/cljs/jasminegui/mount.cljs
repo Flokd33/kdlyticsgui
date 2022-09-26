@@ -351,6 +351,7 @@
            :navigation/active-home
            :navigation/active-var
            :navigation/active-qs
+           :navigation/active-esg
            :navigation/active-attribution
            :navigation/active-scorecard
            :navigation/show-mounting-modal
@@ -508,6 +509,9 @@
            :esg/msci-ccc-weight
            :esg/analyst-commentary
            :esg/carbon-jasmine
+
+
+           :esg/active-home
 
            :trade-history/active-home
 

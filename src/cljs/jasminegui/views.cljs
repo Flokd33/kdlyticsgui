@@ -106,7 +106,7 @@
       :portfolio-review [pr/view]
       :betas            [betas/view]
       :quant-scores     [quantscores/view]
-      :esg              [esg/esg-view]
+      :esg              [esg/gb-calculator-summary]
       :scorecard        [scorecard/view]
       :administration   [administration/administration-view]
       :ta2022           [ta2022.tradeview/ta2022-view]
