@@ -746,7 +746,8 @@
 (rf/reg-event-fx
   :get-position-history
   (fn [{:keys [db]} [_ portfolio filter-one filter-two field dateseq]]
-    {:db                 (assoc db :navigation/show-mounting-modal true)
+    {:db                 (assoc db :navigation/show-mounting-modal true
+                                   :portfolio-history/table-filter [])
      :http-post-dispatch {:url (str static/server-address "position-history") :edn-params {:portfolio portfolio :filter-one filter-one :filter-two filter-two :field field :dateseq dateseq}
                           :dispatch-key [:portfolio-history/data]}}))
 

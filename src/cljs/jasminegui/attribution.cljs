@@ -303,7 +303,8 @@
 (rf/reg-event-fx
   :get-attribution-history
   (fn [{:keys [db]} [_ m]]
-    {:db                 (assoc db :navigation/show-mounting-modal true)
+    {:db                 (assoc db :navigation/show-mounting-modal true
+                                   :attribution-history/table-filter [])
      :http-post-dispatch {:url (str static/server-address "attribution-history") :edn-params m
                           :dispatch-key [:attribution-history/data]}}))
 
