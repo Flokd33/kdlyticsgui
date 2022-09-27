@@ -143,13 +143,13 @@
          ["Trade finder" (fn [] (do (reset! trade-finder-isin ISIN) (rf/dispatch [:navigation/active-qs :trade-finder])))]
          ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
          ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
-         ["ESG Report" (fn [] (do (reset! esg/gb-isin (:security_identifier (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
+         ["ESG Report" (fn [] (do (esg/refresh-esg-atoms!)
+                                  ;(println @esg/esg-reports-clean)
+                                (reset! esg/gb-isin (:security_identifier (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
                                   (reset! esg/gb-date (:date2 (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
                                   (reset! esg/report-type (:report (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
                                   (reset! esg/esg-report-selected (str (case @esg/report-type "green-bond" "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN ISIN} @(rf/subscribe [:quant-model/model-output])))) "_" @esg/gb-date))
-                                  ;(println @esg/gb-isin)
-                                  ;(println @esg/gb-date)
-                                  ;(println @esg/report-type)
+
                                   (rf/dispatch [:post-esg-report-extract @esg/gb-isin @esg/gb-date @esg/report-type])
                                   (rf/dispatch [:navigation/active-view :esg])
                                   (rf/dispatch [:esg/active-home :reporting]) ; change focus

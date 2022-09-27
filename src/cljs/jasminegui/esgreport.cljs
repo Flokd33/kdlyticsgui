@@ -151,13 +151,15 @@
 (def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
 
 (def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
-                                    :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
+                                    :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""   :analyst_score 0},
                                     :project-evaluation/description                        {:question_id 3  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
                                     :project-evaluation/controversies                      {:question_id 4  :question_category "new-issue" :analyst_answer "Yes2"    :analyst_score 0},
                                     :project-evaluation/controversies-comment              {:question_id 27  :question_category "new-issue" :analyst_answer ""    :analyst_score 0}
                                     :independent-verification/independent-verification     {:question_id 5  :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
                                     :independent-verification/second-opinion               {:question_id 6 :question_category "new-issue" :analyst_answer ""     :analyst_score 0}
                                     :proceed-management/ringfencing                        {:question_id 7 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
+
+                                    :proceed-management/clear-process                      {:question_id 28 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
                                     :proceed-management/tracked                            {:question_id 8 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
                                     :proceed-management/use                                {:question_id 9 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
                                     :proceed-management/refi-or-exi                        {:question_id 10 :question_category "new-issue" :analyst_answer nil   :analyst_score 0},
@@ -187,6 +189,7 @@
                  :independent-verification/independent-verification   {:Yes score-1 :No 0}
                  :proceed-management/use                              {:Yes score-1 :No 0}
                  :proceed-management/ringfencing                      {:Yes score-1 :No 0}
+                 :proceed-management/clear-process                    {:Yes score-1 :No 0}
                  :proceed-management/tracked                          {:Yes score-1 :No 0}
                  :reporting-ni/reporting                              {:Yes score-1 :No 0}
                  :country-framework/better-than-national              {:Yes score-1 :Yes2 score-2 :No 0}
@@ -312,6 +315,10 @@
                            :model (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Does the company have a clear process to determine Green Project eligibility?"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/clear-process :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/clear-process :analyst_answer ]) %) (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are the use of proceeds tracked?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
@@ -409,15 +416,18 @@
               ]]
     ))
 
-(def esg-reports-raw (r/atom @(rf/subscribe [:esg-report-list])))
-(def qt-raw (r/atom @(rf/subscribe [:quant-model/model-output])))
-(def esg-reports-clean (r/atom (for [i @esg-reports-raw] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} @qt-raw))) "_" (i :date2))))))
+(def esg-reports-raw (r/atom ""))
+(def qt-raw (r/atom ""))
+(def esg-reports-clean (r/atom ""))
 
-;(def esg-reports @(rf/subscribe [:esg-report-list]))
-;(def qt @(rf/subscribe [:quant-model/model-output]))
-;(def esg-reports-clean (for [i esg-reports-raw] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} qt-raw))) "_" (i :date2)))))
+(defn refresh-esg-atoms! []
+  (reset! esg-reports-raw @(rf/subscribe [:esg-report-list]))
+  (reset! qt-raw @(rf/subscribe [:quant-model/model-output]))
+  (reset! esg-reports-clean (for [i @esg-reports-raw] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} @qt-raw))) "_" (i :date2)))) )
+  )
 
 (defn reporting-display []
+  (refresh-esg-atoms!)
   (let [esg-reports @esg-reports-raw
         qt @qt-raw
         esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
@@ -487,6 +497,7 @@
                           [title :label "Use and Management of Proceeds" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Refinancing of an existing project or initial financing?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "use"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are all the proceeds used for financing/refinancing green projects?"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "refi-or-exi"} report-selected)))} existing-choices))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the company have a clear process to determine Green Project eligibility?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "clear-process"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds tracked?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds ringfenced?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "ringfencing"} report-selected))))]]]
                           [title :label "Reporting" :level :level2]
