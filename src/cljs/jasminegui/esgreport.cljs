@@ -48,10 +48,10 @@
 (def year-disabled? (r/atom true))
 (def sbti-disabled? (r/atom true))
 
-(def esg-report-selected (r/atom "GB_AYDEMT27_2022-09-02"))
-(def gb-isin (r/atom "XS2368781477"))
-(def gb-date (r/atom "2022-09-02"))
-(def report-type (r/atom "green-bond"))
+;(def esg-report-selected (r/atom "GB_AYDEMT27_2022-09-02"))
+;(def gb-isin (r/atom "XS2368781477"))
+;(def gb-date (r/atom "2022-09-02"))
+;(def report-type (r/atom "green-bond"))
 
 (def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
 (def yes-no-choice-2 [{:id "Yes1" :label "Yes (small)"} {:id "Yes2"  :label "Yes (big)"} {:id "No"  :label "No"}])
@@ -77,6 +77,8 @@
   (fn [{:keys [db]} [_]]
     {:http-get-dispatch {:url          (str static/server-address "esg-report-list")
                          :dispatch-key [:esg-report-list]}}))
+
+
 
 (rf/reg-event-fx
   :post-esg-report-extract
@@ -416,21 +418,37 @@
               ]]
     ))
 
-(def esg-reports-raw (r/atom ""))
-(def qt-raw (r/atom ""))
-(def esg-reports-clean (r/atom ""))
+(def report-eligibility (r/atom "No"))
 
-(defn refresh-esg-atoms! []
-  (reset! esg-reports-raw @(rf/subscribe [:esg-report-list]))
-  (reset! qt-raw @(rf/subscribe [:quant-model/model-output]))
-  (reset! esg-reports-clean (for [i @esg-reports-raw] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} @qt-raw))) "_" (i :date2)))) )
+(defn report-eligibility! []
+  (let [report-type @(rf/subscribe [:esg/report-type])
+        report-selected  @(rf/subscribe [:esg-report-extract])
+        eligible (case report-type
+                   "transition-fund" (if (and (= (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))) "Yes")
+                                              (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))) "Yes")
+                                                  (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} report-selected))) "Yes")
+                                                  (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} report-selected))) "Yes")
+                                                  (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} report-selected))) "Yes")))
+                                       "Yes"
+                                       "No")
+                   "green-bond" (if (and (not= (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected))) "Yes2")
+                        (and (not= (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected))) "other") (some? (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected)))))
+                                         (= (:analyst_answer (first (t/chainfilter {:description_short "use"} report-selected))) "Yes")
+                                         (= (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected))) "Yes")
+                                         (= (:analyst_answer (first (t/chainfilter {:description_short "reporting"} report-selected))) "Yes")
+                                         (= (:analyst_answer (first (t/chainfilter {:description_short "independant-verification"} report-selected))) "Yes"))
+                     "Yes"
+                     "No")
+                   )
+        ]
+    (reset! report-eligibility eligible)
+    ;(println (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected))))
+    )
   )
 
 (defn reporting-display []
-  (refresh-esg-atoms!)
-  (let [esg-reports @esg-reports-raw
-        qt @qt-raw
-        esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
+  (let [esg-reports-clean @(rf/subscribe [:esg-report-list])
+        qt @(rf/subscribe [:quant-model/model-output])
         esg-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id esg-reports-clean))))
         report-selected @(rf/subscribe [:esg-report-extract])
         isin ((first report-selected) :security_identifier)
@@ -444,9 +462,11 @@
         nxt-call-dt (if (nil? (:NXT_CALL_DT qt-isin)) "NA" (str (subs (:NXT_CALL_DT qt-isin) 6 8) "-" (subs (:NXT_CALL_DT qt-isin) 4 6) "-" (subs (:NXT_CALL_DT qt-isin) 0 4)))
         amt-out (if (nil? (:AMT_OUTSTANDING qt-isin)) "NA" (:AMT_OUTSTANDING qt-isin))
         analyst-score (reduce + (map :analyst_score report-selected))
-        report-category (case @report-type
+        report-type @(rf/subscribe [:esg/report-type])
+        esg-report-selected @(rf/subscribe [:esg/esg-report-selected])
+        report-category (case report-type
              "transition-fund" "Transition Finance Report"
-             "green-bond" (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
+             "green-bond" (if (= (:category (first esg-report-selected)) "reporting") "Follow up reporting" "New issue report")
              nil
              )
         ]
@@ -457,12 +477,16 @@
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label "Report"]
                             [single-dropdown :width categories-list-width-long :choices esg-reports-clean-input :filter-box? true :model esg-report-selected
-                             :on-change #(do (reset! esg-report-selected %)
-                                             (reset! gb-isin (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean))))
-                                             (reset! gb-date (:date2 (first (t/chainfilter {:unique_id %} esg-reports-clean))))
-                                             (reset! report-type (:report (first (t/chainfilter {:unique_id %} esg-reports-clean))))
-                                             (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date @report-type])
-                                             )]
+                             :on-change #(do                ;(rf/dispatch [:esg/refresh-esg (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
+                                           ;i will not use the above logic for now as it doesnt understand what report to take in that case
+                                             (rf/dispatch [:esg/esg-report-selected %])
+                                             (rf/dispatch [:esg/gb-isin (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
+                                             (rf/dispatch [:esg/date (:date2 (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
+                                             (rf/dispatch [:esg/report-type (:report (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
+                                             (rf/dispatch [:post-esg-report-extract (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean)))
+                                                           (:date2 (first (t/chainfilter {:unique_id %} esg-reports-clean)))
+                                                           (:report (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
+                                             (report-eligibility!))]
                             ]]
                 ]]
     [v-box :width "1280px" :gap "5px" :class "element"
@@ -479,9 +503,12 @@
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Amount outstanding"] [p {:style {:width "500px" :text-align :justify} } (tools/tnfmt amt-out)]]] ;:Cell tables/nfcell2 (tools/tnfmt (:total-trade @leg))
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Coupon"] [p {:style {:width "500px" :text-align :justify}} coupon]]]
                         [gap :size "1"]]
-                       (case @report-type
+                       (case report-type
                          "green-bond" (if (not= report-category "Follow up reporting")
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New Issue Score" :level :level2]] [progress-bar :width categories-list-width-long :model (Math/round (/ analyst-score 0.7))]]]
+
+                          [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "SFRD Sustainable Investment Eligibility" :level :level2]]
+                                                                       [button :label @report-eligibility :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @report-eligibility "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
                           [title :label "Summary" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Analyst summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]
                           [gap :size "1"]
@@ -523,6 +550,9 @@
                          )
                          "transition-fund"
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "Transition fund score" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
+                          [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "Transition fund eligibility" :level :level2]]
+                                                                       [button :label @report-eligibility :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @report-eligibility "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
+
                           [title :label "Eligibility" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/issuer working towards net zero alignment?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected)))) ]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/financed activity supporting one of the five transition sectors?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors"} report-selected))))]]]

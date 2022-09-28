@@ -124,10 +124,26 @@
 (def qs-table-favorites (r/atom #{}))
 
 
+(rf/reg-event-fx
+  :esg/refresh-esg
+  (fn [{:keys [db]} [_ ISIN]]
+    (let [esg-date (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))
+          report-type (:report (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))]
+      {:db (assoc db :esg/report-type report-type
+                     :esg/date esg-date
+                     :esg/gb-isin ISIN
+                     :esg/esg-report-selected (str (case @(rf/subscribe [:esg/report-type]) "green-bond" "GB" "TF") "_"
+                                                   (:Bond (first (t/chainfilter {:ISIN ISIN} (:quant-model/model-output db)))) "_"
+                                                   (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db)))))
+                     )
+       :fx [[:dispatch [:post-esg-report-extract ISIN esg-date report-type]]
+            [:dispatch [:navigation/active-view :esg]]
+            [:dispatch [:esg/active-home :reporting]]
+            ]})
+    ))
+
 (defn fnevt [state rowInfo column instance evt]
-  (let [bond (gobj/getValueByKeys rowInfo "original" "Bond") ISIN (gobj/getValueByKeys rowInfo "original" "ISIN")
-        ;fav (contains? @qs-table-favorites ISIN)
-        ]
+  (let [bond (gobj/getValueByKeys rowInfo "original" "Bond") ISIN (gobj/getValueByKeys rowInfo "original" "ISIN")]
     (if (= (gobj/getValueByKeys column "Header") "*")
       (swap! qs-table-favorites (if (contains? @qs-table-favorites ISIN) disj conj) ISIN)
       (rcm/context!
@@ -143,17 +159,7 @@
          ["Trade finder" (fn [] (do (reset! trade-finder-isin ISIN) (rf/dispatch [:navigation/active-qs :trade-finder])))]
          ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
          ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
-         ["ESG Report" (fn [] (do (esg/refresh-esg-atoms!)
-                                  ;(println @esg/esg-reports-clean)
-                                (reset! esg/gb-isin (:security_identifier (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
-                                  (reset! esg/gb-date (:date2 (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
-                                  (reset! esg/report-type (:report (first (t/chainfilter {:security_identifier ISIN} @esg/esg-reports-clean))))
-                                  (reset! esg/esg-report-selected (str (case @esg/report-type "green-bond" "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN ISIN} @(rf/subscribe [:quant-model/model-output])))) "_" @esg/gb-date))
-
-                                  (rf/dispatch [:post-esg-report-extract @esg/gb-isin @esg/gb-date @esg/report-type])
-                                  (rf/dispatch [:navigation/active-view :esg])
-                                  (rf/dispatch [:esg/active-home :reporting]) ; change focus
-                                  ))]]))))
+         ["ESG Report" (fn [] (do (rf/dispatch [:esg/refresh-esg ISIN])))]]))))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
 
@@ -174,7 +180,7 @@
 (defn qs-table [mytitle data]
   (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
     ;(println (first @(rf/subscribe [:quant-model/model-js-output])))
-     [v-box :class "element"  :gap "10px" :width "1690px"
+    [v-box :class "element"  :gap "10px" :width "1690px"
       :children [[h-box :align :center :gap "10px" :children [[title :label mytitle :level :level1]
                                                               [gap :size "1"]
                                                               [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "quant-table-output-id")]

@@ -243,6 +243,11 @@
                  :esg/analyst-commentary                             []
                  :esg/carbon-jasmine                                 []
 
+                 :esg/esg-report-selected                           "GB_AYDEMT27_2022-09-02"
+                 :esg/gb-isin                                       "XS2368781477"
+                 :esg/date                                          "2022-09-02"
+                 :esg/report-type                                   "green-bond"
+
                  :quant-model/model-output                           []
                  :quant-model/model-js-output                        #js []
                  :quant-model/bond-isin-map                          {}
@@ -259,7 +264,7 @@
                  :quant-model/saved-charts                           {}
                  :quant-model/saved-advanced-charts                  {}
                  :quant-model/issuer-coverage                        []
-                 :quant-model/analyst-coverage                        []
+                 :quant-model/analyst-coverage                       []
                  :quant-model/model-date                             ""
 
 
@@ -346,7 +351,7 @@
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
 (doseq [k (keys default-db)] (rf/reg-sub k (fn [db] (k db))))
 
-
+;list of keys event for which a dispatch will assoc a value to the db given key event
 (doseq [k [:navigation/active-view
            :navigation/active-home
            :navigation/active-var
@@ -510,6 +515,10 @@
            :esg/analyst-commentary
            :esg/carbon-jasmine
 
+           :esg/esg-report-selected
+           :esg/gb-isin
+           :esg/date
+           :esg/report-type
 
            :esg/active-home
 
