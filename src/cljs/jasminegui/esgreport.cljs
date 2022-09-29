@@ -418,33 +418,25 @@
               ]]
     ))
 
-(def report-eligibility (r/atom "No"))
 
-(defn report-eligibility! []
-  (let [report-type @(rf/subscribe [:esg/report-type])
-        report-selected  @(rf/subscribe [:esg-report-extract])
-        eligible (case report-type
-                   "transition-fund" (if (and (= (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))) "Yes")
-                                              (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))) "Yes")
-                                                  (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} report-selected))) "Yes")
-                                                  (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} report-selected))) "Yes")
-                                                  (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} report-selected))) "Yes")))
-                                       "Yes"
-                                       "No")
-                   "green-bond" (if (and (not= (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected))) "Yes2")
-                        (and (not= (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected))) "other") (some? (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected)))))
-                                         (= (:analyst_answer (first (t/chainfilter {:description_short "use"} report-selected))) "Yes")
-                                         (= (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected))) "Yes")
-                                         (= (:analyst_answer (first (t/chainfilter {:description_short "reporting"} report-selected))) "Yes")
-                                         (= (:analyst_answer (first (t/chainfilter {:description_short "independant-verification"} report-selected))) "Yes"))
-                     "Yes"
-                     "No")
-                   )
-        ]
-    (reset! report-eligibility eligible)
-    ;(println (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected))))
-    )
-  )
+(rf/reg-event-fx
+  :esg/refresh-esg
+  (fn [{:keys [db]} [_ uniq_id]]
+    (let [esg-date (:date2 (first (t/chainfilter {:unique_id uniq_id} (:esg-report-list db))))
+          report-type (:report (first (t/chainfilter {:unique_id uniq_id} (:esg-report-list db))))
+          isin  (:security_identifier (first (t/chainfilter {:unique_id uniq_id} (:esg-report-list db))))
+          ]
+      {:db (assoc db :esg/report-type report-type
+                     ;:esg/date esg-date
+                     ;:esg/gb-isin uniq_id
+                     :esg/esg-report-selected (str (case report-type "green-bond" "GB" "TF") "_"
+                                                   (:Bond (first (t/chainfilter {:ISIN isin} (:quant-model/model-output db)))) "_"
+                                                   (:date2 (first (t/chainfilter {:security_identifier isin} (:esg-report-list db)))))
+                     )
+       :fx [[:dispatch [:post-esg-report-extract isin esg-date report-type]]
+            ;[:dispatch [:esg/refresh-elig]]
+            ]})
+    ))
 
 (defn reporting-display []
   (let [esg-reports-clean @(rf/subscribe [:esg-report-list])
@@ -469,6 +461,24 @@
              "green-bond" (if (= (:category (first esg-report-selected)) "reporting") "Follow up reporting" "New issue report")
              nil
              )
+        eligi (case report-type
+                "transition-fund" (if (and (= (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))) "Yes")
+                                           (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))) "Yes")
+                                               (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} report-selected))) "Yes")
+                                               (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} report-selected))) "Yes")
+                                               (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} report-selected))) "Yes")))
+                                    "Yes"
+                                    "No")
+                "green-bond" (if (and (not= (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected))) "Yes2")
+                                      (and (not= (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected))) "other") (some? (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected)))))
+                                      (= (:analyst_answer (first (t/chainfilter {:description_short "use"} report-selected))) "Yes")
+                                      (= (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected))) "Yes")
+                                      (= (:analyst_answer (first (t/chainfilter {:description_short "reporting"} report-selected))) "Yes")
+                                      (= (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} report-selected))) "Yes"))
+                               "Yes"
+                               "No")
+                )
+
         ]
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
@@ -477,16 +487,7 @@
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label "Report"]
                             [single-dropdown :width categories-list-width-long :choices esg-reports-clean-input :filter-box? true :model esg-report-selected
-                             :on-change #(do                ;(rf/dispatch [:esg/refresh-esg (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
-                                           ;i will not use the above logic for now as it doesnt understand what report to take in that case
-                                             (rf/dispatch [:esg/esg-report-selected %])
-                                             (rf/dispatch [:esg/gb-isin (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
-                                             (rf/dispatch [:esg/date (:date2 (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
-                                             (rf/dispatch [:esg/report-type (:report (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
-                                             (rf/dispatch [:post-esg-report-extract (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean)))
-                                                           (:date2 (first (t/chainfilter {:unique_id %} esg-reports-clean)))
-                                                           (:report (first (t/chainfilter {:unique_id %} esg-reports-clean)))])
-                                             (report-eligibility!))]
+                             :on-change #(do (rf/dispatch [:esg/refresh-esg %]))]
                             ]]
                 ]]
     [v-box :width "1280px" :gap "5px" :class "element"
@@ -508,7 +509,7 @@
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New Issue Score" :level :level2]] [progress-bar :width categories-list-width-long :model (Math/round (/ analyst-score 0.7))]]]
 
                           [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "SFRD Sustainable Investment Eligibility" :level :level2]]
-                                                                       [button :label @report-eligibility :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @report-eligibility "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
+                                                                       [button :label eligi :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= eligi "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
                           [title :label "Summary" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Analyst summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]
                           [gap :size "1"]
@@ -551,7 +552,7 @@
                          "transition-fund"
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "Transition fund score" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
                           [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "Transition fund eligibility" :level :level2]]
-                                                                       [button :label @report-eligibility :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @report-eligibility "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
+                                                                       [button :label eligi :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= eligi "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
 
                           [title :label "Eligibility" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/issuer working towards net zero alignment?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected)))) ]]]

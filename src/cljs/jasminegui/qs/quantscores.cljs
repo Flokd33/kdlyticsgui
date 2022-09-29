@@ -124,19 +124,48 @@
 (def qs-table-favorites (r/atom #{}))
 
 
+;(rf/reg-event-fx
+;  :esg/refresh-elig
+;  (fn [{:keys [db]} [_ ]]
+;    (let [esg-report-extract (:esg-report-extract db)
+;          report-type (:esg/report-type db)]
+;      ;(println (first (:esg-report-extract db)))
+;      ;(println (:esg/esg-report-selected db))
+;      {:db (assoc db :esg/elig (case report-type
+;                                 "transition-fund" (if (and (= (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} esg-report-extract))) "Yes")
+;                                                            (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} esg-report-extract))) "Yes")
+;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} esg-report-extract))) "Yes")
+;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} esg-report-extract))) "Yes")
+;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} esg-report-extract))) "Yes")))
+;                                                     "Yes"
+;                                                     "No")
+;                                 "green-bond" (if (and (not= (:analyst_answer (first (t/chainfilter {:description_short "controversies"} esg-report-extract))) "Yes2")
+;                                                       (and (not= (:analyst_answer (first (t/chainfilter {:description_short "categories"} esg-report-extract))) "other") (some? (:analyst_answer (first (t/chainfilter {:description_short "categories"} esg-report-extract)))))
+;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "use"} esg-report-extract))) "Yes")
+;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "tracked"} esg-report-extract))) "Yes")
+;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "reporting"} esg-report-extract))) "Yes")
+;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} esg-report-extract))) "Yes"))
+;                                                "Yes"
+;                                                "No")
+;                                 )
+;                     )
+;       })
+;    ))
+
 (rf/reg-event-fx
-  :esg/refresh-esg
+  :esg/refresh-esg-qs
   (fn [{:keys [db]} [_ ISIN]]
     (let [esg-date (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))
           report-type (:report (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))]
       {:db (assoc db :esg/report-type report-type
-                     :esg/date esg-date
-                     :esg/gb-isin ISIN
-                     :esg/esg-report-selected (str (case @(rf/subscribe [:esg/report-type]) "green-bond" "GB" "TF") "_"
+                     ;:esg/date esg-date
+                     ;:esg/gb-isin ISIN
+                     :esg/esg-report-selected (str (case report-type "green-bond" "GB" "TF") "_"
                                                    (:Bond (first (t/chainfilter {:ISIN ISIN} (:quant-model/model-output db)))) "_"
                                                    (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db)))))
                      )
        :fx [[:dispatch [:post-esg-report-extract ISIN esg-date report-type]]
+            ;[:dispatch [:esg/refresh-elig]]
             [:dispatch [:navigation/active-view :esg]]
             [:dispatch [:esg/active-home :reporting]]
             ]})
@@ -159,7 +188,7 @@
          ["Trade finder" (fn [] (do (reset! trade-finder-isin ISIN) (rf/dispatch [:navigation/active-qs :trade-finder])))]
          ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
          ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
-         ["ESG Report" (fn [] (do (rf/dispatch [:esg/refresh-esg ISIN])))]]))))
+         ["ESG Report" (fn [] (do (rf/dispatch [:esg/refresh-esg-qs ISIN])))]]))))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
 
