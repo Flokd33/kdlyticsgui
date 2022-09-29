@@ -247,6 +247,7 @@
                  :esg/gb-isin                                       "XS2368781477"
                  :esg/date                                          "2022-09-02"
                  :esg/report-type                                   "green-bond"
+                 :esg/elig                                           "No"
 
                  :quant-model/model-output                           []
                  :quant-model/model-js-output                        #js []
@@ -519,6 +520,7 @@
            :esg/gb-isin
            :esg/date
            :esg/report-type
+           :esg/elig
 
            :esg/active-home
 
