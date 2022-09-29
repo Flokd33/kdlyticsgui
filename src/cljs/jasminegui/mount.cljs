@@ -954,7 +954,7 @@
    {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
 
    {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
-   {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi"  :asset    "esg-jasmine"                   :dispatch-key [:esg/carbon-jasmine]}
+   {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi":asset "esg-jasmine-data-cache"       :dispatch-key [:esg/carbon-jasmine]}
    {:get-key :get-ccc-weight                 :namespace "jasmine.positions"  :asset  "msci-ccc-weight"              :dispatch-key [:esg/msci-ccc-weight]}
 
    {:get-key :get-betas              :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}
