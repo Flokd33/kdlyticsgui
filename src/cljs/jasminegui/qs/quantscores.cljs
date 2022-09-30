@@ -124,34 +124,6 @@
 (def qs-table-favorites (r/atom #{}))
 
 
-;(rf/reg-event-fx
-;  :esg/refresh-elig
-;  (fn [{:keys [db]} [_ ]]
-;    (let [esg-report-extract (:esg-report-extract db)
-;          report-type (:esg/report-type db)]
-;      ;(println (first (:esg-report-extract db)))
-;      ;(println (:esg/esg-report-selected db))
-;      {:db (assoc db :esg/elig (case report-type
-;                                 "transition-fund" (if (and (= (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} esg-report-extract))) "Yes")
-;                                                            (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} esg-report-extract))) "Yes")
-;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} esg-report-extract))) "Yes")
-;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} esg-report-extract))) "Yes")
-;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} esg-report-extract))) "Yes")))
-;                                                     "Yes"
-;                                                     "No")
-;                                 "green-bond" (if (and (not= (:analyst_answer (first (t/chainfilter {:description_short "controversies"} esg-report-extract))) "Yes2")
-;                                                       (and (not= (:analyst_answer (first (t/chainfilter {:description_short "categories"} esg-report-extract))) "other") (some? (:analyst_answer (first (t/chainfilter {:description_short "categories"} esg-report-extract)))))
-;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "use"} esg-report-extract))) "Yes")
-;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "tracked"} esg-report-extract))) "Yes")
-;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "reporting"} esg-report-extract))) "Yes")
-;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} esg-report-extract))) "Yes"))
-;                                                "Yes"
-;                                                "No")
-;                                 )
-;                     )
-;       })
-;    ))
-
 (rf/reg-event-fx
   :esg/refresh-esg-qs
   (fn [{:keys [db]} [_ ISIN]]
@@ -217,10 +189,11 @@
                                                               [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
                                                               [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :tooltip-position :above-center :on-click #(t/csv-link @(rf/subscribe [:quant-model/model-output]) "quant-model-output" (conj (keys (first @(rf/subscribe [:quant-model/model-output]))) :ISIN))]]]
                  [h-box :align :center :gap "10px"
-                  :children (concat (into [] (for [c ["SVR" "Upside/Downside" "Screener (SVR)"]] ;"Summary" "Full"  "Legacy" "New"
+                  :children (concat (into [] (for [c ["Full" "Upside/Downside" "Screener (SVR)" "Performance"]] ;"Summary" "Full"  "Legacy" "New" "SVR"
                                                ^{:key c} [radio-button :label c :value c :model qstables/table-style :on-change #(reset! qstables/table-style %)]))   ;; key should be unique among siblings
                                     [[gap :size "20px"]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:flags]) :label "Show flags?" :on-change #(swap! qstables/table-checkboxes assoc-in [:flags] %)]
+                                     [checkbox :model (r/cursor qstables/table-checkboxes [:isin]) :label "Show isins?" :on-change #(swap! qstables/table-checkboxes assoc-in [:isin] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "20px"]

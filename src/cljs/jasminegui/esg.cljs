@@ -278,6 +278,7 @@
 (defn esg-data []
   "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
   (rf/dispatch [:get-esg-carbon-jasmine])
+  (println @(rf/subscribe [:esg/carbon-jasmine]))
   (let [data-msci (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         data-jasmine (group-by :ticker (first @(rf/subscribe [:esg/carbon-jasmine])))
         ;check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-12 (- (/ (reduce + (map #(:amt_carbon_emissions_1 %) (val ticker))) (count (val ticker))) (:amt_carbon_emissions_1 (first (val ticker))))})
@@ -320,15 +321,12 @@
                                                           :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
         ]
     ;(println (first final-data-clean))
-    ;(println (map #(select-keys %  [:isin :bond :ticker :amt_carbon_emissions_1]) (t/chainfilter {:ticker "TELEFO"} (first @(rf/subscribe [:esg/carbon-jasmine])))))
-    ;(println (:check @esg-checkboxes))
   [v-box :gap "10px" :class "element" :width standard-box-width
    :children [[h-box :gap "10px" :align :center :children [[title :label "ESG data" :level :level1]
                                                            [gap :size "1"]
-                                                           ;[md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link (rf/subscribe [:esg/summary-report]) "esgscores")]
                                                            [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "esg-output-id")]
                                                            [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "esg-output-id")]
-                                                           [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @esg-view "esg-output-view" (keys (first final-data-clean)))] ;(mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))))
+                                                           [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @esg-view "esg-output-view" (keys (first final-data-clean)) )]   ;(mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))))
                                                            [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download data" :tooltip-position :above-center :on-click #(t/csv-link final-data-clean "esg-output-data" (keys (first final-data-clean)))]
                                                ]]
 
@@ -341,7 +339,7 @@
                           [checkbox :model (r/cursor esg-checkboxes [:scope3]) :label "Show scope 3?" :on-change #(swap! esg-checkboxes assoc-in [:scope3] %)]
                           [gap :size "1"]
                           ]]
-              [title :level :level4 :label "Carbon data sourced from Jasmine (except for off-bm data, sourced from MSCI), MSCI scores directly from MSCI server"]
+              [title :level :level4 :label "Carbon data sourced from Jasmine (except for off-bm data, sourced from MSCI), MSCI scores directly from MSCI server - as of previous month end, refreshed mid month"]
               [:div {:id "esg-output-id"}
                [:> ReactTable
                {:data           final-data-clean
@@ -353,7 +351,8 @@
                                                    ;{:Header "Bond" :accessor "bond" :width 100}
                                                    {:Header "Sector" :accessor "sector" :width 100}
                                                    {:Header "Country" :accessor "country" :width 70}]}]
-                        (if (:check @esg-checkboxes) [{:Header "Checks" :columns [{:Header "In Jasmine?" :accessor "off-jasmine" :width 100}]}]);{:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100}
+                        (if (:check @esg-checkboxes) [{:Header "Checks" :columns [{:Header "In Jasmine?" :accessor "off-jasmine" :width 100}
+                                                                                  {:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100}]}])
                         (if (:funda @esg-checkboxes) [{:Header "Fundamentals USD" :columns [{:Header "EV (mils)" :accessor "amt_ev_usd" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                                                             {:Header "Date evic" :accessor "dt_asofdate_evic" :width 100}
                                                                                             {:Header "Mkt cap (mils)" :accessor "amt_marketcap_usd" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
