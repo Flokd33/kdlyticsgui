@@ -14,6 +14,7 @@
     [oz.core :as oz]
     [goog.string :as gstring]
     [cljs-time.core :refer [today]]
+    [jasminegui.esgreport :as esg]
     [goog.string.format]
     [reagent-contextmenu.menu :as rcm]
     [jasminegui.qs.qstables :as qstables]
@@ -123,10 +124,55 @@
 (def qs-table-favorites (r/atom #{}))
 
 
+;(rf/reg-event-fx
+;  :esg/refresh-elig
+;  (fn [{:keys [db]} [_ ]]
+;    (let [esg-report-extract (:esg-report-extract db)
+;          report-type (:esg/report-type db)]
+;      ;(println (first (:esg-report-extract db)))
+;      ;(println (:esg/esg-report-selected db))
+;      {:db (assoc db :esg/elig (case report-type
+;                                 "transition-fund" (if (and (= (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} esg-report-extract))) "Yes")
+;                                                            (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} esg-report-extract))) "Yes")
+;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} esg-report-extract))) "Yes")
+;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} esg-report-extract))) "Yes")
+;                                                                (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} esg-report-extract))) "Yes")))
+;                                                     "Yes"
+;                                                     "No")
+;                                 "green-bond" (if (and (not= (:analyst_answer (first (t/chainfilter {:description_short "controversies"} esg-report-extract))) "Yes2")
+;                                                       (and (not= (:analyst_answer (first (t/chainfilter {:description_short "categories"} esg-report-extract))) "other") (some? (:analyst_answer (first (t/chainfilter {:description_short "categories"} esg-report-extract)))))
+;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "use"} esg-report-extract))) "Yes")
+;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "tracked"} esg-report-extract))) "Yes")
+;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "reporting"} esg-report-extract))) "Yes")
+;                                                       (= (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} esg-report-extract))) "Yes"))
+;                                                "Yes"
+;                                                "No")
+;                                 )
+;                     )
+;       })
+;    ))
+
+(rf/reg-event-fx
+  :esg/refresh-esg-qs
+  (fn [{:keys [db]} [_ ISIN]]
+    (let [esg-date (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))
+          report-type (:report (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))]
+      {:db (assoc db :esg/report-type report-type
+                     ;:esg/date esg-date
+                     ;:esg/gb-isin ISIN
+                     :esg/esg-report-selected (str (case report-type "green-bond" "GB" "TF") "_"
+                                                   (:Bond (first (t/chainfilter {:ISIN ISIN} (:quant-model/model-output db)))) "_"
+                                                   (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db)))))
+                     )
+       :fx [[:dispatch [:post-esg-report-extract ISIN esg-date report-type]]
+            ;[:dispatch [:esg/refresh-elig]]
+            [:dispatch [:navigation/active-view :esg]]
+            [:dispatch [:esg/active-home :reporting]]
+            ]})
+    ))
+
 (defn fnevt [state rowInfo column instance evt]
-  (let [bond (gobj/getValueByKeys rowInfo "original" "Bond") ISIN (gobj/getValueByKeys rowInfo "original" "ISIN")
-        ;fav (contains? @qs-table-favorites ISIN)
-        ]
+  (let [bond (gobj/getValueByKeys rowInfo "original" "Bond") ISIN (gobj/getValueByKeys rowInfo "original" "ISIN")]
     (if (= (gobj/getValueByKeys column "Header") "*")
       (swap! qs-table-favorites (if (contains? @qs-table-favorites ISIN) disj conj) ISIN)
       (rcm/context!
@@ -141,7 +187,8 @@
                                       (rf/dispatch [:navigation/active-qs :historical-charts])))]
          ["Trade finder" (fn [] (do (reset! trade-finder-isin ISIN) (rf/dispatch [:navigation/active-qs :trade-finder])))]
          ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
-         ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]]))))
+         ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
+         ["ESG Report" (fn [] (do (rf/dispatch [:esg/refresh-esg-qs ISIN])))]]))))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
 
@@ -161,8 +208,8 @@
 
 (defn qs-table [mytitle data]
   (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
-    ;(println @(rf/subscribe [:quant-model/model-js-output]))
-     [v-box :class "element"  :gap "10px" :width "1690px"
+    ;(println (first @(rf/subscribe [:quant-model/model-js-output])))
+    [v-box :class "element"  :gap "10px" :width "1690px"
       :children [[h-box :align :center :gap "10px" :children [[title :label mytitle :level :level1]
                                                               [gap :size "1"]
                                                               [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "quant-table-output-id")]

@@ -244,6 +244,12 @@
                  :esg/analyst-commentary                             []
                  :esg/carbon-jasmine                                 []
 
+                 :esg/esg-report-selected                           "GB_AYDEMT27_2022-09-02"
+                 :esg/gb-isin                                       "XS2368781477"
+                 :esg/date                                          "2022-09-02"
+                 :esg/report-type                                   "green-bond"
+                 :esg/elig                                           "No"
+
                  :quant-model/model-output                           []
                  :quant-model/model-js-output                        #js []
                  :quant-model/bond-isin-map                          {}
@@ -260,7 +266,7 @@
                  :quant-model/saved-charts                           {}
                  :quant-model/saved-advanced-charts                  {}
                  :quant-model/issuer-coverage                        []
-                 :quant-model/analyst-coverage                        []
+                 :quant-model/analyst-coverage                       []
                  :quant-model/model-date                             ""
 
 
@@ -347,11 +353,12 @@
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
 (doseq [k (keys default-db)] (rf/reg-sub k (fn [db] (k db))))
 
-
+;list of keys event for which a dispatch will assoc a value to the db given key event
 (doseq [k [:navigation/active-view
            :navigation/active-home
            :navigation/active-var
            :navigation/active-qs
+           :navigation/active-esg
            :navigation/active-attribution
            :navigation/active-scorecard
            :navigation/show-mounting-modal
@@ -510,6 +517,14 @@
            :esg/msci-ccc-weight
            :esg/analyst-commentary
            :esg/carbon-jasmine
+
+           :esg/esg-report-selected
+           :esg/gb-isin
+           :esg/date
+           :esg/report-type
+           :esg/elig
+
+           :esg/active-home
 
            :trade-history/active-home
 
@@ -942,7 +957,7 @@
    {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
 
    {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
-   {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi"  :asset    "esg-jasmine"                   :dispatch-key [:esg/carbon-jasmine]}
+   {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi":asset "esg-jasmine-data-cache"       :dispatch-key [:esg/carbon-jasmine]}
    {:get-key :get-ccc-weight                 :namespace "jasmine.positions"  :asset  "msci-ccc-weight"              :dispatch-key [:esg/msci-ccc-weight]}
 
    {:get-key :get-betas              :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}

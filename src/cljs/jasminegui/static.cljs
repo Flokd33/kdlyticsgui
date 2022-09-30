@@ -7,7 +7,7 @@
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [:get-qt-date :get-total-positions :get-naked-positions :get-instruments :get-quant-model]
         attr-events [:get-top-bottom-price-change :get-attribution-date :get-attribution-summary :get-attribution-available-months :get-list-dates-month-end-calendar [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
-        quant-events [:get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts]
+        quant-events [:get-esg-report-list :get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts [:post-esg-report-extract "XS2368781477" "2022-09-02" "green-bond"]]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         implementation-events (conj home-events :get-quant-model :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :get-live-cast-parent-positions :get-analyst-coverage)
         ]

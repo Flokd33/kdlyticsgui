@@ -48,10 +48,10 @@
 (def year-disabled? (r/atom true))
 (def sbti-disabled? (r/atom true))
 
-(def esg-report-selected (r/atom "GB_AYDEMT27_2022-09-02"))
-(def gb-isin (r/atom "XS2368781477"))
-(def gb-date (r/atom "2022-09-02"))
-(def report-type (r/atom "green-bond"))
+;(def esg-report-selected (r/atom "GB_AYDEMT27_2022-09-02"))
+;(def gb-isin (r/atom "XS2368781477"))
+;(def gb-date (r/atom "2022-09-02"))
+;(def report-type (r/atom "green-bond"))
 
 (def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
 (def yes-no-choice-2 [{:id "Yes1" :label "Yes (small)"} {:id "Yes2"  :label "Yes (big)"} {:id "No"  :label "No"}])
@@ -77,6 +77,8 @@
   (fn [{:keys [db]} [_]]
     {:http-get-dispatch {:url          (str static/server-address "esg-report-list")
                          :dispatch-key [:esg-report-list]}}))
+
+
 
 (rf/reg-event-fx
   :post-esg-report-extract
@@ -151,13 +153,15 @@
 (def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
 
 (def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
-                                    :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
+                                    :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""   :analyst_score 0},
                                     :project-evaluation/description                        {:question_id 3  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
                                     :project-evaluation/controversies                      {:question_id 4  :question_category "new-issue" :analyst_answer "Yes2"    :analyst_score 0},
                                     :project-evaluation/controversies-comment              {:question_id 27  :question_category "new-issue" :analyst_answer ""    :analyst_score 0}
                                     :independent-verification/independent-verification     {:question_id 5  :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
                                     :independent-verification/second-opinion               {:question_id 6 :question_category "new-issue" :analyst_answer ""     :analyst_score 0}
                                     :proceed-management/ringfencing                        {:question_id 7 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
+
+                                    :proceed-management/clear-process                      {:question_id 28 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
                                     :proceed-management/tracked                            {:question_id 8 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
                                     :proceed-management/use                                {:question_id 9 :question_category "new-issue" :analyst_answer "No"   :analyst_score 0},
                                     :proceed-management/refi-or-exi                        {:question_id 10 :question_category "new-issue" :analyst_answer nil   :analyst_score 0},
@@ -187,6 +191,7 @@
                  :independent-verification/independent-verification   {:Yes score-1 :No 0}
                  :proceed-management/use                              {:Yes score-1 :No 0}
                  :proceed-management/ringfencing                      {:Yes score-1 :No 0}
+                 :proceed-management/clear-process                    {:Yes score-1 :No 0}
                  :proceed-management/tracked                          {:Yes score-1 :No 0}
                  :reporting-ni/reporting                              {:Yes score-1 :No 0}
                  :country-framework/better-than-national              {:Yes score-1 :Yes2 score-2 :No 0}
@@ -312,6 +317,10 @@
                            :model (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer]) %) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
+               :children [[label :width question-width :label "Does the company have a clear process to determine Green Project eligibility?"]
+                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/clear-process :analyst_answer ])
+                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/clear-process :analyst_answer ]) %) (gb-score-calculator))]]]
+              [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are the use of proceeds tracked?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
@@ -409,10 +418,29 @@
               ]]
     ))
 
+
+(rf/reg-event-fx
+  :esg/refresh-esg
+  (fn [{:keys [db]} [_ uniq_id]]
+    (let [esg-date (:date2 (first (t/chainfilter {:unique_id uniq_id} (:esg-report-list db))))
+          report-type (:report (first (t/chainfilter {:unique_id uniq_id} (:esg-report-list db))))
+          isin  (:security_identifier (first (t/chainfilter {:unique_id uniq_id} (:esg-report-list db))))
+          ]
+      {:db (assoc db :esg/report-type report-type
+                     ;:esg/date esg-date
+                     ;:esg/gb-isin uniq_id
+                     :esg/esg-report-selected (str (case report-type "green-bond" "GB" "TF") "_"
+                                                   (:Bond (first (t/chainfilter {:ISIN isin} (:quant-model/model-output db)))) "_"
+                                                   (:date2 (first (t/chainfilter {:security_identifier isin} (:esg-report-list db)))))
+                     )
+       :fx [[:dispatch [:post-esg-report-extract isin esg-date report-type]]
+            ;[:dispatch [:esg/refresh-elig]]
+            ]})
+    ))
+
 (defn reporting-display []
-  (let [esg-reports @(rf/subscribe [:esg-report-list])
+  (let [esg-reports-clean @(rf/subscribe [:esg-report-list])
         qt @(rf/subscribe [:quant-model/model-output])
-        esg-reports-clean (for [i esg-reports] (assoc i :unique_id (str (if (= (i :report) "green-bond") "GB" "TF") "_" (:Bond (first (t/chainfilter {:ISIN (i :security_identifier)} qt))) "_" (i :date2))))
         esg-reports-clean-input (mapv (fn [x] {:id x :label x}) (sort (distinct (map :unique_id esg-reports-clean))))
         report-selected @(rf/subscribe [:esg-report-extract])
         isin ((first report-selected) :security_identifier)
@@ -426,11 +454,31 @@
         nxt-call-dt (if (nil? (:NXT_CALL_DT qt-isin)) "NA" (str (subs (:NXT_CALL_DT qt-isin) 6 8) "-" (subs (:NXT_CALL_DT qt-isin) 4 6) "-" (subs (:NXT_CALL_DT qt-isin) 0 4)))
         amt-out (if (nil? (:AMT_OUTSTANDING qt-isin)) "NA" (:AMT_OUTSTANDING qt-isin))
         analyst-score (reduce + (map :analyst_score report-selected))
-        report-category (case @report-type
+        report-type @(rf/subscribe [:esg/report-type])
+        esg-report-selected @(rf/subscribe [:esg/esg-report-selected])
+        report-category (case report-type
              "transition-fund" "Transition Finance Report"
-             "green-bond" (if (= (:category (first report-selected)) "reporting") "Follow up reporting" "New issue report")
+             "green-bond" (if (= (:category (first esg-report-selected)) "reporting") "Follow up reporting" "New issue report")
              nil
              )
+        eligi (case report-type
+                "transition-fund" (if (and (= (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))) "Yes")
+                                           (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))) "Yes")
+                                               (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} report-selected))) "Yes")
+                                               (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} report-selected))) "Yes")
+                                               (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} report-selected))) "Yes")))
+                                    "Yes"
+                                    "No")
+                "green-bond" (if (and (not= (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected))) "Yes2")
+                                      (and (not= (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected))) "other") (some? (:analyst_answer (first (t/chainfilter {:description_short "categories"} report-selected)))))
+                                      (= (:analyst_answer (first (t/chainfilter {:description_short "use"} report-selected))) "Yes")
+                                      (= (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected))) "Yes")
+                                      (= (:analyst_answer (first (t/chainfilter {:description_short "reporting"} report-selected))) "Yes")
+                                      (= (:analyst_answer (first (t/chainfilter {:description_short "independent-verification"} report-selected))) "Yes"))
+                               "Yes"
+                               "No")
+                )
+
         ]
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
@@ -439,12 +487,7 @@
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label "Report"]
                             [single-dropdown :width categories-list-width-long :choices esg-reports-clean-input :filter-box? true :model esg-report-selected
-                             :on-change #(do (reset! esg-report-selected %)
-                                             (reset! gb-isin (:security_identifier (first (t/chainfilter {:unique_id %} esg-reports-clean))))
-                                             (reset! gb-date (:date2 (first (t/chainfilter {:unique_id %} esg-reports-clean))))
-                                             (reset! report-type (:report (first (t/chainfilter {:unique_id %} esg-reports-clean))))
-                                             (rf/dispatch [:post-esg-report-extract @gb-isin @gb-date @report-type])
-                                             )]
+                             :on-change #(do (rf/dispatch [:esg/refresh-esg %]))]
                             ]]
                 ]]
     [v-box :width "1280px" :gap "5px" :class "element"
@@ -461,9 +504,12 @@
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Amount outstanding"] [p {:style {:width "500px" :text-align :justify} } (tools/tnfmt amt-out)]]] ;:Cell tables/nfcell2 (tools/tnfmt (:total-trade @leg))
                         [h-box :gap "10px" :align :center :children [[label :width question-width :label "Coupon"] [p {:style {:width "500px" :text-align :justify}} coupon]]]
                         [gap :size "1"]]
-                       (case @report-type
+                       (case report-type
                          "green-bond" (if (not= report-category "Follow up reporting")
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New Issue Score" :level :level2]] [progress-bar :width categories-list-width-long :model (Math/round (/ analyst-score 0.7))]]]
+
+                          [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "SFRD Sustainable Investment Eligibility" :level :level2]]
+                                                                       [button :label eligi :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= eligi "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
                           [title :label "Summary" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Analyst summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]
                           [gap :size "1"]
@@ -479,6 +525,7 @@
                           [title :label "Use and Management of Proceeds" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Refinancing of an existing project or initial financing?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "use"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are all the proceeds used for financing/refinancing green projects?"] [p {:style {:width "500px"}} (str (:label (first (t/chainfilter {:id (:analyst_answer (first (t/chainfilter {:description_short "refi-or-exi"} report-selected)))} existing-choices))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Does the company have a clear process to determine Green Project eligibility?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "clear-process"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds tracked?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "tracked"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Are the use of proceeds ringfenced?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "ringfencing"} report-selected))))]]]
                           [title :label "Reporting" :level :level2]
@@ -504,6 +551,9 @@
                          )
                          "transition-fund"
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "Transition fund score" :level :level2]] [progress-bar :width categories-list-width-long :model analyst-score]]]
+                          [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "Transition fund eligibility" :level :level2]]
+                                                                       [button :label eligi :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= eligi "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
+
                           [title :label "Eligibility" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/issuer working towards net zero alignment?"] [p {:style {:width "500px"}} (str (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected)))) ]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Is the company/financed activity supporting one of the five transition sectors?"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "sectors"} report-selected))))]]]
