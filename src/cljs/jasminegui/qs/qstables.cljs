@@ -73,12 +73,12 @@
   {:ISIN                                {:Header "ISIN" :accessor "ISIN" :width 100}
    :ISIN-hide                           {:Header "ISIN" :accessor "ISIN" :show false}
    :Country                             {:Header "Country" :accessor "Country" :width 55}
-   :Sector                              {:Header "Sector" :accessor "Sector" :width 80}
+   :Sector                              {:Header "Sector" :accessor "Sector" :width 75}
    :Sector-long                         {:Header "Sector" :accessor "Sector" :width 120}
    :Ticker                              {:Header "Ticker" :accessor "Ticker" :width 80}
-   :Analyst                             {:Header "Analyst" :accessor "Analyst" :width 80}
+   :Analyst                             {:Header "Analyst" :accessor "Analyst" :width 55}
    :Use                                 {:Header "Use" :accessor "Use" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true}
-   :Bond                                {:Header "Bond" :accessor "Bond" :width 120}
+   :Bond                                {:Header "Bond" :accessor "Bond" :width 110}
    :SENIOR                              {:Header "Snr" :accessor "SENIOR" :width 35}
    :SENIOR-WIDE                         {:Header "Senior" :accessor "SENIOR" :width 50 :style {:textAlign "center"}}
    :HYBRID-WIDE                         {:Header "Hybrid" :accessor "HYBRID" :width 50 :style {:textAlign "center"}}
@@ -251,7 +251,15 @@
    :ytd-z-delta                         {:Header (gstring/unescapeEntities "&Delta; ZTW") :accessor "ytd-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :ytd-return                          {:Header "TR %" :accessor "ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
    :best-ytd-return                     {:Header "TR %" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :weekly-return                       {:Header "TR %" :accessor "weekly-return" :width 100 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :best-ytd-return-2                   {:Header "YTD" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :weekly-return                       {:Header "5D" :accessor "r1w-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :monthly-return                      {:Header "1M" :accessor "r1m-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :yearly-return                       {:Header "1Y" :accessor "r1y-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :zytd-delta                          {:Header "YTD" :accessor "ytd-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :z1w-delta                           {:Header "5D" :accessor "r1w-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :z1m-delta                           {:Header "1M" :accessor "r1m-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :z1y-delta                           {:Header "1Y" :accessor "r1y-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+
 
    :difference_svr_2_2d                 {:Header "Delta 2D" :accessor "difference_svr_2d" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
 
@@ -307,9 +315,9 @@
    :RTG_FITCH_OUTLOOK                   {:Header "Fitch" :accessor "RTG_FITCH_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
    :RTG_MDY_OUTLOOK                     {:Header "Moody's" :accessor "RTG_MDY_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
 
-   :n91held                             {:Header "Held?" :accessor "n91held" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show false}
-   :n91heldvisible                      {:Header "Held?" :accessor "n91held" :width 70 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show true}
-   :esg-report                          {:Header "Report(s)" :accessor "esg-report" :width 70 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :show true}
+   :n91held                             {:Header "Held?" :accessor "n91held" :width 45 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show false}
+   :n91heldvisible                      {:Header "Held?" :accessor "n91held" :width 45 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND :show true}
+   :esg-report                          {:Header "Type" :accessor "esg-report" :width 70 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :show true}
 
 
    :BBG_CEMBI_D1Y_BETA                  {:Header "vs CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 60 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
@@ -336,7 +344,7 @@
        {:Header "Universe score" :columns (mapv quant-score-table-columns [:URV_legacy_1 :URV_new_1 :URV_svr_1])}
        {:Header "Historical score" :columns (mapv quant-score-table-columns [:HRV_legacy_1 :HRV_new_1 :HRV_svr_1])}]
       "Full"
-      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond-sticky :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON])}
+      [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON])}
        {:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :NWNAIC])}
        {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
        {:Header "Model prediction" :columns (mapv quant-score-table-columns [:predicted_spread_legacy_1 :predicted_spread_new_1 :predicted_spread_svr_1])}
@@ -357,6 +365,7 @@
        {:Header "Mean group difference" :columns (mapv quant-score-table-columns [:avg_rat_grp_diff_legacy_1 :avg_rat_grp_diff_new_1 :avg_rat_grp_diff_svr_1])}
        {:Header "Std group difference" :columns (mapv quant-score-table-columns [:std_rat_grp_diff_legacy_1 :std_rat_grp_diff_new_1 :std_rat_grp_diff_svr_1])}
        {:Header "Debugging: source data" :columns (mapv quant-score-table-columns [:FORCE_INCLUSION :AMT_OUTSTANDING :Use :Price-source :Used_YTW :ZTW-source :Duration-source :Rating-source :Override :OverrideRating :OverrideValuation :Workout_date :Workout_price])}]
+      ; TODO add perf stuff when finished
       "Legacy"
       [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :SENIOR])}
        {:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :Used_Duration :Used_Rating_Score :Rating_String])}
@@ -388,15 +397,26 @@
          {:Header "5d performance" :columns (mapv quant-score-table-columns [:weekly-return])}
          {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
          {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}])
+      "Performance"
+      (concat
+        [{:Header "Description" :columns (mapv quant-score-table-columns (if (:isin checkboxes) [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW] [:Bond :ISIN-hide :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW]))}]
+        (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
+        (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
+        (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
+        [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Current_yield])}
+         {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
+         {:Header "TR %" :columns (mapv quant-score-table-columns [:weekly-return :monthly-return :best-ytd-return-2 :yearly-return])}
+         {:Header (gstring/unescapeEntities "&Delta; ZTW") :columns (mapv quant-score-table-columns [:zytd-delta :z1y-delta :z1m-delta :z1y-delta])}])
+
       "Screener (SVR)"
-      (concat [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN-hide :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW])}] ;we include ISIN-hide so it's in the view download
+      (concat [{:Header "Description" :columns (mapv quant-score-table-columns (if (:isin checkboxes) [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW] [:Bond :ISIN-hide :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW]))}] ;we include ISIN-hide so it's in the view download
               (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
+               {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
                {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta ])}
-               {:Header "5d performance" :columns (mapv quant-score-table-columns [:weekly-return])}
                {:Header "91" :columns (mapv quant-score-table-columns [:n91heldvisible :Analyst])}
                {:Header "ESG Report" :columns (mapv quant-score-table-columns [:esg-report])}])
 
@@ -434,4 +454,4 @@
       ))
   )
 
-(def table-checkboxes (r/atom {:indices false :calls false :flags false}))
+(def table-checkboxes (r/atom {:indices false :calls false :flags false :isin false}))
