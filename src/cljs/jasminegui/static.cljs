@@ -62,6 +62,7 @@
    {:code :index-returns       :name "Index returns"}
    {:code :top-bottom-pr       :name "Top/bottom universe"}
    {:code :strategies          :name "Strategies"}
+   {:code :emd-weekly          :name "EMD weekly"}
    ])
 
 (def var-navigation

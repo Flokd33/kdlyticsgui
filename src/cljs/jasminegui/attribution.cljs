@@ -541,6 +541,33 @@
 
                             ])])
 
+(defn emd-weekly []
+  (when (zero? (count @(rf/subscribe [:attribution/emd-weekly]))) (rf/dispatch [:get-emd-weekly]))
+  [box :class "subbody rightelement" :child
+   (gt/element-box-generic "emd-weekly" max-width "EMD weekly"
+                           {:target-id "emd-weekly-table" :download-table @(rf/subscribe [:attribution/emd-weekly])}
+                           [                                ;[title :level :level3 :label "Total returns. Momentum strategies rebalanced 1st of month, 25bps cost if rebalanced, and earning 50bps p.a. if in cash."]
+                            [:> ReactTable
+                             {:data           @(rf/subscribe [:attribution/emd-weekly])
+                              :columns        (concat [{:Header "Description" :columns [(tables/text-col "Code" "Portfolio_Code" 80)
+                                                                                        (tables/text-col "Name" "Portfolio_Name" 200)
+                                                                                        (tables/text-col "Benchmark" "Performance_Comparison_Index" 200)
+                                                                                        (tables/text-col "Inception" "Inception_Date" 80)
+                                                                                        (tables/text-col "Currency" "Base_Currency" 60)
+                                                                                        (tables/nb-col "Value" "Market_Value_at_End,_(Base_Currency)" 100 tables/nb-thousand-cell-format)]}]
+                                                      (map (fn [x]
+                                                             {:Header  (clojure.string/replace (subs x 1) "_" " ")
+                                                              :columns [(assoc (dissoc (tables/nb-col "Portfolio" (str "Portfolio" x) 60 tables/round2-if-not0) :getProps) :style {:textAlign "right"})
+                                                                        (assoc (dissoc (tables/nb-col "Index" (str "Index" x) 60 tables/round2-if-not0) :getProps) :style {:textAlign "right"})
+                                                                        (tables/nb-col "Excess" (str "Excess" x) 60 tables/round2-if-not0)]})
+                                                           ["_7_Days" "_MTD" "_YTD" "_1_Year" "_Inception"]
+                                                           )
+                                                      )
+
+                              :showPagination true :sortable true :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 20 :className "-striped"}]
+
+                            ])])
+
 (defn active-home []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
   (case @(rf/subscribe [:navigation/active-attribution])
@@ -552,6 +579,7 @@
     :index-returns                  [index-returns-controller]
     :top-bottom-pr                  [top-bottom-pr]
     :strategies                     [strategies]
+    :emd-weekly                     [emd-weekly]
     [:div.output "nothing to display"]))
 
 

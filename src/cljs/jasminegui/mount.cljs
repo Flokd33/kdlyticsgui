@@ -150,6 +150,7 @@
 
                  :attribution/summary                                []
                  :attribution/available-months                       []
+                 :attribution/emd-weekly                              []
 
                  :attribution-index-returns/portfolio                "OGEMCORD"
                  :attribution-index-returns/period                   "ytd"
@@ -444,6 +445,7 @@
            :attribution/summary
            :attribution/available-months
            :list-dates-month-end-calendar
+           :attribution/emd-weekly
 
            :attribution-index-returns/portfolio
            :attribution-index-returns/period
@@ -930,6 +932,7 @@
    {:get-key :get-mini-security-master  :namespace "common.static"  :asset "mini-security-master"              :dispatch-key [:quant-model/mini-security-master]}
    {:get-key :get-allianz-loss-report     :namespace "common.xlscsvassets" :asset  "allianz-pnl-loss"  :dispatch-key [:allianz-loss-report]}
    {:get-key :get-analyst-coverage     :namespace "common.xlscsvassets" :asset  "analyst-coverage"  :dispatch-key [:quant-model/analyst-coverage]}
+   {:get-key :get-emd-weekly     :namespace "common.xlscsvassets" :asset  "emd-weekly-performance-sheet"  :dispatch-key [:attribution/emd-weekly]}
 
    {:get-key :portfolio-nav-request           :namespace "jasmine.positions"  :asset "sod-portfolio-nav"            :dispatch-key [:implementation/portfolio-nav]}
    {:get-key :get-live-cast-parent-positions  :namespace "jasmine.positions"  :asset "live-positions-by-parent-id"  :dispatch-key [:implementation/live-cast-parent-positions]}
