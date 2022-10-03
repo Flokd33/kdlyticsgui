@@ -190,11 +190,11 @@
                                                               [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @qstables/qs-table-view "quant-model-output"  (mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes)))))] ;
                                                               [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download full model" :tooltip-position :above-center :on-click #(t/csv-link @(rf/subscribe [:quant-model/model-output]) "quant-model-output" (conj (keys (first @(rf/subscribe [:quant-model/model-output]))) :ISIN))]]]
                  [h-box :align :center :gap "10px"
-                  :children (concat (into [] (for [c ["Full" "All" "Upside/Downside" "Screener (SVR)" "Performance"]] ;"Summary" "Full"  "Legacy" "New" "SVR"
+                  :children (concat (into [] (for [c ["Screener" "Performance" "Upside/Downside" "All" ]] ;"Summary" "Full"  "Legacy" "New" "SVR"
                                                ^{:key c} [radio-button :label c :value c :model qstables/table-style :on-change #(reset! qstables/table-style %)]))   ;; key should be unique among siblings
                                     [[gap :size "20px"]
+                                     [checkbox :model (r/cursor qstables/table-checkboxes [:isin]) :label "Show ISIN?" :on-change #(swap! qstables/table-checkboxes assoc-in [:isin] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:flags]) :label "Show flags?" :on-change #(swap! qstables/table-checkboxes assoc-in [:flags] %)]
-                                     [checkbox :model (r/cursor qstables/table-checkboxes [:isin]) :label "Show isins?" :on-change #(swap! qstables/table-checkboxes assoc-in [:isin] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:indices]) :label "Show index membership?" :on-change #(swap! qstables/table-checkboxes assoc-in [:indices] %)]
                                      [checkbox :model (r/cursor qstables/table-checkboxes [:calls]) :label "Show calls?" :on-change #(swap! qstables/table-checkboxes assoc-in [:calls] %)]
                                      [gap :size "20px"]
