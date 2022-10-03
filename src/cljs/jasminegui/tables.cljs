@@ -231,8 +231,8 @@
   (r/as-element
     (if-let [x (aget this "value")]
       (if (= (str (subs (aget this "row" "FIRST_SETTLE_DT" ) 0 4)) this-year)
-        [:div {:style {:color (if (neg? x) "red" "black") :font-style "italic"}} (str "*" (gstring/format "%.2f%" (* 100 x)))]
-        [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format "%.2f%" (* 100 x))])
+        [:div {:style {:color (if (neg? x) "red" "black") :font-style "italic"}} (str "*" (gstring/format "%.2f" x))]
+        [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format "%.2f" x)])
       "-")))
 
 (defn sub-low-level-rating-score-to-string [x]

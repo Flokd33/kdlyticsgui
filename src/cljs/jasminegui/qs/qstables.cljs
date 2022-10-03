@@ -109,7 +109,7 @@
    :Used_Duration                       {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round1 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :FIRST_SETTLE_DT                     {:Header "Issued" :accessor "FIRST_SETTLE_DT" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1 %) :filterable true}
    :FIRST_SETTLE_DT_NO_SHOW             {:Header "Issued-no-show" :accessor "FIRST_SETTLE_DT" :width 80 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1 %) :filterable true :show false}
-   :Current_yield                       {:Header "Curr Yield" :accessor "CURRENT_YIELD" :width 70 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format*100 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :Current_yield                       {:Header "Crt yld" :accessor "CURRENT_YIELD" :width 50 :style {:textAlign "right"} :aggregate tables/median :Cell tables/yield-format*100 :filterable true :filterMethod tables/nb-filter-OR-AND}
 
    :predicted_spread_legacy_1           {:Header "Legacy" :accessor "predicted_spread_legacy" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :predicted_spread_new_1              {:Header "New" :accessor "predicted_spread_new" :width 60 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -252,9 +252,9 @@
    :ytd-return                          {:Header "TR %" :accessor "ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
    :best-ytd-return                     {:Header "TR %" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
    :best-ytd-return-2                   {:Header "YTD" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :weekly-return                       {:Header "5D" :accessor "r1w-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :monthly-return                      {:Header "1M" :accessor "r1m-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :yearly-return                       {:Header "1Y" :accessor "r1y-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :weekly-return                       {:Header "5D" :accessor "r1w-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :monthly-return                      {:Header "1M" :accessor "r1m-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :yearly-return                       {:Header "1Y" :accessor "r1y-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2 :filterable true :filterMethod tables/nb-filter-OR-AND}
    :zytd-delta                          {:Header "YTD" :accessor "ytd-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1w-delta                           {:Header "5D" :accessor "r1w-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1m-delta                           {:Header "1M" :accessor "r1m-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -347,7 +347,7 @@
        {:Header "Universe score" :columns (mapv quant-score-table-columns [:URV_legacy_1 :URV_new_1 :URV_svr_1])}
        {:Header "Historical score" :columns (mapv quant-score-table-columns [:HRV_legacy_1 :HRV_new_1 :HRV_svr_1])}]
       "All"
-      (sort-by #(.indexOf (concat ["Bond" "ISIN"] (filter (fn [c] (not (some #{c} ["Bond" "ISIN"]))) (map :accessor (vals quant-score-table-columns)))) (:accessor %) ) (vals quant-score-table-columns))
+      (sort-by #(.indexOf (concat ["Bond" "ISIN" "Country" "Sector"] (filter (fn [c] (not (some #{c} ["Bond" "ISIN" "country" "sector"]))) (map :accessor (vals quant-score-table-columns)))) (:accessor %) ) (vals quant-score-table-columns))
       ;[{:Header "AlL" :columns (for [k (vec (keys (first @(rf/subscribe [:quant-model/model-output]))))]  {:Header k :accessor k})}]
       "Full"
       [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON])}
@@ -395,7 +395,7 @@
         (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
         (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
         (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
-        [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Current_yield])}
+        [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])}
          {:Header "Predicted Z-spreads" :columns (mapv quant-score-table-columns [:predicted_spread_svr_3 :predicted_spread_svr_2d_3])}
          {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}
          {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta])}
