@@ -195,6 +195,7 @@
       [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format fmt (* 100 x))]
       "-")))
 
+
 (defn roundpc-no-mult [fmt this]
   (r/as-element
     (if-let [x (aget this "value")]
@@ -234,6 +235,13 @@
         [:div {:style {:color (if (neg? x) "red" "black") :font-style "italic"}} (str "*" (gstring/format "%.2f" x))]
         [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format "%.2f" x)])
       "-")))
+
+(defn round2red [this]
+  (r/as-element
+    (if-let [x (aget this "value")]
+      [:div {:style {:color (if (neg? x) "red" "black")}} (gstring/format "%.2f" x)]
+      "-")))
+
 
 (defn sub-low-level-rating-score-to-string [x]
   (let [i (dec (js/parseInt x))]
