@@ -326,11 +326,14 @@
    })
 
 
-(def table-style (reagent/atom "Screener (SVR)"))
+(def table-style (reagent/atom "Screener"))
 
 (def qs-table-view (atom nil))
 
+
 (defn table-style->qs-table-col [table-style checkboxes]
+  ;(println (filter (fn [c] (not= c "Bond")) (map :accessor (vals quant-score-table-columns))) "ISIN")
+  ;(println (conj (filter (fn [c] (not= c "Bond") (map :accessor (vals quant-score-table-columns)))) "ISIN"))
   (letfn [(c [title col-names] {:Header title :columns (mapv quant-score-table-columns col-names)})]
     (case table-style
       "PositionHistory"
@@ -344,8 +347,8 @@
        {:Header "Universe score" :columns (mapv quant-score-table-columns [:URV_legacy_1 :URV_new_1 :URV_svr_1])}
        {:Header "Historical score" :columns (mapv quant-score-table-columns [:HRV_legacy_1 :HRV_new_1 :HRV_svr_1])}]
       "All"
-      ;[{:Header "ALL" :columns (mapv quant-score-table-columns (vec (keys (first @(rf/subscribe [:quant-model/model-output])))))}]
-      [{:Header "AlL" :columns (for [k (vec (keys (first @(rf/subscribe [:quant-model/model-output]))))]  {:Header k :accessor k})}]
+      (sort-by #(.indexOf (concat ["Bond" "ISIN"] (filter (fn [c] (not (some #{c} ["Bond" "ISIN"]))) (map :accessor (vals quant-score-table-columns)))) (:accessor %) ) (vals quant-score-table-columns))
+      ;[{:Header "AlL" :columns (for [k (vec (keys (first @(rf/subscribe [:quant-model/model-output]))))]  {:Header k :accessor k})}]
       "Full"
       [{:Header "Description" :columns (mapv quant-score-table-columns [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON])}
        {:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :NWNAIC])}
@@ -396,7 +399,7 @@
          {:Header "Predicted Z-spreads" :columns (mapv quant-score-table-columns [:predicted_spread_svr_3 :predicted_spread_svr_2d_3])}
          {:Header "260d Z-spreads" :columns (mapv quant-score-table-columns [:z1ymin :z1ymedian :z1ymax :z1yvalid])}
          {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta])}
-         {:Header "5d performance" :columns (mapv quant-score-table-columns [:weekly-return])}
+         ;{:Header "5d performance" :columns (mapv quant-score-table-columns [:weekly-return])}
          {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
          {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}])
       "Performance"
@@ -405,17 +408,18 @@
         (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
         (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
         (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
-        [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Current_yield])}
+        [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])}
          {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
+         {:Header (gstring/unescapeEntities "&Delta; ZTW") :columns (mapv quant-score-table-columns [:z1w-delta :z1m-delta :zytd-delta :z1y-delta])}
          {:Header "TR %" :columns (mapv quant-score-table-columns [:weekly-return :monthly-return :best-ytd-return-2 :yearly-return])}
-         {:Header (gstring/unescapeEntities "&Delta; ZTW") :columns (mapv quant-score-table-columns [:z1w-delta :z1m-delta :zytd-delta :z1y-delta])}])
+         {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}])
 
-      "Screener (SVR)"
+      "Screener"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns (if (:isin checkboxes) [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW] [:Bond :ISIN-hide :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW]))}] ;we include ISIN-hide so it's in the view download
               (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
               (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
-              [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
+              [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Current_yield :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
                {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
                {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta ])}
