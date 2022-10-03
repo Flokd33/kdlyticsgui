@@ -278,7 +278,7 @@
 (defn esg-data []
   "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
   (rf/dispatch [:get-esg-carbon-jasmine])
-  (println @(rf/subscribe [:esg/carbon-jasmine]))
+  ;(println @(rf/subscribe [:esg/carbon-jasmine]))
   (let [data-msci (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         data-jasmine (group-by :ticker (first @(rf/subscribe [:esg/carbon-jasmine])))
         ;check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-12 (- (/ (reduce + (map #(:amt_carbon_emissions_1 %) (val ticker))) (count (val ticker))) (:amt_carbon_emissions_1 (first (val ticker))))})
@@ -295,7 +295,7 @@
                                                        :msci-CARBON_EMISSIONS_YEAR :msci-CARBON_EMISSIONS_SOURCE :msci-CARBON_EMISSIONS_SCOPE_1_KEY :msci-CARBON_EMISSIONS_SCOPE_2_KEY
                                                        :msci-CARBON_EMISSIONS_SCOPE_3_CALCULATION_DATE :msci-CARBON_EMISSIONS_SCOPE_3_DOWN :msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM
                                                        :msci-CARBON_EMISSIONS_SCOPE_3_DOWNSTREAM_YEAR :msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM_YEAR :msci-IVA_COMPANY_RATING
-                                                       :Ticker :Country :Sector :NAME]
+                                                       :Ticker :Country :Sector :NAME :msci-ESG_HEADLINE]
                                                     ) data-msci-filtered)
         data-msci-filtered-ready  (map #(clojure.set/rename-keys % {:msci-CARBON_EMISSIONS_SCOPE_1              :amt_carbon_emissions_1
                                                                     :msci-CARBON_EMISSIONS_SCOPE_2              :amt_carbon_emissions_2
@@ -320,13 +320,13 @@
         final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "No" "Yes") ;in msci data output but not in jasmine
                                                           :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
         ]
-    ;(println (first final-data-clean))
+    ;(println (keys (second data-msci-filtered-ready)))
   [v-box :gap "10px" :class "element" :width standard-box-width
    :children [[h-box :gap "10px" :align :center :children [[title :label "ESG data" :level :level1]
                                                            [gap :size "1"]
                                                            [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "esg-output-id")]
                                                            [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "esg-output-id")]
-                                                           [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(t/react-table-to-csv @esg-view "esg-output-view" (keys (first final-data-clean)) )]   ;(mapv :accessor (apply concat (map :columns (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))))
+                                                           [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(do (t/react-table-to-csv @esg-view "esg-output-view" (map name (keys (first final-data-clean))) ))]
                                                            [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download data" :tooltip-position :above-center :on-click #(t/csv-link final-data-clean "esg-output-data" (keys (first final-data-clean)))]
                                                ]]
 
