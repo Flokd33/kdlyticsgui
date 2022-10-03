@@ -404,7 +404,7 @@
          {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}])
       "Performance"
       (concat
-        [{:Header "Description" :columns (mapv quant-score-table-columns (if (:isin checkboxes) [:Bond :ISIN :Country :Sector :COUPON :FIRST_SETTLE_DT_NO_SHOW :n91heldvisible] [:Bond :ISIN-hide :Country :Sector :COUPON :FIRST_SETTLE_DT_NO_SHOW :n91heldvisible]))}]
+        [{:Header "Description" :columns (mapv quant-score-table-columns (if (:isin checkboxes) [:Bond :ISIN :Country :Sector :COUPON :FIRST_SETTLE_DT_NO_SHOW ] [:Bond :ISIN-hide :Country :Sector :COUPON :FIRST_SETTLE_DT_NO_SHOW ]))}]
         (if (:flags checkboxes) [{:Header "Flags" :columns (mapv quant-score-table-columns [:SENIOR-WIDE :BASEL_III_DESIGNATION :CAPITAL_TRIGGER_TYPE :HYBRID-WIDE :INTERNATIONAL_SUKUK :ESG :MSCI-SCORE :Transition_finance_universe])}])
         (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
         (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
@@ -412,7 +412,8 @@
          {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
          {:Header (gstring/unescapeEntities "&Delta; ZTW") :columns (mapv quant-score-table-columns [:z1w-delta :z1m-delta :zytd-delta :z1y-delta])}
          {:Header "TR %" :columns (mapv quant-score-table-columns [:weekly-return :monthly-return :best-ytd-return-2 :yearly-return])}
-         {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}])
+         {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}
+         {:Header "91" :columns (mapv quant-score-table-columns [:n91heldvisible])}])
 
       "Screener"
       (concat [{:Header "Description" :columns (mapv quant-score-table-columns (if (:isin checkboxes) [:Bond :ISIN :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW] [:Bond :ISIN-hide :Country :Sector :AMT_OUTSTANDING_3 :COUPON :FIRST_SETTLE_DT_NO_SHOW]))}] ;we include ISIN-hide so it's in the view download
