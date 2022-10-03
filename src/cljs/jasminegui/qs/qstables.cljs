@@ -252,11 +252,11 @@
    :ytd-return                          {:Header "TR %" :accessor "ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
    :best-ytd-return                     {:Header "TR %" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
    :best-ytd-return-2                   {:Header "YTD" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :weekly-return                       {:Header "5D" :accessor "r1w-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2red :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :weekly-return                       {:Header "1W" :accessor "r1w-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2red :filterable true :filterMethod tables/nb-filter-OR-AND}
    :monthly-return                      {:Header "1M" :accessor "r1m-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2red :filterable true :filterMethod tables/nb-filter-OR-AND}
    :yearly-return                       {:Header "1Y" :accessor "r1y-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2red :filterable true :filterMethod tables/nb-filter-OR-AND}
    :zytd-delta                          {:Header "YTD" :accessor "ytd-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :z1w-delta                           {:Header "5D" :accessor "r1w-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :z1w-delta                           {:Header "1W" :accessor "r1w-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1m-delta                           {:Header "1M" :accessor "r1m-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1y-delta                           {:Header "1Y" :accessor "r1y-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
 
