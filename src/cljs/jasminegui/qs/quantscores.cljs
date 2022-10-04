@@ -501,7 +501,8 @@
 (def all-histogram-targets
   (let [rename (fn [grp-name line] (assoc (clojure.set/rename-keys line {:Header :label :accessor :id}) :group grp-name))]
     (concat
-      (map (partial rename "Performance") (map qstables/quant-score-table-columns [:ytd-return :ytd-z-delta]))
+      (map (partial rename "TR %") (map qstables/quant-score-table-columns [:yearly-return :ytd-return :monthly-return :weekly-return]))
+      (map (partial rename (gstring/unescapeEntities "&Delta; ZTW")) (map qstables/quant-score-table-columns [:z1y-delta :zytd-delta :z1m-delta :z1w-delta]))
       (map (partial rename "Valuation") (map qstables/quant-score-table-columns [:difference_svr_2 :difference_svr_2_2d]))
       (map (partial rename "Pricing") (map qstables/quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])))))
 
