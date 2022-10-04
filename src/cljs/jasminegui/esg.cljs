@@ -368,12 +368,14 @@
                         (if (:scope1 @esg-checkboxes) [{:Header "Scope 1" :columns [{:Header "Year" :accessor "cat_scope_1_year" :width 80 :style {:textAlign "center"}}
                                                                                     {:Header "Method" :accessor "cat_scope_1_method" :width 150}
                                                                                     {:Header "Source" :accessor "cat_scope_1_src" :width 80}
+                                                                                    {:Header "Intensity" :accessor "amt_carbon_intensity_1" :width 80 :Cell tables/round0}
                                                                                     {:Header "Emissions" :accessor "amt_carbon_emissions_1" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                                                     {:Header "Emissions/evic" :accessor "emissions_evic_1" :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
                                                        ])
                         (if (:scope2 @esg-checkboxes) [{:Header "Scope 2" :columns [{:Header "Year"   :accessor "cat_scope_2_year" :width 80 :style {:textAlign "center"}}
                                                                                     {:Header "Method" :accessor "cat_scope_2_method" :width 150}
                                                                                     {:Header "Source" :accessor "cat_scope_2_src" :width 80}
+                                                                                    {:Header "Intensity" :accessor "amt_carbon_intensity_2" :width 80 :Cell tables/round0}
                                                                                     {:Header "Emissions" :accessor "amt_carbon_emissions_2" :Cell tables/nfcell2 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                                                     {:Header "Emissions/evic" :accessor "emissions_evic_2" :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
                                                        {:Header "Scope 1-2" :columns [{:Header "Date Revenues" :accessor "dt_revenue_scope12" :width 90 :style {:textAlign "center"}}
