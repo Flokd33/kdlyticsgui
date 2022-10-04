@@ -629,8 +629,7 @@
                                                                                                        (tables/nb-col "Hybrid" "HYBRID" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/nb-col "Corp Hyb." "HYBRIDNONFINS" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/nb-col "Sukuk" "INTERNATIONAL_SUKUK" 70 tables/round2pc tables/sum-rows)
-                                                                                                       (tables/nb-col "FA risk" "downgrade-candidates" 70 tables/round2pc tables/sum-rows)
-                                                                                                       (tables/text-col "Ad hoc" "ad-hoc" 220)])}
+                                                                                                       (tables/nb-col "FA risk" "downgrade-candidates" 70 tables/round2pc tables/sum-rows)])}
                                          ]
                         :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]
                       ]

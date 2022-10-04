@@ -257,7 +257,7 @@
                            :on-change #(reset! analyst-name %)]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (js/parseInt (str (* @gb-score-new-issue (/ 100 70)))) ]]]
 
-              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "SFRD Sustainable Investment Eligibility" :level :level2]]
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "SFDR Sustainable Investment Eligibility" :level :level2]]
                                                              [box :width dropdown-width :child [button :label @is-gb-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-gb-eligible "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]]
 
 
@@ -508,7 +508,7 @@
                          "green-bond" (if (not= report-category "Follow up reporting")
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New Issue Score" :level :level2]] [progress-bar :width categories-list-width-long :model (Math/round (/ analyst-score 0.7))]]]
 
-                          [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "SFRD Sustainable Investment Eligibility" :level :level2]]
+                          [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "SFDR Sustainable Investment Eligibility" :level :level2]]
                                                                        [button :label eligi :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= eligi "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
                           [title :label "Summary" :level :level2]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Analyst summary:"] [p {:style {:width "500px" :text-align :justify}} (str (:analyst_answer (first (t/chainfilter {:description_short "text"} report-selected))))]]]
