@@ -159,7 +159,7 @@
         nbonds (count bond-data)
         ntail (int (* nbonds (/ exclude-outliers 100.)))
         cut-bond-data (if (zero? nbonds) bond-data (drop ntail (drop-last ntail bond-data)))
-        decimals (if (some #{target} ["ytd-return" "Used_YTW" "Used_Duration"]) ".2f" ".0f")]
+        decimals (if (some #{target} ["ytd-return" "Used_YTW" "Used_Duration" "r1w-return" "r1m-return" "r1w-return"]) ".2f" ".0f")]
     {:title  target-label
      :data   {:values cut-bond-data}
      :layer  [
