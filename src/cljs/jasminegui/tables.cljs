@@ -16,6 +16,8 @@
 ;;;;;;;;;;;;;
 
 (defn sum-rows [vals] (reduce + vals))
+(defn sum-rows-not-nil [vals] (reduce + (remove nil? vals)) ;(reduce + vals)
+  )
 
 (defn median [coll]
   (let [sorted (sort (remove nil? coll))     ;(remove zero? (remove nil? coll))
@@ -259,6 +261,7 @@
 (defn rating-score-to-string [this] (aget this "row" "qt-iam-int-lt-median-rating"))
 
 (defn total-txt [row] "Total")
+(defn empty-txt [row] "")
 
 (defn text-col [header accessor width] {:Header header :accessor accessor :width width})
 (defn nb-col
@@ -271,7 +274,9 @@
 (def risk-table-columns
   (let [round2 #(nb-cell-format "%.2f" 1. %)
         round1 #(nb-cell-format "%.1f" 1. %)
-        round2pc #(nb-cell-format "%.2f%" 1. %)]
+        round2pc #(nb-cell-format "%.2f%" 1. %)
+        round2*100 #(nb-cell-format "%.2f" 100. %)
+        ]
     {:id                               {:Header "ID" :accessor "id" :show false}
      :id-show                          (text-col "ID" "id" 65)
      :region                           (text-col "Region" "jpm-region" 120)
@@ -296,7 +301,7 @@
      :z-spread                         (nb-col "Z" "qt-libor-spread" 45 nb-thousand-cell-format median)
      :g-spread                         (nb-col "G" "qt-govt-spread" 45 nb-thousand-cell-format median)
      :duration                         (nb-col "M dur" "qt-modified-duration" 45 round1 median)
-     :yield                            (nb-col "Yield" "qt-yield" 45 round2 median)
+     :yield                            (nb-col "Yield" "qt-yield" 45 round2*100 median)
 
      :contrib-gspread                  (nb-col "G-spread" "contrib-gspread" 60 round1 sum-rows)
      :contrib-zspread                  (nb-col "Fund" "contrib-zspread" 60 round1 sum-rows)
@@ -324,6 +329,27 @@
      :quant-value-2d                   (nb-col "2D" "quant-value-2d" 50 round2 sum-rows)
      :quant-value-4d                   (nb-col "4D" "quant-value-4d" 50 round2 sum-rows)
      :msci-rating                      (assoc (text-col "Rating" "msci-rating" 75) :sortMethod sort-msci-rating)
+     }))
+
+(def esg-table-columns
+  (let [round2 #(nb-cell-format "%.2f" 1. %)
+        round1 #(nb-cell-format "%.1f" 1. %)
+        round2pc #(nb-cell-format "%.2f%" 1. %)]
+    {:id                               {:Header "ID" :accessor "id" :show false}
+     :id-show                          (text-col "ID" "id" 65)
+     :region                           (text-col "Region" "jpm-region" 120)
+     :emd-region                       (text-col "Region" "emd-region" 120)
+     :country                          (text-col "Country" "qt-risk-country-name" 120)
+     :issuer                           (text-col "Issuer" "TICKER" 120)
+     :sector                           (text-col "Sector" "qt-jpm-sector" 120)
+     :maturity-band                    (text-col "Maturity" "qt-final-maturity-band" 120)
+     :rating                           {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}
+     :rating-score                     {:Header "Rating" :width 120 :accessor "qt-iam-int-lt-median-rating-score" :aggregate first} ; :Cell rating-score-to-string
+     :financial-seniority              (text-col "Style" "financial-seniority" 120)
+     :name                             (text-col "Name" "NAME" 120)
+     :isin                             (text-col "ISIN" "isin" 110)
+
+     :msci-SOCIAL_PILLAR_SCORE         (nb-col "msci-SOCIAL_PILLAR_SCORE" "msci-SOCIAL_PILLAR_SCORE" 50 round2 sum-rows)
      }))
 
 (defn invrtg-to-string [this] (aget this "row" "Rating"))
