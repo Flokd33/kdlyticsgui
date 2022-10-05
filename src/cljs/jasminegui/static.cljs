@@ -90,12 +90,12 @@
    ])
 
 (def esg-navigation
-  [{:code :msci                       :name "MSCI"}
+  [                                                         ;{:code :msci                       :name "MSCI"}
+   {:code :esg-data                   :name "ESG data"}
    {:code :holdings                   :name "Holdings through MSCI"}
    {:code :ungc                       :name "UNGC problem securities"}
    {:code :esg-scores                 :name "ESG summary report"}
    {:code :esg-commentary             :name "ESG analyst commentary"}
-   {:code :esg-data                   :name "ESG data"}
    {:code :refinitiv                  :name "Refinitiv"}
    {:code :gb-scoring                 :name "Green bond scoring (beta)"}
    {:code :tf-scoring                 :name "Transition fund scoring (beta)"}

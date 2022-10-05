@@ -18,7 +18,7 @@
 (defn sum-rows [vals] (reduce + vals))
 
 (defn median [coll]
-  (let [sorted (sort (remove nil? coll))
+  (let [sorted (sort (remove nil? coll))     ;(remove zero? (remove nil? coll))
         cnt (count sorted)
         halfway (quot cnt 2)]
     (cond
@@ -330,7 +330,8 @@
 
 (def attribution-table-columns
   (let [performance-attributes {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.2f%" 1. %) :getProps red-negatives :filterable true}
-        performance-attributes-bps {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.0f bps" 100. %) :getProps red-negatives :filterable true}]
+        performance-attributes-bps {:width 70 :aggregate sum-rows :Cell #(nb-cell-format "%.0f bps" 100. %) :getProps red-negatives :filterable true}
+        performance-attributes-return {:width 70 :aggregate median :Cell #(nb-cell-format "%.2f%" 1. %) :getProps red-negatives :filterable true}]
     {:region          {:Header "Region" :accessor "Region" :width 140}
      :country         {:Header "Country" :accessor "Country" :width 140}
      :issuer          {:Header "Issuer" :accessor "Issuer" :width 140}
@@ -345,8 +346,8 @@
      :contribution    (merge {:Header "Fund" :accessor "Fund-Contribution"} performance-attributes)
      :bm-contribution (merge {:Header "Index" :accessor "Index-Contribution"} performance-attributes)
 
-     ;:index-return    (merge {:Header "Index" :accessor "Index-Return"} performance-attributes)
-     ;:fund-return     (merge {:Header "Fund" :accessor "Fund-Return"} performance-attributes)
+     :index-return    (merge {:Header "Index" :accessor "Index-Return"} performance-attributes-return)
+     :fund-return     (merge {:Header "Fund" :accessor "Fund-Return"} performance-attributes-return)
 
      :total-effect-wtd    (merge {:Header "Effect" :accessor "Total-Effect-wtd"} performance-attributes-bps)
      :xs-weight-wtd       (merge {:Header "Excess" :accessor "Average-Excess-Weight-wtd"} performance-attributes)
