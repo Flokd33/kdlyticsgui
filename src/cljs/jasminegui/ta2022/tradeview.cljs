@@ -330,6 +330,7 @@
         mtvs (rf/subscribe [:ta2022/main-table-view-selector])
         mtp (rf/subscribe [:ta2022/main-table-pivot])
         is-table (= @mtp "No")]
+    ;(println data)
     [v-box :gap "10px"
      :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" {:no-icons true}
                                         [[h-box :gap "10px" :align :center
@@ -397,7 +398,10 @@
                                                                                                                       {:Header "2D" :accessor "svr2d1yrtn" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}]}
                                                                                            {:Header "History" :columns [{:Header "Tight" :accessor "upside1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}
                                                                                                                         {:Header "Median" :accessor "expected1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}
-                                                                                                                        {:Header "Wide" :accessor "downside1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}]}]
+                                                                                                                        {:Header "Wide" :accessor "downside1y" :width 75 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 1. %) :aggregate tables/median}]}
+                                                                                           {:Header "Contribution" :columns [{:Header "Target" :accessor "target-alert-tr-1y-contribution" :width 85 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.1f%" 100. %) :aggregate tables/sum-rows}]}
+
+                                                                                           ]
                                                                                           )
 
                                                                                         ) ;:new-issue

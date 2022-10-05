@@ -561,13 +561,9 @@
                                                               :columns [(assoc (dissoc (tables/nb-col "Portfolio" (str "Portfolio" x) 60 tables/round2-if-not0) :getProps) :style {:textAlign "right"})
                                                                         (assoc (dissoc (tables/nb-col "Index" (str "Index" x) 60 tables/round2-if-not0) :getProps) :style {:textAlign "right"})
                                                                         (tables/nb-col "Excess" (str "Excess" x) 60 tables/round2-if-not0)]})
-                                                           ["_7_Days" "_MTD" "_YTD" "_1_Year" "_Inception"]
-                                                           )
-                                                      )
+                                                           ["_7_Days" "_MTD" "_YTD" "_1_Year" "_Inception"]))
 
-                              :showPagination true :sortable true :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 20 :className "-striped"}]
-
-                            ])])
+                              :showPagination true :sortable true :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 20 :className "-striped"}]])])
 
 (defn active-home []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
