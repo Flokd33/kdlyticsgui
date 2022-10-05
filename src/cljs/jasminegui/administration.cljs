@@ -48,12 +48,16 @@
 (rf/reg-event-fx
   :compile-gui
   (fn [{:keys [db]} [_]]
-    {:db (assoc db :navigation/success-compile {:show true :on-close :close-compile :response nil})
+    {:db (assoc db :navigation/success-modal {:show true :on-close :close-rebuild :response nil})
      :http-post-dispatch {:url (str static/server-address "compile-gui")
                           :edn-params {}
-                          :dispatch-key [:dummy]}}))
+                          :dispatch-key [:has-compiled]}}))
 
 
+(rf/reg-event-db
+  :has-compiled
+  (fn [db [_ data]]
+    (assoc-in db [:navigation/success-modal :response] (:pass data))))
 
 (rf/reg-event-db
   :has-rebuilt
