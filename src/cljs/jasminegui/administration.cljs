@@ -26,7 +26,7 @@
 
 (rf/reg-event-db :bloomberg-session-refreshed (fn [db [_ data]] (assoc-in db [:navigation/success-modal :response] (:text-response data))))
 (rf/reg-event-db :close-bloomberg-session-refreshed (fn [db [_]] (assoc db :navigation/success-modal {:show false :on-close nil :response nil})))
-
+(rf/reg-event-db :close-compile (fn [db [_]] (assoc db :navigation/success-compile {:show false :on-close nil :response nil})))
 
 
 (rf/reg-event-fx
@@ -44,6 +44,16 @@
      :http-post-dispatch {:url          (str static/server-address "rebuild-pos")
                           :edn-params   {}
                           :dispatch-key [:has-rebuilt-pos]}}))
+
+(rf/reg-event-fx
+  :compile-gui
+  (fn [{:keys [db]} [_]]
+    {(assoc db :navigation/success-compile {:show true :on-close :close-compile :response nil})
+     :http-post-dispatch {:url (str static/server-address "compile-gui")
+                          :edn-params {[]}
+                          :dispatch-key [:dummy]}}))
+
+
 
 (rf/reg-event-db
   :has-rebuilt
@@ -97,6 +107,7 @@
    :children [[title :label "Debug operations" :level :level1]
               [button :style {:width "100%"} :label "Rebuild positions and VaR!" :on-click #(rf/dispatch [:rebuild])]
               [button :style {:width "100%"} :label "Rebuild positions and integrity report!" :on-click #(rf/dispatch [:rebuild-pos])]
+              [button :style {:width "100%"} :label "Compile Gui!" :on-click #(rf/dispatch [:compile-gui])]
               [button :style {:width "100%"} :label "Refresh Bloomberg session!" :on-click #(rf/dispatch [:refresh-bloomberg-session])]
               [button :style {:width "100%"} :label "Refresh Attribution!" :on-click #(rf/dispatch [:get-refresh-attribution])]
               [button :style {:width "100%"} :label "Refresh Sedols!" :on-click #(rf/dispatch [:get-refresh-sedols])]
