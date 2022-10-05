@@ -48,7 +48,7 @@
 (rf/reg-event-fx
   :compile-gui
   (fn [{:keys [db]} [_]]
-    {(assoc db :navigation/success-compile {:show true :on-close :close-compile :response nil})
+    {:db (assoc db :navigation/success-compile {:show true :on-close :close-compile :response nil})
      :http-post-dispatch {:url (str static/server-address "compile-gui")
                           :edn-params {}
                           :dispatch-key [:dummy]}}))
