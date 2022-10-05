@@ -50,7 +50,7 @@
   (fn [{:keys [db]} [_]]
     {(assoc db :navigation/success-compile {:show true :on-close :close-compile :response nil})
      :http-post-dispatch {:url (str static/server-address "compile-gui")
-                          :edn-params {[]}
+                          :edn-params {}
                           :dispatch-key [:dummy]}}))
 
 
