@@ -52,7 +52,7 @@
      [tables/tree-table-risk-table
       :single-portfolio-attribution/clean-table
       [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-       ;{:Header "Return" :columns (mapv tables/attribution-table-columns [:index-return :fund-return])} ; do median at grouping level
+       {:Header "Return" :columns (mapv tables/attribution-table-columns [:index-return :fund-return])} ; do median at grouping level
        {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
        {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
        {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}

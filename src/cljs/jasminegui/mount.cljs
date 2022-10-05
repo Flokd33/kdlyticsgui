@@ -227,7 +227,7 @@
                  :bond-price-history/name                            []
 
                  :esg/refinitiv-ids                                  nil
-                 :esg/active-home                                    :msci
+                 :esg/active-home                                    :esg-data
                  :esg/selected-companies                             []
                  :esg/data                                           []
                  :esg/data-detailed                                  []
