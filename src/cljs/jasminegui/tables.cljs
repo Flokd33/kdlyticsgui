@@ -345,6 +345,9 @@
      :contribution    (merge {:Header "Fund" :accessor "Fund-Contribution"} performance-attributes)
      :bm-contribution (merge {:Header "Index" :accessor "Index-Contribution"} performance-attributes)
 
+     ;:index-return    (merge {:Header "Index" :accessor "Index-Return"} performance-attributes)
+     ;:fund-return     (merge {:Header "Fund" :accessor "Fund-Return"} performance-attributes)
+
      :total-effect-wtd    (merge {:Header "Effect" :accessor "Total-Effect-wtd"} performance-attributes-bps)
      :xs-weight-wtd       (merge {:Header "Excess" :accessor "Average-Excess-Weight-wtd"} performance-attributes)
      :weight-wtd          (merge {:Header "Fund" :accessor "Average-Fund-Weight-wtd"} performance-attributes)
