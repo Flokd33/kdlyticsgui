@@ -223,6 +223,7 @@
 
 (def max-width "1675px")
 (def dropdown-width "125px")
+(def dropdown-width-long "175px")
 (def mini-dropdown-width "75px")
 
 (defn single-bond-trade-history-event [state rowInfo instance]

@@ -272,8 +272,18 @@
                 :className      "-striped -highlight"}]]])
 
 
-(def esg-checkboxes (r/atom {:funda false :score true :check false :scope1 true :scope2 false :scope3 false :tree "no"}))
-(def esg-view (atom nil))
+(def esg-checkboxes (r/atom {:funda false :score true :check false :scope1 true :scope2 false :scope3 false :tree "no" :field-chart "amt_carbon_emissions_1"}))
+(def esg-view (r/atom nil))
+(def esg-data-chart-data (r/atom nil))
+
+
+(def list-fields-chart ["amt_carbon_emissions_1" "amt_carbon_intensity_1" "emissions_evic_1"
+                        "amt_carbon_emissions_2" "amt_carbon_intensity_2" "emissions_evic_2"
+                        "amt_carbon_emissions_1_2" "amt_carbon_intensity_1_2" "emissions_evic_1_2"
+                        "amt_revenue_scope12"
+                        "amt_carbon_emissions_3_up" "amt_carbon_emissions_3_down" "amt_carbon_intensity_3" "emissions_evic_3_up" "emissions_evic_3_down"
+                        "msci-IVA_COMPANY_RATING" "msci-ENVIRONMENTAL_PILLAR_SCORE" "msci-SOCIAL_PILLAR_SCORE" "msci-GOVERNANCE_PILLAR_SCORE" "msci-WEIGHTED_AVERAGE_SCORE"
+                        ])
 
 (defn esg-data []
   "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
@@ -321,7 +331,7 @@
         final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "No" "Yes") ;in msci data output but not in jasmine
                                                           :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
         ]
-    (println pivot)
+    (println (keys (first final-data-clean)))
   [v-box :gap "10px" :class "element" :width standard-box-width
    :children [[h-box :gap "10px" :align :center :children [[title :label "ESG data" :level :level1]
                                                            [gap :size "1"]
@@ -341,23 +351,24 @@
                           ;[checkbox :model (r/cursor esg-checkboxes [:tree]) :label "Tree?" :on-change #(swap! esg-checkboxes assoc-in [:tree] %)]
                           [title :label "Pivot?" :level :level3]
                           [single-dropdown :width riskviews/dropdown-width :model (r/cursor esg-checkboxes [:tree]) :choices (into [] (for [k ["No" "Country" "Sector" ]] {:id (.toLowerCase k) :label k})) :on-change #(swap! esg-checkboxes assoc-in [:tree] %)]
-                          [gap :size "1"]
+                          [single-dropdown :width riskviews/dropdown-width-long :model (r/cursor esg-checkboxes [:field-chart]) :choices (into [] (for [k list-fields-chart ] {:id k :label k})) :on-change #(swap! esg-checkboxes assoc-in [:field-chart] %)]
+                          [button :label "Chart" :disabled? (if (= pivot "No") true false) :class "btn btn-primary btn-block" :on-click #(do (reset! esg-data-chart-data
+                                                                                                                                                     (->> (js->clj (. (.getResolvedState @esg-view) -sortedData))
+                                                                                                                                                          (map (fn [v] (select-keys v ["_pivotVal" @(r/cursor esg-checkboxes [:field-chart])])))))
+                                                                                                                                                     )
+                           ]
+
                           ]]
-              [title :level :level4 :label "Carbon data sourced from Jasmine (except for off-bm data, sourced from MSCI), MSCI scores directly from MSCI server - as of previous month end, refreshed mid month. Revenues expressed in millions"]
+              [title :level :level4 :label "Carbon data sourced from Jasmine (except for off-bm data, sourced from MSCI), MSCI scores directly from MSCI server - as of previous month end, refreshed mid month. Revenues expressed in millions. When the table is pivoted, top lines scores/intensity/revenues and footprint are medians, emissions are sums"]
               [:div {:id "esg-output-id"}
                [:> ReactTable
-               {:data           final-data-clean
-                :columns
-                (concat [{:Header "Description" :columns [
-                                                   ;{:Header "Isin" :accessor "isin" :width 100 }
-                                                   ;{:Header "BO id" :accessor "sec_id" :width 100}
-                                                   {:Header "Ticker" :accessor "Ticker" :width 80}
-                                                   ;{:Header "Bond" :accessor "bond" :width 100}
-                                                   {:Header "Sector" :accessor "sector" :width 110}
-                                                   {:Header "Country" :accessor "country" :width 70}]}]
-                        (if (:check @esg-checkboxes) [{:Header "Checks"
-                                                       :columns [{:Header "In Jasmine?" :accessor "off-jasmine" :width 100 :aggregate tables/empty-txt}
-                                                                 {:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100 :aggregate tables/empty-txt}]}])
+               {:data           final-data-clean :columns
+                (concat [{:Header "Description" :columns [{:Header "Ticker" :accessor "Ticker" :width 80}
+                                                          {:Header "Sector" :accessor "sector" :width 110}
+                                                          {:Header "Country" :accessor "country" :width 70} ;{:Header "Isin" :accessor "isin" :width 100 } {:Header "BO id" :accessor "sec_id" :width 100} {:Header "Bond" :accessor "bond" :width 100}
+                                                   ]}]
+                        (if (:check @esg-checkboxes) [{:Header "Checks" :columns [{:Header "In Jasmine?" :accessor "off-jasmine" :width 100 :aggregate tables/empty-txt}
+                                                                                  {:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100 :aggregate tables/empty-txt}]}])
                         (if (:funda @esg-checkboxes) [{:Header "Fundamentals USD (millions)"
                                                        :columns [{:Header "EV" :accessor "amt_ev_usd" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
                                                                                                    {:Header "EVIC date" :accessor "dt_asofdate_evic" :width 100}
@@ -414,10 +425,12 @@
                 :sortable true
                 :filterable true
                 :defaultSorted [{:id :Ticker :desc false}]
-                :pageSize 20
+                :pageSize 10
                 :ref  #(reset! esg-view %)
                 :defaultFilterMethod tables/text-filter-OR
-                :className      "-striped -highlight"}]]]]))
+                :className      "-striped -highlight"}]
+               [oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data "ESG chart data" @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]))]
+               ]]]))
 
 (rf/reg-event-fx
   :esg/get-tamale-body
