@@ -1,6 +1,7 @@
 (ns jasminegui.charting
   (:require [jasminegui.tools :as t]
-            [re-frame.core :as rf])
+            [re-frame.core :as rf]
+            )
   (:require [jasminegui.static :as static]))
 
 
@@ -62,6 +63,7 @@
      :width width :height height}))
 
 (def performance-colors ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])
+(def esg-colors ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E" "#C87A1B" "#0A3323" "#9A293D"]) ; based on 13 sectors
 (def chart-text-size 12)
 (def standard-box-width "1600px")
 (def standard-box-height "1024px")
@@ -73,7 +75,6 @@
         xfields (remove #(= % "_pivotVal") (keys (first rt-pivot-data)))
         colors (take (count (keys grp)) performance-colors)
         new-data (into [] (for [g (keys grp) x xfields] {:ygroup g :xgroup (t/gdate->ddMMMyy (t/int->gdate x)) :value (get (first (grp g)) x)}))]
-    ;(println new-data)
       {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
      :width    (* 30 (count colors)) :height 400
@@ -85,6 +86,32 @@
                 :y       {:field "value", :type "quantitative", :axis {:title nil :labelFontSize chart-text-size}}
                 :tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
                 :color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}}}))
+
+
+(defn stacked-vertical-bars-esg [rt-pivot-data title field-pivot field-chart]
+  (let [xfields (map #(get % "_pivotVal") rt-pivot-data)
+        yfields (map #(get % field-chart) rt-pivot-data)
+        colors (take (count xfields) esg-colors)
+        ;new-data (into [] (for [x xfields y yfields ] {:ygroup x :xgroup nil :value y}))
+        ]
+    (println (first rt-pivot-data))
+    (println field-pivot)
+    (println field-chart)
+    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
+     :data     {:values rt-pivot-data}
+     :width    (* 60 (count colors))
+     :height   600
+     :mark     "bar"
+     :encoding {:x       {:field "_pivotVal" :type "nominal" :axis {:title field-pivot :labels xfields}}
+                :y       {:field field-chart, :type "quantitative", :axis {:title field-chart :labels yfields}}
+                ;:tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
+                :color   {:field "_pivotVal", :type "nominal", :scale {:domain xfields :range colors} :legend {:title "Group"}}
+                }}))
+
+
+
+
+
 
 (defn stacked-vertical-bars-2 [data title]
   (let [new-data (->> (sort-by :date data)
