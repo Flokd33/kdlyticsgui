@@ -94,12 +94,16 @@
                     (take 15 data-sorted)
                     data-sorted
                     )
-        xfields (map :field data-clean)    ;(map #(get % "_pivotVal") rt-pivot-data)
-        yfields (map :val data-clean)
+        data-adjusted (if (= "emissions_evic" (subs field-chart 0 14) )
+                        (map (fn [x] (update x :val * 1000000)) data-clean)
+                        data-clean
+                        )
+        xfields (map :field data-adjusted)    ;(map #(get % "_pivotVal") rt-pivot-data)
+        yfields (map :val data-adjusted)
         colors (take (count xfields) esg-colors)
         ]
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
-     :data     {:values data-clean}
+     :data     {:values data-adjusted}
      :width    (* 60 (count colors))
      :height   600
      :mark     "bar"
