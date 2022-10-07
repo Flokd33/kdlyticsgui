@@ -88,30 +88,26 @@
                 :color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}}}))
 
 
-(defn stacked-vertical-bars-esg [rt-pivot-data title field-pivot field-chart]
-  (let [xfields (map #(get % "_pivotVal") rt-pivot-data)
-        yfields (map #(get % field-chart) rt-pivot-data)
+(defn stacked-vertical-bars-esg [rt-pivot-data title field-pivot field-chart pivot]
+  (let [data-sorted (reverse (sort-by :val (for [m rt-pivot-data] {:field (first (vals m)) :val (second (vals m))})))
+        data-clean (if (= pivot "country")
+                    (take 15 data-sorted)
+                    data-sorted
+                    )
+        xfields (map :field data-clean)    ;(map #(get % "_pivotVal") rt-pivot-data)
+        yfields (map :val data-clean)
         colors (take (count xfields) esg-colors)
-        ;new-data (into [] (for [x xfields y yfields ] {:ygroup x :xgroup nil :value y}))
         ]
-    (println (first rt-pivot-data))
-    (println field-pivot)
-    (println field-chart)
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
-     :data     {:values rt-pivot-data}
+     :data     {:values data-clean}
      :width    (* 60 (count colors))
      :height   600
      :mark     "bar"
-     :encoding {:x       {:field "_pivotVal" :type "nominal" :axis {:title field-pivot :labels xfields}}
-                :y       {:field field-chart, :type "quantitative", :axis {:title field-chart :labels yfields}}
+     :encoding {:x       {:field "field" :type "nominal" :axis {:title field-pivot :labels xfields} :sort {:field "val"}}
+                :y       {:field "val", :type "quantitative", :axis {:title field-chart :labels yfields}}
                 ;:tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
-                :color   {:field "_pivotVal", :type "nominal", :scale {:domain xfields :range colors} :legend {:title "Group"}}
+                :color   {:field "field", :type "nominal", :scale {:domain xfields :range colors} :legend {:title "Group"}}
                 }}))
-
-
-
-
-
 
 (defn stacked-vertical-bars-2 [data title]
   (let [new-data (->> (sort-by :date data)
