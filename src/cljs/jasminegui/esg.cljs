@@ -297,7 +297,7 @@
    ]
 )
 
-
+(def list-choices (into [] (for [k ["No" "Country" "Sector" ]] {:id (.toLowerCase k) :label k})))
 
 (defn esg-data []
   "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
@@ -342,20 +342,18 @@
                                                                     }
                                                                  ) data-msci-filtered-clean)
         final-data  (map #(apply merge %) (vals (group-by :Ticker (concat first-merge-esg-score data-msci-filtered-ready))))
-
         final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "No" "Yes") ;in msci data output but not in jasmine
                                                           :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
         ]
-    (println (= pivot "no"))
+
   [v-box :gap "10px" :class "element" :width standard-box-width
-   :children [[h-box :gap "10px" :align :center :children [[title :label "ESG data" :level :level1]
+   :children [[h-box :gap "10px" :align :center :children [[title :label "Data" :level :level1]
                                                            [gap :size "1"]
                                                            [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "esg-output-id")]
                                                            [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "esg-output-id")]
                                                            [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(do (t/react-table-to-csv @esg-view "esg-output-view" (map name (keys (first final-data-clean))) ))]
                                                            [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download data" :tooltip-position :above-center :on-click #(t/csv-link final-data-clean "esg-output-data" (keys (first final-data-clean)))]
                                                ]]
-
               [h-box :align :center :gap "20px"
                :children [[checkbox :model (r/cursor esg-checkboxes [:funda]) :label "Show fundamentals?" :on-change #(swap! esg-checkboxes assoc-in [:funda] %)]
                           [checkbox :model (r/cursor esg-checkboxes [:score]) :label "Show MSCI scores?" :on-change #(swap! esg-checkboxes assoc-in [:score] %)]
@@ -365,12 +363,14 @@
                           [checkbox :model (r/cursor esg-checkboxes [:scope3]) :label "Show scope 3?" :on-change #(swap! esg-checkboxes assoc-in [:scope3] %)]
                           ;[checkbox :model (r/cursor esg-checkboxes [:tree]) :label "Tree?" :on-change #(swap! esg-checkboxes assoc-in [:tree] %)]
                           [title :label "Pivot?" :level :level3]
-                          [single-dropdown :width riskviews/dropdown-width :model (r/cursor esg-checkboxes [:tree]) :choices (into [] (for [k ["No" "Country" "Sector" ]] {:id (.toLowerCase k) :label k})) :on-change #(swap! esg-checkboxes assoc-in [:tree] %)]
+                          [single-dropdown :width riskviews/dropdown-width :model (r/cursor esg-checkboxes [:tree]) :choices list-choices :on-change #(swap! esg-checkboxes assoc-in [:tree] %)]
                           [single-dropdown :width riskviews/dropdown-width-long :disabled? (if (= pivot "no") true false) :model (r/cursor esg-checkboxes [:field-chart]) :choices list-fields-chart :on-change #(swap! esg-checkboxes assoc-in [:field-chart] %)]
                           [button :label "Chart" :disabled? (if (= pivot "no") true false) :class "btn btn-primary btn-block" :on-click #(do (reset! esg-data-chart-data
-                                                                                                                                                     (->> (js->clj (. (.getResolvedState @esg-view) -sortedData))
-                                                                                                                                                          (map (fn [v] (select-keys v ["_pivotVal" @(r/cursor esg-checkboxes [:field-chart])])))))
+                                                                                                                            (->> (js->clj (. (.getResolvedState @esg-view) -sortedData))
+                                                                                                                                 (map (fn [v] (select-keys v ["_pivotVal" @(r/cursor esg-checkboxes [:field-chart])])))))
                                                                                                                                                      )
+
+                           ;:disabled? (if (= pivot "no") true false)
                            ]
                           ]]
               [title :level :level4 :label "Carbon data sourced from Jasmine (except for off-bm data, sourced from MSCI), MSCI scores directly from MSCI server - as of previous month end, refreshed mid month. Revenues expressed in millions. When the table is pivoted, top lines scores/intensity/revenues/EV/MktCap and footprint are medians, emissions are sums"]
@@ -435,15 +435,18 @@
                                                                   {:Header "Footprint" :accessor "emissions_evic_3_down" :aggregate tables/median :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}])
                   )
                 :pivotBy (if (= pivot "no") [] [(keyword pivot)]) ;(mapv :accessor (into [] (for [r (remove nil? (conj :sector :name))] (tables/esg-table-columns r))))
-                :showPagination true
-                :sortable true
-                :filterable true
-                :defaultSorted [{:id :Ticker :desc false}]
-                :pageSize 10
+                :showPagination true :sortable true :filterable true
+                :defaultSorted [{:id :Ticker :desc false}] :pageSize 10
                 :ref  #(reset! esg-view %)
-                :defaultFilterMethod tables/text-filter-OR
-                :className      "-striped -highlight"}]
-               [oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data "ESG chart data" @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]) pivot)]
+                :defaultFilterMethod tables/text-filter-OR :className      "-striped -highlight"}]
+               [gap :size "1"]
+               [v-box :gap "30px" :align :stretch :children
+                [[title :label "Visualisation" :level :level1]
+                 [oz/vega-lite (charting/scatter-esg final-data-clean)]
+                 ;[oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data  @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]) pivot)]
+                 (if (= pivot "no") nil
+                                    [oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data  @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]) pivot)])
+                 ]]
                ]]]))
 
 (rf/reg-event-fx
