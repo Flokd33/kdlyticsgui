@@ -275,6 +275,7 @@
 (def esg-checkboxes (r/atom {:funda false :score true :check false :scope1 true :scope2 false :scope3 false :tree "no" :field-chart "amt_carbon_emissions_1"}))
 (def esg-view (r/atom nil))
 (def esg-data-chart-data (r/atom nil))
+(def esg-data-chart-data-scatter (r/atom nil))
 
 (def list-fields-chart
   [{:id "amt_carbon_emissions_1" :label "Scope 1" , :group "Emissions"}
@@ -365,14 +366,13 @@
                           [title :label "Pivot?" :level :level3]
                           [single-dropdown :width riskviews/dropdown-width :model (r/cursor esg-checkboxes [:tree]) :choices list-choices :on-change #(swap! esg-checkboxes assoc-in [:tree] %)]
                           [single-dropdown :width riskviews/dropdown-width-long :disabled? (if (= pivot "no") true false) :model (r/cursor esg-checkboxes [:field-chart]) :choices list-fields-chart :on-change #(swap! esg-checkboxes assoc-in [:field-chart] %)]
-                          [button :label "Chart" :disabled? (if (= pivot "no") true false) :class "btn btn-primary btn-block" :on-click #(do (reset! esg-data-chart-data
-                                                                                                                            (->> (js->clj (. (.getResolvedState @esg-view) -sortedData))
-                                                                                                                                 (map (fn [v] (select-keys v ["_pivotVal" @(r/cursor esg-checkboxes [:field-chart])])))))
+                          [button :label "Chart" :disabled? (if (= pivot "no") false false) :class "btn btn-primary btn-block" :on-click #(do (reset! esg-data-chart-data
+                                                                                                                                                     (->> (js->clj (. (.getResolvedState @esg-view) -sortedData))
+                                                                                                                                                          (map (fn [v] (select-keys v ["_pivotVal" @(r/cursor esg-checkboxes [:field-chart])])))))
+                                                                                                                                             (reset! esg-data-chart-data-scatter
+                                                                                                                                                     (->> (js->clj (. (.getResolvedState @esg-view) -sortedData))))
                                                                                                                                                      )
-
-                           ;:disabled? (if (= pivot "no") true false)
-                           ]
-                          ]]
+                           ]]]
               [title :level :level4 :label "Carbon data sourced from Jasmine (except for off-bm data, sourced from MSCI), MSCI scores directly from MSCI server - as of previous month end, refreshed mid month. Revenues expressed in millions. When the table is pivoted, top lines scores/intensity/revenues/EV/MktCap and footprint are medians, emissions are sums"]
               [:div {:id "esg-output-id"}
                [:> ReactTable
@@ -442,12 +442,10 @@
                [gap :size "1"]
                [v-box :gap "30px" :align :stretch :children
                 [[title :label "Visualisation" :level :level1]
-                 [oz/vega-lite (charting/scatter-esg final-data-clean)]
-                 ;[oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data  @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]) pivot)]
-                 (if (= pivot "no") nil
-                                    [oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data  @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]) pivot)])
-                 ]]
-               ]]]))
+                 [oz/vega-lite (charting/scatter-esg @esg-data-chart-data-scatter pivot)]
+                 (if (= pivot "no") nil [oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data  @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]) pivot)])
+                 ]
+               ]]]]))
 
 (rf/reg-event-fx
   :esg/get-tamale-body

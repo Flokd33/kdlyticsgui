@@ -111,9 +111,12 @@
                 }}
     ))
 
-(defn scatter-esg [raw-data]
-  (let [data-clean (map (fn [x] (update x :emissions_evic_1 * 1000000)) raw-data)
-        data-final (map #(assoc % :method_cat_scope_1 (case (:cat_scope_1_method %)
+(defn scatter-esg [raw-data pivot]
+  (let [data-raw-clean (if (= pivot "no")
+                         raw-data
+                         (for [f (flatten (for [t raw-data] (get t "_subRows")))] (get f "_original") )) ; sorry...
+        data-clean (map (fn [x] (update x "emissions_evic_1" * 1000000)) data-raw-clean)
+        data-final (map #(assoc % "method_cat_scope_1" (case (% "cat_scope_1_method")
                                             "Reported"             "Reported"
                                             "Modelled(JPM Sector)" "Modelled"
                                             "Modelled"             "Modelled"
