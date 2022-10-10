@@ -1,7 +1,6 @@
 (ns jasminegui.charting
   (:require [jasminegui.tools :as t]
-            [re-frame.core :as rf]
-            )
+            [re-frame.core :as rf])
   (:require [jasminegui.static :as static]))
 
 
@@ -77,7 +76,7 @@
         new-data (into [] (for [g (keys grp) x xfields] {:ygroup g :xgroup (t/gdate->ddMMMyy (t/int->gdate x)) :value (get (first (grp g)) x)}))]
       {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
      :data     {:values new-data},
-     :width    (* 30 (count colors)) :height 400
+     :width    (* 35 (count colors)) :height 500
      :mark     "bar"
      :encoding {:column  {:field  "xgroup" :type "nominal" :title nil
                           :header {:orient "bottom" :labelFontSize chart-text-size},
@@ -88,36 +87,73 @@
                 :color   {:field "ygroup", :type "nominal", :scale {:domain (keys grp) :range colors} :legend {:title "Group"}}}}))
 
 
-(defn stacked-vertical-bars-esg [rt-pivot-data title field-pivot field-chart pivot]
-  (let [data-sorted (reverse (sort-by :val (for [m rt-pivot-data] {:field (first (vals m)) :val (second (vals m))})))
-        data-clean (if (= pivot "country")
-                    (take 15 data-sorted)
-                    data-sorted
-                    )
-        data-adjusted (if (= "emissions_evic" (subs field-chart 0 14) )
-                        (map (fn [x] (update x :val * 1000000)) data-clean)
-                        data-clean
-                        )
-        xfields (map :field data-adjusted)    ;(map #(get % "_pivotVal") rt-pivot-data)
-        yfields (map :val data-adjusted)
+(defn stacked-vertical-bars-esg [rt-pivot-data field-pivot field-chart pivot ]
+  (let [country_codes @(rf/subscribe [:country-codes])
+        country_codes-indexed (zipmap (map :CountryCode country_codes) country_codes)
+        data-sorted (reverse (sort-by :val (for [m rt-pivot-data] {:field (first (vals m)) :val (second (vals m))})))
+        data-clean (if (= pivot "country") (take 15 data-sorted) data-sorted)
+        data-adjusted (if (= "emissions_evic" (subs field-chart 0 14) ) (map (fn [x] (update x :val * 1000000)) data-clean) data-clean)
+        data_final (if (= pivot "country") (map #(assoc % :field (:LongName (get country_codes-indexed (:field %)))) data-adjusted) data-adjusted)
+        xfields (map :field data_final)    ;(map #(get % "_pivotVal") rt-pivot-data)
+        yfields (map :val data_final)
         colors (take (count xfields) esg-colors)
         ]
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
-     :data     {:values data-adjusted}
-     :width    (* 60 (count colors))
-     :height   600
-     :mark     "bar"
-     :encoding {:x       {:field "field" :type "nominal" :axis {:title field-pivot :labels xfields} :sort {:field "val"}}
-                :y       {:field "val", :type "quantitative", :axis {:title field-chart :labels yfields}}
-                ;:tooltip [{:field "xgroup" :type "nominal"} {:field "ygroup" :type "nominal"} {:field "value" :type "quantitative"}]
-                :color   {:field "field", :type "nominal", :scale {:domain xfields :range colors} :legend {:title "Group"}}
-                }}))
+    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+     :title {:text (str field-chart " per " field-pivot) :fontSize 20}
+     :data     {:values data_final}
+     :width 1000
+     :height 600
+     :mark "bar"
+     :encoding {:x       {:field "field" :type "nominal" :axis {:title (clojure.string/capitalize field-pivot) :labels xfields :labelFontSize 15 :titleFontSize 15} :sort {:field "val" :order "descending"} }
+                :y       {:field "val", :type "quantitative" :axis {:title field-chart :labels yfields :labelFontSize 15 :titleFontSize 15}}
+                :tooltip [{:field "field" :type "nominal" :title field-pivot} {:field "val" :type "quantitative" :title field-chart :titleFontSize 15 :format ",.0f"}] ;mils ",.2s"
+                :color   {:field "field", :type "nominal", :scale {:domain xfields :range colors} :legend {:title (clojure.string/capitalize field-pivot) :labelFontSize 15 :titleFontSize 15}}
+                }}
+    ))
+
+(defn scatter-esg [raw-data]
+  (let [data-clean (map (fn [x] (update x :emissions_evic_1 * 1000000)) raw-data)
+        data-final (map #(assoc % :method_cat_scope_1 (case (:cat_scope_1_method %)
+                                            "Reported"             "Reported"
+                                            "Modelled(JPM Sector)" "Modelled"
+                                            "Modelled"             "Modelled"
+                                            "Modelled(BAML 3)"     "Modelled"
+                                            "Modelled(BAML 4)"     "Modelled"
+                                            "Modelled(GICS 4)"     "Modelled"
+                                            "Augmented"            "Augmented"
+                                            "E.Segmt-Low"          "Other"
+                                            "E.CSI"                "Other"
+                                            "E.Segmt-Moderately"   "Other"
+                                            "High"                 "Other"
+                                            "Other"
+                                                )) data-clean)
+        ]
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json",
+     :data     {:values data-final}
+     :title {:text "Footprint/Intensity - Scope 1" :fontSize 20}
+     ;:params {:name "grid" :select "interval" :bind "scales"}
+     :selection {:grid {:type "interval" :bind "scales"}}
+     :width    1000
+     :height   800
+     :mark     {:opacity 0.8 :type "point"} ;:type "circle" ;need point in order to use :shape
+     :encoding {:x       {:field "amt_carbon_intensity_1" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
+                :y       {:field "emissions_evic_1" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
+                :shape   {:field "method_cat_scope_1", :type "nominal" :legend {:title "Method" :labelFontSize 15 :titleFontSize 15}} ;method_cat_scope_1
+                :color   {:field "sector", :type "nominal" :scale {:range esg-colors} :legend {:title "Sector" :labelFontSize 15 :titleFontSize 15}}
+                :size   {:field "amt_carbon_emissions_1" :type "quantitative" :legend {:title "Emissions" :labelFontSize 15 :titleFontSize 15}}
+                :tooltip [{:field "Ticker" :type "nominal" :title "Ticker"} {:field "sector" :type "nominal" :title "Sector"} {:field "method_cat_scope_1" :type "nominal" :title "Method"}
+                          {:field "amt_carbon_emissions_1" :type "quantitative" :title "Emissions" :format ",.2s"}
+                          {:field "amt_carbon_intensity_1" :type "quantitative" :title "Intensity" :format ",.0f"}
+                          {:field "emissions_evic_1" :type "quantitative" :title "Footprint" :format ",.0f"}
+                          ]
+                }}
+    ))
 
 (defn stacked-vertical-bars-2 [data title]
   (let [new-data (->> (sort-by :date data)
                       (map #(update % :weight * 100))
                       (map #(assoc % :date-mmm-yy ((comp t/gdate->MMM-yy t/int->gdate :date) %)))) ]
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json",
      :data     {:values new-data},
      :width    800
      :height   400
