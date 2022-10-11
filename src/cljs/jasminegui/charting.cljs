@@ -186,16 +186,16 @@
 
 
 (defn small-pie-esg [data title]
-  (let [colors-esg ["#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#652043" "#19A68C" "#DB4857" "#E8E5CE" "#FFB43D" "#004042"]]
+  (let [colors-esg ["#E89687" "#B2A896" "#652043" "#392B5E" ]]
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
-   :title {:text title :fontSize 20} :data     {:values data} :width 500 :height 300 :mark "arc"
+   :title {:text title :fontSize 20} :data     {:values data} :width 600 :height 300 :mark "arc"
    :encoding {:theta  {:field "freq" :type "quantitative" :stack true}}
    :layer [{:mark {:type "arc" :outerRadius 115}
-            :encoding {:color {:field "category" :type "nominal":scale {:range colors-esg} :legend nil }
+            :encoding {:color {:field "category" :type "nominal" :scale {:range colors-esg} :legend nil }
                        :order {:field "freq" :type "quantitative"}}}
-           {:mark {:type "text" :radius 150 :size 15}
+           {:mark {:type "text" :radius 155 :size 15}
             :encoding {:text {:field "category" :type "nominal"}
                        :order {:field "freq" :type "quantitative"}}}
-           {:mark {:type "text" :radius 95 :size 15 :fontWeight "bold"}
+           {:mark {:type "text" :radius 90 :size 15 :fontWeight "bold"}
             :encoding {:text {:field "freq" :type "quantitative"}}}]})
   )
