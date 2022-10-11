@@ -17,6 +17,7 @@
   (mount-root))
 
 (rf/dispatch [:get-portfolios])
+(rf/dispatch [:get-portfolios-grp])
 (rf/dispatch [:get-rating-to-score])
 
 ;letter v or V, then t or T

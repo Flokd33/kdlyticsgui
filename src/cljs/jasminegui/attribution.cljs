@@ -47,12 +47,12 @@
         risk-choices (let [rfil @(rf/subscribe [:single-portfolio-attribution/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :security))] (tables/attribution-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/attribution-choice-map))]
-    ;(println (last @(rf/subscribe [:single-portfolio-attribution/clean-table])) )
+    (println (mapv :accessor grouping-columns) )
     [:div {:id "single-portfolio-attribution-table"}
      [tables/tree-table-risk-table
       :single-portfolio-attribution/clean-table
       [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
-       {:Header "Return" :columns (mapv tables/attribution-table-columns [:index-return :fund-return])} ; do median at grouping level
+       (if (true? is-tree) {} {:Header "Return" :columns (mapv tables/attribution-table-columns [:index-return :fund-return])})
        {:Header "Effect" :columns (mapv tables/attribution-table-columns [:total-effect])}
        {:Header "Contribution" :columns (mapv tables/attribution-table-columns [:contribution :bm-contribution])}
        {:Header "Weight" :columns (mapv tables/attribution-table-columns [:xs-weight :weight :bm-weight])}

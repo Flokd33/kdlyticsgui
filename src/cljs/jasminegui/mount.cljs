@@ -17,6 +17,7 @@
                  :instruments                                        {}
                  :rating-to-score                                    nil
                  :portfolios                                         []
+                 :portfolios-grp                                         []
                  :portfolio-dropdown-map                             {}
                  :ex-emcd-portfolios                                 []
                  :total-positions                                    {}
@@ -236,6 +237,7 @@
                  :esg/selected-pillars                               (set nil)
                  :esg/msci-scores                                    nil
                  :esg/summary-report                                 []
+                 :esg/gb-analytics                                   []
                  :esg/engagements                                    []
                  :esg/security-notes                                 []
                  :esg/tamale-body                                    ""
@@ -375,6 +377,7 @@
            :var/data
            :var/portfolio
            :var/chart-period
+           :portfolios-grp
            
            :single-portfolio-risk/portfolio
            :single-portfolio-risk/display-style
@@ -511,6 +514,7 @@
            :esg/selected-pillars
            :esg/msci-scores
            :esg/summary-report
+           :esg/gb-analytics
            :esg/engagements
            :esg/security-notes
            :esg/tamale-body
@@ -938,6 +942,7 @@
 
 (def simple-http-assets
   [{:get-key :get-portfolios              :namespace "common.static" :asset "portfolios"              :dispatch-key [:portfolios]}
+   {:get-key :get-portfolios-grp          :namespace "common.static" :asset "portfolios-grp"          :dispatch-key [:portfolios-grp]}
    {:get-key :get-country-codes           :namespace "common.static" :asset "country-codes"           :dispatch-key [:country-codes]}
    {:get-key :get-jpm-sectors             :namespace "common.static" :asset "jpm-sectors"             :dispatch-key [:jpm-sectors]}
    {:get-key :get-analysts                :namespace "common.static" :asset "analysts"                :dispatch-key [:analysts]}
@@ -959,7 +964,8 @@
 
    {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
    {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi":asset "esg-jasmine-data-cache"       :dispatch-key [:esg/carbon-jasmine]}
-   {:get-key :get-ccc-weight                 :namespace "jasmine.positions"  :asset  "msci-ccc-weight"              :dispatch-key [:esg/msci-ccc-weight]}
+   {:get-key :get-ccc-weight                 :namespace "jasmine.positions"  :asset  "msci-ccc-weight"             :dispatch-key [:esg/msci-ccc-weight]}
+   {:get-key :get-esg-report-analytics          :namespace "common.static" :asset  "gb-analytics"                  :dispatch-key [:esg/gb-analytics]}
 
    {:get-key :get-betas              :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}
 
