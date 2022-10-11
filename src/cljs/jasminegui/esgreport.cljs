@@ -1030,3 +1030,69 @@
                 [gap :size "20px"]
                 ]])
     )
+
+(defn esg-report-analytics []
+  (when (zero? (count @(rf/subscribe [:esg/gb-analytics]))) (rf/dispatch [:get-esg-report-analytics]))
+  (let [data @(rf/subscribe [:esg/gb-analytics])
+        ;colors-esg ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E" "#C87A1B" "#0A3323" "#9A293D"]
+        colors-esg ["#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#652043" "#19A68C" "#DB4857" "#E8E5CE" "#FFB43D" "#004042"]
+
+        data-yes-no (t/chainfilter {:question_id #(some #{%} [7 13 5 28 9 14 26 8])} data)
+        data-yes-no-final (map #(assoc % :perc_yes (* (/ (get (:frequencies % ) "Yes") (+ (get (:frequencies % ) "Yes") (get (:frequencies % ) "No"))) 100)) data-yes-no)
+
+        ;pies
+        data-category (for [cat (:frequencies (first (t/chainfilter {:question_id 1} data)))] {:category (key cat) :freq (val cat)}) ;data-category-order (sort-by :freq > data-category)
+        data-independent-verif    (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [6])} data)))] {:category (key cat) :freq (val cat)})
+        data-sbti-cat   (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [23])} data)))] {:category (key cat) :freq (val cat)})
+        data-refi-or-exit   (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [10])} data)))] {:category (key cat) :freq (val cat)})
+
+        ;other bars stacked
+        data-controversies  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [4])} data)))] {:category (key cat) :freq (val cat)})
+        data-better-national  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [12])} data)))] {:category (key cat) :freq (val cat)})
+
+        ]
+    (println data-controversies)
+    [v-box :gap "20px" :class "element" :width standard-box-width
+     :children [[h-box :align :center :children [[title :label "GB Report Analytics" :level :level1]]]
+                [oz/vega-lite
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "% Yes (only for simple Yes/No answers ..)" :fontSize 20}
+                  :data  {:values data-yes-no-final}
+                  :width 900 :height 400
+                  :encoding {:y  {:field "description_long", :type "nominal" :axis nil}}
+                  :layer [{:mark {:type "bar" :color "#19A68C"}
+                           :encoding {:x {:field "perc_yes" :type "quantitative" :scale {:domain [0 100]}  :title ""}
+                                      :tooltip [{:field "perc_yes" :type "quantitative" :title "% yes" :format ",.2f" } ]}}
+                          {:mark {:type "text" :align "left" :x 5 :size 15} :encoding {:text {:field "description_long"}}}]}]
+                [oz/vega-lite
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Project categories" :fontSize 20}
+                  :data {:values data-category}
+                  :width 900 :height 500 :mark "arc"
+                  :encoding {:theta  {:field "freq" :type "quantitative" :stack true}}
+                  :layer [{:mark {:type "arc" :outerRadius 200}
+                           :encoding {:color {:field "category" :type "nominal":scale {:range colors-esg} }
+                                      :order {:field "freq" :type "quantitative"}}}
+                          {:mark {:type "text" :radius 250 :size 15}
+                           :encoding {:text {:field "category" :type "nominal"}
+                                      :order {:field "freq" :type "quantitative"}}}
+                          {:mark {:type "text" :radius 160 :size 15 :fontWeight "bold"}
+                           :encoding {:text {:field "freq" :type "quantitative"}}}
+                          ]}]
+                [oz/vega-lite
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+                  :title {:text "Who provide independant verif?" :fontSize 20}
+                  :data     {:values data-independent-verif}
+                  :width 1000
+                  :height 600
+                  :mark "bar"
+                  :encoding {:x       {:field "category" :type "nominal" :axis {:title "name"  :labelFontSize 15 :titleFontSize 15} :sort {:field "freq" :order "descending"} }
+                             :y       {:field "freq", :type "quantitative" :axis {:title "freq"  :labelFontSize 15 :titleFontSize 15}}
+                             :color   {:field "category", :type "nominal" :scale {:range colors-esg} :legend nil} ;:legend {:title "sdfgs" :labelFontSize 15 :titleFontSize 15}
+                             }}
+                 ]
+                [h-box :align :center :children
+                 [[oz/vega-lite (charting/small-pie-esg data-sbti-cat "SBTI category?")]
+                  [oz/vega-lite (charting/small-pie-esg data-refi-or-exit "Refi or exit?")]]]
+                [h-box :align :center :children
+                 [[oz/vega-lite (charting/small-pie-esg data-controversies "Controversies")]
+                  [oz/vega-lite (charting/small-pie-esg data-better-national "Better than national")]]]
+                ]]))

@@ -116,35 +116,36 @@
                          raw-data
                          (for [f (flatten (for [t raw-data] (get t "_subRows")))] (get f "_original") )) ; sorry...
         data-clean (map (fn [x] (update x "emissions_evic_1" * 1000000)) data-raw-clean)
-        data-final (map #(assoc % "method_cat_scope_1" (case (% "cat_scope_1_method")
-                                            "Reported"             "Reported"
-                                            "Modelled(JPM Sector)" "Modelled"
-                                            "Modelled"             "Modelled"
-                                            "Modelled(BAML 3)"     "Modelled"
-                                            "Modelled(BAML 4)"     "Modelled"
-                                            "Modelled(GICS 4)"     "Modelled"
-                                            "Augmented"            "Augmented"
-                                            "E.Segmt-Low"          "Other"
-                                            "E.CSI"                "Other"
-                                            "E.Segmt-Moderately"   "Other"
-                                            "High"                 "Other"
-                                            "Other"
-                                                )) data-clean)
+        ;data-final (map #(assoc % "method_cat_scope_1" (case (% "cat_scope_1_method")
+        ;                                    "Reported"             "Reported"
+        ;                                    "Modelled(JPM Sector)" "Modelled"
+        ;                                    "Modelled"             "Modelled"
+        ;                                    "Modelled(BAML 3)"     "Modelled"
+        ;                                    "Modelled(BAML 4)"     "Modelled"
+        ;                                    "Modelled(GICS 4)"     "Modelled"
+        ;                                    "Augmented"            "Augmented"
+        ;                                    "E.Segmt-Low"          "Other"
+        ;                                    "E.CSI"                "Other"
+        ;                                    "E.Segmt-Moderately"   "Other"
+        ;                                    "High"                 "Other"
+        ;                                    "Other"
+        ;                                        )) data-clean)
         ]
     {:$schema  "https://vega.github.io/schema/vega-lite/v5.json",
-     :data     {:values data-final}
+     :data     {:values data-clean}
      :title {:text "Footprint/Intensity - Scope 1" :fontSize 20}
      ;:params {:name "grid" :select "interval" :bind "scales"}
      :selection {:grid {:type "interval" :bind "scales"}}
      :width    1000
      :height   800
-     :mark     {:opacity 0.8 :type "point"} ;:type "circle" ;need point in order to use :shape
+     :mark     {:opacity 0.5 :type "circle"} ;:type "circle" ;need point in order to use :shape
      :encoding {:x       {:field "amt_carbon_intensity_1" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
                 :y       {:field "emissions_evic_1" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
-                :shape   {:field "method_cat_scope_1", :type "nominal" :legend {:title "Method" :labelFontSize 15 :titleFontSize 15}} ;method_cat_scope_1
+                ;:shape   {:field "method_cat_scope_1", :type "nominal" :legend {:title "Method" :labelFontSize 15 :titleFontSize 15}} ;method_cat_scope_1
                 :color   {:field "sector", :type "nominal" :scale {:range esg-colors} :legend {:title "Sector" :labelFontSize 15 :titleFontSize 15}}
                 :size   {:field "amt_carbon_emissions_1" :type "quantitative" :legend {:title "Emissions" :labelFontSize 15 :titleFontSize 15}}
-                :tooltip [{:field "Ticker" :type "nominal" :title "Ticker"} {:field "sector" :type "nominal" :title "Sector"} {:field "method_cat_scope_1" :type "nominal" :title "Method"}
+                :tooltip [{:field "Ticker" :type "nominal" :title "Ticker"} {:field "sector" :type "nominal" :title "Sector"}
+                          {:field "cat_scope_1_method" :type "nominal" :title "Method"}
                           {:field "amt_carbon_emissions_1" :type "quantitative" :title "Emissions" :format ",.2s"}
                           {:field "amt_carbon_intensity_1" :type "quantitative" :title "Intensity" :format ",.0f"}
                           {:field "emissions_evic_1" :type "quantitative" :title "Footprint" :format ",.0f"}
@@ -182,3 +183,19 @@
              {:mark     {:type "line" :color "#D83949"}
               :encoding {:y       {:field "weight" :type "quantitative" :axis {:title "Weight %" :labelFontSize 15 :titleFontSize 15 :titleColor "#D83949"}}}}]
      :resolve {:scale {:y "independent" }}}))
+
+
+(defn small-pie-esg [data title]
+  (let [colors-esg ["#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#652043" "#19A68C" "#DB4857" "#E8E5CE" "#FFB43D" "#004042"]]
+    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+   :title {:text title :fontSize 20} :data     {:values data} :width 500 :height 300 :mark "arc"
+   :encoding {:theta  {:field "freq" :type "quantitative" :stack true}}
+   :layer [{:mark {:type "arc" :outerRadius 115}
+            :encoding {:color {:field "category" :type "nominal":scale {:range colors-esg} :legend nil }
+                       :order {:field "freq" :type "quantitative"}}}
+           {:mark {:type "text" :radius 150 :size 15}
+            :encoding {:text {:field "category" :type "nominal"}
+                       :order {:field "freq" :type "quantitative"}}}
+           {:mark {:type "text" :radius 95 :size 15 :fontWeight "bold"}
+            :encoding {:text {:field "freq" :type "quantitative"}}}]})
+  )

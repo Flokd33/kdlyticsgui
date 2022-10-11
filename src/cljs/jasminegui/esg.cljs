@@ -620,6 +620,7 @@
               :reporting [esgreport/reporting-display]
               :holdings [holdings]
               :esg-scores [esg-scores]
+              :esg-report-analytics [esgreport/esg-report-analytics]
               :esg-engagements [esg-engagements]
               [:div.output "nothing to display"])]))
 

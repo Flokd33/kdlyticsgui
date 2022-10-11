@@ -647,9 +647,12 @@
      ]
     ))
 
+
+
 (defn portfolio-checks-display []
   (when (empty? @(rf/subscribe [:talanx-checks])) (rf/dispatch [:get-talanx-checks]))
   (when (empty? @(rf/subscribe [:ogemigc-nr-bucket])) (rf/dispatch [:get-ogemigc-nr-bucket]))
+  (when (empty? @(rf/subscribe [:portfolios-grp])) (rf/dispatch [:get-portfolios-grp]))
   (let [portfolio-checks-data-raw @(rf/subscribe [:portfolio-checks])
         portfolio-checks-data (for [e portfolio-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-status-warning)) (get {false 0 true 1} (e :check-status-breach))])))
         portfolio-checks-data-nav (filter #(and (not= (:check-name %) "MDUR Delta") (not= (:check-name %) "MDUR") (not= (:check-name %) "MDUR vs BM %")) portfolio-checks-data)
@@ -660,19 +663,27 @@
         talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)
         talanx-checks-data-clean-corp (filter #(= (:sov-or-corp %) "corp") talanx-checks-data-clean)
         talanx-checks-data-clean-sov (filter #(= (:sov-or-corp %) "sov") talanx-checks-data-clean)
-        date @(rf/subscribe [:qt-date])]
+        date @(rf/subscribe [:qt-date])
+        port-grp @(rf/subscribe [:portfolios-grp])
+        port-grp-zip (zipmap (map :portfolio_name port-grp) port-grp)
+        portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)
+        ]
+    (println portfolio-checks-data-nav-grp)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
                         [[:> ReactTable
-                          {:data       portfolio-checks-data-nav
-                           :columns    [{:Header "Portfolio" :accessor :portfolio :width 90 :style {:textAlign "left"}}
-                                        {:Header "Check" :accessor :check-name :width 100 :style {:textAlign "left"}}
-                                        {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
-                                        {:Header "Breach" :accessor :check-threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                        {:Header "Warning" :accessor :check-threshold-warning :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                        {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
-                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-nav) :showPageSizeOptions false :className "-striped -highlight"}]]
+                          {:data       portfolio-checks-data-nav-grp
+                           :columns    [{:Header "Group"  :accessor :grp :width 120 :style {:textAlign "left"}}
+                                        {:Header "Portfolio" :aggregate tables/empty-txt :accessor :portfolio :width 90 :style {:textAlign "left"}}
+                                        {:Header "Check" :aggregate tables/empty-txt :accessor :check-name :width 100 :style {:textAlign "left"}}
+                                        {:Header "Status" :aggregate tables/empty-txt :accessor :check-status :width 80 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                        {:Header "Breach" :aggregate tables/empty-txt :accessor :check-threshold-breach :width 80 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                        {:Header "Warning" :aggregate tables/empty-txt :accessor :check-threshold-warning :width 80 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
+                                        {:Header "Value" :aggregate tables/empty-txt :accessor :check-value :width 80 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :defaultExpanded {1 {} 2 {} 0 {} 3 {} 4 {} 5 {} 6 {} 7 {}} :showPagination true
+                           :pageSize 7 :showPageSizeOptions false :className "-striped -highlight"
+                           :pivotBy [:grp]}]]
                         )
         (gt/element-box "checks" "100%" (str "OGEMIGC HY or <= 1 rating list  " date) ogemigc-nr-list
                         [[:> ReactTable
