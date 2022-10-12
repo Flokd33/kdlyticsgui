@@ -1045,7 +1045,7 @@
         data-controversies  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [4])} data)))] {:category (case (key cat) "Yes2" "Yes (big)" "Yes1" "Yes (small)" "No" "No" "N/A") :freq (val cat)})
         data-better-national  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [12])} data)))] {:category (case (key cat) "Yes2" "In line" "Yes" "Yes" "No" "No" "N/A") :freq (val cat)})
         ]
-    (println data-scores)
+    ;(println data-scores)
     [v-box :gap "20px" :class "element" :width standard-box-width
      :children [[h-box :align :center :children [[title :label (str "Green Bond Report Analytics (" (count data-scores) ")") :level :level1]]]
 
