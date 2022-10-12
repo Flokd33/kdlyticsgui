@@ -306,6 +306,7 @@
   ;(println @(rf/subscribe [:esg/carbon-jasmine]))
   (let [data-msci (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         data-jasmine (group-by :ticker (first @(rf/subscribe [:esg/carbon-jasmine])))
+        position-ticker-list (map :TICKER (t/chainfilter {:portfolio #(= % @(rf/subscribe [:portfolio-trade-history/portfolio])) :weight pos?} @(rf/subscribe [:positions])))
         pivot @(r/cursor esg-checkboxes [:tree])
         ;check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-12 (- (/ (reduce + (map #(:amt_carbon_emissions_1 %) (val ticker))) (count (val ticker))) (:amt_carbon_emissions_1 (first (val ticker))))})
         check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-1 (apply = (remove nil? (map #(:amt_carbon_emissions_1 %) (val ticker))))})
@@ -331,12 +332,8 @@
                                                                     :msci-CARBON_EMISSIONS_SOURCE               :cat_scope_1_src
                                                                     :msci-CARBON_EMISSIONS_SCOPE_1_KEY          :cat_scope_1_method
                                                                     :msci-CARBON_EMISSIONS_SCOPE_2_KEY          :cat_scope_2_method
-                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_CALCULATION_DATE
                                                                     :msci-CARBON_EMISSIONS_SCOPE_3_DOWN          :amt_carbon_emissions_3_down
                                                                     :msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM      :amt_carbon_emissions_3_up
-                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_DOWNSTREAM_YEAR
-                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM_YEAR
-                                                                    ;:Ticker
                                                                     :Country :country
                                                                     :Sector    :sector
                                                                     :NAME :bond
@@ -344,9 +341,12 @@
                                                                  ) data-msci-filtered-clean)
         final-data  (map #(apply merge %) (vals (group-by :Ticker (concat first-merge-esg-score data-msci-filtered-ready))))
         final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "No" "Yes") ;in msci data output but not in jasmine
-                                                          :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
-        ]
+                                                          :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No") ;flag if different scope 1 emissions for same ticker but diff bonds
+                                                          :held-name (if (some #(= (sec :Ticker) %) position-ticker-list) 1 0)
+                                                          ))
 
+        ]
+    ;(println (first final-data-clean))
   [v-box :gap "10px" :class "element" :width standard-box-width
    :children [[h-box :gap "10px" :align :center :children [[title :label "Data" :level :level1]
                                                            [gap :size "1"]
@@ -379,7 +379,8 @@
                {:data           final-data-clean :columns
                 (concat [{:Header "Description" :columns [{:Header "Ticker" :accessor "Ticker" :width 80}
                                                           {:Header "Sector" :accessor "sector" :width 110}
-                                                          {:Header "Country" :accessor "country" :width 70} ;{:Header "Isin" :accessor "isin" :width 100 } {:Header "BO id" :accessor "sec_id" :width 100} {:Header "Bond" :accessor "bond" :width 100}
+                                                          {:Header "Country" :accessor "country" :width 70}
+                                                          {:Header "Held?" :accessor "held-name" :width 70};{:Header "Isin" :accessor "isin" :width 100 } {:Header "BO id" :accessor "sec_id" :width 100} {:Header "Bond" :accessor "bond" :width 100}
                                                    ]}]
                         (if (:check @esg-checkboxes) [{:Header "Checks" :columns [{:Header "In Jasmine?" :accessor "off-jasmine" :width 100 :aggregate tables/empty-txt}
                                                                                   {:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100 :aggregate tables/empty-txt}]}])
