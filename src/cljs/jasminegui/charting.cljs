@@ -186,12 +186,12 @@
 
 
 (defn small-pie-esg [data title]
-  (let [colors-esg ["#E89687" "#B2A896" "#652043" "#392B5E" ]]
+  (let []
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
    :title {:text title :fontSize 20} :data     {:values data} :width 600 :height 300 :mark "arc"
    :encoding {:theta  {:field "freq" :type "quantitative" :stack true}}
    :layer [{:mark {:type "arc" :outerRadius 115}
-            :encoding {:color {:field "category" :type "nominal" :scale {:range colors-esg} :legend nil }
+            :encoding {:color {:field "color" :type "nominal" :scale nil :legend nil }
                        :order {:field "freq" :type "quantitative"}}}
            {:mark {:type "text" :radius 155 :size 15}
             :encoding {:text {:field "category" :type "nominal"}
