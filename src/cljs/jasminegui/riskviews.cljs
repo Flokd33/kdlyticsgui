@@ -667,7 +667,6 @@
         port-grp @(rf/subscribe [:portfolios-grp])
         port-grp-zip (zipmap (map :portfolio_name port-grp) port-grp)
         portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)
-
         ]
     ;(println portfolio-checks-data-nav-grp)
     [h-box :class "subbody rightelement" :gap "20px" :children
