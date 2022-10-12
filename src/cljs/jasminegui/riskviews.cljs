@@ -647,7 +647,7 @@
      ]
     ))
 
-
+(def expanded (r/atom {1 {} 2 {} 0 {} 3 {} 4 {} 5 {} 6 {} }))
 
 (defn portfolio-checks-display []
   (when (empty? @(rf/subscribe [:talanx-checks])) (rf/dispatch [:get-talanx-checks]))
@@ -667,6 +667,7 @@
         port-grp @(rf/subscribe [:portfolios-grp])
         port-grp-zip (zipmap (map :portfolio_name port-grp) port-grp)
         portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)
+
         ]
     ;(println portfolio-checks-data-nav-grp)
     [h-box :class "subbody rightelement" :gap "20px" :children
@@ -681,7 +682,8 @@
                                         {:Header "Breach" :aggregate tables/empty-txt :accessor :check-threshold-breach :width 80 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                         {:Header "Warning" :aggregate tables/empty-txt :accessor :check-threshold-warning :width 80 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                         {:Header "Value" :aggregate tables/empty-txt :accessor :check-value :width 80 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
-                           :filterable true :defaultFilterMethod tables/text-filter-OR :defaultExpanded {1 {} 2 {} 0 {} 3 {} 4 {} 5 {} 6 {} } :showPagination true
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true
+                           :defaultExpanded @expanded  :expanded @expanded :onExpandedChange #(reset! expanded %)
                            :pageSize 7 :showPageSizeOptions false :className "-striped -highlight"
                            :pivotBy [:grp]}]]
                         )
