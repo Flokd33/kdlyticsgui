@@ -237,6 +237,7 @@
                  :esg/msci-scores                                    nil
                  :esg/summary-report                                 []
                  :esg/gb-analytics                                   []
+                 :esg/tf-analytics                                   []
                  :esg/engagements                                    []
                  :esg/security-notes                                 []
                  :esg/tamale-body                                    ""
@@ -513,6 +514,7 @@
            :esg/msci-scores
            :esg/summary-report
            :esg/gb-analytics
+           :esg/tf-analytics
            :esg/engagements
            :esg/security-notes
            :esg/tamale-body
@@ -962,7 +964,8 @@
    {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
    {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi":asset "esg-jasmine-data-cache"       :dispatch-key [:esg/carbon-jasmine]}
    {:get-key :get-ccc-weight                 :namespace "jasmine.positions"  :asset  "msci-ccc-weight"             :dispatch-key [:esg/msci-ccc-weight]}
-   {:get-key :get-esg-report-analytics          :namespace "common.static" :asset  "gb-analytics"                  :dispatch-key [:esg/gb-analytics]}
+   {:get-key :get-esg-gb-report-analytics          :namespace "common.static" :asset  "gb-analytics"                  :dispatch-key [:esg/gb-analytics]}
+   {:get-key :get-esg-tf-report-analytics          :namespace "common.static" :asset  "tf-analytics"                  :dispatch-key [:esg/tf-analytics]}
 
    {:get-key :get-betas              :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}
 
