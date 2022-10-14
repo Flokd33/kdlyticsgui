@@ -503,7 +503,7 @@
                           "Fund-Contribution" "Index-Contribution" "Total-Effect" "Duration" "Used_YTW" "Used_ZTW"]
         month-end-choices-raw @(rf/subscribe [:list-dates-month-end-calendar])
         month-end-choices-clean  (if (= "quarterly" period)
-                                   ["20220331" "20220630"]  ;ADD QUARTERS END
+                                   ["20220331" "20220630" "20220930"] ;ADD QUARTERS END
                                    (rest month-end-choices-raw)
                                    )
         month-end-choices (distinct (into [] (for [k month-end-choices-clean] {:id k :label (t/gdate->ddMMMyy (t/int->gdate k))})))]
