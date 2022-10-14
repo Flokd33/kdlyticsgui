@@ -272,8 +272,33 @@
                 :className      "-striped -highlight"}]]])
 
 
-(def esg-checkboxes (r/atom {:funda false :score true :check false :scope1 true :scope2 false :scope3 false}))
-(def esg-view (atom nil))
+(def esg-checkboxes (r/atom {:funda false :score true :check false :scope1 true :scope2 false :scope3 false :tree "no" :field-chart "amt_carbon_emissions_1"}))
+(def esg-view (r/atom nil))
+(def esg-data-chart-data (r/atom nil))
+(def esg-data-chart-data-scatter (r/atom nil))
+
+(def list-fields-chart
+  [{:id "amt_carbon_emissions_1" :label "Scope 1" , :group "Emissions"}
+   {:id "amt_carbon_emissions_2" :label "Scope 2", :group "Emissions"}
+   {:id "amt_carbon_emissions_1_2" :label "Scope 1-2", :group "Emissions"}
+   {:id "amt_carbon_emissions_3_up" :label "Scope 3 up", :group "Emissions"}
+   {:id "amt_carbon_emissions_3_down" :label "Scope 3 down", :group "Emissions"}
+   {:id "amt_carbon_intensity_1" :label "Scope 1", :group "Intensity"}
+   {:id "amt_carbon_intensity_2" :label "Scope 2", :group "Intensity"}
+   {:id "amt_carbon_intensity_1_2" :label "Scope 1-2", :group "Intensity"}
+   {:id "emissions_evic_1" :label "Scope 1", :group "Footprint"}
+   {:id "emissions_evic_2" :label "Scope 2", :group "Footprint"}
+   {:id "emissions_evic_1_2" :label  "Scope 1-2", :group "Footprint"}
+   {:id "emissions_evic_3_up" :label  "Scope 3 up", :group "Footprint"}
+   {:id "emissions_evic_3_down" :label  "Scope 3 down", :group "Footprint"}
+   {:id "msci-ENVIRONMENTAL_PILLAR_SCORE" :label "E", :group "MSCI ESG"}
+   {:id "msci-SOCIAL_PILLAR_SCORE" :label "S", :group "MSCI ESG"}
+   {:id "msci-GOVERNANCE_PILLAR_SCORE" :label "G", :group "MSCI ESG"}
+   {:id "msci-WEIGHTED_AVERAGE_SCORE" :label "ESG", :group "MSCI ESG"}
+   ]
+)
+
+(def list-choices (into [] (for [k ["No" "Country" "Sector" ]] {:id (.toLowerCase k) :label k})))
 
 (defn esg-data []
   "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
@@ -281,6 +306,8 @@
   ;(println @(rf/subscribe [:esg/carbon-jasmine]))
   (let [data-msci (if-let [x @(rf/subscribe [:esg/msci-scores])] (vals x) [])
         data-jasmine (group-by :ticker (first @(rf/subscribe [:esg/carbon-jasmine])))
+        position-ticker-list (map :TICKER (t/chainfilter {:portfolio #(= % @(rf/subscribe [:portfolio-trade-history/portfolio])) :weight pos?} @(rf/subscribe [:positions])))
+        pivot @(r/cursor esg-checkboxes [:tree])
         ;check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-12 (- (/ (reduce + (map #(:amt_carbon_emissions_1 %) (val ticker))) (count (val ticker))) (:amt_carbon_emissions_1 (first (val ticker))))})
         check-diff (for [ticker data-jasmine]  {:ticker (key ticker) :diff-in-emissions-1 (apply = (remove nil? (map #(:amt_carbon_emissions_1 %) (val ticker))))})
         list-check-diff (map :ticker (t/chainfilter {:diff-in-emissions-1 #(false? %)} check-diff))
@@ -305,12 +332,8 @@
                                                                     :msci-CARBON_EMISSIONS_SOURCE               :cat_scope_1_src
                                                                     :msci-CARBON_EMISSIONS_SCOPE_1_KEY          :cat_scope_1_method
                                                                     :msci-CARBON_EMISSIONS_SCOPE_2_KEY          :cat_scope_2_method
-                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_CALCULATION_DATE
                                                                     :msci-CARBON_EMISSIONS_SCOPE_3_DOWN          :amt_carbon_emissions_3_down
                                                                     :msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM      :amt_carbon_emissions_3_up
-                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_DOWNSTREAM_YEAR
-                                                                    ;:msci-CARBON_EMISSIONS_SCOPE_3_UPSTREAM_YEAR
-                                                                    ;:Ticker
                                                                     :Country :country
                                                                     :Sector    :sector
                                                                     :NAME :bond
@@ -318,18 +341,20 @@
                                                                  ) data-msci-filtered-clean)
         final-data  (map #(apply merge %) (vals (group-by :Ticker (concat first-merge-esg-score data-msci-filtered-ready))))
         final-data-clean (for [sec final-data] (assoc sec :off-jasmine (if (some #(= (sec :Ticker) %) tickers-missing-from-jasmine) "No" "Yes") ;in msci data output but not in jasmine
-                                                          :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No"))) ;flag if different scope 1 emissions for same ticker but diff bonds
+                                                          :data-inconsistency (if (some #(= (sec :Ticker) %) list-check-diff) "Yes" "No") ;flag if different scope 1 emissions for same ticker but diff bonds
+                                                          :held-name (if (some #(= (sec :Ticker) %) position-ticker-list) 1 0)
+                                                          ))
+
         ]
-    ;(println (keys (second data-msci-filtered-ready)))
+    ;(println (first final-data-clean))
   [v-box :gap "10px" :class "element" :width standard-box-width
-   :children [[h-box :gap "10px" :align :center :children [[title :label "ESG data" :level :level1]
+   :children [[h-box :gap "10px" :align :center :children [[title :label "Data" :level :level1]
                                                            [gap :size "1"]
                                                            [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab "esg-output-id")]
                                                            [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image "esg-output-id")]
                                                            [md-circle-icon-button :md-icon-name "zmdi-filter-list" :tooltip "Download current view" :tooltip-position :above-center :on-click #(do (t/react-table-to-csv @esg-view "esg-output-view" (map name (keys (first final-data-clean))) ))]
                                                            [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download data" :tooltip-position :above-center :on-click #(t/csv-link final-data-clean "esg-output-data" (keys (first final-data-clean)))]
                                                ]]
-
               [h-box :align :center :gap "20px"
                :children [[checkbox :model (r/cursor esg-checkboxes [:funda]) :label "Show fundamentals?" :on-change #(swap! esg-checkboxes assoc-in [:funda] %)]
                           [checkbox :model (r/cursor esg-checkboxes [:score]) :label "Show MSCI scores?" :on-change #(swap! esg-checkboxes assoc-in [:score] %)]
@@ -337,74 +362,91 @@
                           [checkbox :model (r/cursor esg-checkboxes [:scope1]) :label "Show scope 1?" :on-change #(swap! esg-checkboxes assoc-in [:scope1] %)]
                           [checkbox :model (r/cursor esg-checkboxes [:scope2]) :label "Show scope 2?" :on-change #(swap! esg-checkboxes assoc-in [:scope2] %)]
                           [checkbox :model (r/cursor esg-checkboxes [:scope3]) :label "Show scope 3?" :on-change #(swap! esg-checkboxes assoc-in [:scope3] %)]
-                          [gap :size "1"]
-                          ]]
-              [title :level :level4 :label "Carbon data sourced from Jasmine (except for off-bm data, sourced from MSCI), MSCI scores directly from MSCI server - as of previous month end, refreshed mid month. Revenues expressed in millions"]
+                          ;[checkbox :model (r/cursor esg-checkboxes [:tree]) :label "Tree?" :on-change #(swap! esg-checkboxes assoc-in [:tree] %)]
+                          [title :label "Pivot?" :level :level3]
+                          [single-dropdown :width riskviews/dropdown-width :model (r/cursor esg-checkboxes [:tree]) :choices list-choices :on-change #(swap! esg-checkboxes assoc-in [:tree] %)]
+                          [single-dropdown :width riskviews/dropdown-width-long :disabled? (if (= pivot "no") true false) :model (r/cursor esg-checkboxes [:field-chart]) :choices list-fields-chart :on-change #(swap! esg-checkboxes assoc-in [:field-chart] %)]
+                          [button :label "Chart" :disabled? (if (= pivot "no") false false) :class "btn btn-primary btn-block" :on-click #(do (reset! esg-data-chart-data
+                                                                                                                                                     (->> (js->clj (. (.getResolvedState @esg-view) -sortedData))
+                                                                                                                                                          (map (fn [v] (select-keys v ["_pivotVal" @(r/cursor esg-checkboxes [:field-chart])])))))
+                                                                                                                                             (reset! esg-data-chart-data-scatter
+                                                                                                                                                     (->> (js->clj (. (.getResolvedState @esg-view) -sortedData))))
+                                                                                                                                                     )
+                           ]]]
+              [title :level :level4 :label "Carbon data sourced from Jasmine (except for off-bm data, sourced from MSCI), MSCI scores directly from MSCI server - as of previous month end, refreshed mid month. Revenues expressed in millions. When the table is pivoted, top lines scores/intensity/revenues/EV/MktCap and footprint are medians, emissions are sums"]
               [:div {:id "esg-output-id"}
                [:> ReactTable
-               {:data           final-data-clean
-                :columns
-                (concat [{:Header "Description" :columns [
-                                                   ;{:Header "Isin" :accessor "isin" :width 100 }
-                                                   ;{:Header "BO id" :accessor "sec_id" :width 100}
-                                                   {:Header "Ticker" :accessor "Ticker" :width 80}
-                                                   ;{:Header "Bond" :accessor "bond" :width 100}
-                                                   {:Header "Sector" :accessor "sector" :width 110}
-                                                   {:Header "Country" :accessor "country" :width 70}]}]
-                        (if (:check @esg-checkboxes) [{:Header "Checks" :columns [{:Header "In Jasmine?" :accessor "off-jasmine" :width 100}
-                                                                                  {:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100}]}])
-                        (if (:funda @esg-checkboxes) [{:Header "Fundamentals USD (millions)" :columns [{:Header "EV" :accessor "amt_ev_usd" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                                   {:Header "EVIC date" :accessor "dt_asofdate_evic" :width 100}
-                                                                                                   {:Header "Mkt cap" :accessor "amt_marketcap_usd" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                                   {:Header "Revenue Date" :accessor "dt_asofdate_revenue" :width 90}
-                                                                                                   {:Header "Revenues" :accessor "amt_revenue_usd" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                            ]}])
-                        (if (:score @esg-checkboxes) [{:Header "MSCI scoring" :columns [{:Header "Rating" :accessor "msci-IVA_COMPANY_RATING" :width 80 :style {:textAlign "center"}}
-                                                                                        {:Header "E" :accessor "msci-ENVIRONMENTAL_PILLAR_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
-                                                                                        {:Header "S" :accessor "msci-SOCIAL_PILLAR_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
-                                                                                        {:Header "G" :accessor "msci-GOVERNANCE_PILLAR_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
-                                                                                        {:Header "Final" :accessor "msci-WEIGHTED_AVERAGE_SCORE" :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
-                                                                                        {:Header "UNGC" :accessor "msci-UNGC_COMPLIANCE" :style {:textAlign "center"} :width 80}
-                                                                                        {:Header "Note" :accessor "msci-ESG_HEADLINE" :style {:textAlign "center"} :width 150}]}])
-                        (if (:scope1 @esg-checkboxes) [{:Header "Scope 1" :columns [{:Header "Year" :accessor "cat_scope_1_year" :width 80 :style {:textAlign "center"}}
-                                                                                    {:Header "Method" :accessor "cat_scope_1_method" :width 150}
-                                                                                    {:Header "Source" :accessor "cat_scope_1_src" :width 80}
-                                                                                    {:Header "Intensity" :accessor "amt_carbon_intensity_1" :width 80 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}
-                                                                                    {:Header "Emissions" :accessor "amt_carbon_emissions_1" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                    {:Header "Footprint" :accessor "emissions_evic_1" :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
+               {:data           final-data-clean :columns
+                (concat [{:Header "Description" :columns [{:Header "Ticker" :accessor "Ticker" :width 80}
+                                                          {:Header "Sector" :accessor "sector" :width 110}
+                                                          {:Header "Country" :accessor "country" :width 70}
+                                                          {:Header "Held?" :accessor "held-name" :width 70};{:Header "Isin" :accessor "isin" :width 100 } {:Header "BO id" :accessor "sec_id" :width 100} {:Header "Bond" :accessor "bond" :width 100}
+                                                   ]}]
+                        (if (:check @esg-checkboxes) [{:Header "Checks" :columns [{:Header "In Jasmine?" :accessor "off-jasmine" :width 100 :aggregate tables/empty-txt}
+                                                                                  {:Header "Data Inconsistency" :accessor "data-inconsistency" :width 100 :aggregate tables/empty-txt}]}])
+                        (if (:funda @esg-checkboxes) [{:Header "Fundamentals USD (millions)"
+                                                       :columns [{:Header "EV" :accessor "amt_ev_usd" :aggregate tables/median :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                 {:Header "EVIC date" :accessor "dt_asofdate_evic" :width 100 :aggregate tables/empty-txt}
+                                                                 {:Header "Mkt cap" :aggregate tables/median :accessor "amt_marketcap_usd" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                 {:Header "Revenue Date" :accessor "dt_asofdate_revenue" :width 90 :aggregate tables/empty-txt}
+                                                                 {:Header "Revenues"  :aggregate tables/median :accessor "amt_revenue_usd" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                 ]}])
+                        (if (:score @esg-checkboxes) [{:Header "MSCI scoring"
+                                                       :columns [{:Header "Rating" :accessor "msci-IVA_COMPANY_RATING" :width 80 :style {:textAlign "center"} :aggregate tables/empty-txt}
+                                                                 {:Header "E" :accessor "msci-ENVIRONMENTAL_PILLAR_SCORE" :aggregate tables/median :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
+                                                                 {:Header "S" :accessor "msci-SOCIAL_PILLAR_SCORE" :aggregate tables/median :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
+                                                                 {:Header "G" :accessor "msci-GOVERNANCE_PILLAR_SCORE" :aggregate tables/median :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
+                                                                 {:Header "Final" :accessor "msci-WEIGHTED_AVERAGE_SCORE" :aggregate tables/median :Cell tables/round1 :style {:textAlign "right"} :width 40 :filterMethod tables/nb-filter-OR-AND}
+                                                                 {:Header "UNGC" :accessor "msci-UNGC_COMPLIANCE" :style {:textAlign "center"} :width 80 :aggregate tables/empty-txt}
+                                                                 {:Header "Note" :accessor "msci-ESG_HEADLINE" :style {:textAlign "center"} :width 150 :aggregate tables/empty-txt}]}])
+                        (if (:scope1 @esg-checkboxes) [{:Header "Scope 1"
+                                                        :columns [{:Header "Year" :accessor "cat_scope_1_year" :width 80 :style {:textAlign "center"} :aggregate tables/empty-txt}
+                                                                  {:Header "Method" :accessor "cat_scope_1_method" :width 150 :aggregate tables/empty-txt}
+                                                                  {:Header "Source" :accessor "cat_scope_1_src" :width 80 :aggregate tables/empty-txt}
+                                                                  {:Header "Intensity" :accessor "amt_carbon_intensity_1" :aggregate tables/median :width 80 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}} ; if is tree
+                                                                  {:Header "Emissions" :accessor "amt_carbon_emissions_1" :aggregate tables/sum-rows-not-nil :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND} ;:aggregate tables/sum-rows-not-nil
+                                                                  {:Header "Footprint" :accessor "emissions_evic_1" :aggregate tables/median :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
                                                        ])
-                        (if (:scope2 @esg-checkboxes) [{:Header "Scope 2" :columns [{:Header "Year"   :accessor "cat_scope_2_year" :width 80 :style {:textAlign "center"}}
-                                                                                    {:Header "Method" :accessor "cat_scope_2_method" :width 150}
-                                                                                    {:Header "Source" :accessor "cat_scope_2_src" :width 80}
-                                                                                    {:Header "Intensity" :accessor "amt_carbon_intensity_2" :width 80 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}
-                                                                                    {:Header "Emissions" :accessor "amt_carbon_emissions_2" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                    {:Header "Footprint" :accessor "emissions_evic_2" :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
-                                                       {:Header "Scope 1-2" :columns [{:Header "Revenue date" :accessor "dt_revenue_scope12" :width 90 :style {:textAlign "center"}}
-                                                                                      {:Header "Revenues" :accessor "amt_revenue_scope12" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                      {:Header "Intensity" :accessor "amt_carbon_intensity_1_2" :width 80 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}
-                                                                                      {:Header "Emissions" :accessor "amt_carbon_emissions_1_2" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                      {:Header "Footprint" :accessor "emissions_evic_1_2" :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}])
-                        (if (:scope3 @esg-checkboxes) [{:Header "Scope 3 up" :columns [{:Header "Revenue date" :accessor "dt_revenue_scope3_up" :width 90 :style {:textAlign "center"}}
-                                                                                       {:Header "Revenues" :accessor "amt_revenue_scope3_up" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                       {:Header "Method" :accessor "cat_scope_3_up_method" :width 150}
-                                                                                       {:Header "Source" :accessor "cat_scope_3_down_src" :width 80}
-                                                                                       {:Header "Emissions" :accessor "amt_carbon_emissions_3_up" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                       {:Header "Footprint" :accessor "emissions_evic_3_up" :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}  ]}
-                                                       {:Header "Scope 3 down" :columns [{:Header "Revenue date" :accessor "dt_revenue_scope3_down" :width 90 :style {:textAlign "center"}}
-                                                                                         {:Header "Revenues" :accessor "amt_revenue_scope3_down" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                         {:Header "Method" :accessor "cat_scope_3_down_method" :width 150}
-                                                                                         {:Header "Source" :accessor "cat_scope_3_down_src" :width 80}
-                                                                                         {:Header "Emissions" :accessor "amt_carbon_emissions_3_down" :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
-                                                                                         {:Header "Footprint" :accessor "emissions_evic_3_down" :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}])
+                        (if (:scope2 @esg-checkboxes) [{:Header "Scope 2"
+                                                        :columns [{:Header "Year"   :accessor "cat_scope_2_year" :width 80 :style {:textAlign "center"} :aggregate tables/empty-txt}
+                                                                  {:Header "Method" :accessor "cat_scope_2_method" :width 150 :aggregate tables/empty-txt}
+                                                                  {:Header "Source" :accessor "cat_scope_2_src" :width 80 :aggregate tables/empty-txt}
+                                                                  {:Header "Intensity" :accessor "amt_carbon_intensity_2" :aggregate tables/median :width 80 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}
+                                                                  {:Header "Emissions" :accessor "amt_carbon_emissions_2" :aggregate tables/sum-rows-not-nil :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Footprint" :accessor "emissions_evic_2" :aggregate tables/median :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}
+                                                       {:Header "Scope 1-2"
+                                                        :columns [{:Header "Revenue date" :accessor "dt_revenue_scope12" :width 90 :style {:textAlign "center"} :aggregate tables/empty-txt}
+                                                                  {:Header "Revenues" :accessor "amt_revenue_scope12" :aggregate tables/median :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Intensity" :accessor "amt_carbon_intensity_1_2" :aggregate tables/median :width 80 :Cell tables/nb-thousand-cell-format :style {:textAlign "right"}}
+                                                                  {:Header "Emissions" :accessor "amt_carbon_emissions_1_2" :aggregate tables/sum-rows-not-nil :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Footprint" :accessor "emissions_evic_1_2" :aggregate tables/median :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}])
+                        (if (:scope3 @esg-checkboxes) [{:Header "Scope 3 up"
+                                                        :columns [{:Header "Revenue date" :accessor "dt_revenue_scope3_up" :width 90 :style {:textAlign "center"}  :aggregate tables/empty-txt}
+                                                                  {:Header "Revenues" :accessor "amt_revenue_scope3_up" :aggregate tables/median :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Method" :accessor "cat_scope_3_up_method" :width 150 :aggregate tables/empty-txt}
+                                                                  {:Header "Source" :accessor "cat_scope_3_down_src" :width 80 :aggregate tables/empty-txt}
+                                                                  {:Header "Emissions" :accessor "amt_carbon_emissions_3_up" :aggregate tables/sum-rows-not-nil :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Footprint" :accessor "emissions_evic_3_up" :aggregate tables/median :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}  ]}
+                                                       {:Header "Scope 3 down"
+                                                        :columns [{:Header "Revenue date" :accessor "dt_revenue_scope3_down" :width 90 :style {:textAlign "center"} :aggregate tables/empty-txt}
+                                                                  {:Header "Revenues" :accessor "amt_revenue_scope3_down" :aggregate tables/median :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Method" :accessor "cat_scope_3_down_method" :width 150 :aggregate tables/empty-txt}
+                                                                  {:Header "Source" :accessor "cat_scope_3_down_src" :width 80 :aggregate tables/empty-txt}
+                                                                  {:Header "Emissions" :accessor "amt_carbon_emissions_3_down" :aggregate tables/sum-rows-not-nil :Cell tables/nb-thousand-cell-format :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}
+                                                                  {:Header "Footprint" :accessor "emissions_evic_3_down" :aggregate tables/median :Cell tables/round0*1000000 :style {:textAlign "right"} :width 90 :filterMethod tables/nb-filter-OR-AND}]}])
                   )
-                :showPagination true
-                :sortable true
-                :filterable true
-                :defaultSorted [{:id :Ticker :desc false}]
-                :pageSize 20
+                :pivotBy (if (= pivot "no") [] [(keyword pivot)]) ;(mapv :accessor (into [] (for [r (remove nil? (conj :sector :name))] (tables/esg-table-columns r))))
+                :showPagination true :sortable true :filterable true
+                :defaultSorted [{:id :Ticker :desc false}] :pageSize 10
                 :ref  #(reset! esg-view %)
-                :defaultFilterMethod tables/text-filter-OR
-                :className      "-striped -highlight"}]]]]))
+                :defaultFilterMethod tables/text-filter-OR :className      "-striped -highlight"}]
+               [gap :size "1"]
+               [v-box :gap "30px" :align :stretch :children
+                [[title :label "Visualisation" :level :level1]
+                 [oz/vega-lite (charting/scatter-esg @esg-data-chart-data-scatter pivot)]
+                 (if (= pivot "no") nil [oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data  @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]) pivot)])
+                 ]
+               ]]]]))
 
 (rf/reg-event-fx
   :esg/get-tamale-body
@@ -579,6 +621,8 @@
               :reporting [esgreport/reporting-display]
               :holdings [holdings]
               :esg-scores [esg-scores]
+              :esg-report-analytics-gb [esgreport/esg-report-analytics-gb]
+              :esg-report-analytics-tf [esgreport/esg-report-analytics-tf]
               :esg-engagements [esg-engagements]
               [:div.output "nothing to display"])]))
 

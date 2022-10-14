@@ -418,7 +418,6 @@
               ]]
     ))
 
-
 (rf/reg-event-fx
   :esg/refresh-esg
   (fn [{:keys [db]} [_ uniq_id]]
@@ -480,7 +479,7 @@
                 )
 
         ]
-    (println esg-reports-clean)
+    ;(println esg-reports-clean)
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -634,7 +633,6 @@
 
 (def tf-total-score (r/atom 0))
 (def tf-analyst-name (r/atom ""))
-
 (def tf-identifier (r/atom ""))
 (def is-tf-eligible (r/atom "No"))
 (def tf-calculator-summary (r/atom {:eligibility/net-zero            {:question_id 50 :analyst_answer "" :analyst_score 0},
@@ -700,9 +698,7 @@
     (rf/dispatch [:post-esg-report-upload summary]) ; new system table with scores for each questions?
     ))
 
-(defn clean-report! []
-  (doseq [q @tf-calculator-summary] (reset! (r/cursor tf-calculator-summary [(key q) :analyst_answer]) ""))
-  )
+(defn clean-report! [] (doseq [q @tf-calculator-summary] (reset! (r/cursor tf-calculator-summary [(key q) :analyst_answer]) "")))
 
 (def question-width-label "423px")
 
@@ -1030,3 +1026,129 @@
                 [gap :size "20px"]
                 ]])
     )
+
+(defn add-colors [vec-map field colors] (map #(assoc %1 :color %2) (sort-by field > vec-map) colors))
+
+(defn esg-report-analytics-gb []
+  (when (zero? (count @(rf/subscribe [:esg/gb-analytics]))) (rf/dispatch [:get-esg-gb-report-analytics]))
+  (let [data (first @(rf/subscribe [:esg/gb-analytics]))
+        data-scores (second @(rf/subscribe [:esg/gb-analytics]))
+        colors-esg ["#19A68C" "#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#652043" "#DB4857" "#E8E5CE" "#FFB43D" "#004042" "#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E" "#C87A1B" "#0A3323" "#9A293D"] ;"#004042" ;"#392B5E"
+        data-yes-no (t/chainfilter {:question_id #(some #{%} [7 13 5 28 9 14 26 8])} data)
+        data-yes-no-final (map #(assoc % :perc_yes (* (/ (get (:frequencies % ) "Yes") (+ (get (:frequencies % ) "Yes") (get (:frequencies % ) "No"))) 100)) data-yes-no)
+        data-category (for [cat (:frequencies (first (t/chainfilter {:question_id 1} data)))] {:category (key cat) :freq (val cat)})
+        ;(case (key cat) "climate" "Climate change" "renewable" "Renewable energy" "green" "Green buildings" "energy" "Energy efficiency" "clean" "Clean transportation" "pollution" "Pollution" "eco" "Eco-efficient" "environmentally" "Environmentally.." "terrestrial" "Biodiversity" "sustainable" "Water" "Other")
+        data-category-clean (for [t data-category] (assoc t :cat2 (:label (first (t/chainfilter {:id (t :category)} project-sub-categories )))))
+        data-independent-verif    (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [6])} data)))] {:category (case (key cat) "" "N/A" (key cat)) :freq (val cat)})
+        data-sbti-cat   (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [23])} data)))] {:category (case (key cat) "committed" "Committed" "verified" "Verified" "No") :freq (val cat)})
+        data-refi-or-exit   (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [10])} data)))] {:category (case (key cat) "both" "Both" "initial" "Initial" "refinancing" "Refinancing" "N/A") :freq (val cat)})
+        data-controversies  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [4])} data)))] {:category (case (key cat) "Yes2" "Yes (big)" "Yes1" "Yes (small)" "No" "No" "N/A") :freq (val cat)})
+        data-better-national  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [12])} data)))] {:category (case (key cat) "Yes2" "In line" "Yes" "Yes" "No" "No" "N/A") :freq (val cat)})
+        ]
+    ;(println data-scores)
+    [v-box :gap "20px" :class "element" :width standard-box-width
+     :children [[h-box :align :center :children [[title :label (str "Green Bond Report Analytics (" (count data-scores) ")") :level :level1]]]
+                [h-box :align :center :children
+                 [[oz/vega-lite
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores (excluding 0s...)" :fontSize 20}
+                    :data  {:values (t/chainfilter {:score #(> % 0)} data-scores)}
+                    :width 400 :height 50
+                    :mark {:type "boxplot" :extent "min-max" :color "#19A68C" :median {:color "red"}}
+                    :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}}}]
+
+                  [oz/vega-lite
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores by sectors (excluding 0s...)" :fontSize 20}
+                    :data  {:values (t/chainfilter {:score #(> % 0)} data-scores)}
+                    :width 400 :height 300
+                    :mark {:type "boxplot" :extent "min-max" :median {:color "red"}}
+                    :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}
+                             :y  {:field "sector", :type "nominal" :scale {:zero true} :axis {:title "Sectors" :labelFontSize 15 :titleFontSize 15}}
+                             :color {:field "sector" :type "nominal" :scale colors-esg :legend nil} }}]]]
+                [oz/vega-lite
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "% Yes" :fontSize 20}
+                  :data  {:values data-yes-no-final}
+                  :width 900 :height 400
+                  :encoding {:y  {:field "description_long", :type "nominal" :axis nil :sort {:field "perc_yes" :order "descending"}}}
+                  :layer [{:mark {:type "bar" :color "#19A68C"}
+                           :encoding {:x {:field "perc_yes" :type "quantitative" :scale {:domain [0 100]}  :axis {:title "%" :labelFontSize 15 :titleFontSize 15}}
+                                      :tooltip [{:field "perc_yes" :type "quantitative" :title "% Yes" :format ",.2f" } ]}}
+                          {:mark {:type "text" :align "left" :x 5 :size 15} :encoding {:text {:field "description_long"}}}]}]
+                [oz/vega-lite
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Project categories" :fontSize 20}
+                  :data {:values (add-colors data-category-clean :freq colors-esg)}
+                  :width 900 :height 500 :mark "arc"
+                  :encoding {:theta  {:field "freq" :type "quantitative" :stack true}
+                             :tooltip [{:field "cat2" :type "nominal" :title "Description" }]}
+                  :layer [{:mark {:type "arc" :outerRadius 200}
+                           :encoding {:color {:field "color" :type "nominal" :scale nil :legend nil} ;:scale {:range colors-esg}
+                                      :order {:field "freq" :type "quantitative"}}}
+                          {:mark {:type "text" :name "gg" :radius 250 :size 15  } ;label transform doesnt work.. :transform {:type "label" :avoidMarks "gg" :anchor "top" :offset 1 }
+                           :encoding {:text {:field "category" :type "nominal"}
+                                      :order {:field "freq" :type "quantitative"}}}
+                          {:mark {:type "text" :radius 160 :size 15 :fontWeight "bold"}
+                           :encoding {:text {:field "freq" :type "quantitative"}}}
+                          ;:transform {:type "label" :avoidMarks "gg" :anchor ["top"] :offset [1] }
+                          ]}]
+                [oz/vega-lite
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+                  :title {:text "Who provides the independent verification?" :fontSize 20}
+                  :data     {:values (add-colors data-independent-verif :freq colors-esg)}
+                  :width 1100 :height 600 :mark "bar"
+                  :encoding {:x       {:field "category" :type "nominal" :axis {:title "Name" :labelFontSize 15 :titleFontSize 15 :labelAngle -30 :labelLimit 0} :sort {:field "freq" :order "descending"} } ;label limit of 100 is default => 0 for full
+                             :y       {:field "freq", :type "quantitative" :axis {:title "Occurences" :labelFontSize 15 :titleFontSize 15}}
+                             :tooltip [{:field "freq" :type "quantitative" :title "#" } {:field "category" :type "nominal" :title "Category" }]
+                             :color   {:field "color", :type "nominal" :scale nil :legend nil} ;:legend {:title "sdfgs" :labelFontSize 15 :titleFontSize 15}
+                             }}
+                 ]
+                [h-box :align :center :children
+                 [[oz/vega-lite (charting/small-pie-esg (add-colors data-sbti-cat :freq colors-esg)     "If SBTI aligned, what category?"  )]
+                  [oz/vega-lite (charting/small-pie-esg (add-colors data-refi-or-exit :freq colors-esg) "Refinancing of an existing project or initial financing?" )]]]
+                [h-box :align :center :children
+                 [[oz/vega-lite (charting/small-pie-esg (add-colors data-controversies :freq colors-esg) "Is there a potential for social risks and/or controversies?" )]
+                  [oz/vega-lite (charting/small-pie-esg (add-colors data-better-national :freq colors-esg) "Is the company framework better than the nation framework?" )]]]
+                ]]))
+
+
+(defn esg-report-analytics-tf []
+  (when (zero? (count @(rf/subscribe [:esg/tf-analytics]))) (rf/dispatch [:get-esg-tf-report-analytics]))
+  (let [data (first @(rf/subscribe [:esg/tf-analytics]))
+        data-scores (second @(rf/subscribe [:esg/tf-analytics]))
+        colors-esg ["#19A68C" "#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#652043" "#DB4857" "#E8E5CE" "#FFB43D" "#004042" "#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E" "#C87A1B" "#0A3323" "#9A293D"] ;"#004042" ;"#392B5E"
+        data-yes-no (t/chainfilter {:question_id #(some #{%} [70 58 69 50 51 66 53 52])} data)
+        data-yes-no-final (map #(assoc % :perc_yes (* (/ (get (:frequencies % ) "Yes") (+ (get (:frequencies % ) "Yes") (get (:frequencies % ) "No"))) 100)) data-yes-no)
+        data-avoid-reduce    (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [56])} data)))] {:category (case (key cat) "avoid" "Avoid"  "reduce" "Reduce" "both" "Both" "N/A") :freq (val cat)})
+        data-classification   (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [54])} data)))] {:category (case (key cat) "committed" "Committed" "enabler" "Enabler" "aiming" "Aiming" "N/A") :freq (val cat)})
+        ]
+    ;(println data)
+    ;(println data-scores)
+    [v-box :gap "20px" :class "element" :width standard-box-width
+         :children [[h-box :align :center :children [[title :label (str "Transition Finance Report Analytics (" (count data-scores) ")") :level :level1]]]
+                    [h-box :align :center :children
+                     [[oz/vega-lite
+                       {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores (excluding 0s...)" :fontSize 20}
+                        :data  {:values (t/chainfilter {:score #(> % 0)} data-scores)}
+                        :width 400 :height 50
+                        :mark {:type "boxplot" :extent "min-max" :color "#19A68C" :median {:color "red"}}
+                        :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}}}]
+                      [oz/vega-lite
+                       {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores by sectors (excluding 0s...)" :fontSize 20}
+                        :data  {:values (t/chainfilter {:score #(> % 0)} data-scores)}
+                        :width 400 :height 300
+                        :mark {:type "boxplot" :extent "min-max" :median {:color "red"}}
+                        :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}
+                                   :y  {:field "sector", :type "nominal" :scale {:zero true} :axis {:title "Sectors" :labelFontSize 15 :titleFontSize 15}}
+                                   :color {:field "sector" :type "nominal" :scale colors-esg :legend nil} }}]]]
+                    [oz/vega-lite
+                     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "% Yes" :fontSize 20}
+                      :data  {:values data-yes-no-final}
+                      :width 900 :height 400
+                      :encoding {:y  {:field "description_long", :type "nominal" :axis nil :sort {:field "perc_yes" :order "descending"}}}
+                      :layer [{:mark {:type "bar" :color "#19A68C"}
+                               :encoding {:x {:field "perc_yes" :type "quantitative" :scale {:domain [0 100]}  :axis {:title "%" :labelFontSize 15 :titleFontSize 15}}
+                                          :tooltip [{:field "perc_yes" :type "quantitative" :title "% Yes" :format ",.2f" } ]}}
+                              {:mark {:type "text" :align "left" :x 5 :size 15} :encoding {:text {:field "description_long"}}}]}]
+                   [oz/vega-lite (charting/small-pie-esg (add-colors data-avoid-reduce :freq colors-esg)  "Is the GB associated with carbon avoided or quantifiable carbon reduced activities?"  )]
+                    [oz/vega-lite (charting/small-pie-esg (add-colors data-classification :freq colors-esg) "What is the GB most appropriate classification for this Transition Investment?" )]
+
+                    ]]
+    ))

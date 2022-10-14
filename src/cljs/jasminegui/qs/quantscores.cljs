@@ -926,7 +926,7 @@
   (fn [{:keys [db]} [_]]
     (let [{:keys [ISIN ISIN-144A]} (db :quant-model/new-bond-entry)]
       {:http-get-dispatch {:url (str static/server-address "quant-model-new-bond-check?ISIN=" (.toUpperCase ISIN) "&ISIN-144A=" (if (nil? ISIN-144A) "" (.toUpperCase ISIN-144A)))
-                           :dispatch-key [:quant-model/new-bond-entry-result]} ; add 144A
+                           :dispatch-key [:quant-model/new-bond-entry-result]}
        :db                (-> db (assoc :quant-model/new-bond-tested false
                                         :quant-model/new-bond-already-exists false
                                         :quant-model/new-bond-entry {:ISIN (.toUpperCase ISIN) :ISIN-144A (if (nil? ISIN-144A) "" (.toUpperCase ISIN-144A)) :JPM_SECTOR nil :CNTRY_OF_RISK nil :NAME nil}))})))
