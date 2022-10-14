@@ -311,6 +311,8 @@
    :cembi-ig-dur                        {:Header "CEMBI IG" :accessor "cembi-ig-dur" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
    :cembi-ig-dur-x-sp                   {:Header "CEMBI IG" :accessor "cembi-ig-dur-x-sp" :width 65 :Cell tables/round2-if-not0 :style {:textAlign "right"} :aggregate tables/sum-rows :filterMethod tables/nb-filter-OR-AND}
 
+   :liquidity-score                     {:Header "Liquidity" :accessor "Liquidity-Score" :width 65 :Cell tables/round1 :style {:textAlign "right"} :aggregate tables/median :filterMethod tables/nb-filter-OR-AND}
+
    :RTG_SP_OUTLOOK                      {:Header "S&P" :accessor "RTG_SP_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
    :RTG_FITCH_OUTLOOK                   {:Header "Fitch" :accessor "RTG_FITCH_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
    :RTG_MDY_OUTLOOK                     {:Header "Moody's" :accessor "RTG_MDY_OUTLOOK" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell nil :filterable true :filterMethod tables/nb-filter-OR-AND}
