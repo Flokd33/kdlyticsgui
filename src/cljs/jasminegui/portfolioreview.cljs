@@ -448,7 +448,6 @@
          {:code :quant-value      :name "Quant value"       }
          {:code :risk             :name "Risk"              }
          {:code :ir-breakdown     :name "Interest rate risk"}
-         {:code :trounce-flow     :name "Trounce flow"}
          {:code :testing          :name "testing stuff"}
 
          ]))

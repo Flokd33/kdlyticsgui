@@ -58,19 +58,18 @@
   (when (zero? (count @(rf/subscribe [:trounce-flow-duration]))) (rf/dispatch [:get-trounce-flow-duration]))
   (when (zero? (count @(rf/subscribe [:trounce-flow-country]))) (rf/dispatch [:get-trounce-flow-country]))
   (when (zero? (count @(rf/subscribe [:trounce-flow-country-change]))) (rf/dispatch [:get-trounce-flow-country-change]))
+  (when (zero? (count @(rf/subscribe [:trounce-flow-date]))) (rf/dispatch [:get-trounce-flow-date]))
   (let [data-cash @(rf/subscribe [:trounce-flow-cash])
         data-country @(rf/subscribe [:trounce-flow-country])
         data-country-change @(rf/subscribe [:trounce-flow-country-change])
         data-duration @(rf/subscribe [:trounce-flow-duration])
         data-duration-clean (for [d data-duration] (assoc d :diff (- (:duration d) (:benchmark d))))
         data-duration-clean-filtered (t/chainfilter {:date #(> (t/int->gdate (js/parseInt (mod-date %))) (t/int->gdate 20160929))} data-duration-clean) ;; no BM data before Sept 16'..
-        colors-esg ["#19A68C" "#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#652043" "#DB4857" "#E8E5CE" "#FFB43D" "#004042" "#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E" "#C87A1B" "#0A3323" "#9A293D"] ;"#004042" ;"#392B5E"
         ]
-    ;(println data-country-change)
     ;(println  data-duration-clean-filtered)
     [box :class "subbody rightelement" :child
      [v-box :gap "20px" :class "element" :width "1600px"
-     :children [[h-box :align :center :children [[title :label "Trounce Flow" :level :level1]]]
+     :children [[h-box :align :center :children [[title :label (str "Trounceflow ("  @(rf/subscribe [:trounce-flow-date]) ")") :level :level1]]]
                 [h-box :align :center :children
                  [[oz/vega-lite
                    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
@@ -95,9 +94,11 @@
                              :encoding {:x       {:field "date" :type "temporal"  :axis {:title "Date" :labelFontSize 15 :titleFontSize 15 :labelAngle -60 :labelLimit 0 :format "%b-%y"}}
                                         :y       {:field "diff", :type "quantitative" :axis {:title "Net allocation vs CEMBI" :labelFontSize 15 :titleFontSize 15}}
                                         :tooltip [{:field "date" :type "temporal" :title "Date" } {:field "diff" :type "quantitative" :title "diff" }
-                                                  {:field "duration" :type "quantitative" :title "Funds" } {:field "benchmark" :type "quantitative" :title "BM" }]
-                                        }
-                             }]}]]]
+                                                  {:field "duration" :type "quantitative" :title "Funds" } {:field "benchmark" :type "quantitative" :title "BM" }]}}
+                            {:mark {:type "rule"}
+                             :encoding {:y       {:field "diff", :type "quantitative" :aggregate "mean"}
+                                        :color {:value "#C33345"}
+                                        :size {:value 3}}}]}]]]
                 [h-box :align :center :children
                  [[oz/vega-lite
                    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
