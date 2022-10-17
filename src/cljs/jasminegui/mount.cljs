@@ -252,6 +252,7 @@
                  :trounce-flow-duration                              []
                  :trounce-flow-country                               []
                  :trounce-flow-country-change                        []
+                 :trounce-flow-date                                   ""
 
 
                  :esg/esg-report-selected                           "GB_AYDEMT27_2022-09-02"
@@ -543,6 +544,7 @@
            :trounce-flow-duration
            :trounce-flow-country
            :trounce-flow-country-change
+           :trounce-flow-date
 
            :trade-history/active-home
 
@@ -978,6 +980,7 @@
    {:get-key :get-trounce-flow-duration       :namespace "jasmine.positions"  :asset "trounce-flow-duration"        :dispatch-key [:trounce-flow-duration]}
    {:get-key :get-trounce-flow-country        :namespace "jasmine.positions"  :asset "trounce-flow-country"         :dispatch-key [:trounce-flow-country]}
    {:get-key :get-trounce-flow-country-change :namespace "jasmine.positions"  :asset "trounce-flow-country-change"  :dispatch-key [:trounce-flow-country-change]}
+   {:get-key :get-trounce-flow-date           :namespace "jasmine.positions"  :asset "get-trounce-flow-month-as-of"  :dispatch-key [:trounce-flow-date]}
 
    {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
    {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi":asset "esg-jasmine-data-cache"       :dispatch-key [:esg/carbon-jasmine]}
