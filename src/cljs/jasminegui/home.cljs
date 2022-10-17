@@ -13,6 +13,8 @@
     [jasminegui.tools :as tools]
     [jasminegui.tables :as tables]
     [goog.object :as gobj]
+    [oz.core :as oz]
+    [jasminegui.tools :as t]
     ["react-table-v6" :as rt :default ReactTable]))
 
 
@@ -48,6 +50,80 @@
                                (assoc (tables/nb-col "IAM Ultimate Parent & Subsidiaries Total % Owned" "IAM_Ultimate_Parent_&_Subsidiaries_Total_%_Owned" 100 #(tables/nb-cell-format "%.1f" 100 %)) :headerStyle header-style)]
          :defaultPageSize 20 :showPagination true :getTrProps conditional-color :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])]))
 
+
+(defn mod-date [date]  (str (subs date 0 4) (subs date 5 7) (subs date 8 10) ))
+
+(defn trounce-flow-display []
+  (when (zero? (count @(rf/subscribe [:trounce-flow-cash]))) (rf/dispatch [:get-trounce-flow-cash]))
+  (when (zero? (count @(rf/subscribe [:trounce-flow-duration]))) (rf/dispatch [:get-trounce-flow-duration]))
+  (when (zero? (count @(rf/subscribe [:trounce-flow-country]))) (rf/dispatch [:get-trounce-flow-country]))
+  (when (zero? (count @(rf/subscribe [:trounce-flow-country-change]))) (rf/dispatch [:get-trounce-flow-country-change]))
+  (let [data-cash @(rf/subscribe [:trounce-flow-cash])
+        data-country @(rf/subscribe [:trounce-flow-country])
+        data-country-change @(rf/subscribe [:trounce-flow-country-change])
+        data-duration @(rf/subscribe [:trounce-flow-duration])
+        data-duration-clean (for [d data-duration] (assoc d :diff (- (:duration d) (:benchmark d))))
+        data-duration-clean-filtered (t/chainfilter {:date #(> (t/int->gdate (js/parseInt (mod-date %))) (t/int->gdate 20160929))} data-duration-clean) ;; no BM data before Sept 16'..
+        colors-esg ["#19A68C" "#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#652043" "#DB4857" "#E8E5CE" "#FFB43D" "#004042" "#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E" "#C87A1B" "#0A3323" "#9A293D"] ;"#004042" ;"#392B5E"
+        ]
+    ;(println data-country-change)
+    ;(println  data-duration-clean-filtered)
+    [box :class "subbody rightelement" :child
+     [v-box :gap "20px" :class "element" :width "1600px"
+     :children [[h-box :align :center :children [[title :label "Trounce Flow" :level :level1]]]
+                [h-box :align :center :children
+                 [[oz/vega-lite
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+                    :title {:text "Cash allocation" :fontSize 20}
+                    :data     {:values data-cash}
+                    :width 1500 :height 600
+                    :layer [{:mark {:type "bar" :color "#19A68C"}
+                             :encoding {:x       {:field "date" :type "temporal" :axis {:title "Date" :labelFontSize 15 :titleFontSize 15 :labelAngle -60 :labelLimit 0 :format "%b-%y"}}
+                                        :y       {:field "cash", :type "quantitative" :axis {:title "% Cash" :labelFontSize 15 :titleFontSize 15}}
+                                        :tooltip [{:field "date" :type "temporal" :title "Date" } {:field "cash" :type "quantitative" :title "% cash" }]}}
+                            {:mark {:type "rule"}
+                             :encoding {:y       {:field "cash", :type "quantitative" :aggregate "mean"}
+                                        :color {:value "#C33345"}
+                                        :size {:value 3}}}]}]]]
+                [h-box :align :center :children
+                 [[oz/vega-lite
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+                    :title {:text "Duration allocation (net vs CEMBI)" :fontSize 20}
+                    :data     {:values data-duration-clean-filtered}
+                    :width 1500 :height 600
+                    :layer [{:mark {:type "bar" :color "#591739"}
+                             :encoding {:x       {:field "date" :type "temporal"  :axis {:title "Date" :labelFontSize 15 :titleFontSize 15 :labelAngle -60 :labelLimit 0 :format "%b-%y"}}
+                                        :y       {:field "diff", :type "quantitative" :axis {:title "Net allocation vs CEMBI" :labelFontSize 15 :titleFontSize 15}}
+                                        :tooltip [{:field "date" :type "temporal" :title "Date" } {:field "diff" :type "quantitative" :title "diff" }
+                                                  {:field "duration" :type "quantitative" :title "Funds" } {:field "benchmark" :type "quantitative" :title "BM" }]
+                                        }
+                             }]}]]]
+                [h-box :align :center :children
+                 [[oz/vega-lite
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+                    :title {:text "Latest average positioning across countries " :fontSize 20}
+                    :data     {:values data-country}
+                    :width 1300 :height 600
+                    :layer [{:mark {:type "bar"}
+                             :encoding {:x       {:field "average_positioning" :type "quantitative"  :axis {:title "%" :labelFontSize 15 :titleFontSize 15}}
+                                        :y       {:field "asset", :type "nominal" :axis {:title "%" :labelFontSize 15 :titleFontSize 15} :sort {:field "average_positioning" :order "descending"}}
+                                        :tooltip [{:field "average_positioning" :type "quantitative" :title "%" } {:field "asset" :type "nominal" :title "Country" }]}
+                             }]}]]]
+                [h-box :align :center :children
+                 [[oz/vega-lite
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+                    :title {:text "Latest average positioning change across countries " :fontSize 20}
+                    :data     {:values data-country-change}
+                    :width 1300 :height 600
+                    :layer [{:mark {:type "bar"}
+                             :encoding {:x       {:field "average_positioning_change" :type "quantitative"  :axis {:title "%" :labelFontSize 15 :titleFontSize 15}}
+                                        :y       {:field "asset", :type "nominal" :axis {:title "%" :labelFontSize 15 :titleFontSize 15} :sort {:field "average_positioning_change" :order "descending"}}
+                                        :tooltip [{:field "average_positioning_change" :type "quantitative" :title "%" } {:field "asset" :type "nominal" :title "Country" }]}
+                             }]}]]]
+                ]
+      ]]
+    ))
+
 (defn active-home []
   (let [active-home @(rf/subscribe [:navigation/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
@@ -66,6 +142,7 @@
       :position-history               [riskviews/position-history]
       :allianz-loss-report            [riskviews/allianz-loss-report]
       :gdel                           [global-debt-and-equity-levels]
+      :trounce-flow                   [trounce-flow-display]
       [:div.output "nothing to display"])))
 
 
