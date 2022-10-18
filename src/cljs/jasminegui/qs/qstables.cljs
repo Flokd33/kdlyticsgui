@@ -249,7 +249,7 @@
    :z1ymedian                           {:Header "Median" :accessor "z1ymedian" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
    :z1yvalid                            {:Header "Days" :accessor "z1yvalid" :width 55 :style {:textAlign "right"} :aggregate tables/median :filterable true :filterMethod tables/nb-filter-OR-AND}
    :ytd-z-delta                         {:Header (gstring/unescapeEntities "&Delta; ZTW") :accessor "ytd-z-delta" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/zspread-format :filterable true :filterMethod tables/nb-filter-OR-AND}
-   :ytd-return                          {:Header "YTD" :accessor "ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2pc :filterable true :filterMethod tables/nb-filter-OR-AND}
+   :ytd-return                          {:Header "YTD" :accessor "ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2red :filterable true :filterMethod tables/nb-filter-OR-AND}
    :best-ytd-return                     {:Header "TR %" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
    :best-ytd-return-2                   {:Header "YTD" :accessor "best-ytd-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/ytd-ita :filterable true :filterMethod tables/nb-filter-OR-AND}
    :weekly-return                       {:Header "1W" :accessor "r1w-return" :width 65 :style {:textAlign "right"} :aggregate tables/median :Cell tables/round2red :filterable true :filterMethod tables/nb-filter-OR-AND}
@@ -425,7 +425,7 @@
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Current_yield :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
                {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
-               {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta ])}
+               {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta])}
                {:Header "91" :columns (mapv quant-score-table-columns [:n91heldvisible :Analyst])}
                {:Header "ESG Report" :columns (mapv quant-score-table-columns [:esg-report])}])
 
@@ -460,6 +460,21 @@
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
                {:Header "YTD performance" :columns (mapv quant-score-table-columns [:ytd-return :ytd-z-delta])}])
+      "IndexCrawlerCountryPivot"
+      (concat [{:Header " " :columns (mapv #(assoc % :filterable false) [{:Header "Country" :accessor "Country" :width 85}
+                                                                        {:Header "$ m" :accessor "AMT_OUTSTANDING" :width 65 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell #(tables/nb-cell-format "%.0f" 0.000001 %) :filterable true :filterMethod tables/nb-filter-OR-AND}])
+                }
+               {:Header "Pricing" :columns
+                (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score
+                                                                                   :difference_svr_2 :difference_svr_2_2d]))}
+               {:Header (gstring/unescapeEntities "&Delta; ZTW") :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:z1w-delta :z1m-delta :zytd-delta :z1y-delta]))}
+               {:Header "TR %" :columns (mapv #(assoc % :filterable false) (mapv quant-score-table-columns [:weekly-return :monthly-return :ytd-return :yearly-return]))}
+               ]
+              ;[{:Header (gstring/unescapeEntities "&Delta; ZTW") :columns (mapv quant-score-table-columns [:z1w-delta :z1m-delta :zytd-delta :z1y-delta])}
+              ; {:Header "TR %" :columns (mapv quant-score-table-columns [:weekly-return :monthly-return :best-ytd-return-2 :yearly-return])}
+              ; ]
+              )
+
       ))
   )
 

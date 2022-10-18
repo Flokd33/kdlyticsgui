@@ -224,45 +224,59 @@
   (let [data @(rf/subscribe [:quant-model/model-output])
         cembi-embi (map #(assoc % :totaldummy "") (filter #(or (pos? (:cembi %)) (pos? (:cembi-ig %)) (pos? (:cembi-hy %)) (pos? (:embi %)) (pos? (:embi-ig %)) (pos? (:jaci %))) data))
         final (tables/cljs-text-filter-OR @index-crawler-filter cembi-embi)]
-    [box  :class "subbody rightelement"
-     :child
-             [v-box :class "element" :gap "20px" :width "1690px"
-              :children [[title :label "Index crawler" :level :level1]
-                         [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
-                         [:> ReactTable
-                          {:data final :columns (qstables/table-style->qs-table-col "IndexCrawler" nil)
-                           :showPagination  false :pageSize 1
-                           :filterable      true :defaultFilterMethod (fn [filterfn row] true)
-                           :onFilteredChange #(reset! index-crawler-filter %)
-                           :className "-striped -highlight" ;:getTrProps      on-click-context
-                           :pivotBy [:totaldummy]
-                           :expanded @index-crawler-expander :onExpandedChange #(reset! index-crawler-expander %)}]
-                         [title :level :level4 :label "Aggregate results from filter below, with median valuation:"]
-                         [:> ReactTable
-                          {:data     (into [] (for [i [:cembi :cembi-ig :cembi-hy :embi :embi-ig :jaci]]
-                                                (let [unv (filter (comp pos? i) final)]
-                                                  {:idx      i :bonds (count unv) :issuers (count (distinct (map :Ticker unv))) :nav (reduce + (map i unv))
-                                                   :Used_YTW (tables/median (map :Used_YTW unv))
-                                                   :Used_ZTW (tables/median (map :Used_ZTW unv))
-                                                   :G        (tables/median (map :G_SPREAD_MID_CALC unv))
-                                                   :Used_Duration (tables/median (map :Used_Duration unv))
-                                                   :Used_Rating_Score (tables/median (map :Used_Rating_Score unv))
-                                                   :ytd-return (tables/median (map :ytd-return unv)) ;FC
-                                                   :ytd-z-delta (tables/median (map :ytd-z-delta unv)) ;FC
-                                                   })))
-                           :columns  [{:Header "Index" :accessor "idx" :width 70}
-                                      {:Header "Bonds" :accessor "bonds" :width 60 :style {:textAlign "right"}}
-                                      {:Header "Issuers" :accessor "issuers" :width 60 :style {:textAlign "right"}}
-                                      {:Header "NAV" :accessor "nav" :width 60 :style {:textAlign "right"} :Cell tables/round2}
-                                      {:Header "YTW" :accessor "Used_YTW" :width 60 :style {:textAlign "right"} :Cell tables/round2}
-                                      {:Header "ZTW" :accessor "Used_ZTW" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
-                                      {:Header "G" :accessor "G" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
-                                      {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :Cell tables/round1}
-                                      {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"}}
-                                      {:Header "TR %*" :accessor "ytd-return" :width 60 :style {:textAlign "right"}:Cell tables/round2pc} ; FC
-                                      {:Header (gstring/unescapeEntities "&Delta; ZTW*") :accessor "ytd-z-delta" :width 80 :style {:textAlign "right"}:Cell tables/zspread-format}]
-                           :pageSize 5 :filterable false :showPageSizeOptions false :showPagination false}]
-                         [title :level :level4 :label "*NB: figures do not include new issues as well as matured and called bonds"]]]]))
+    [v-box  :class "subbody" :gap "20px"
+     :children [
+                [v-box :class "rightelement element" :gap "20px" :width "1690px"
+                 :children [[title :label "Index crawler" :level :level1]
+                            [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
+                            [:> ReactTable
+                             {:data             final :columns (qstables/table-style->qs-table-col "IndexCrawler" nil)
+                              :showPagination   false :pageSize 1
+                              :filterable       true :defaultFilterMethod (fn [filterfn row] true)
+                              :onFilteredChange #(reset! index-crawler-filter %)
+                              :className        "-striped -highlight" ;:getTrProps      on-click-context
+                              :pivotBy          [:totaldummy]
+                              :expanded         @index-crawler-expander :onExpandedChange #(reset! index-crawler-expander %)}]
+                            [title :level :level4 :label "Aggregate results from filter below, with median valuation:"]
+                            [:> ReactTable
+                             {:data     (into [] (for [i [:cembi :cembi-ig :cembi-hy :embi :embi-ig :jaci]]
+                                                   (let [unv (filter (comp pos? i) final)]
+                                                     {:idx               i :bonds (count unv) :issuers (count (distinct (map :Ticker unv))) :nav (reduce + (map i unv))
+                                                      :Used_YTW          (tables/median (map :Used_YTW unv))
+                                                      :Used_ZTW          (tables/median (map :Used_ZTW unv))
+                                                      :G                 (tables/median (map :G_SPREAD_MID_CALC unv))
+                                                      :Used_Duration     (tables/median (map :Used_Duration unv))
+                                                      :Used_Rating_Score (tables/median (map :Used_Rating_Score unv))
+                                                      :ytd-return        (tables/median (map :ytd-return unv)) ;FC
+                                                      :ytd-z-delta       (tables/median (map :ytd-z-delta unv)) ;FC
+                                                      })))
+                              :columns  [{:Header "Index" :accessor "idx" :width 70}
+                                         {:Header "Bonds" :accessor "bonds" :width 60 :style {:textAlign "right"}}
+                                         {:Header "Issuers" :accessor "issuers" :width 60 :style {:textAlign "right"}}
+                                         {:Header "NAV" :accessor "nav" :width 60 :style {:textAlign "right"} :Cell tables/round2}
+                                         {:Header "YTW" :accessor "Used_YTW" :width 60 :style {:textAlign "right"} :Cell tables/round2}
+                                         {:Header "ZTW" :accessor "Used_ZTW" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                                         {:Header "G" :accessor "G" :width 60 :style {:textAlign "right"} :Cell tables/zspread-format}
+                                         {:Header "Duration" :accessor "Used_Duration" :width 60 :style {:textAlign "right"} :Cell tables/round1}
+                                         {:Header "Rating" :accessor "Used_Rating_Score" :width 60 :style {:textAlign "right"}}
+                                         {:Header "TR %*" :accessor "ytd-return" :width 60 :style {:textAlign "right"} :Cell tables/round2}
+                                         {:Header (gstring/unescapeEntities "&Delta; ZTW*") :accessor "ytd-z-delta" :width 80 :style {:textAlign "right"} :Cell tables/zspread-format}]
+                              :pageSize 5 :filterable false :showPageSizeOptions false :showPagination false}]
+                            [title :level :level4 :label "*NB: figures do not include new issues as well as matured and called bonds"]]]
+
+                [v-box :class "rightelement element" :gap "20px" :width "1690px"
+                 :children (into [[title :label "Index country breakdowns" :level :level1]
+                                  [title :label "Median values except index weight and amount outstanding (sum)." :level :level4]]
+                                 (for [[idx idxcode] [["CEMBI" :cembi] ["CEMBI IG" :cembi-ig] ["CEMBI HY" :cembi-hy] ["EMBI" :embi] ["EMBI IG" :embi-ig] ["JACI" :jaci]]]
+                                      [v-box :children [[title :label idx :level :level2]
+                                                        [h-box :children [[:> ReactTable
+                                                                           {:data     (filter #(pos? (idxcode %)) data)
+                                                                            :columns  (let [x (qstables/table-style->qs-table-col "IndexCrawlerCountryPivot" nil)] (concat [(update (first x) :columns conj (assoc (qstables/quant-score-table-columns idxcode) :filterable false :Header "Weight"))] (rest x))) ;(map #(assoc % :filterable false) (conj (qstables/table-style->qs-table-col "IndexCrawlerCountryPivot" nil) (assoc (qstables/quant-score-table-columns idxcode) :Header "Weight")))
+                                                                            :expanded #js {} :pageSize 10 :className "-striped -highlight"
+                                                                            :pivotBy  [:Country]}]]]]]))]
+                ]
+
+     ]))
 
 (defn score-vs-outlook []
   (let [data @(rf/subscribe [:quant-model/model-output])
