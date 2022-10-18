@@ -199,3 +199,42 @@
            {:mark {:type "text" :radius 90 :size 15 :fontWeight "bold"}
             :encoding {:text {:field "freq" :type "quantitative"}}}]})
   )
+
+(defn mod-date [date]  (str (subs date 0 4) (subs date 5 7) (subs date 8 10) ))
+
+(defn bar-chart-duration [data-raw color title]
+  (let [data-duration-clean (for [d data-raw] (assoc d :diff (- (:duration d) (:benchmark d))))
+        data-duration-clean-filtered (t/chainfilter {:date #(> (t/int->gdate (js/parseInt (mod-date %))) (t/int->gdate 20160929))} data-duration-clean) ;; no BM data before Sept 16'. (->> data-weight
+        ]
+    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+     :title {:text title :fontSize 20}
+     :data     {:values data-duration-clean-filtered}
+     :width 1500 :height 600
+     :layer [{:mark {:type "bar" :color color}
+              :encoding {:x       {:field "date" :type "temporal"  :axis {:title "Date" :labelFontSize 15 :titleFontSize 15 :labelAngle -60 :labelLimit 0 :format "%b-%y"}}
+                         :y       {:field "diff", :type "quantitative" :axis {:title "Net allocation vs CEMBI" :labelFontSize 15 :titleFontSize 15}}
+                         :tooltip [{:field "date" :type "temporal" :title "Date" } {:field "diff" :type "quantitative" :title "diff" }
+                                   {:field "duration" :type "quantitative" :title "Funds" } {:field "benchmark" :type "quantitative" :title "BM" }]}}
+             {:mark {:type "rule"}
+              :encoding {:y       {:field "diff", :type "quantitative" :aggregate "mean"}
+                         :color {:value "#C33345"}
+                         :size {:value 3}}}]}))
+
+(defn bar-chart-cash [data-raw color title]
+  (let []
+    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+     :title {:text title :fontSize 20}
+     :data     {:values data-raw}
+     :width 1500 :height 600
+     :layer [{:mark {:type "bar" :color color}
+              :encoding {:x       {:field "date" :type "temporal" :axis {:title "Date" :labelFontSize 15 :titleFontSize 15 :labelAngle -60 :labelLimit 0 :format "%b-%y"}}
+                         :y       {:field "cash", :type "quantitative" :axis {:title "% Cash" :labelFontSize 15 :titleFontSize 15}}
+                         :tooltip [{:field "date" :type "temporal" :title "Date" } {:field "cash" :type "quantitative" :title "% cash" }]}}
+             {:mark {:type "rule"}
+              :encoding {:y       {:field "cash", :type "quantitative" :aggregate "mean"}
+                         :color {:value "#C33345"}
+                         :size {:value 3}}}]}))
+
+
+
+
