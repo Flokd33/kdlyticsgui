@@ -449,6 +449,7 @@
          {:code :risk             :name "Risk"              }
          {:code :ir-breakdown     :name "Interest rate risk"}
          {:code :testing          :name "testing stuff"}
+
          ]))
 
 (def maximum-page (count pages))

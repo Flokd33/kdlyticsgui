@@ -248,6 +248,19 @@
                  :esg/analyst-commentary                             []
                  :esg/carbon-jasmine                                 []
 
+                 :trounce-flow-cash                                  []
+                 :trounce-flow-duration                              []
+                 :trounce-flow-country                               []
+                 :trounce-flow-country-change                        []
+
+                 :trounce-flow-duration-embi-local                   []
+                 :trounce-flow-duration-embi                         []
+                 :trounce-flow-cash-embi-local                       []
+                 :trounce-flow-cash-embi                             []
+
+                 :trounce-flow-date                                   ""
+
+
                  :esg/esg-report-selected                           "GB_AYDEMT27_2022-09-02"
                  :esg/gb-isin                                       "XS2368781477"
                  :esg/date                                          "2022-09-02"
@@ -532,6 +545,16 @@
            :esg/elig
 
            :esg/active-home
+
+           :trounce-flow-cash
+           :trounce-flow-duration
+           :trounce-flow-country
+           :trounce-flow-country-change
+           :trounce-flow-date
+           :trounce-flow-duration-embi-local
+           :trounce-flow-duration-embi
+           :trounce-flow-cash-embi-local
+           :trounce-flow-cash-embi
 
            :trade-history/active-home
 
@@ -963,6 +986,17 @@
    {:get-key :get-total-positions             :namespace "jasmine.positions"  :asset "total-lines"                  :dispatch-key [:total-positions]}
    {:get-key :get-instruments                 :namespace "jasmine.positions"  :asset "instruments"                  :dispatch-key [:instruments]}
    {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
+
+   {:get-key :get-trounce-flow-cash           :namespace "jasmine.positions"  :asset "trounce-flow-cash"            :dispatch-key [:trounce-flow-cash]}
+   {:get-key :get-trounce-flow-duration       :namespace "jasmine.positions"  :asset "trounce-flow-duration"        :dispatch-key [:trounce-flow-duration]}
+   {:get-key :get-trounce-flow-country        :namespace "jasmine.positions"  :asset "trounce-flow-country"         :dispatch-key [:trounce-flow-country]}
+   {:get-key :get-trounce-flow-country-change :namespace "jasmine.positions"  :asset "trounce-flow-country-change"  :dispatch-key [:trounce-flow-country-change]}
+   {:get-key :get-trounce-flow-date           :namespace "jasmine.positions"  :asset "get-trounce-flow-month-as-of"  :dispatch-key [:trounce-flow-date]}
+
+   {:get-key :get-trounce-flow-cash-embi           :namespace "jasmine.positions"  :asset "trounce-flow-cash-embi"            :dispatch-key [:trounce-flow-cash-embi]}
+   {:get-key :get-trounce-flow-cash-embi-local     :namespace "jasmine.positions"  :asset "trounce-flow-cash-embi-local"      :dispatch-key [:trounce-flow-cash-embi-local]}
+   {:get-key :get-trounce-flow-duration-embi       :namespace "jasmine.positions"  :asset "trounce-flow-duration-embi"        :dispatch-key [:trounce-flow-duration-embi]}
+   {:get-key :get-trounce-flow-duration-embi-local  :namespace "jasmine.positions"  :asset "trounce-flow-duration-embi-local"  :dispatch-key [:trounce-flow-duration-embi-local]}
 
    {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
    {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi":asset "esg-jasmine-data-cache"       :dispatch-key [:esg/carbon-jasmine]}
