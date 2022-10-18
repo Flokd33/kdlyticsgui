@@ -10,8 +10,9 @@
         quant-events [:get-esg-report-list :get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts [:post-esg-report-extract "XS2368781477" "2022-09-02" "green-bond"]]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         implementation-events (conj home-events :get-quant-model :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :get-live-cast-parent-positions :get-analyst-coverage)
+        trounceflow-events [:get-trounce-flow-cash :get-trounce-flow-duration :get-trounce-flow-country :get-trounce-flow-country-change :get-trounce-flow-date :get-trounce-flow-cash-embi :get-trounce-flow-cash-embi-local :get-trounce-flow-duration-embi :get-trounce-flow-duration-embi-local]
         ]
-  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (conj home-events :get-list-dates-position-history :get-portfolio-checks ) :mounting-modal true}
+  [{:code :home             :name "Holdings"          :dispatch :home             :subs nil :load-events (conj home-events trounceflow-events :get-list-dates-position-history :get-portfolio-checks ) :mounting-modal true}
    {:code :trade-history    :name "Trade history"     :dispatch :trade-history    :subs nil :load-events (concat home-events [:get-country-codes :get-jpm-sectors :get-model-portfolios :get-quant-model])} ;need load position to identify what we still own among list of trade- not effici
    ;
    ; ~}@:/etn , need to review with Alex
