@@ -218,6 +218,8 @@
                                                                                     :HYBRIDNONFINS
                                                                                     :HY
                                                                                     :COCOS
+                                                                                    :T1
+                                                                                    :T2
                                                                                     :ad-hoc
                                                                                     :downgrade-candidates
                                                                                     :contrib-BBG_CEMBI_D1Y_BETA
@@ -608,6 +610,7 @@
 
 (defn summary-display []
   (let [data @(rf/subscribe [:summary-display/table])]
+    (println (first @(rf/subscribe [:summary-display/table])))
     [box :class "subbody rightelement" :child
      (gt/element-box "summary" "100%" (str "Summary " @(rf/subscribe [:qt-date])) data
                      [[:> ReactTable
@@ -639,7 +642,10 @@
                                                                                                        (tables/nb-col "Hybrid" "HYBRID" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/nb-col "Corp Hyb." "HYBRIDNONFINS" 70 tables/round2pc tables/sum-rows)
                                                                                                        (tables/nb-col "Sukuk" "INTERNATIONAL_SUKUK" 70 tables/round2pc tables/sum-rows)
-                                                                                                       (tables/nb-col "FA risk" "downgrade-candidates" 70 tables/round2pc tables/sum-rows)])}
+                                                                                                       (tables/nb-col "FA risk" "downgrade-candidates" 70 tables/round2pc tables/sum-rows)
+                                                                                                       (tables/nb-col "AT1" "T1" 70 tables/round2pc tables/sum-rows)
+                                                                                                       (tables/nb-col "T2" "T2" 70 tables/round2pc tables/sum-rows)
+                                                                                                       ])}
                                          ]
                         :showPagination false :pageSize (count @(rf/subscribe [:portfolios])) :getTrProps go-to-portfolio-risk :className "-striped -highlight"}]
                       ]
