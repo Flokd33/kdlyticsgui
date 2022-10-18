@@ -75,7 +75,7 @@
                 [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-duration @(rf/subscribe [:trounce-flow-duration-embi-local]) "#CF6F13" "Duration allocation (net vs EMBI local)")]]]
                 [h-box :align :center :children
                  [[oz/vega-lite
-                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Latest average positioning across countries " :fontSize 20}
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Latest average positioning across countries (CEMBI)" :fontSize 20}
                     :data     {:values @(rf/subscribe [:trounce-flow-country])} :width 1300 :height 600
                     :layer [{:mark {:type "bar":color "#4C3C84"}
                              :encoding {:x       {:field "average_positioning" :type "quantitative"  :axis {:title "%" :labelFontSize 15 :titleFontSize 15}}
@@ -84,7 +84,7 @@
                              }]}]]]
                 [h-box :align :center :children
                  [[oz/vega-lite
-                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Latest average positioning change across countries " :fontSize 20}
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Latest average positioning change across countries (CEMBI)" :fontSize 20}
                     :data     {:values @(rf/subscribe [:trounce-flow-country-change])} :width 1300 :height 600
                     :layer [{:mark {:type "bar" :color "#4C3C84"}
                              :encoding {:x       {:field "average_positioning_change" :type "quantitative"  :axis {:title "%" :labelFontSize 15 :titleFontSize 15}}
