@@ -416,7 +416,6 @@
         sector @(rf/subscribe [:scorecard/sector])
         vdisplay @(rf/subscribe [:scorecard-risk/table])
         filtered-tree (tables/cljs-text-filter-OR @fins-pivot-filter @(rf/subscribe [:scorecard-risk/tree]))
-
         portfolios @(rf/subscribe [:portfolios])
         selected-portfolios (rf/subscribe [:multiple-portfolio-scorecard/selected-portfolios])
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
@@ -526,8 +525,9 @@
                                                )
                                              ]
                                              ]
-                                 (let [cols (into [] (for [p (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))] ;@(rf/subscribe [:portfolios])
+                                 (let [cols (into [] (for [p (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))) :when (not (some #{p} ["OG-EQ-HDG" "OGEMCRED" "OG-INF-HDG" "TRANSLIQU" "IOTPECON" "IOTPEMHC" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))] ;@(rf/subscribe [:portfolios])
                                                        {:Header p :accessor (name p) :width 80 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}))]
+                                   ;(println cols)
                                    [:> ReactTable
                                     {:data                @(rf/subscribe [:scorecard-risk/multiple-tree])
                                      :columns             (concat (mapv tables/risk-table-columns [:issuer :name]) cols)
