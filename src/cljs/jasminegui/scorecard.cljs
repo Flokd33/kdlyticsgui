@@ -415,7 +415,13 @@
   (let [portfolio @(rf/subscribe [:scorecard/portfolio])
         sector @(rf/subscribe [:scorecard/sector])
         vdisplay @(rf/subscribe [:scorecard-risk/table])
-        filtered-tree (tables/cljs-text-filter-OR @fins-pivot-filter @(rf/subscribe [:scorecard-risk/tree]))]
+        filtered-tree (tables/cljs-text-filter-OR @fins-pivot-filter @(rf/subscribe [:scorecard-risk/tree]))
+
+        portfolios @(rf/subscribe [:portfolios])
+        selected-portfolios (rf/subscribe [:multiple-portfolio-scorecard/selected-portfolios])
+        toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
+        ]
+    ;(println selected-portfolios)
     [v-box :gap "20px" :align :start
      :children [[h-box :class "element" :gap "20px"
                  :children [[title :level :level1 :label "Portfolio and sector selection"]
@@ -505,9 +511,23 @@
                                                       {:Header "Year to date" :columns (mapv tables/attribution-table-columns [:total-effect-ytd :contribution-ytd :bm-contribution-ytd])}
                                                       {:Header "YTD weights" :columns (mapv tables/attribution-table-columns [:xs-weight-ytd :weight-ytd :bm-weight-ytd])}]
                                      :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}]]))
-                (gt/element-box "scorecard-nav-portfolios" "100%" (str sector " NAV across portfolios, grouped by issuer") @(rf/subscribe [:scorecard-risk/multiple-tree])
-                                [(let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))]
-                                                       {:Header p :accessor (name p) :width "100px" :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}))]
+                 (gt/element-box "scorecard-nav-portfolios" "100%" (str sector " NAV across portfolios, grouped by issuer") @(rf/subscribe [:scorecard-risk/multiple-tree])
+                                [[h-box :gap " 10px "
+                                  :children [[title :label "Portfolios:" :level :level3]
+                                                    [gap :size "10px"]
+                                                    [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios (set portfolios)])]
+                                                                                 [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios #{}])]]]
+                                             (for [line static/portfolio-alignment-groups]
+                                               (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                                                 [v-box :gap "2px" :children
+                                                  [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                                                   [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios %])]
+                                                   ]])
+                                               )
+                                             ]
+                                             ]
+                                 (let [cols (into [] (for [p (toggle-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))) :when (not (some #{p} ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE" "OGEMHCD" "IUSSEMD"]))] ;@(rf/subscribe [:portfolios])
+                                                       {:Header p :accessor (name p) :width 80 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}))]
                                    [:> ReactTable
                                     {:data                @(rf/subscribe [:scorecard-risk/multiple-tree])
                                      :columns             (concat (mapv tables/risk-table-columns [:issuer :name]) cols)

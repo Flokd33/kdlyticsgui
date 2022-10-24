@@ -143,6 +143,7 @@
                  :multiple-portfolio-attribution/field-one           :total-effect
                  :multiple-portfolio-attribution/field-two           "None"
                  :multiple-portfolio-attribution/selected-portfolios (set nil) ;["OGEMCORD"]
+                 :multiple-portfolio-scorecard/selected-portfolios   (set ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD" "IMETEMCD"  "IALEEMCD" "IAKLEMCD" "IAUNEMCD"  "IAPKEMCD" "OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"])
                  :multiple-portfolio-attribution/filter              {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-attribution/shortcut            1
                  :multiple-portfolio-attribution/table-filter        []
@@ -465,6 +466,7 @@
            :multiple-portfolio-attribution/period
            :multiple-portfolio-attribution/threshold
 
+           :multiple-portfolio-scorecard/selected-portfolios
 
            :attribution/summary
            :attribution/available-months
