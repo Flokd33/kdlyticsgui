@@ -1034,6 +1034,7 @@
   (when (zero? (count @(rf/subscribe [:esg/gb-analytics]))) (rf/dispatch [:get-esg-gb-report-analytics]))
   (let [data (first @(rf/subscribe [:esg/gb-analytics]))
         data-scores (second @(rf/subscribe [:esg/gb-analytics]))
+        data-scores-rebased (map #(assoc % :score (/ (:score %) 0.8)) data-scores)
         colors-esg ["#19A68C" "#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#652043" "#DB4857" "#E8E5CE" "#FFB43D" "#004042" "#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E" "#C87A1B" "#0A3323" "#9A293D"] ;"#004042" ;"#392B5E"
         data-yes-no (t/chainfilter {:question_id #(some #{%} [7 13 5 28 9 14 26 8])} data)
         data-yes-no-final (map #(assoc % :perc_yes (* (/ (get (:frequencies % ) "Yes") (+ (get (:frequencies % ) "Yes") (get (:frequencies % ) "No"))) 100)) data-yes-no)
@@ -1046,20 +1047,19 @@
         data-controversies  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [4])} data)))] {:category (case (key cat) "Yes2" "Yes (big)" "Yes1" "Yes (small)" "No" "No" "N/A") :freq (val cat)})
         data-better-national  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [12])} data)))] {:category (case (key cat) "Yes2" "In line" "Yes" "Yes" "No" "No" "N/A") :freq (val cat)})
         ]
-    ;(println data-scores)
     [v-box :gap "20px" :class "element" :width standard-box-width
      :children [[h-box :align :center :children [[title :label (str "Green Bond Report Analytics (" (count data-scores) ")") :level :level1]]]
                 [h-box :align :center :children
                  [[oz/vega-lite
                    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores (excluding 0s...)" :fontSize 20}
-                    :data  {:values (t/chainfilter {:score #(> % 0)} data-scores)}
+                    :data  {:values (t/chainfilter {:score #(> % 0)} data-scores-rebased)}
                     :width 400 :height 50
                     :mark {:type "boxplot" :extent "min-max" :color "#19A68C" :median {:color "red"}}
                     :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}}}]
 
                   [oz/vega-lite
                    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores by sectors (excluding 0s...)" :fontSize 20}
-                    :data  {:values (t/chainfilter {:score #(> % 0)} data-scores)}
+                    :data  {:values (t/chainfilter {:score #(> % 0)} data-scores-rebased)}
                     :width 400 :height 300
                     :mark {:type "boxplot" :extent "min-max" :median {:color "red"}}
                     :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}
