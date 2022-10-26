@@ -129,18 +129,16 @@
   (fn [{:keys [db]} [_ ISIN]]
     (let [esg-date (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))
           report-type (:report (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))]
-      {:db (assoc db :esg/report-type report-type
-                     ;:esg/date esg-date
-                     ;:esg/gb-isin ISIN
-                     :esg/esg-report-selected (str (case report-type "green-bond" "GB" "TF") "_"
+      (if (not (nil? report-type))
+        {:db (assoc db :esg/report-type report-type
+                       :esg/esg-report-selected (str (case report-type "green-bond" "GB" "TF") "_"
                                                    (:Bond (first (t/chainfilter {:ISIN ISIN} (:quant-model/model-output db)))) "_"
-                                                   (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db)))))
-                     )
+                                                   (:date2 (first (t/chainfilter {:security_identifier ISIN} (:esg-report-list db))))))
        :fx [[:dispatch [:post-esg-report-extract ISIN esg-date report-type]]
             ;[:dispatch [:esg/refresh-elig]]
             [:dispatch [:navigation/active-view :esg]]
             [:dispatch [:esg/active-home :reporting]]
-            ]})
+            ]}))
     ))
 
 (defn fnevt [state rowInfo column instance evt]
@@ -160,7 +158,7 @@
          ["Trade finder" (fn [] (do (reset! trade-finder-isin ISIN) (rf/dispatch [:navigation/active-qs :trade-finder])))]
          ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
          ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
-         ["ESG Report" (fn [] (do (rf/dispatch [:esg/refresh-esg-qs ISIN])))]]))))
+         ["ESG report" (fn [] (do (rf/dispatch [:esg/refresh-esg-qs ISIN])))]]))))
 
 (defn n91held? [rowInfo] (if-let [r rowInfo] (= (aget r "original" "n91held") 1)))
 
