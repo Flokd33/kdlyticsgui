@@ -270,6 +270,7 @@
 
                  :quant-model/model-output                           []
                  :quant-model/model-js-output                        #js []
+                 :quant-model/model-overrides                        {}
                  :quant-model/bond-isin-map                          {}
                  :quant-model/calculator-spreads                     {:legacy nil :new nil :svr nil}
                  :quant-model/rating-curves                          []

@@ -172,3 +172,10 @@
       (if-not (and (number? k) (<= -100 k 100)) :error nil))
     (catch :default e
       :error)))
+
+(defn new-spread-from-new-price
+  "ax2 + bx + c = 0. Delta = b2 - 4ac, solution = [-b +/- srqt(delta)] / 2a"
+  [target-price clean-price current-spread modified-duration convexity]
+  (let [a (* convexity 0.5 0.000001) b (* modified-duration 0.0001) c (/ (- clean-price target-price) clean-price)      ;it's -dP/P
+        delta (- (* b b) (* 4 a c)) s1 (/ (+ (- b) (Math/sqrt delta)) (* 2 a))] ;s2 (/ (- (- b) (Math/sqrt delta)) (* 2 a))
+    (- current-spread s1)))                                 ;                                   ;[ (- current-spread s2)]

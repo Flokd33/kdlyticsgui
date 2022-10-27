@@ -30,6 +30,7 @@
 (def trade-finder-isin (r/atom nil))
 ;;
 (def show-chart-modal (r/atom nil))
+(def show-price-override-modal (r/atom nil))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Following used for historical charts
 (def typeahead-bond-nickname (r/atom nil))
@@ -158,6 +159,7 @@
                                       (rf/dispatch [:post-model-history-prediction :prediction (remove nil? [ISIN])])
                                       (rf/dispatch [:navigation/active-qs :historical-charts])))]
          ["Trade finder" (fn [] (do (reset! trade-finder-isin ISIN) (rf/dispatch [:navigation/active-qs :trade-finder])))]
+         ["Override price" (fn [] (reset! show-price-override-modal {:bond bond :ISIN ISIN}))]
          ["Implementation ticket" (fn [] (rf/dispatch [:quant-screen-to-implementation ISIN]))]
          ["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 ISIN]))]
          ["ESG Report" (fn [] (do (rf/dispatch [:esg/refresh-esg-qs ISIN])))]]))))
@@ -177,6 +179,7 @@
     (r/as-element [:i {:class (if (contains? @qs-table-favorites (gobj/getValueByKeys this "value")) "zmdi zmdi-star" "zmdi zmdi-star-outline")}]))
   )
 
+(def override-toggle (r/atom "Raw data"))
 
 (defn qs-table [mytitle data]
   (let [a 3]                                                ;download-column-old (conj (keys (first data)) :ISIN)
@@ -201,20 +204,24 @@
                                      [button :label "Filter stars"  :on-click #(do (reset! qs-table-filter (clj->js [{"id" "ISIN" "value" (clojure.string/join "," @qs-table-favorites )}])))]
                                      [button :label "Clear filter" :on-click #(reset! qs-table-filter [])]
                                      [button :label "Clear stars" :on-click #(do (reset! qs-table-favorites #{}) (reset! qs-table-filter []))]
+                                     [gap :size "20px"]
+                                     [radio-button :label "Raw data" :value "Raw data" :model override-toggle :on-change #(reset! override-toggle %)]
+                                     [radio-button :label "Overrides" :value "Overrides" :model override-toggle :on-change #(reset! override-toggle %)]
                                      [gap :size "1"]
                                      ])]
                  [title :level :level4 :label "Use , for OR. Use & for AND. Use - to exclude. Examples: AR,BR for Argentina or Brazil. >200&<300 for spreads between 200bps and 300bps. >0 to only see bonds in an index. -Sov to exclude sovereigns, -CN&-HK to exclude both countries."]
                  [:div {:id "quant-table-output-id"}
                   [:> ReactTable
                    ;BELOW: NEED TO REFERENCE QS-TABLE-FAVORITES BEFORE THE CELL FORMATTING OTHERWISE DIDN'T WORK
-                   {:data            data :columns (concat (if @qs-table-favorites [{:Header "*" :filterable true :accessor "ISIN" :style {:textAlign "center"} :width 40 :Cell favorite-formatting}] []) (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))
+                   {:data            (if (= @override-toggle "Raw data") data (sort-by :Bond (vec (vals @(rf/subscribe [:quant-model/model-overrides])))))
+                    :columns         (concat (if @qs-table-favorites [{:Header "*" :filterable true :accessor "ISIN" :style {:textAlign "center"} :width 40 :Cell favorite-formatting}] []) (qstables/table-style->qs-table-col @qstables/table-style @qstables/table-checkboxes))
                     :showPagination  true :defaultPageSize 15 :pageSizeOptions [5 10 15 25 50 100]
                     :filterable      true :defaultFilterMethod tables/text-filter-OR
                     :defaultFiltered @qs-table-filter :onFilteredChange #(reset! qs-table-filter %) ; SEE NOTE ABOVE
                     :ref             #(reset! qstables/qs-table-view %)
                     ;:getTrProps      on-click-context
                     :getTdProps      on-cell-click-context
-                    :className "-striped -highlight"}]]]])
+                    :className       "-striped -highlight"}]]]])
   )
 
 (def index-crawler-filter (r/atom []))
@@ -690,6 +697,63 @@
                                                                                         (/ (cljs.reader/read-string @coupon) 100)))) 100)))
                                                    (reset! show-duration-modal false))]]]]))))
 
+
+
+
+
+(rf/reg-event-db
+  :quant-model/override-price
+  (fn [db [_ ISIN price]]
+    (reset! show-price-override-modal nil)
+    (println price)
+    (if (or (nil? price) (= (clojure.string/replace-all price #" " "") "") (js/isNaN price))
+      (update db :quant-model/model-overrides dissoc ISIN)
+      (let [m (first (t/filterkey= :ISIN ISIN (db :quant-model/model-output)))
+            p (js/parseFloat price)
+            new-spread (t/new-spread-from-new-price p (m :Used_Price) (m :Used_ZTW) (m :Used_Duration) (m :CNVX_MID))
+            dspread (- new-spread (m :Used_ZTW))
+            new-m (-> m
+                      (assoc :Used_Price price)
+                      (update :Used_YTW + (* 0.01 dspread))
+                      (assoc :CURRENT_YIELD (/ (m :COUPON) p))
+                      (assoc :Used_ZTW new-spread)
+                      (update :G_SPREAD_MID_CALC + dspread)
+                      (update :difference_svr + dspread)
+                      (update :difference_svr_2d + dspread)
+                      (update :sp_to_sov_svr + dspread)
+                      (update :best-ytd-return #(* 100 (dec (/ (* p (inc (/ % 100.))) (m :Used_Price)))))
+                      (update :r1w-return #(* 100 (dec (/ (* p (inc (/ % 100.))) (m :Used_Price)))))
+                      (update :r1m-return #(* 100 (dec (/ (* p (inc (/ % 100.))) (m :Used_Price)))))
+                      (update :r1y-return #(* 100 (dec (/ (* p (inc (/ % 100.))) (m :Used_Price)))))
+                      (update :ytd-z-delta + dspread)
+                      (update :r1w-z-delta + dspread)
+                      (update :r1m-z-delta + dspread)
+                      (update :r1y-z-delta + dspread)
+                      (update :upside1y #(* 100 (dec (/ (* (m :Used_Price) (inc (/ % 100.))) p))))
+                      (update :expected1y #(* 100 (dec (/ (* (m :Used_Price) (inc (/ % 100.))) p))))
+                      (update :downside1y #(* 100 (dec (/ (* (m :Used_Price) (inc (/ % 100.))) p))))
+                      (update :svr4d1yrtn #(* 100 (dec (/ (* (m :Used_Price) (inc (/ % 100.))) p))))
+                      (update :svr2d1yrtn #(* 100 (dec (/ (* (m :Used_Price) (inc (/ % 100.))) p))))
+                      )]
+        ;(println (select-keys m [:Used_Price :Used_YTW :CURRENT_YIELD :Used_ZTW :G_SPREAD_MID_CALC :difference_svr :difference_svr_2d :sp_to_sov_svr :best-ytd-return :ytd-z-delta]))
+        ;(println (select-keys new-m [:Used_Price :Used_YTW :CURRENT_YIELD :Used_ZTW :G_SPREAD_MID_CALC :difference_svr :difference_svr_2d :sp_to_sov_svr :best-ytd-return :ytd-z-delta]))
+
+        (update db :quant-model/model-overrides assoc ISIN new-m)))))
+
+(defn price-override-modal []
+  (let [price (r/atom nil)]
+    (fn []
+      (if @show-price-override-modal
+        [modal-panel
+         :wrap-nicely? true
+         :backdrop-on-click #(reset! show-price-override-modal nil)
+         :child [v-box :gap "10px" :align :center :children
+                 [[title :label (str "Override price for " (@show-price-override-modal :bond)) :level :level2]
+                  [input-text :width "200px" :model price :placeholder "Price" :on-change #(reset! price %)]
+                  [h-box :gap "10px" :children [[button :label "Override" :on-click #(rf/dispatch [:quant-model/override-price (@show-price-override-modal :ISIN) @price])]
+                                                [button :label "Remove" :on-click #(rf/dispatch [:quant-model/override-price (@show-price-override-modal :ISIN) nil])]
+                                    [button :label "Cancel" :on-click #(reset! show-price-override-modal nil)]]]]]]))))
+
 (def curve-histories (r/atom {:curve-one/type nil
                               :curve-one/selection nil
                               :curve-one/tenor "5Y"
@@ -1162,4 +1226,4 @@
           )))))
 
 (defn view []
-  [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/qs-navigation :navigation/active-qs) [active-home] [duration-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio] [issuer-rationale-modal]]])
+  [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/qs-navigation :navigation/active-qs) [active-home] [duration-modal] [price-override-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio] [issuer-rationale-modal]]])

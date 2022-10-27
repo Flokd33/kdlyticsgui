@@ -85,7 +85,10 @@
                                          (or
                                            (checknb res :latest-market-price)
                                            (and (checknb res :latest-market-price-1) (checknb res :latest-market-price-2) (checknb res :latest-market-spread)))))
-            other-check-fn (fn [res] (and (some? (:latest-market-price res)) (number? (:latest-market-price res)) (not (get res :triggered))))
+            other-check-fn (fn [res] (and (not (get res :triggered))
+                                          (or
+                                            (checknb res :latest-market-price)
+                                            (and (checknb res :latest-market-price-1) (checknb res :latest-market-price-2) (checknb res :latest-market-spread)))))
             implied-price-consistent? (if (and (main-check-fn (:relval-alert data)) (main-check-fn (:target-alert data)))
                                         (< (Math/abs (/ (- (get-in data [:relval-alert :implied-price]) (get-in data [:target-alert :implied-price]))
                                                    (get-in data [:target-alert :implied-price])))
