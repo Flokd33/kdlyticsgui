@@ -530,7 +530,7 @@
   [box :class "subbody rightelement" :child
    (gt/element-box-generic "strategies" max-width (str "Strategies")
                            {:target-id "strategies-table" :download-table @(rf/subscribe [:backtest-output])}
-                           [[title :level :level3 :label "Total returns. Momentum strategies rebalanced 1st of month, 25bps cost if rebalanced, and earning 50bps p.a. if in cash."]
+                           [[title :level :level3 :label "Total returns. Momentum strategies rebalanced 1st of month, 25bps cost if rebalanced, and earning conservative 3mth bill if in cash (0% in 2021, 1.5% in 2022)."]
                             [:> ReactTable
                              {:data           @(rf/subscribe [:backtest-output])
                               :columns        (into [{:Header "Strategy" :accessor "strategy" :width 150}
