@@ -322,7 +322,9 @@
    :esg-report                          {:Header "Type" :accessor "esg-report" :width 70 :style {:textAlign "center"} :aggregate tables/median :Cell nil :filterable true :show true}
 
 
-   :BBG_CEMBI_D1Y_BETA                  {:Header "vs CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 60 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
+   :BBG_CEMBI_D1Y_BETA                  {:Header "CEMBI" :accessor "BBG_CEMBI_D1Y_BETA" :width 50 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
+   :BBG_CEMBIIG_D1Y_BETA                {:Header "C. IG" :accessor "BBG_CEMBIIG_D1Y_BETA" :width 50 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
+   :BBG_EMBI_D1Y_BETA                   {:Header "EMBI" :accessor "BBG_EMBI_D1Y_BETA" :width 50 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}
    :totaldummy                          {:Header " " :accessor "totaldummy" :width 30}
    :NWNAIC                              {:Header "NAIC" :accessor "NWNAIC" :width 60 :style {:textAlign "right"}   :Cell #(tables/nb-cell-format "%.1f%" 100. %)}
    })
@@ -411,7 +413,8 @@
         (if (:indices checkboxes) [{:Header "Index inclusion" :columns (mapv quant-score-table-columns [:cembi :cembi-ig :embi :embi-ig :us-agg :global-agg :jaci])}])
         (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
         [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score])}
-         {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
+         ;{:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
+         {:Header (gstring/unescapeEntities "Bloomberg 1Y daily &beta;") :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA :BBG_CEMBIIG_D1Y_BETA :BBG_EMBI_D1Y_BETA])}
          {:Header (gstring/unescapeEntities "&Delta; ZTW") :columns (mapv quant-score-table-columns [:z1w-delta :z1m-delta :zytd-delta :z1y-delta])}
          {:Header "TR %" :columns (mapv quant-score-table-columns [:weekly-return :monthly-return :best-ytd-return-2 :yearly-return])}
          {:Header "Target returns with 1y coupon (%)" :columns (mapv quant-score-table-columns [:svr4d1yrtn :svr2d1yrtn :upside1y :expected1y :downside1y])}
@@ -424,7 +427,7 @@
               (if (:calls checkboxes) [{:Header "Call schedule" :columns (mapv quant-score-table-columns [:NXT_CALL_DT :NXT_CALL_PX :days-to-call :price-vs-call :MATURITY])}])
               [{:Header "Valuation" :columns (mapv quant-score-table-columns [:Used_Price :Used_YTW :Current_yield :Used_ZTW :G-SPREAD :Used_Duration :Used_Rating_Score :Rating_String])}
                {:Header "Model outputs (ZTW)" :columns (mapv quant-score-table-columns [:predicted_spread_svr_2 :difference_svr_2 :implied_rating_svr_2 :difference_svr_2_2d :sp_to_sov_svr])}
-               {:Header "Bbg beta" :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA])}
+               {:Header (gstring/unescapeEntities "Bloomberg 1Y daily &beta;") :columns (mapv quant-score-table-columns [:BBG_CEMBI_D1Y_BETA :BBG_CEMBIIG_D1Y_BETA :BBG_EMBI_D1Y_BETA])}
                {:Header "YTD performance" :columns (mapv quant-score-table-columns [:best-ytd-return :ytd-z-delta])}
                {:Header "91" :columns (mapv quant-score-table-columns [:n91heldvisible :Analyst])}
                {:Header "ESG Report" :columns (mapv quant-score-table-columns [:esg-report])}])
