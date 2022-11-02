@@ -14,6 +14,7 @@
     [jasminegui.mount :as mount]
     [jasminegui.static :as static]
     [jasminegui.tools :as tools]
+    [jasminegui.guitools :as gt]
     [jasminegui.tables :as tables]
     [cljs-time.core :as cljs-time]
 
@@ -190,8 +191,7 @@
                               :y     {:field "performance", :type "nominal", :axis {:title "", :labels false}},
                               :color {:field "performance", :type "nominal", :scale {:range [(first performance-colors)]}, :legend nil},
                               :text  {:field "value" :format fmt}}}]}
-     :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}})
-    )
+     :config    {:view {:stroke "transparent"}, :axis {:domainWidth 1}}}))
 
 (defn stacked-vertical-bars [data title]
   (let [groups (distinct (mapv :group data))
@@ -240,8 +240,9 @@
                         :color {:field  "country", :type "nominal", :scale {:domain (reverse ordered-countries) :range (reverse colors)}
                                 :legend {:title nil :labelFontSize chart-text-size}}}}]}))
 
-(defn grouped-vertical-bars [data title]
+(defn grouped-vertical-bars
   "The data is of the form [{:date dt :group TXT :value 0}]"
+  [data title]
   (let [individual-weights (if (> (count (distinct (map :group data))) 10) 20 35) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         colors (take (count (distinct (mapv :group data))) performance-colors)
         scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
@@ -837,18 +838,19 @@
       :testing                       [nivo-testing]
       [:div.output "nothing to display"])))
 
-(defn portfolio-change [portfolio]
-  ;(reset! current-page 0)                                   ;(go-to-page 0 portfolio)
-  (rf/dispatch [:change-portfolio portfolio])               ;THERE WILL BE A HACK IN DISPLAY SUMMARY
-  ;(reset! current-page 0)
-  ;(rf/dispatch [:portfolio-review/portfolio portfolio])
-  ;(rf/dispatch [:get-portfolio-review-summary-data portfolio])
-  )
+;(defn portfolio-change [portfolio]
+;  ;(reset! current-page 0)                                   ;(go-to-page 0 portfolio)
+;  (rf/dispatch [:change-portfolio portfolio])               ;THERE WILL BE A HACK IN DISPLAY SUMMARY
+;  ;(reset! current-page 0)
+;  ;(rf/dispatch [:portfolio-review/portfolio portfolio])
+;  ;(rf/dispatch [:get-portfolio-review-summary-data portfolio])
+;  )
 
 (defn nav []
   (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])
-        portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
-        portfolio @(rf/subscribe [:portfolio-review/portfolio])]
+        ;portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
+        ;portfolio @(rf/subscribe [:portfolio-review/portfolio])
+        ]
     [h-box
      :children [[v-box
                  :gap "20px"
@@ -858,7 +860,8 @@
                                                                       [box :size "1" :align :center :child [label :label (str (inc @current-page) "/" maximum-page) :style {:width "135px" :color "white" :text-align "center"}]]
                                                                       [md-icon-button :md-icon-name "zmdi-forward" :size :larger :style {:color "white"} :on-click next-page!]]]
                                                     [line :color "#CA3E47" :class "separatornavline"]
-                                                    [single-dropdown :width "100%" :model portfolio :choices portfolio-map :on-change portfolio-change]
+                                                    [h-box  :children [[gap :size "1"] (gt/portfolio-dropdown-selector :portfolio-review/portfolio :change-portfolio) [gap :size "1"]]]
+                                                    ;[single-dropdown :width "100%" :model portfolio :choices portfolio-map :on-change portfolio-change]
                                                     [line :color "#CA3E47" :class "separatornavline"]]))
                                  (for [item portfolio-review-navigation]
                                    [button

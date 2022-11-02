@@ -100,9 +100,7 @@
                                    [md-circle-icon-button :md-icon-name "zmdi-camera" :tooltip "Open image in new tab" :tooltip-position :above-center :on-click (t/open-image-in-new-tab (if-let [tid (:target-id {:download-table @(rf/subscribe [:var/table])})] tid "var-table"))]
                                    [md-circle-icon-button :md-icon-name "zmdi-image" :tooltip "Save table as image" :tooltip-position :above-center :on-click (t/save-image (if-let [tid (:target-id {:download-table @(rf/subscribe [:var/table])})] tid "var-table"))]
                                    [md-circle-icon-button :md-icon-name "zmdi-download" :tooltip "Download table" :tooltip-position :above-center :on-click (if-let [ocl (:on-click-action {:download-table @(rf/subscribe [:var/table])})] ocl #(t/csv-link (:download-table {:download-table @(rf/subscribe [:var/table])}) (str "var-table" "-" (t/gdate->yyyyMMdd (cljs-time.core/today))) download-columns))]]]]
-                      [[var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]])]]
-  )
-  )
+                      [[var-table] [p "(*) Max loss goes backwards in time hence can be smaller than VaR."]])]]))
 
 (defn backtest-chart []
   (let [dates @(rf/subscribe [:var/dates])
@@ -147,12 +145,12 @@
                                 (- (cljs.reader/read-string (subs standard-box-width 0 3)) 150) 550)]]]))
 
 (defn var-controller []
-  (let [portfolio (rf/subscribe [:var/portfolio])
-        chart-period (rf/subscribe [:var/chart-period])]
+  (let [chart-period (rf/subscribe [:var/chart-period])]
      [h-box
-      :class "element" :width standard-box-width :gap "20px" :justify :between
+      :class "element" :width standard-box-width :gap "20px"
       :children [[title :label "Display selection" :level :level1]
-                 [v-box :gap "5px" :children [[title :label "Portfolio:" :level :level3][single-dropdown :width dropdown-width :model portfolio :choices @(rf/subscribe [:portfolio-dropdown-map]) :on-change #(rf/dispatch [:get-portfolio-var %])]]]
+                 [gap :size "1"]
+                 [v-box :gap "5px" :children [[title :label "Portfolio:" :level :level3](gt/portfolio-dropdown-selector :var/portfolio :get-portfolio-var)]]
                  [v-box :gap "5px" :children [[title :label "Chart period:" :level :level3][single-dropdown :width dropdown-width :model chart-period :choices static/var-charts-choice-map :on-change #(rf/dispatch [:var/chart-period %])]]]
                  ]]))
 

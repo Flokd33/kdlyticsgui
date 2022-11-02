@@ -216,7 +216,7 @@
                                                                                     :contrib-BBG_CEMBI_D1Y_BETA
                                                                                     :bm-contrib-BBG_CEMBI_D1Y_BETA
                                                                                     :contrib-delta-BBG_CEMBI_D1Y_BETA])
-                           {:contrib-bond-yield (- (get-in db [:total-positions (keyword p) :contrib-yield]) (reduce + (map :contrib-yield (grp p))))})
+                           {:contrib-bond-yield (- (get-in db [:total-positions (keyword p) :contrib-yield]) (/ (reduce + (map :contrib-yield (grp p))) 100))})
                          [:cash-pct :contrib-yield :contrib-bond-yield]))))))
 
 ;;;;;;;;;
@@ -506,8 +506,8 @@
         [box :class "subbody rightelement" :child
          (gt/element-box-with-cols "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
                                    [[h-box :gap "5px" :align :center :children [[title :level :level3 :label "Portfolio:"]
-
-                                                                                [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
+                                                                                (gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
+                                                                                ;[single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
                                                                                 [gap :size "20px"]
                                                                                 [title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]]]
 
@@ -577,7 +577,8 @@
          (gt/element-box-with-cols "concentrationrisk" "100%" (str "Concentration risk " @(rf/subscribe [:qt-date])) display
                                    [[title :level :level4 :label "Filtering for buckets of risk where the index is above 1% and we hold more than 2x the index size."]
                                     [h-box :gap "20px" :align :center :children [[title :level :level3 :label "Portfolio:"]
-                                                                                 [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
+                                                                                 ;[single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
+                                                                                 (gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
                                                                                  [title :level :level3 :label "Breakdown:"]
                                                                                  [radio-button :model breakdown :label "Country / Sector" :value :country-sector :on-change #(reset! breakdown %)]
                                                                                  [radio-button :model breakdown :label "Country / Rating" :value :country-rating :on-change #(reset! breakdown %)]
@@ -915,6 +916,8 @@
 
                                 ])]]]))
 
+(rf/reg-event-db :portfolio-history/change-portfolio (fn [db [_ p]] (assoc db :portfolio-history/data [] :portfolio-history/portfolio p)))
+
 (defn portfolio-history []
   (let [qt-date (t/ddMMMyyyy->gdate @(rf/subscribe [:qt-date])) ; (cljs-time.format/parse (cljs-time.format/formatter "dd MMMyyyy") (str (subs @(rf/subscribe [:qt-date]) 0 2) " " (subs @(rf/subscribe [:qt-date]) 2)))
         qt-date-yyyymmdd (t/gdate->yyyyMMdd qt-date)        ;(cljs-time.format/unparse (cljs-time.format/formatter "yyyyMMdd") qt-date)
@@ -927,7 +930,7 @@
         field-one (rf/subscribe [:portfolio-history/field-one])
         breakdown (rf/subscribe [:portfolio-history/breakdown])
         absdiff (rf/subscribe [:portfolio-history/absdiff])
-        portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
+        ;portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
         display-style (rf/subscribe [:portfolio-history/display-style])
         portfolio (rf/subscribe [:portfolio-history/portfolio])
         hide-zero-risk (rf/subscribe [:portfolio-history/hide-zero-holdings])
@@ -960,8 +963,10 @@
                                                                                                                                                                 (rf/dispatch [:portfolio-history/data []]))]
                                             [gap :size "30px"]]
                                            (into [] (concat [[title :label "Filtering:" :level :level3]
-                                                             [single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:portfolio-history/data []])
-                                                                                                                                                            (rf/dispatch [:portfolio-history/portfolio %]))]]
+                                                             (gt/portfolio-dropdown-selector :portfolio-history/portfolio :portfolio-history/change-portfolio)
+                                                             ;[single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(do (rf/dispatch [:portfolio-history/data []])
+                                                             ;                                                                                               (rf/dispatch [:portfolio-history/portfolio %]))]
+                                                             ]
                                                             (filtering-row :portfolio-history/filter)
                                                             [[gap :size "30px"]])))]
                               [h-box :gap "10px" :align :center
