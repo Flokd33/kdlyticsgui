@@ -182,8 +182,12 @@
    {:id :contrib-yield                    :label "Yield contribution"}
    {:id :contrib-zspread                  :label "Z-spread contribution"}
    {:id :contrib-gspread                  :label "G-spread contribution"}
-   {:id :contrib-BBG_CEMBI_D1Y_BETA       :label "Bbg Beta"}
-   {:id :contrib-delta-BBG_CEMBI_D1Y_BETA :label "Bbg Beta delta"}
+   {:id :contrib-BBG_CEMBI_D1Y_BETA       :label "Bbg CEMBI Beta"}
+   {:id :contrib-delta-BBG_CEMBI_D1Y_BETA :label "Bbg CEMBI Beta delta"}
+   {:id :contrib-BBG_CEMBIIG_D1Y_BETA       :label "Bbg CEMBI IG Beta"}
+   {:id :contrib-delta-BBG_CEMBIIG_D1Y_BETA :label "Bbg CEMBI IG Beta delta"}
+   {:id :contrib-BBG_EMBI_D1Y_BETA       :label "Bbg EMBI Beta"}
+   {:id :contrib-delta-BBG_EMBI_D1Y_BETA :label "Bbg EMBI Beta delta"}
    {:id :quant-value-4d                   :label "Quant value 4D"}
    {:id :quant-value-2d                   :label "Quant value 2D"}])
 
