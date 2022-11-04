@@ -47,7 +47,7 @@
         risk-choices (let [rfil @(rf/subscribe [:single-portfolio-attribution/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices :security))] (tables/attribution-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/attribution-choice-map))]
-    (println (mapv :accessor grouping-columns) )
+    ;(println (mapv :accessor grouping-columns) )
     [:div {:id "single-portfolio-attribution-table"}
      [tables/tree-table-risk-table
       :single-portfolio-attribution/clean-table

@@ -323,6 +323,13 @@
      :bm-contrib-BBG_CEMBI_D1Y_BETA    (nb-col "Index Bbg" "bm-contrib-BBG_CEMBI_D1Y_BETA" 65 round2 sum-rows)
      :contrib-delta-BBG_CEMBI_D1Y_BETA (nb-col "Delta Bbg" "contrib-delta-BBG_CEMBI_D1Y_BETA" 65 round2 sum-rows)
 
+     :contrib-BBG_EMBI_D1Y_BETA       (nb-col "Fund Bbg" "contrib-BBG_EMBI_D1Y_BETA" 65 round2 sum-rows)
+     :bm-contrib-BBG_EMBI_D1Y_BETA    (nb-col "Index Bbg" "bm-contrib-BBG_EMBI_D1Y_BETA" 65 round2 sum-rows)
+     :contrib-delta-BBG_EMBI_D1Y_BETA (nb-col "Delta Bbg" "contrib-delta-BBG_EMBI_D1Y_BETA" 65 round2 sum-rows)
+     :contrib-BBG_CEMBIIG_D1Y_BETA       (nb-col "Fund Bbg" "contrib-BBG_CEMBIIG_D1Y_BETA" 65 round2 sum-rows)
+     :bm-contrib-BBG_CEMBIIG_D1Y_BETA    (nb-col "Index Bbg" "bm-contrib-BBG_CEMBIIG_D1Y_BETA" 65 round2 sum-rows)
+     :contrib-delta-BBG_CEMBIIG_D1Y_BETA (nb-col "Delta Bbg" "contrib-delta-BBG_CEMBIIG_D1Y_BETA" 65 round2 sum-rows)
+
      :total-return-ytd                 (nb-col "YTD TR" "total-return-ytd" 50 #(nb-cell-format "%.1f%" 100. %) median)
      :jensen-ytd                       (nb-col "Jensen" "jensen-ytd" 50 #(nb-cell-format "%.1f%" 100. %) median)
 

@@ -105,6 +105,7 @@
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
 (defn get-pivoted-data-with-nominal [instrument-definition accessors-k table portfolios instruments field]
+  (println field)
   (let [grp (group-by (juxt :id :portfolio) table)
         kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)
         all-fields (conj accessors-k field :isin :description :id)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
@@ -602,7 +603,7 @@
 
 (defn summary-display []
   (let [data @(rf/subscribe [:summary-display/table])]
-    (println (first @(rf/subscribe [:summary-display/table])))
+    ;(println (first @(rf/subscribe [:summary-display/table])))
     [box :class "subbody rightelement" :child
      (gt/element-box "summary" "100%" (str "Summary " @(rf/subscribe [:qt-date])) data
                      [[:> ReactTable
