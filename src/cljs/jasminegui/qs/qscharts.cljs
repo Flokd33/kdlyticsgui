@@ -73,9 +73,41 @@
      :width  1000
      :height 625}))
 
+(defn spot-chart-vega-spec-spread-range [chart-type issuers]
+  (let [bonds (filter #(contains? issuers (:Ticker %)) @(rf/subscribe [:quant-model/model-output]))
+        bond-data (map #(select-keys % [:Bond :Used_Duration :Used_ZTW :z1ymin :z1ymax :Ticker]) bonds)
+        min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
+        max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)]
+    {:title  nil
+     :data   {:values bond-data}
+     :layer  [{:mark      {:type "point" :filled true}
+               :selection {:grid {:type "interval" :bind "scales"}}
+               :encoding  {:x       {:field "Used_Duration" :type "quantitative" :axis {:title "Duration" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".1f"} :scale {:domain [min-domain max-domain]}} ;:scale {:domain [0. 30.]}
+                           :y       {:field :Used_ZTW :type "quantitative" :axis {:title "ZTW vs 1y range" :titleFontSize 14 :labelFontSize 14 :tickMinStep 0.5 :format ".0f"}}
+                           :color   {:field "Ticker" :scale {:range n91-color-palette}}
+                           :tooltip [{:field "Bond" :type "nominal" :title "Bond"}
+                                     {:field "Used_Duration" :type "quantitative", :title "Duration"}
+                                     {:field "Used_ZTW" :type "quantitative", :title "ZTW"}
+                                     {:field "z1ymin" :type "quantitative", :title "1y tight"}
+                                     {:field "z1ymax" :type "quantitative", :title "1y wide"}]}}
+              {:mark     {:type "rule"}
+               :encoding {:x       {:field "Used_Duration" :type "quantitative"}
+                          :y       {:field "z1ymin" :type "quantitative"}
+                          :y2      {:field "z1ymax" :type "quantitative"}
+                          :color   {:field "Ticker" :scale {:range n91-color-palette}}}}
+              {:mark     {:type "text" :dx 6 :align "left"}
+               :encoding {:x    {:field "Used_Duration" :type "quantitative"} ;:scale {:domain [0. 30.]}
+                          :y    {:field :Used_ZTW :type "quantitative"}
+                          :text {:field "Bond" :type "nominal"}}}]
+     :width  1000
+     :height 625})
+  )
+
+
 (defn spot-chart-vega-spec [model chart-type ratings issuers rating-curves-key]
-  (if (= :quant-model chart-type)
-    (spot-chart-vega-spec-quant-model model chart-type ratings issuers rating-curves-key)
+  (case chart-type
+    :quant-model (spot-chart-vega-spec-quant-model model chart-type ratings issuers rating-curves-key)
+    :ztw-1y-range (spot-chart-vega-spec-spread-range chart-type issuers)
     (let [bonds (filter #(contains? issuers (:Ticker %)) @(rf/subscribe [:quant-model/model-output]))
           bond-data (map #(select-keys % [:Bond :Used_Duration (if (= chart-type :yield) :Used_YTW :Used_Price) :Ticker]) bonds)
           min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
@@ -96,10 +128,7 @@
                             :text {:field "Bond" :type "nominal"}}}]
        :width  1000
        :height 625})
-
-
-    )
-  )
+    ))
 
 (defn advanced-spot-chart-vega-spec [isins model ratings rating-curves-key]
   (let [raw-data (@(rf/subscribe [:quant-model/generic-rating-curves]) rating-curves-key)

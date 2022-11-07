@@ -446,6 +446,7 @@
           (into [] (concat
                      [[title :label "Chart type" :level :level3]
                       [radio-button :label "Model (Z-spread)" :value :quant-model :model spot-chart-plot-type :on-change #(reset! spot-chart-plot-type %)]
+                      [radio-button :label "ZTW 1y range" :value :ztw-1y-range :model spot-chart-plot-type :on-change #(reset! spot-chart-plot-type %)]
                       [radio-button :label "Yield" :value :yield :model spot-chart-plot-type :on-change #(reset! spot-chart-plot-type %)]
                       [radio-button :label "Price" :value :price :model spot-chart-plot-type :on-change #(reset! spot-chart-plot-type %)]
                       [gap :size "10px"]]
