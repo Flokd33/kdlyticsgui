@@ -609,6 +609,7 @@
 (defn active-home []
   (let [active-esg @(rf/subscribe [:esg/active-home])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
+    (set! (. js/document -title) "ESG")
     [box :padding "80px 20px" :class "rightelement"
      :child (case active-esg
               ;:msci [msci-table]

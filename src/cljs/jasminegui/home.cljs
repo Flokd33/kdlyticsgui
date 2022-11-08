@@ -118,6 +118,7 @@
 
 
 (defn home-view []
+  (set! (. js/document -title) "Holdings")
   [h-box :gap "10px" :padding "0px"
    :children [[gt/left-nav-bar static/risk-navigation :navigation/active-home]
               [active-home]

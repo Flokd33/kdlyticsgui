@@ -484,4 +484,5 @@
 ;    (dom/render [viewer] (.getElementById js/document "pdf-placeholder"))))
 
 (defn ta2022-view []
+  (set! (. js/document -title) "Trade analyser")
   [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/ta2022-navigation :ta2022/active-home) [active-home] [modal-ta2022]]])

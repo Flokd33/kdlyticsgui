@@ -869,7 +869,7 @@
                                     :label (:name item)
                                     :on-click #(go-to-block! (:code item))]))]]]))
 
-(defn view [] [h-box :gap "10px" :padding "0px" :children [[nav] [active-home]]])
+(defn view [] (set! (. js/document -title) "Portfolio review") [h-box :gap "10px" :padding "0px" :children [[nav] [active-home]]])
 
 
 

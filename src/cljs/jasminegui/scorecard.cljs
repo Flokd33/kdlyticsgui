@@ -536,6 +536,7 @@
                 ]]))
 
 (defn view []
+  (set! (. js/document -title) "Scorecard")
   (rf/dispatch [:get-qdb-securities "CONSUMERS"])
   [box :width standard-box-width :padding "80px 20px" :class "subbody" :child [risk-view]])
 

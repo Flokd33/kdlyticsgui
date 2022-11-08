@@ -23,7 +23,7 @@
    {:code :scorecard        :name "Scorecard"         :dispatch :scorecard        :subs nil :load-events (concat [:get-attribution-date [:get-scorecard-attribution "OGEMCORD"]] quant-events home-events) :mounting-modal true}
    {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-esg-carbon-jasmine :get-analysts-emcd :get-esg-tf-report-analytics :get-esg-gb-report-analytics :get-esg-report-list  [:post-esg-report-extract "XS2368781477" "2022-09-02" "green-bond"]  :get-analysts :get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores :get-quant-model])}
    ;{:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
-   {:code :ta2022           :name "TA2022"            :dispatch :ta2022           :subs nil :load-events quant-events :mounting-modal true}
+   {:code :ta2022           :name "Trade analyser"            :dispatch :ta2022           :subs nil :load-events quant-events :mounting-modal true}
    {:code :implementation   :name "Implementation"    :dispatch :implementation   :subs nil :load-events implementation-events :mounting-modal true}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}
    ]))
