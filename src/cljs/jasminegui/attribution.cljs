@@ -376,7 +376,7 @@
                                            (str (:date %) "_" (:period %))
                                            )) @(rf/subscribe [:attribution-history/data]) )
         all-dates2 (sort (distinct (map :date2 data-clean)))
-
+        download-columns (concat (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? risk-choices)) (map #(str "dt" %) all-dates2))
         months-this-year (mapv #(js/parseInt (jasminegui.tools/gdate->yyyyMMdd (cljs-time.core/plus (cljs-time.core/local-date (.getYear (cljs-time.core/today)) % 1) (cljs-time.core/days -1)))) (range 2 (inc (inc (.getMonth (cljs-time.core/today))))))
         get-period-fn (fn [k]
                         (case k
@@ -384,10 +384,9 @@
                           ;:monthly {:periodseq (conj (vec (repeat (count months-this-year) "monthly")) "mtd") :fileperiodseq (conj (vec (repeat (count months-this-year) "monthly_")) nil) :dateseq (conj months-this-year (js/parseInt (t/gdate->yyyyMMdd qt-date)))}
                           :monthly {:periodseq (conj (vec (repeat (count months-this-year) "monthly")) "mtd" "ytd") :fileperiodseq (conj (vec (repeat (count months-this-year) "monthly_")) nil nil) :dateseq (conj months-this-year (js/parseInt (t/gdate->yyyyMMdd qt-date)) (js/parseInt (t/gdate->yyyyMMdd qt-date)))}
                           :daily {:periodseq ["yearly" "yearly" "yearly"] :fileperiodseq ["yearly_" "yearly_" nil] :dateseq [20201231 20211231 20220706]}))]
-    ;(println  (first data-clean))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "attribution-history-risk-table" max-width (str "Portfolio history")
-                             {:target-id "attribution-history-risk-table" :on-click-action #(tools/react-table-to-csv @attribution-history-display-view @portfolio 0 is-tree)}
+                             {:target-id "attribution-history-risk-table" :on-click-action #(tools/react-table-to-csv @attribution-history-display-view @portfolio download-columns is-tree)}
                              [[h-box :gap " 10px " :align :center
                                :children [[title :style {:width "85px"} :label "Display:" :level :level3]
                                           [single-dropdown :width dropdown-width :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:attribution-history/display-style %]) (rf/dispatch [:attribution-history/hide-zero-holdings (= % " Table ")]))]
