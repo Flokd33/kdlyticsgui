@@ -142,9 +142,7 @@
      :title   nil                                           ;(str @(rf/subscribe [:single-bond-trade-history/bond]) " trading history")
      :data    {:values data :format {:parse {:date "date:'%Y%m%d'" :price "quantitative" :buy "quantitative" :sell "quantitative"}}}
      :vconcat [{:layer
-                [{:mark     "line",
-                  :width 600
-                  :height 400
+                [{:mark "line" :width 600 :height 400
                   :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                              :y {:field "price" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title "Price"}}}}
                  {:mark     {:type "point", :shape "triangle-up", :color "green"}
@@ -153,9 +151,7 @@
                  {:mark     {:type "point", :shape "triangle-down", :color "red"}
                   :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                              :y {:field "sell" :type "quantitative" :scale {:domain [ymin ymax]} :axis {:title nil}}}}]}
-               {:mark     "line",
-                :height   200
-                :width    600
+               {:mark "line" :height 200 :width 600
                 :encoding {:x {:field "date" :type "temporal" :axis {:format "%b-%y", :labelFontSize 10 :title nil}}
                            :y {:field "nav" :type "quantitative" :scale {:domain [0 (int (inc (apply max (remove nil? (map :nav data)))))]} :axis {:title "NAV %"}}}}]}))
 
@@ -204,8 +200,7 @@
                                [md-circle-icon-button :md-icon-name "zmdi-download" :on-click #(tools/csv-link display "trade-history")]]]
                    (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
                      [box :align :center :child [throbber :size :large]]
-                     [h-box :gap "20px" :children [
-                                                   [v-box :children [[:> ReactTable
+                     [h-box :gap "20px" :children [[v-box :children [[:> ReactTable
                                                                       {:data           display
                                                                        :columns        [{:Header "Date" :accessor "TradeDate" :width 100 :Cell subs10}
                                                                                         {:Header "Type" :accessor "TransactionTypeName" :width 90}
@@ -214,8 +209,7 @@
                                                                                         {:Header "Price" :accessor "PriceLcl" :width 90 :style {:textAlign "right"} :Cell tables/round2}
                                                                                         {:Header "Counterparty" :accessor "counterparty_code" :width 90}]
                                                                        :showPagination false :pageSize (count display) :className "-striped -highlight"}]
-                                                                     [p "(*) based on latest NAV, not at time of trade"]
-                                                                     ]]
+                                                                     [p "(*) based on latest NAV, not at time of trade"]]]
                                                    [oz/vega-lite (facet-trade-history-chart)]]])]]])))
 
 (defn modal-single-bond-flat-trade-history []
@@ -342,14 +336,7 @@
            :filterable      false
            ;:defaultSorted   [{:id :Quantity :desc true}]
            :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score "Issuer" :TICKER :NAME) :TICKER :NAME]
-           :className       "-striped -highlight"}]
-
-         )])
-
-
-
-      )
-    )
+           :className       "-striped -highlight"}])])))
 
 
 
@@ -434,9 +421,7 @@
         final-data (->> data
                         (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter sector-filter v))])))
                         (map #(into {} (for [[k v] %] [k (if (= k :date) v (filter country-filter v))])))
-                        (filter empty-filter)
-                        )
-        ]
+                        (filter empty-filter))]
     [box :align :center
      :child
      [:> ReactTable
@@ -451,8 +436,7 @@
 (defn trade-history-recent-perf-table []
   (let [data @(rf/subscribe [:traded-since-date-output/flat-data])
         selected-portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
-        data-filtered  (t/chainfilter {:portfolio #(some #{%} selected-portfolios)} data)
-        ]
+        data-filtered  (t/chainfilter {:portfolio #(some #{%} selected-portfolios)} data)]
     (if @(rf/subscribe [:recent-trade-data/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
   [box :align :center
@@ -471,37 +455,18 @@
                                               {:Header "Quantity" :accessor "Quantity" :width 80 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND}
                                               {:Header "bps" :accessor "bps" :width 80 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
                                               {:Header "Price" :accessor "PriceLcl" :width 80  :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Last Price" :accessor "last-price" :width 80  :style {:textAlign "right"} :Cell tables/round2}
-                                              ]
-                                    }
+                                              {:Header "Last Price" :accessor "last-price" :width 80  :style {:textAlign "right"} :Cell tables/round2}]}
                                    {:Header  "Beta vs Cembi"
                                     :columns [{:Header "Issue" :accessor "beta-vs-cembi" :width 80 :style {:textAlign "right"} :Cell tables/round2}
-                                              {:Header "Trade Contrib" :accessor "beta-vs-cembi-contri" :width 80 :style {:textAlign "right"} :Cell tables/round3}
-                                              ]
-                                    }
+                                              {:Header "Trade Contrib" :accessor "beta-vs-cembi-contri" :width 80 :style {:textAlign "right"} :Cell tables/round3}]}
                                    {:Header  "Performance"
                                     :columns [{:Header "TR" :accessor "total-return" :width 80 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                              {:Header "TR CEMBI" :accessor "tr-vs-cembi" :width 80 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}
-                                              ]
-                                    }
+                                              {:Header "TR CEMBI" :accessor "tr-vs-cembi" :width 80 :getProps tables/red-negatives :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.2f%" 100. %)}]}
                                    {:Header  "Comments"
                                     :columns [{:Header "Order Reason" :accessor "order_reason" :width 250 }
                                               ;{:Header "Trader comment" :accessor "trader_comments" :width 300 } ;:style {:whiteSpace "unset"}
-                                              {:Header "PM comment" :accessor "pm_instruction" :width 100 }
-                                              ]
-                                    }
-                                   ]
-                                  )
-     :showPagination      (> (count data) 50)
-     :defaultPageSize     (min 50 (count data))
-     :pivotBy             []
-     :filterable          true
-     :defaultFilterMethod tables/text-filter-OR
-     :className           "-striped -highlight"
-     :getTrProps      on-click-context
-     }]]))
-
-    )
+                                              {:Header "PM comment" :accessor "pm_instruction" :width 100 }]}])
+     :showPagination (> (count data) 50) :defaultPageSize (min 50 (count data)) :pivotBy [] :filterable true :defaultFilterMethod tables/text-filter-OR :className "-striped -highlight" :getTrProp on-click-context}]])))
 
 (defn trade-history-recent-perf []
   (let [start-date (rf/subscribe [:portfolio-trade-history/start-date])
