@@ -30,6 +30,7 @@
 (defn navigation-event
   "This is really not pure. But it saves loading time at mount."
   [item]
+  (set! (. js/document -title) (:name item))
   (doseq [k (:load-events item)]
     (rf/dispatch (if (vector? k) k [k])))                                      ;send http-requests sequentially
   (rf/dispatch [:navigation/active-view (:code item)]))
@@ -62,7 +63,7 @@
                                             [[gap :size "1"]
                                              [box :align-self :center :height "50%" :width "3px" :child [line :color "#CA3E47" :size "3px"]]
                                              [box :width "3px" :child ""] ;this is just equal to line above - ugly hack
-                                             [box :width "150px" :class "dropdown" :child [hyperlink :label (gstring/unescapeEntities "pampar &trade;") :on-click #(rf/dispatch [:navigation/active-view :entry])]]]))]
+                                             [box :width "150px" :class "dropdown" :child [hyperlink :label (gstring/unescapeEntities "pampar &trade;") :on-click #(do (set! (. js/document -title) "pampar") (rf/dispatch [:navigation/active-view :entry]))]]]))]
                 [line :color "#CA3E47" :class "separatorline"]]]))
 
 (defn modal-global-password []
@@ -82,11 +83,7 @@
   (if @(rf/subscribe [:navigation/show-mounting-modal])
     [modal-panel
      :wrap-nicely? false
-     :child [alert-box
-             :padding "15px"
-             :style {:width "120px"}
-             :heading [box  :align :center :child [throbber :size :large]]
-             :closeable? false]]))
+     :child [alert-box :padding "15px" :style {:width "120px"} :heading [box :align :center :child [throbber :size :large]] :closeable? false]]))
 
 (defn entry [] [box :padding "280px 0px" :class "subbody" :child
                 [v-box :align-self :center :class "titlescreen" :children
@@ -95,9 +92,8 @@
                  ]])
 
 (defn active-view []
-  (let [active-view @(rf/subscribe [:navigation/active-view])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
-    (case active-view
+    (case @(rf/subscribe [:navigation/active-view])
       :entry            [entry]
       :home             [home/home-view]
       :trade-history    [th/trade-history-view]
@@ -111,7 +107,7 @@
       :administration   [administration/administration-view]
       :ta2022           [ta2022.tradeview/ta2022-view]
       :implementation   [implementation/trade-implementation-view]
-      [:div.output "nothing to display"])))
+      [:div.output "nothing to display"]))
 
 
 (defn main-panel []

@@ -565,7 +565,7 @@
 
 (defn active-home []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
-  (set! (. js/document -title) "Performance")
+  ;(set! (. js/document -title) "Performance")
   (case @(rf/subscribe [:navigation/active-attribution])
     :summary                        [summary-display]
     :single-portfolio               [single-portfolio-attribution-controller]

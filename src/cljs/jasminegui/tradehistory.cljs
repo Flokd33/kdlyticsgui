@@ -759,7 +759,7 @@
   "Create the body with trade-history"
   []
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
-  (set! (. js/document -title) "Trade history")
+  ;(set! (. js/document -title) "Trade history")
   (case @(rf/subscribe [:trade-history/active-home])
     :single-portfolio [trade-history]
     :multiple-portfolio [multiple-portfolio-history-table]

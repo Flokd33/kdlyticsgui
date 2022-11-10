@@ -847,10 +847,7 @@
 ;  )
 
 (defn nav []
-  (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])
-        ;portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
-        ;portfolio @(rf/subscribe [:portfolio-review/portfolio])
-        ]
+  (let [active-tab @(rf/subscribe [:portfolio-review/active-tab])]
     [h-box
      :children [[v-box
                  :gap "20px"
@@ -869,7 +866,8 @@
                                     :label (:name item)
                                     :on-click #(go-to-block! (:code item))]))]]]))
 
-(defn view [] (set! (. js/document -title) "Portfolio review") [h-box :gap "10px" :padding "0px" :children [[nav] [active-home]]])
+(defn view []                                               ;(set! (. js/document -title) "Portfolio review")
+  [h-box :gap "10px" :padding "0px" :children [[nav] [active-home]]])
 
 
 

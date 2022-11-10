@@ -142,7 +142,7 @@
                                         [p (str v)]]]))])
 
 (defn administration-view []
-  (set! (. js/document -title) "Administration")
+  ;(set! (. js/document -title) "Administration")
   (rf/dispatch [:get-last-updated-logs])                    ;very impure, very dirty
   [v-box                                                  ;:gap "10px"
    :gap "10px"

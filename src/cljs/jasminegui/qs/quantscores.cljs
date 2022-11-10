@@ -1225,5 +1225,5 @@
           )))))
 
 (defn view []
-  (set! (. js/document -title) "Quant scores")
+  ;(set! (. js/document -title) "Quant scores")
   [h-box :gap "10px" :padding "0px" :children [(gt/left-nav-bar static/qs-navigation :navigation/active-qs) [active-home] [duration-modal] [price-override-modal] [rcm/context-menu] [modal-spot-charts] [modelportfolios/modal-change-model-portfolio] [issuer-rationale-modal]]])

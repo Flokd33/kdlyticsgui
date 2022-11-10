@@ -683,6 +683,6 @@
                :on-close #(rf/dispatch [(:on-close modal-data)])]])))
 
 (defn trade-implementation-view []
-  (set! (. js/document -title) "Implementation")
+  ;(set! (. js/document -title) "Implementation")
   (when-not @(rf/subscribe [:implementation/trade-implementation]) (rf/dispatch [:trade-implementation/reset]))
   [h-box :gap "10px" :padding "0px" :children [[trade-implementation-control] [trade-implementation-input] [modal-open-implementation] [modal-success]]])
