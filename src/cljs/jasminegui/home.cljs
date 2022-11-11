@@ -94,28 +94,28 @@
                             [[h-box :align :center :children [[oz/vega-lite (charting/bar-chart-cash @(rf/subscribe [:trounce-flow-cash]) "#19A68C" "Cash allocation CEMBI" )]]] ; could str with (:label (first (t/chainfilter {:id @trounceflow-index-choice} index-choices ))
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-duration @(rf/subscribe [:trounce-flow-duration]) "#19A68C" "Duration allocation (net vs CEMBI)")]]]
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country]) "average_positioning" "Latest average positioning across countries (CEMBI)" )]]]
-                             [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-change]) "average_positioning_change" "Latest average positioning change across countries (CEMBI)" )]]]
+                             [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-change]) "average_positioning_change" "Latest average positioning 1m change across countries (CEMBI)" )]]]
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-rating @(rf/subscribe [:trounce-flow-rating]) "Rating allocation (CEMBI)" )]]]
                              ])
                   "embi" (concat
                             [[h-box :align :center :children [[oz/vega-lite (charting/bar-chart-cash @(rf/subscribe [:trounce-flow-cash-embi]) "#19A68C" "Cash allocation EMBI" )]]]
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-duration @(rf/subscribe [:trounce-flow-duration-embi]) "#19A68C" "Duration allocation (net vs EMBI)")]]]
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-embi]) "average_positioning" "Latest average positioning across countries (EMBI)" )]]]
-                             [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-change-embi]) "average_positioning_change" "Latest average positioning change across countries (EMBI)" )]]]
+                             [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-change-embi]) "average_positioning_change" "Latest average positioning 1m change across countries (EMBI)" )]]]
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-rating @(rf/subscribe [:trounce-flow-rating-embi]) "Rating allocation (EMBI)" )]]]
                              ])
                   "embi-local" (concat
                             [[h-box :align :center :children [[oz/vega-lite (charting/bar-chart-cash @(rf/subscribe [:trounce-flow-cash-embi-local]) "#19A68C" "Cash allocation GBI-EM" )]]]
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-duration @(rf/subscribe [:trounce-flow-duration-embi-local]) "#19A68C" "Duration allocation (net vs GBI-EM)")]]]
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-embi-local]) "average_positioning" "Latest average positioning across countries (GBI-EM)" )]]]
-                             [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-change-embi-local]) "average_positioning_change" "Latest average positioning change across countries (GBI-EM)" )]]]
+                             [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-change-embi-local]) "average_positioning_change" "Latest average positioning 1m change across countries (GBI-EM)" )]]]
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-rating @(rf/subscribe [:trounce-flow-rating-embi-local]) "Rating allocation (GBI-EM)" )]]]
                              ])
                   "jaci" (concat
                             [;[h-box :align :center :children [[oz/vega-lite (charting/bar-chart-cash @(rf/subscribe [:trounce-flow-cash]) "#19A68C" "Cash allocation CEMBI" )]]]
                              ;no duration for jaci..
                              [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-jaci]) "average_positioning" "Latest average positioning across countries (JACI)" )]]]
-                             [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-change-jaci]) "average_positioning_change" "Latest average positioning change across countries (JACI)" )]]]
+                             [h-box :align :center :children [[oz/vega-lite (charting/bar-chart-countries @(rf/subscribe [:trounce-flow-country-change-jaci]) "average_positioning_change" "Latest average positioning 1m change across countries (JACI)" )]]]
                              ])
                   )
                 ;[h-box :align :center :children [[oz/vega-lite (charting/bar-chart-cash @(rf/subscribe [:trounce-flow-cash]) "#19A68C" "Cash allocation CEMBI" )]]]
