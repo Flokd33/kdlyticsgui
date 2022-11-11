@@ -213,17 +213,15 @@
   )
 
 (defn bar-chart-rating [data title]
-  (let [data-renamed (mapv #(clojure.set/rename-keys % {:bb_ratings :BB :d_ratings :D :cc_ratings :CC :ccc_ratings :CCC :bbb_ratings :BBB :b_ratings :B
-                                                                :aaa_ratings :AAA :aa_ratings :AA :c_ratings :C :a_ratings  :A}) (flatten data))
+  (let [data-renamed (mapv #(clojure.set/rename-keys % {:bb_ratings :BB :d_ratings :D :cc_ratings :CC :ccc_ratings :CCC :bbb_ratings :BBB :b_ratings :B :aaa_ratings :AAA :aa_ratings :AA :c_ratings :C :a_ratings  :A}) (flatten data))
         data-reformat (vec (flatten (for [d data-renamed] (for [k d] {:date (d :date) :value (val k) :rating (name (key k))}))))
         data-clean (t/chainfilter {:rating #(not (= % "date" )) } data-reformat)
         ]
-    ;(println data-clean)
     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text title :fontSize 20}
      :data     {:values data-clean} :width 1300 :height 600
      :layer [{:mark {:type "bar":color "#4C3C84"}
               :encoding {:x       {:field "date" :type "nominal"  :axis {:title "Date" :labelFontSize 15 :titleFontSize 15 :labelAngle -60 :labelLimit 0} }
-                         :y       {:field "value", :type "quantitative" :axis {:title "%" :labelFontSize 15 :titleFontSize 15}}
+                         :y       {:field "value", :type "quantitative" :axis {:title "%" :labelFontSize 15 :titleFontSize 15} :scale {:domain [0 100]}}
                          :color   {:field "rating" :type "nominal" :scale {:range ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"]}}
                          :tooltip [{:field "date" :type "nominal" :title "Date" }{:field "rating" :type "nominal" :title "Rating"}{:field "value" :type "quantitative" :title "%"}]
                          }
