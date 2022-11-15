@@ -111,46 +111,45 @@
                 }}
     ))
 
-(defn scatter-esg [raw-data pivot]
+(defn scatter-esg [raw-data pivot show-tickers]
   (let [data-raw-clean (if (= pivot "no")
                          raw-data
                          (for [f (flatten (for [t raw-data] (get t "_subRows")))] (get f "_original") )) ; sorry...
         data-clean (map (fn [x] (update x "emissions_evic_1" * 1000000)) data-raw-clean)
-        ;data-final (map #(assoc % "method_cat_scope_1" (case (% "cat_scope_1_method")
-        ;                                    "Reported"             "Reported"
-        ;                                    "Modelled(JPM Sector)" "Modelled"
-        ;                                    "Modelled"             "Modelled"
-        ;                                    "Modelled(BAML 3)"     "Modelled"
-        ;                                    "Modelled(BAML 4)"     "Modelled"
-        ;                                    "Modelled(GICS 4)"     "Modelled"
-        ;                                    "Augmented"            "Augmented"
-        ;                                    "E.Segmt-Low"          "Other"
-        ;                                    "E.CSI"                "Other"
-        ;                                    "E.Segmt-Moderately"   "Other"
-        ;                                    "High"                 "Other"
-        ;                                    "Other"
-        ;                                        )) data-clean)
+        second-mark (if show-tickers
+                      {:mark     {:type "text" :dx 6 :align "left"}
+                       :encoding {:x       {:field "amt_carbon_intensity_1" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
+                                  :y       {:field "emissions_evic_1" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
+                                  :text    {:field "Ticker" :type "nominal"}
+                                  }}
+                      nil
+                      )
         ]
     {:$schema  "https://vega.github.io/schema/vega-lite/v5.json",
      :data     {:values data-clean}
      :title {:text "Footprint/Intensity - Scope 1" :fontSize 20}
      ;:params {:name "grid" :select "interval" :bind "scales"}
-     :selection {:grid {:type "interval" :bind "scales"}}
      :width    1000
      :height   800
-     :mark     {:opacity 0.5 :type "circle"} ;:type "circle" ;need point in order to use :shape
-     :encoding {:x       {:field "amt_carbon_intensity_1" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
-                :y       {:field "emissions_evic_1" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
-                ;:shape   {:field "method_cat_scope_1", :type "nominal" :legend {:title "Method" :labelFontSize 15 :titleFontSize 15}} ;method_cat_scope_1
-                :color   {:field "sector", :type "nominal" :scale {:range esg-colors} :legend {:title "Sector" :labelFontSize 15 :titleFontSize 15}}
-                :size   {:field "amt_carbon_emissions_1" :type "quantitative" :legend {:title "Emissions" :labelFontSize 15 :titleFontSize 15}}
-                :tooltip [{:field "Ticker" :type "nominal" :title "Ticker"} {:field "sector" :type "nominal" :title "Sector"}
-                          {:field "cat_scope_1_method" :type "nominal" :title "Method"}
-                          {:field "amt_carbon_emissions_1" :type "quantitative" :title "Emissions" :format ",.2s"}
-                          {:field "amt_carbon_intensity_1" :type "quantitative" :title "Intensity" :format ",.0f"}
-                          {:field "emissions_evic_1" :type "quantitative" :title "Footprint" :format ",.0f"}
-                          ]
-                }}
+     :layer (remove nil? (concat [{:selection {:grid {:type "interval" :bind "scales"}}
+              :mark     {:opacity 0.5 :type "circle" }
+              :encoding {:x       {:field "amt_carbon_intensity_1" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
+                         :y       {:field "emissions_evic_1" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
+                         :text    {:field "Ticker" :type "nominal"}
+                         ;:shape   {:field "method_cat_scope_1", :type "nominal" :legend {:title "Method" :labelFontSize 15 :titleFontSize 15}} ;method_cat_scope_1
+                         :color   {:field "sector", :type "nominal" :scale {:range esg-colors} :legend {:title "Sector" :labelFontSize 15 :titleFontSize 15}}
+                         :size   {:field "amt_carbon_emissions_1" :type "quantitative" :legend {:title "Emissions" :labelFontSize 15 :titleFontSize 15}}
+                         :tooltip [{:field "Ticker" :type "nominal" :title "Ticker"} {:field "sector" :type "nominal" :title "Sector"}
+                                   {:field "cat_scope_1_method" :type "nominal" :title "Method"}
+                                   {:field "amt_carbon_emissions_1" :type "quantitative" :title "Emissions" :format ",.2s"}
+                                   {:field "amt_carbon_intensity_1" :type "quantitative" :title "Intensity" :format ",.0f"}
+                                   {:field "emissions_evic_1" :type "quantitative" :title "Footprint" :format ",.0f"}
+                                   ]
+                         }
+              }
+             second-mark
+             ]))
+     }
     ))
 
 (defn stacked-vertical-bars-2 [data title]
