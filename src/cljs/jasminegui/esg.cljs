@@ -299,6 +299,7 @@
 )
 
 (def list-choices (into [] (for [k ["No" "Country" "Sector" ]] {:id (.toLowerCase k) :label k})))
+(def show-tickers (r/atom false))
 
 (defn esg-data []
   "We take Carbon data from Jasmine, we add ESG scores from MSCI research API and finally we add MSCI data that is not in Jasmine (off BM) "
@@ -443,7 +444,8 @@
                [gap :size "1"]
                [v-box :gap "30px" :align :stretch :children
                 [[title :label "Visualisation" :level :level1]
-                 [oz/vega-lite (charting/scatter-esg @esg-data-chart-data-scatter pivot)]
+                 [checkbox :model @show-tickers :label "Show tickers?" :on-change #(reset! show-tickers %)]
+                 [oz/vega-lite (charting/scatter-esg @esg-data-chart-data-scatter pivot @show-tickers)]
                  (if (= pivot "no") nil [oz/vega-lite (charting/stacked-vertical-bars-esg @esg-data-chart-data  @(r/cursor esg-checkboxes [:tree]) @(r/cursor esg-checkboxes [:field-chart]) pivot)])
                  ]
                ]]]]))
