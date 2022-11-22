@@ -71,7 +71,7 @@
                  :multiple-portfolio-risk/field-number               "One"
                  :multiple-portfolio-risk/field-one                  :nav
                  :multiple-portfolio-risk/field-two                  "None"
-                 :multiple-portfolio-risk/selected-portfolios        (set nil)
+                 :multiple-portfolio-risk/selected-portfolios        #{}
                  :multiple-portfolio-risk/filter                     {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-risk/hide-zero-holdings         true
                  :multiple-portfolio-risk/shortcut                   1
@@ -142,8 +142,8 @@
                  :multiple-portfolio-attribution/period              "ytd"
                  :multiple-portfolio-attribution/field-one           :total-effect
                  :multiple-portfolio-attribution/field-two           "None"
-                 :multiple-portfolio-attribution/selected-portfolios (set nil) ;["OGEMCORD"]
-                 :multiple-portfolio-scorecard/selected-portfolios   (set ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"  "IALEEMCD" "IAKLEMCD" "IAUNEMCD"  "IAPKEMCD" "OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"])
+                 :multiple-portfolio-attribution/selected-portfolios #{}
+                 :multiple-portfolio-scorecard/selected-portfolios   #{"OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"  "IALEEMCD" "IAKLEMCD" "IAUNEMCD"  "IAPKEMCD" "OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"}
                  :multiple-portfolio-attribution/filter              {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-attribution/shortcut            1
                  :multiple-portfolio-attribution/table-filter        []
@@ -235,7 +235,7 @@
                  :esg/data                                           []
                  :esg/data-detailed                                  []
                  :esg/refinitiv-structure                            []
-                 :esg/selected-pillars                               (set nil)
+                 :esg/selected-pillars                               #{}
                  :esg/msci-scores                                    nil
                  :esg/summary-report                                 []
                  :esg/gb-analytics                                   []
