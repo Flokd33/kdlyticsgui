@@ -30,7 +30,6 @@
 
 
 (def risk-navigation
-
   [{:code :summary                :name "Overview"}
    {:code :single-portfolio       :name "Single portfolio"}
    {:code :all-portfolios         :name "Multiple portfolios"}
@@ -45,15 +44,13 @@
    {:code :position-history       :name "Position history"}
    {:code :allianz-loss-report    :name "Allianz P&L budget"}
    {:code :gdel                   :name "Global debt levels"}
-   {:code :trounce-flow            :name "Trounceflow"}
-   ])
+   {:code :trounce-flow           :name "Trounceflow"}])
 
 (def trade-history-navigation
   [{:code :single-portfolio   :name "Single portfolio"}
    {:code :multiple-portfolio :name "Multiple portfolio"}
    {:code :recent-trades      :name "Recent trades"}
-   {:code :recent-trades-perf :name "Recent trades 2"}
-   ])
+   {:code :recent-trades-perf :name "Recent trades 2"}])
 
 (def attribution-navigation
   [{:code :summary             :name "Overview"}
@@ -64,8 +61,7 @@
    {:code :index-returns       :name "Index returns"}
    {:code :top-bottom-pr       :name "Top/bottom universe"}
    {:code :strategies          :name "Strategies"}
-   {:code :emd-weekly          :name "EMD weekly"}
-   ])
+   {:code :emd-weekly          :name "EMD weekly"}])
 
 (def var-navigation
   [{:code :overview            :name "Overview"}
@@ -88,12 +84,11 @@
    ;{:code :methodology          :name "Methodology"}
    {:code :issuer-coverage      :name "Issuer coverage"}
    {:code :model-portfolios     :name "Model portfolios (WIP)"}
-   {:code :score-vs-outlook2    :name "Up/down candidates"}
-   ])
+   {:code :score-vs-outlook2    :name "Up/down candidates"}])
 
+;{:code :msci                       :name "MSCI"}
 (def esg-navigation
-  [                                                         ;{:code :msci                       :name "MSCI"}
-   {:code :esg-data                   :name "ESG data"}
+  [{:code :esg-data                   :name "ESG data"}
    {:code :holdings                   :name "Holdings through MSCI"}
    {:code :ungc                       :name "UNGC problem securities"}
    {:code :esg-scores                 :name "ESG summary report"}
@@ -102,16 +97,14 @@
    {:code :gb-scoring                 :name "Green bond scoring (beta)"}
    {:code :tf-scoring                 :name "Transition fund scoring (beta)"}
    {:code :reporting                  :name "Scoring report (beta)"}
-   {:code :esg-report-analytics-gb       :name "Scoring analytics GB (beta)"}
-   {:code :esg-report-analytics-tf       :name "Scoring analytics TF (beta)"}
-   {:code :esg-engagements            :name "ESG interactions"}
-   ])
+   {:code :esg-report-analytics-gb    :name "Scoring analytics GB (beta)"}
+   {:code :esg-report-analytics-tf    :name "Scoring analytics TF (beta)"}
+   {:code :esg-engagements            :name "ESG interactions"}])
 
 (def ta2022-navigation
   [{:code :main                 :name "Table"}
    {:code :trade-view           :name "Trade view"}
-   {:code :journal              :name "Journal"}
-   ])
+   {:code :journal              :name "Journal"}])
 
 (def risk-choice-map
   [{:id "None"         :label "None"}
@@ -121,19 +114,17 @@
    {:id :rating-score  :label "Rating"}
    {:id :sector        :label "Sector"}
    {:id :maturity-band :label "Maturity"}
-   {:id :emd-region    :label "EMD region"}
-   ])
+   {:id :emd-region    :label "EMD region"}])
 
 (def risk-choice-map-history
-  [{:id "None"         :label "None"}
-   {:id :jpm-region    :label "Region"}
+  [{:id "None"                      :label "None"}
+   {:id :jpm-region                 :label "Region"}
    {:id :qt-risk-country-code       :label "Country"}
-   {:id :issuer        :label "Issuer"}
-   {:id :rating-score  :label "Rating"}
-   {:id :sector        :label "Sector"}
-   {:id :maturity-band :label "Maturity"}
-   {:id :emd-region    :label "EMD region"}
-   ])
+   {:id :issuer                     :label "Issuer"}
+   {:id :rating-score               :label "Rating"}
+   {:id :sector                     :label "Sector"}
+   {:id :maturity-band              :label "Maturity"}
+   {:id :emd-region                 :label "EMD region"}])
 
 (def attribution-choice-map
   [{:id "None"         :label "None"}

@@ -831,8 +831,7 @@
   :qt-date
   (fn [db [_ qt-date]] (let [dt (.replace ^string qt-date "\"" "")]
                          (assoc db :qt-date dt
-                                   ;:portfolio-history/end-period (str (subs dt 0 (- (count dt) 4)) (subs dt (- (count dt) 2)))
-                                   ))))
+                                   :portfolio-history/end-period (t/gdate->yyyyMMdd (t/ddMMMyyyy->gdate dt))))))
 
 (rf/reg-event-db
   :attribution-date
