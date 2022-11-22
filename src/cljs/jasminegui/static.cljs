@@ -158,7 +158,7 @@
 
 
 (def portfolio-alignment-groups
-  [{:id :cembi      :label "CEMBI"      :portfolios ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IEZVKEMD" "IMETEMCD" "IKZVKEMD"]}
+  [{:id :cembi      :label "CEMBI"      :portfolios ["OGEMCORD" "ICSCEMCD" "IPPFCORP" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"]}
    {:id :allianz    :label "Allianz"    :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
    {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC" "INMIEMCD"]}
    {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
