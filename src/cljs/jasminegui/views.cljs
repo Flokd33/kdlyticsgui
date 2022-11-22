@@ -47,6 +47,7 @@
 ;  )
 
 (defn nav-bar []
+  ;changing color from #CA3E47 to the corporate #C33345
   (let [active-view @(rf/subscribe [:navigation/active-view])]
     [v-box
      :align :start
@@ -61,10 +62,10 @@
                                                                  [hyperlink-href :label (:name item) :href (:href item)]
                                                                  [hyperlink :label (:name item) :on-click #(navigation-event item)])])) ;#(rf/dispatch [:navigation/active-view (:code item)])
                                             [[gap :size "1"]
-                                             [box :align-self :center :height "50%" :width "3px" :child [line :color "#CA3E47" :size "3px"]]
+                                             [box :align-self :center :height "50%" :width "3px" :child [line :color "#C33345" :size "3px"]]
                                              [box :width "3px" :child ""] ;this is just equal to line above - ugly hack
                                              [box :width "150px" :class "dropdown" :child [hyperlink :label (gstring/unescapeEntities "pampar &trade;") :on-click #(do (set! (. js/document -title) "pampar") (rf/dispatch [:navigation/active-view :entry]))]]]))]
-                [line :color "#CA3E47" :class "separatorline"]]]))
+                [line :color "#C33345" :class "separatorline"]]]))
 
 (defn modal-global-password []
   (if @(rf/subscribe [:show-global-password-modal])

@@ -20,7 +20,6 @@
         default-beta-line {:width 75 :Cell tables/round2 :style {:textAlign "right"} :filterable true :filterMethod tables/nb-filter-OR-AND}
         download-columns [:NAME :isin :qt-risk-country-name :qt-jpm-sector :qt-final-maturity-band :qt-yield :qt-govt-spread :qt-libor-spread :qt-modified-duration :total-return-ytd :jensen-ytd :xsr-6m :xsr-9m :xsr-12m :beta-vs-cembi-duration :beta-vs-cembi-sector  :beta-vs-cembi-country  :beta-vs-cembi-up :beta-vs-cembi-dw  :beta-vs-cembi-rating :beta-vs-embi-country :beta-vs-cembi-ig :beta-vs-ust :beta-vs-embi :beta-vs-ushy :beta-vs-blend333333 :beta-vs-blend502525 :beta-vs-gbiem  :beta-vs-blend5050  :cembi-beta-last-year :beta-vs-spx :cembi-beta-previous-year :beta-vs-usig :beta-vs-cembi-hy ]
         f (fn [line] (merge line default-beta-line))]
-    ;(set! (. js/document -title) "Bond betas")
     [box :padding "80px 25px" :child
      [v-box :class "subbody element"  :gap "20px"
       :children [[h-box :align :center :children [[title :label (str "One year betas vs benchmarks") :level :level1]
@@ -63,5 +62,9 @@
                                                                                                            {:Header "UST5-7Y" :accessor "beta-vs-ust"}
                                                                                                            {:Header "S&P500" :accessor "beta-vs-spx"}
                                                                                                            {:Header "CEMBI UP" :accessor "beta-vs-cembi-up"}
-                                                                                                           {:Header "CEMBI DW" :accessor "beta-vs-cembi-dw"}])}]))))
+                                                                                                           {:Header "CEMBI DW" :accessor "beta-vs-cembi-dw"}
+                                                                                                           {:Header "EMBI UP" :accessor "beta-vs-embi-up"}
+                                                                                                           {:Header "EMBI DW" :accessor "beta-vs-embi-dw"}
+
+                                                                                                           ])}]))))
                    :showPagination true :defaultPageSize 15 :pageSizeOptions [15 25 50 100] :filterable true :defaultFilterMethod tables/text-filter-OR :className "-striped -highlight"}]]]]))
