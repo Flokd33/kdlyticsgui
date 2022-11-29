@@ -117,7 +117,7 @@
                          (for [f (flatten (for [t raw-data] (get t "_subRows")))] (get f "_original") )) ; sorry...
         data-clean (map (fn [x] (update x "emissions_evic_1" * 1000000)) data-raw-clean)
         second-mark (if show-tickers
-                      {:mark     {:type "text" :dx 6 :align "left"}
+                      {:mark     {:type "text" :dx 10 :align "left"}
                        :encoding {:x       {:field "amt_carbon_intensity_1" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
                                   :y       {:field "emissions_evic_1" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
                                   :text    {:field "Ticker" :type "nominal"}
@@ -125,6 +125,7 @@
                       nil
                       )
         ]
+    ;(println (first data-raw-clean))
     {:$schema  "https://vega.github.io/schema/vega-lite/v5.json",
      :data     {:values data-clean}
      :title {:text "Footprint/Intensity - Scope 1" :fontSize 20}

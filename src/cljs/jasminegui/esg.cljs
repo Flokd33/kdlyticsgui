@@ -347,7 +347,6 @@
                                                           ))
 
         ]
-    ;(println (first final-data-clean))
   [v-box :gap "10px" :class "element" :width standard-box-width
    :children [[h-box :gap "10px" :align :center :children [[title :label "Data" :level :level1]
                                                            [gap :size "1"]
