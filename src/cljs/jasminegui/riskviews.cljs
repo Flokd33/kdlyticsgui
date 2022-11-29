@@ -68,10 +68,13 @@
                   (if (:single-portfolio-risk/hide-zero-holdings db) (filter #(not= (:original-quantity %) 0)) identity))
           v2 (into [] xform (:positions db))
           risk-choices (let [rfil (:single-portfolio-risk/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-          grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
+          risk-choices-clean (if (= portfolio "OGTRCRED") (if (= (some #{:sector} risk-choices) :sector) (vec (conj (remove #(= % :sector) risk-choices) :sector-baml)) risk-choices) risk-choices) ;TODO change for portfolio_strategy <> 'DM' =>  we want to change the key used for the sector classification when BAML sector needed
+          grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) v2)
           sorted-data2 (into [] (for [r sorted-data] (update r :qt-iam-int-lt-median-rating-score #(str "G" %))))]                                                ;viewable-positions
+      ;(println (sort (keys (first sorted-data2))))
+      ;(println accessors-k)
       (clj->js
         (if (= (:single-portfolio-risk/display-style db) "Tree")
           (tables/cljs-text-filter-OR (:single-portfolio-risk/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data2))
@@ -347,9 +350,11 @@
         hide-zero-risk (rf/subscribe [:single-portfolio-risk/hide-zero-holdings])
         is-tree (= @(rf/subscribe [:single-portfolio-risk/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:single-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
-        additional-des-cols (remove (set (conj risk-choices "None")) (map :id static/risk-choice-map))
-        download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
+        risk-choices-clean (if (= "OGTRCRED" "OGTRCRED") (if (= (some #{:sector} risk-choices) :sector) (vec (conj (remove #(= % :sector) risk-choices) :sector-baml)) risk-choices) risk-choices) ;TODO change for portfolio_strategy <> 'DM' =>  we want to change the key used for the sector classification when BAML sector needed
+        grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :name))] (tables/risk-table-columns r)))
+        additional-des-cols (remove (set (conj risk-choices-clean "None")) (map :id static/risk-choice-map))
+        download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices-clean :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
+    (println risk-choices)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic-new "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
                                  {:target-id       "single-portfolio-risk-table"
