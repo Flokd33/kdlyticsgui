@@ -265,7 +265,7 @@
                             #(assoc % :Bond lbl))
                           data-pricing-filtered)]
     ;(println data-pricing-1)
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
      :data    {:values data-to-plot :format {:parse {:Bond "nominal" :date "date:'%Y-%m-%d'" :ztw "quantitative" :ytw "quantitative" :duration "quantitative" :price "quantitative" :rating_score "quantitative"}}}
@@ -346,7 +346,7 @@
                                   )
                          data-to-plot-2)]
 
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :resolve {:scale {:color "independent"}}
      :title   nil
      :data    {:values data-to-plot-2 :format {:parse {:Curve "nominal" :date "date:'%Y-%m-%d'" :tenor-choice "quantitative"}}}
@@ -362,7 +362,7 @@
   (let [groups (distinct (mapv :group data))
         colors (take (count (distinct (mapv :group data))) colour-universe)
         new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)]
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :data    {:values new-data},
      :width   800,
      :height  600,

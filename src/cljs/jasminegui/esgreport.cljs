@@ -1051,14 +1051,14 @@
      :children [[h-box :align :center :children [[title :label (str "Green Bond Report Analytics (" (count data-scores) ")") :level :level1]]]
                 [h-box :align :center :children
                  [[oz/vega-lite
-                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores (excluding 0s...)" :fontSize 20}
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text "Scores (excluding 0s...)" :fontSize 20}
                     :data  {:values (t/chainfilter {:score #(> % 0)} data-scores-rebased)}
                     :width 400 :height 50
                     :mark {:type "boxplot" :extent "min-max" :color "#19A68C" :median {:color "red"}}
                     :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}}}]
 
                   [oz/vega-lite
-                   {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores by sectors (excluding 0s...)" :fontSize 20}
+                   {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text "Scores by sectors (excluding 0s...)" :fontSize 20}
                     :data  {:values (t/chainfilter {:score #(> % 0)} data-scores-rebased)}
                     :width 400 :height 300
                     :mark {:type "boxplot" :extent "min-max" :median {:color "red"}}
@@ -1066,7 +1066,7 @@
                              :y  {:field "sector", :type "nominal" :scale {:zero true} :axis {:title "Sectors" :labelFontSize 15 :titleFontSize 15}}
                              :color {:field "sector" :type "nominal" :scale colors-esg :legend nil} }}]]]
                 [oz/vega-lite
-                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "% Yes" :fontSize 20}
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text "% Yes" :fontSize 20}
                   :data  {:values data-yes-no-final}
                   :width 900 :height 400
                   :encoding {:y  {:field "description_long", :type "nominal" :axis nil :sort {:field "perc_yes" :order "descending"}}}
@@ -1075,7 +1075,7 @@
                                       :tooltip [{:field "perc_yes" :type "quantitative" :title "% Yes" :format ",.2f" } ]}}
                           {:mark {:type "text" :align "left" :x 5 :size 15} :encoding {:text {:field "description_long"}}}]}]
                 [oz/vega-lite
-                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Project categories" :fontSize 20}
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text "Project categories" :fontSize 20}
                   :data {:values (add-colors data-category-clean :freq colors-esg)}
                   :width 900 :height 500 :mark "arc"
                   :encoding {:theta  {:field "freq" :type "quantitative" :stack true}
@@ -1091,7 +1091,7 @@
                           ;:transform {:type "label" :avoidMarks "gg" :anchor ["top"] :offset [1] }
                           ]}]
                 [oz/vega-lite
-                 {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+                 {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
                   :title {:text "Who provides the independent verification?" :fontSize 20}
                   :data     {:values (add-colors data-independent-verif :freq colors-esg)}
                   :width 1100 :height 600 :mark "bar"
@@ -1126,13 +1126,13 @@
          :children [[h-box :align :center :children [[title :label (str "Transition Finance Report Analytics (" (count data-scores) ")") :level :level1]]]
                     [h-box :align :center :children
                      [[oz/vega-lite
-                       {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores (excluding 0s...)" :fontSize 20}
+                       {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text "Scores (excluding 0s...)" :fontSize 20}
                         :data  {:values (t/chainfilter {:score #(> % 0)} data-scores)}
                         :width 400 :height 50
                         :mark {:type "boxplot" :extent "min-max" :color "#19A68C" :median {:color "red"}}
                         :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}}}]
                       [oz/vega-lite
-                       {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores by sectors (excluding 0s...)" :fontSize 20}
+                       {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text "Scores by sectors (excluding 0s...)" :fontSize 20}
                         :data  {:values (t/chainfilter {:score #(> % 0)} data-scores)}
                         :width 400 :height 300
                         :mark {:type "boxplot" :extent "min-max" :median {:color "red"}}
@@ -1140,7 +1140,7 @@
                                    :y  {:field "sector", :type "nominal" :scale {:zero true} :axis {:title "Sectors" :labelFontSize 15 :titleFontSize 15}}
                                    :color {:field "sector" :type "nominal" :scale colors-esg :legend nil} }}]]]
                     [oz/vega-lite
-                     {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "% Yes" :fontSize 20}
+                     {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text "% Yes" :fontSize 20}
                       :data  {:values data-yes-no-final}
                       :width 900 :height 400
                       :encoding {:y  {:field "description_long", :type "nominal" :axis nil :sort {:field "perc_yes" :order "descending"}}}

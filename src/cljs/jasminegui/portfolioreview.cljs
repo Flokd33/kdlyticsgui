@@ -145,7 +145,7 @@
         perf-sort (reverse (distinct (mapv :performance data)))
         colors (reverse (take (count (distinct (mapv :performance data))) performance-colors))
         scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
-    {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema   "https://vega.github.io/schema/vega-lite/v5.json",
      :data      {:values data},
      :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
      :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "left"}}},
@@ -171,7 +171,7 @@
   [data title fmt dc nbcols textdx scale]
   (let [individual-height (if (> (count (distinct (map :group data))) 10) 20 60) ; (/ (+ standard-box-height-nb 400) (* 5 (count (distinct (map :group data)))))
         scl (* dc (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40))]
-    {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema   "https://vega.github.io/schema/vega-lite/v5.json",
      :data      {:values data},
      :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
      :facet     {:row {:field "group", :type "ordinal", :sort (mapv :group data), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "left"}}},
@@ -197,7 +197,7 @@
   (let [groups (distinct (mapv :group data))
         colors (take (count (distinct (mapv :group data))) performance-colors)
         new-data (mapv #(assoc %1 :order (.indexOf groups (:group %1))) data)]
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :data    {:values new-data},
      :width   (- standard-box-width-nb 800),
      :height  (- standard-box-height-nb 400),
@@ -225,7 +225,7 @@
         ordered-countries (reverse (conj (remove #(= % "Rest") (map :country (sort-by :value (take-last nb-countries data)))) "Rest"))
         colors (take (count (distinct (mapv :country data))) performance-colors)
         new-data (mapv #(assoc %1 :order (.indexOf ordered-countries (:country %1))) data)]
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :data    {:values new-data :format {:parse {:date "date:'%Y%m%d'"}}},
      :width   (- standard-box-width-nb 400),
      :height  (- standard-box-height-nb 400),
@@ -247,7 +247,7 @@
         colors (take (count (distinct (mapv :group data))) performance-colors)
         scl (/ (max (apply max (map :value data)) (- (apply min (map :value data)))) 40)]
     ;(println data)
-    {:$schema   "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema   "https://vega.github.io/schema/vega-lite/v5.json",
      :data      {:values data :format {:parse {:date "date:'%Y%m%d'"}}},
      :title     nil
      :transform [{:calculate (str "datum.value >= 0 ? datum.value + " scl " : datum.value - " scl), :as "valuetxt"}],
@@ -279,7 +279,7 @@
                       (concat ;[{:date "Begin", :value 0}]
                         data [{:date "YTD", :value 0}]))]
     {:$schema
-             "https://vega.github.io/schema/vega-lite/v4.json",
+             "https://vega.github.io/schema/vega-lite/v5.json",
      :data {:values new-data},
      :width 600,
      :height (- standard-box-height-nb 400),
@@ -330,7 +330,7 @@
 (defn quant-value-waterfall-chart [data max-total]
   "The data is of the form [{:date dt :group TXT :value 0}]"
   (let [new-data (map (fn [line] (update line :value #(/ (Math/round (* 100 %)) 100))) (concat data [{:group "Total", :value 0}]))]
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :data   {:values new-data},
      :width  1100,
      :height (- standard-box-height-nb 400),
@@ -760,7 +760,7 @@
         grp (group-by (comp year-cut js/parseInt :issuance-year) bonds-only)
         res (into [] (for [[k g] grp field [:weight :bm-weight]] {:vintage k :field (if (= field :weight) portfolio "Index") :nav (reduce + (map field g))}))
         final (sort-by #(.indexOf ["<=2010" "2011-2015" "2016" "2017" "2018" "2019" "2020" "2021" "2022" "2023"] (:vintage %)) res)]
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :data    {:values final},
      :title   nil
      :facet   {:column {:field "vintage", :type "nominal", :sort (mapv :vintage final), :title "", :header {:labelAngle 0, :labelFontSize chart-text-size, :labelAlign "center"}}},

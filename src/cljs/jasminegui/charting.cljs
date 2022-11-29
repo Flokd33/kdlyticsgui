@@ -10,7 +10,7 @@
         data (concat pv (take-last 125 bv))                 ;super hacky - for portfolio review - as indices have carry
         ymin (* 0.99 (apply min (map :price data)))
         ymax (* 1.01 (apply max (map :price data)))]
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :title   nil
      :width   (if benchmark-value (- width 75) width)             ; 75 for the legend
      :height  height
@@ -74,7 +74,7 @@
         xfields (remove #(= % "_pivotVal") (keys (first rt-pivot-data)))
         colors (take (count (keys grp)) performance-colors)
         new-data (into [] (for [g (keys grp) x xfields] {:ygroup g :xgroup (t/gdate->ddMMMyy (t/int->gdate x)) :value (get (first (grp g)) x)}))]
-      {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
+      {:$schema  "https://vega.github.io/schema/vega-lite/v5.json",
      :data     {:values new-data},
      :width    (* 35 (count colors)) :height 500
      :mark     "bar"
@@ -98,7 +98,7 @@
         yfields (map :val data_final)
         colors (take (count xfields) esg-colors)
         ]
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
      :title {:text (str field-chart " per " field-pivot) :fontSize 20}
      :data     {:values data_final}
      :width 1000
@@ -172,7 +172,7 @@
                       (map #(update % :weight * 100))
                       (map #(assoc % :price (:price (first (t/chainfilter {:date (t/gdate->yyyy-MM-dd (t/int->gdate (% :date)))} data-price)))))
                       (map #(assoc % :date-mmm-yy ((comp t/gdate->MMM-yy t/int->gdate :date) %))))]
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json",
      :data     {:values new-data},
      :width    800
      :height   400
@@ -186,7 +186,7 @@
 
 (defn small-pie-esg [data title]
   (let []
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
    :title {:text title :fontSize 20} :data     {:values data} :width 600 :height 300 :mark "arc"
    :encoding {:theta  {:field "freq" :type "quantitative" :stack true}}
    :layer [{:mark {:type "arc" :outerRadius 115}
@@ -202,7 +202,7 @@
 (defn mod-date [date]  (str (subs date 0 4) (subs date 5 7) (subs date 8 10) ))
 
 (defn bar-chart-countries [data field title]
-  {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text title :fontSize 20}
+  {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text title :fontSize 20}
    :data     {:values data} :width 1300 :height 600
    :layer [{:mark {:type "bar":color "#4C3C84"}
             :encoding {:x       {:field field :type "quantitative"  :axis {:title "%" :labelFontSize 15 :titleFontSize 15}}
@@ -216,7 +216,7 @@
         data-reformat (vec (flatten (for [d data-renamed] (for [k d] {:date (d :date) :value (val k) :rating (name (key k))}))))
         data-clean (t/chainfilter {:rating #(not (= % "date" )) } data-reformat)
         ]
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text title :fontSize 20}
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json" :title {:text title :fontSize 20}
      :data     {:values data-clean} :width 1300 :height 600
      :layer [{:mark {:type "bar":color "#4C3C84"}
               :encoding {:x       {:field "date" :type "nominal"  :axis {:title "Date" :labelFontSize 15 :titleFontSize 15 :labelAngle -60 :labelLimit 0} }
@@ -233,7 +233,7 @@
   (let [data-duration-clean (for [d data-raw] (assoc d :diff (- (:duration d) (:benchmark d))))
         data-duration-clean-filtered (t/chainfilter {:date #(> (t/int->gdate (js/parseInt (mod-date %))) (t/int->gdate 20160929))} data-duration-clean) ;; no BM data before Sept 16'. (->> data-weight
         ]
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
      :title {:text title :fontSize 20}
      :data     {:values data-duration-clean-filtered}
      :width 1500 :height 600
@@ -249,7 +249,7 @@
 
 (defn bar-chart-cash [data-raw color title]
   (let []
-    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json"
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
      :title {:text title :fontSize 20}
      :data     {:values data-raw}
      :width 1500 :height 600

@@ -138,7 +138,7 @@
   (let [data @(rf/subscribe [:single-bond-trade-history/chart-data])
         ymin (* 0.99 (apply min (remove nil? (map :price data))))
         ymax (* 1.01 (apply max (remove nil? (map :price data))))]
-    {:$schema "https://vega.github.io/schema/vega-lite/v4.json",
+    {:$schema "https://vega.github.io/schema/vega-lite/v5.json",
      :title   nil                                           ;(str @(rf/subscribe [:single-bond-trade-history/bond]) " trading history")
      :data    {:values data :format {:parse {:date "date:'%Y%m%d'" :price "quantitative" :buy "quantitative" :sell "quantitative"}}}
      :vconcat [{:layer
