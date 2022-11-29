@@ -284,6 +284,7 @@
      :country                          (text-col "Country" "qt-risk-country-name" 120)
      :issuer                           (text-col "Issuer" "TICKER" 120)
      :sector                           (text-col "Sector" "qt-jpm-sector" 120)
+     :sector-baml                      (text-col "Sector BAML" "qt-BAML-level-3" 120)
      :maturity-band                    (text-col "Maturity" "qt-final-maturity-band" 120)
      :rating                           {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}
      :rating-score                     {:Header "Rating" :width 120 :accessor "qt-iam-int-lt-median-rating-score" :aggregate first} ; :Cell rating-score-to-string
