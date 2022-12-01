@@ -40,6 +40,7 @@
    {:code :large-exposures        :name "Large exposures"}
    {:code :var                    :name "VaR and Beta"}
    {:code :proxies                :name "Bond proxies"}
+   {:code :stresstest             :name "Stress test"}
    {:code :portfolio-history      :name "Portfolio history"}
    {:code :position-history       :name "Position history"}
    {:code :allianz-loss-report    :name "Allianz P&L budget"}

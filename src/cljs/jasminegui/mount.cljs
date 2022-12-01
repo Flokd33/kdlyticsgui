@@ -97,6 +97,10 @@
                  :var/dates                                          nil
                  :var/chart-period                                   :daily-3y
 
+                 :stresstest/scenarios                                []
+                 :stresstest/results                                []
+                 :stresstest/selected-portfolios                    #{"OGEMCORD" "OGEMIGC"}
+
                  ;position-history
                  :portfolio-history/portfolio                         "OGEMCORD"
                  :portfolio-history/start-period                      "20211231"
@@ -667,6 +671,10 @@
            :backtest-output
            :dummy
 
+           :stresstest/selected-portfolios
+           :stresstest/scenarios
+           :stresstest/results
+
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
 (rf/reg-event-db
@@ -1079,6 +1087,8 @@
 
    {:get-key :get-backtest-output        :namespace "jasmine.backtesting.momentum"  :asset "backtest-output"              :dispatch-key [:backtest-output]}
 
+   {:get-key :get-stress-test-results        :namespace "jasmine.stresstest"  :asset "stress-test-results"              :dispatch-key [:stresstest/results]}
+   {:get-key :get-stress-test-scenarios      :namespace "jasmine.stresstest"  :asset "stress-test-scenarios-for-gui"            :dispatch-key [:stresstest/scenarios]}
 
    ])
 

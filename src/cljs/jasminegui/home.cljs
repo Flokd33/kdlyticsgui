@@ -17,6 +17,7 @@
     [oz.core :as oz]
     [jasminegui.tools :as t]
     [jasminegui.charting :as charting]
+    [jasminegui.stresstest :as stresstest]
     ["react-table-v6" :as rt :default ReactTable]))
 
 
@@ -141,6 +142,7 @@
       :irrisk                         [riskviews/irrisk]
       :large-exposures                [riskviews/large-exposures]
       :var                            [var/main-var-view]
+      :stresstest                     [stresstest/view]
       :proxies                        [var/main-proxy-view]
       :portfolio-history              [riskviews/portfolio-history]
       :position-history               [riskviews/position-history]

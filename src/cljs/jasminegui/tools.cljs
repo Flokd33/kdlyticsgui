@@ -179,3 +179,11 @@
   (let [a (* convexity 0.5 0.000001) b (* modified-duration 0.0001) c (/ (- clean-price target-price) clean-price)      ;it's -dP/P
         delta (- (* b b) (* 4 a c)) s1 (/ (+ (- b) (Math/sqrt delta)) (* 2 a))] ;s2 (/ (- (- b) (Math/sqrt delta)) (* 2 a))
     (- current-spread s1)))                                 ;                                   ;[ (- current-spread s2)]
+
+(defn rot13 [text]
+  (let [alphabet "abcdefghijklmnopqrstuvwxyz"
+        cipher (->> (cycle alphabet)
+                    (drop 13)
+                    (take 26)
+                    (zipmap alphabet))]
+    (clojure.string/join (replace cipher text))))
