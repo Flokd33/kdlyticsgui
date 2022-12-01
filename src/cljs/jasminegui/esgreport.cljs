@@ -153,7 +153,7 @@
 
 (def tf-reduced-activities-choices [{:id "avoid" :label "Carbon avoided"} {:id "reduce"  :label "Carbon reduced"} {:id "both"  :label "Both"} {:id "none"  :label "None"}])
 
-(def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
+  (def gb-calculator-summary (r/atom {:project-evaluation/categories                         {:question_id 1  :question_category "new-issue" :analyst_answer nil  :analyst_score 0},
                                     :project-evaluation/categories-other                   {:question_id 2  :question_category "new-issue" :analyst_answer ""   :analyst_score 0},
                                     :project-evaluation/description                        {:question_id 3  :question_category "new-issue" :analyst_answer ""       :analyst_score 0},
                                     :project-evaluation/controversies                      {:question_id 4  :question_category "new-issue" :analyst_answer "Yes2"    :analyst_score 0},
@@ -217,12 +217,10 @@
     )
   )
 
-
 (defn gb-summary-generator [is-reporting]
-  (let [answers @gb-calculator-summary
-        answers_clean  (if (= is-reporting true)
-                         (into {} (for [[k v] answers :when (= (:question_category v) "reporting")] [k v]))
-                         (into {} (for [[k v] answers :when (not= (:question_category v) "reporting")] [k v])))
+  (let [answers_clean  (if (= is-reporting true)
+                         (into {} (for [[k v] @gb-calculator-summary :when (= (:question_category v) "reporting")] [k v]))
+                         (into {} (for [[k v] @gb-calculator-summary :when (not= (:question_category v) "reporting")] [k v])))
         summary (for [k (keys answers_clean)] {:question_id (get-in answers_clean [k :question_id]) :analyst_code @analyst-name :date today-date :security_identifier @identifier
                                                :analyst_answer (if (nil? (get-in answers_clean [k :analyst_answer])) "" (get-in answers_clean [k :analyst_answer]))
                                                :analyst_score (get-in answers_clean [k :analyst_score])})]
@@ -250,53 +248,39 @@
               [title :label "Green bond calculator" :level :level1]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
-                          [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12}
-                                                                      :on-change #(do (reset! identifier %) (reset! is-gb-eligible "No"))]]]
+                          [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12} :on-change #(do (reset! identifier %) (reset! is-gb-eligible "No"))]]]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
-                          [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name
-                           :on-change #(reset! analyst-name %)]]]
+                          [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name :on-change #(reset! analyst-name %)]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (js/parseInt (str (* @gb-score-new-issue (/ 100 70)))) ]]]
-
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "SFDR Sustainable Investment Eligibility" :level :level2]]
                                                              [box :width dropdown-width :child [button :label @is-gb-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-gb-eligible "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]]
-
-
               [title :label "Summary" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[box :width question-width :child [title :label "Analyst summary/notes"]]
-                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/text :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/text :analyst_answer]) %))]]]
+                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/text :analyst_answer ]) :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/text :analyst_answer]) %))]]]
               [title :label "Project Evaluation" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Category:"]
-                          [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])%)
-                                           (if (= "other" %) (reset! other-disabled? false) (reset! other-disabled? true))
-                                           (gb-eligible)
-                                           (gb-score-calculator))]]]
+                          [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer]) :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])%)
+                                           (if (= "other" %) (reset! other-disabled? false) (reset! other-disabled? true)) (gb-eligible) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Other:"]
-                          [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) :disabled? other-disabled?
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) %))]]]
+                          [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) :disabled? other-disabled? :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) %))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Project description:"]
-                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer]) %))]]]
+                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer ]) :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer]) %))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                            :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) "") )
-                                            (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %)
-                                           (gb-eligible)
-                                           (gb-score-calculator))]]]
+                                            (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %) (gb-eligible) (gb-score-calculator))]]]
               (case (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                             "No" nil
                              [h-box :gap "10px" :align :center
                                     :children [[label :width question-width :label "Comment if there is a risk of controversies:"]
                                                [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer ])
                                                 :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) %))]]])
-
               [title :label "Independent Verification" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Does the green bond have independent verification?"]
@@ -306,7 +290,6 @@
                :children [[label :width question-width :label "Who provides the independent verification?"]
                           [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:independent-verification/second-opinion :analyst_answer ])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:independent-verification/second-opinion :analyst_answer]) %))]]]
-
               [title :label "Use and Management of Proceeds" :level :level2 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Are all the proceeds used for financing/refinancing green projects?"]
@@ -329,13 +312,11 @@
                :children [[label :width question-width :label "Are the use of proceeds ringfenced?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer ])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer ]) %) (gb-score-calculator))]]]
-
               [title :label "Reporting" :level :level2 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is there regular reporting on the impact stemming from the green projects?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
-
               [title :label "Country Framework" :level :level2 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the company framework better than the national framework?"]
@@ -345,44 +326,36 @@
                :children [[label :width question-width :label "Country:"]
                           [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices country-names-sorted :filter-box? true :model (r/cursor gb-calculator-summary [:country-framework/country-framework-list :analyst_answer])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:country-framework/country-framework-list :analyst_answer]) %) (gb-score-calculator))]]]
-
               [title :label "Additional Information" :level :level2 ]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the company net-zero committed?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer])
                            :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) "") )
-                                         (reset! (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer]) %) (if (= "Yes" %) (reset! year-disabled? false) (reset! year-disabled? true))
-                                           (gb-score-calculator))]]]
+                                         (reset! (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer]) %) (if (= "Yes" %) (reset! year-disabled? false) (reset! year-disabled? true)) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "If yes please indicate the year "]
+               :children [[label :width question-width :label "If yes please indicate the year"]
                           [input-text :width dropdown-width  :validation-regex #"^[0-9]*$" :attr {:maxlength 12} :model (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) :disabled? year-disabled?
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) %))]]]
-
               [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the company SBTi aligned and if so, which category?"]
+               :children [[label :width question-width :label "Is the company SBTi aligned?"]
                           [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer])
                            :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) "") )
-                                           (reset! (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer]) %) (if (= "Yes" %) (reset! sbti-disabled? false) (reset! sbti-disabled? true))
-                                           (gb-score-calculator))]]]
+                                           (reset! (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer]) %) (if (= "Yes" %) (reset! sbti-disabled? false) (reset! sbti-disabled? true)) (gb-score-calculator))]]]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "If yes please indicate the category"]
                           [single-dropdown :width categories-list-width-long :placeholder "Please select..." :choices categories-if-yes :model (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) :disabled? sbti-disabled?
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) %))]]]
-
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Reference sources:"]
                           [input-textarea  :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer])
                            :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer]) %) (gb-score-calculator))]]]
-
               [gap :size "10px"]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label ""]
                           [button :label "Save new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator) (gb-summary-generator false))]]]
               [gap :size "20px"]
-              [line :size  "2px" :color "black"] ;[gap :size "50px"]
-              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]]
-                                                             [progress-bar :width categories-list-width-long :model gb-score-follow-up ]]]
-
+              [line :size  "2px" :color "black"]
+              [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]] [progress-bar :width categories-list-width-long :model gb-score-follow-up ]]]
               [title :label "Reporting" :level :level2]
               [h-box :gap "10px" :align :center
                :children [[label :width question-width :label "Is the project on track?"]
@@ -427,14 +400,11 @@
           isin  (:security_identifier (first (t/chainfilter {:unique_id uniq_id} (:esg-report-list db))))
           ]
       {:db (assoc db :esg/report-type report-type
-                     ;:esg/date esg-date
-                     ;:esg/gb-isin uniq_id
                      :esg/esg-report-selected (str (case report-type "green-bond" "GB" "TF") "_"
                                                    (:Bond (first (t/chainfilter {:ISIN isin} (:quant-model/model-output db)))) "_"
                                                    (:date2 (first (t/chainfilter {:security_identifier isin} (:esg-report-list db)))))
                      )
        :fx [[:dispatch [:post-esg-report-extract isin esg-date report-type]]
-            ;[:dispatch [:esg/refresh-elig]]
             ]})
     ))
 
@@ -480,7 +450,6 @@
                 )
 
         ]
-    ;(println esg-reports-clean)
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -508,7 +477,6 @@
                        (case report-type
                          "green-bond" (if (not= report-category "Follow up reporting")
                          [[h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "New Issue Score" :level :level2]] [progress-bar :width categories-list-width-long :model (Math/round (/ analyst-score 0.7))]]]
-
                           [h-box :gap "10px" :align :center :children [[box :width question-width :child [title :label "SFDR Sustainable Investment Eligibility" :level :level2]]
                                                                        [button :label eligi :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= eligi "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]
                           [title :label "Summary" :level :level2]
@@ -728,24 +696,17 @@
                             [info-button :info "All Transition Investments should have a commitment to achieve carbon neutrality in the future. This includes both an explicit target or a public commitment (without a target date)" :position :left-center]
                             [single-dropdown :width dropdown-width :choices yes-no-choice
                              :model (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer])
-                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %)
-                                             (tf-eligible)
-                                             (tf-score-calculator)
-                                             (if (= % "No") (do (clean-report!)
-                                                              (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %)))
-                                             )]]]
-
-                (if (= (get-in @tf-calculator-summary [:eligibility/net-zero :analyst_answer]) "Yes") ;first level eligibility
+                             :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %) (tf-eligible) (tf-score-calculator)
+                                             (if (= % "No") (do (clean-report!) (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %))))]]]
+                (if (= (get-in @tf-calculator-summary [:eligibility/net-zero :analyst_answer]) "Yes")
                   (concat
-                    [[v-box  :gap "5px" :children [
-                   [h-box :gap "10px" :align :center
+                    [[v-box  :gap "5px"
+                      :children [[h-box :gap "10px" :align :center
                     :children [[label :width question-width-label :label "Is the company/financed activity supporting one of the five transition sectors?"]
                                [info-button :info "bla bla " :position :left-center]
                                [single-dropdown :width dropdown-width :choices yes-no-choice
                                 :model (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer])
-                                :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer]) %)
-                                                (tf-score-calculator)
-                                                )]]]
+                                :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer]) %) (tf-score-calculator))]]]
                    (case (get-in @tf-calculator-summary [:eligibility/sectors :analyst_answer])
                      "Yes" [h-box :gap "10px" :align :center
                       :children [[label :width question-width :label "Select sector:"]
@@ -763,36 +724,27 @@
                       :children [[label :width question-width :label "Is emissions intensity close to zero/green revenue a large majority?"]
                                  [single-dropdown :width dropdown-width :choices yes-no-choice
                                   :model (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer])
-                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer]) %)
-                                                  (tf-eligible)
-                                                  (tf-score-calculator))]]]
+                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
                     [h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "Does the company have clear plans to transition?"]
                                 [single-dropdown :width dropdown-width :choices yes-no-choice
                                  :model (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer]) %)
-                                                 (tf-eligible)
-                                                 (tf-score-calculator))]]]
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
                     [h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "Is the company/asset required to enable the transition to net zero for other sectors?"]
                                 [single-dropdown :width dropdown-width :choices yes-no-choice
                                  :model (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer]) %)
-                                                 (tf-eligible)
-                                                 (tf-score-calculator))]]]
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
                     [h-box :gap "10px" :align :center
                      :children [[label :width question-width :label "Is the company ahead of its peer group on climate-related metrics?"]
                                 [single-dropdown :width dropdown-width :choices yes-no-choice
                                  :model (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer]) %)
-                                                 (tf-eligible)
-                                                 (tf-score-calculator))]]]
+                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
                      [h-box :gap "10px" :align :center
                       :children [[label :width question-width :label "Is the company/issuer expanding misaligned activities?"]
                                  [single-dropdown :width dropdown-width :choices yes-no-choice
                                   :model (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer])
-                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer]) %)
-                                                  (tf-score-calculator))]]]
+                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer]) %) (tf-score-calculator))]]]
                       (if (= (get-in @tf-calculator-summary [:eligibility/misaligned :analyst_answer]) "Yes")
                         [h-box :gap "10px" :align :start
                          :children [[label :width question-width :label "Misaligned activities comment:"]
@@ -811,9 +763,7 @@
                                 [input-textarea :width categories-list-width-long :rows 5
                                  :model (r/cursor tf-calculator-summary [:eligibility/category-comment :analyst_answer])
                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/category-comment :analyst_answer]) %))]]]
-                                                  ]]]
-                    )
-                  )
+                                                  ]]]))
                 (if (= @is-tf-eligible "Yes")
                   (concat
                     [[v-box  :gap "5px" :children
@@ -885,15 +835,13 @@
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %) (tf-score-calculator))]]]
                                       [h-box :gap "10px" :align :center
                                        :children [[label :width question-width :label "Most recent emissions intensity (if applicable):"]
                                                   [input-text :width categories-list-width-long
                                                    :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
                                                    :model (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer])
-                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %)
-                                                                   (tf-score-calculator))]]]
+                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %) (tf-score-calculator))]]]
                                       [h-box :gap "10px" :align :center
                                        :children [[label :width question-width :label "Reduction target year:"]
                                                   [input-text :width categories-list-width-long
@@ -905,22 +853,19 @@
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %) (tf-score-calculator))]]]
                                       [h-box :gap "10px" :align :center
                                        :children [[label :width question-width :label "Reduction target intensity (if applicable):"]
                                                   [input-text :width categories-list-width-long
                                                    :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
                                                    :model (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer])
-                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %)
-                                                                   (tf-score-calculator))]]]
+                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Total absolute emissions reduction (2030):"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %) (tf-score-calculator))]]]
                                     ]]])
                         "both" (concat
                                  [[h-box :gap "10px" :align :center
@@ -928,16 +873,14 @@
                                               [input-text :width categories-list-width-long
                                                :validation-regex #"^[0-9]*$"
                                                :model (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer])
-                                               :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer]) %)
-                                                               (tf-score-calculator))]]]]
+                                               :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer]) %) (tf-score-calculator))]]]]
                                  [[v-box  :gap "5px" :children
                                    [[h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"]
                                                 [single-dropdown :width dropdown-width
                                                  :choices yes-no-choice
                                                  :model (r/cursor tf-calculator-summary [:subs/paris :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/paris :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/paris :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Comment on target:"]
                                                 [input-textarea :width categories-list-width-long :rows 5
@@ -948,28 +891,24 @@
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Base year emissions:"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Base year emissions intensity (if applicable):"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
                                                  :model (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Emission scopes included:"]
                                                 [input-textarea :width categories-list-width-long :rows 1
                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
-
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Most recent emissions year:"]
                                                 [input-text :width categories-list-width-long
@@ -981,15 +920,13 @@
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Most recent intensity (if applicable):"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Reduction target year:"]
                                                 [input-text :width categories-list-width-long
@@ -1001,22 +938,19 @@
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Reduction target intensity (if applicable):"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
                                                  :model (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %) (tf-score-calculator))]]]
                                     [h-box :gap "10px" :align :center
                                      :children [[label :width question-width :label "Total absolute emissions reduction (2030):"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
                                                  :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %) (tf-score-calculator))]]]
                                     ]]])
                         "none" nil
                         nil)]]]))
@@ -1039,14 +973,12 @@
         data-yes-no (t/chainfilter {:question_id #(some #{%} [7 13 5 28 9 14 26 8])} data)
         data-yes-no-final (map #(assoc % :perc_yes (* (/ (get (:frequencies % ) "Yes") (+ (get (:frequencies % ) "Yes") (get (:frequencies % ) "No"))) 100)) data-yes-no)
         data-category (for [cat (:frequencies (first (t/chainfilter {:question_id 1} data)))] {:category (key cat) :freq (val cat)})
-        ;(case (key cat) "climate" "Climate change" "renewable" "Renewable energy" "green" "Green buildings" "energy" "Energy efficiency" "clean" "Clean transportation" "pollution" "Pollution" "eco" "Eco-efficient" "environmentally" "Environmentally.." "terrestrial" "Biodiversity" "sustainable" "Water" "Other")
         data-category-clean (for [t data-category] (assoc t :cat2 (:label (first (t/chainfilter {:id (t :category)} project-sub-categories )))))
         data-independent-verif    (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [6])} data)))] {:category (case (key cat) "" "N/A" (key cat)) :freq (val cat)})
         data-sbti-cat   (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [23])} data)))] {:category (case (key cat) "committed" "Committed" "verified" "Verified" "No") :freq (val cat)})
         data-refi-or-exit   (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [10])} data)))] {:category (case (key cat) "both" "Both" "initial" "Initial" "refinancing" "Refinancing" "N/A") :freq (val cat)})
         data-controversies  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [4])} data)))] {:category (case (key cat) "Yes2" "Yes (big)" "Yes1" "Yes (small)" "No" "No" "N/A") :freq (val cat)})
-        data-better-national  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [12])} data)))] {:category (case (key cat) "Yes2" "In line" "Yes" "Yes" "No" "No" "N/A") :freq (val cat)})
-        ]
+        data-better-national  (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [12])} data)))] {:category (case (key cat) "Yes2" "In line" "Yes" "Yes" "No" "No" "N/A") :freq (val cat)})]
     [v-box :gap "20px" :class "element" :width standard-box-width
      :children [[h-box :align :center :children [[title :label (str "Green Bond Report Analytics (" (count data-scores) ")") :level :level1]]]
                 [h-box :align :center :children
@@ -1056,7 +988,6 @@
                     :width 400 :height 50
                     :mark {:type "boxplot" :extent "min-max" :color "#19A68C" :median {:color "red"}}
                     :encoding {:x  {:field "score", :type "quantitative" :scale {:zero true} :axis {:title "Score" :labelFontSize 15 :titleFontSize 15}}}}]
-
                   [oz/vega-lite
                    {:$schema  "https://vega.github.io/schema/vega-lite/v4.json" :title {:text "Scores by sectors (excluding 0s...)" :fontSize 20}
                     :data  {:values (t/chainfilter {:score #(> % 0)} data-scores-rebased)}
@@ -1120,8 +1051,6 @@
         data-avoid-reduce    (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [56])} data)))] {:category (case (key cat) "avoid" "Avoid"  "reduce" "Reduce" "both" "Both" "N/A") :freq (val cat)})
         data-classification   (for [cat (:frequencies (first (t/chainfilter {:question_id #(some #{%} [54])} data)))] {:category (case (key cat) "committed" "Committed" "enabler" "Enabler" "aiming" "Aiming" "N/A") :freq (val cat)})
         ]
-    ;(println data)
-    ;(println data-scores)
     [v-box :gap "20px" :class "element" :width standard-box-width
          :children [[h-box :align :center :children [[title :label (str "Transition Finance Report Analytics (" (count data-scores) ")") :level :level1]]]
                     [h-box :align :center :children

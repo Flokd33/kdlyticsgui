@@ -354,7 +354,7 @@
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :name))] (tables/risk-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices-clean "None")) (map :id static/risk-choice-map))
         download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices-clean :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
-    (println risk-choices)
+    ;(println risk-choices)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic-new "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
                                  {:target-id       "single-portfolio-risk-table"
