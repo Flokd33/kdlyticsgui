@@ -53,7 +53,7 @@
 ;(def gb-date (r/atom "2022-09-02"))
 ;(def report-type (r/atom "green-bond"))
 
-(def yes-no-choice [{:id "Yes" :label "Yes"} {:id "No"  :label "No"}])
+(def yes-no-choice [{:id "No"  :label "No"} {:id "Yes" :label "Yes"}])
 (def yes-no-choice-2 [{:id "Yes1" :label "Yes (small)"} {:id "Yes2"  :label "Yes (big)"} {:id "No"  :label "No"}])
 (def yes-no-choice-3 [{:id "Yes" :label "Yes"} {:id "Yes2"  :label "In line"} {:id "No"  :label "No"}])
 
@@ -240,155 +240,86 @@
       (reset! is-gb-eligible "Yes")
       (reset! is-gb-eligible "No"))))
 
+(defn qbox [level question child-question]
+  [h-box :gap "10px" :align :center :children [[box :width question-width :child (if (= level :label) [label :label question] [title :label question :level level])] child-question]])
+
+
 (defn green-bond-scoring-display []
   (let [country-names-sorted (mapv (fn [x] {:id x :label x}) (sort (distinct (map :LongName @(rf/subscribe [:country-codes])))))
-        analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)})]
+        analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)})
+        update-fn (fn [kseq v] (reset! (r/cursor gb-calculator-summary kseq) v) (gb-score-calculator) (gb-eligible))
+        yes-no-dropdown (fn [kseq] [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary kseq) :on-change #(update-fn kseq %)])]
   [v-box :width "1280px" :gap "5px" :class "element"
    :children [[modal-success]
               [title :label "Green bond calculator" :level :level1]
-              [h-box :gap "10px" :align :center
-               :children [[box :width question-width :child [title :label "ISIN" :level :level2]]
-                          [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12} :on-change #(do (reset! identifier %) (reset! is-gb-eligible "No"))]]]
-              [h-box :gap "10px" :align :center
-               :children [[box :width question-width :child [title :label "Analyst" :level :level2]]
-                          [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name :on-change #(reset! analyst-name %)]]]
+              [qbox :level2 "ISIN" [input-text :width categories-list-width-long :placeholder "MAX 12 characters" :model identifier :attr {:maxlength 12} :on-change #(do (reset! identifier %) (reset! is-gb-eligible "No"))]]
+              [qbox :level2 "Analyst" [single-dropdown :width dropdown-width :choices analyst-names-list :model analyst-name :on-change #(reset! analyst-name %)]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "New issue score" :level :level2]] [progress-bar :width categories-list-width-long :model (js/parseInt (str (* @gb-score-new-issue (/ 100 70)))) ]]]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "SFDR Sustainable Investment Eligibility" :level :level2]]
                                                              [box :width dropdown-width :child [button :label @is-gb-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-gb-eligible "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]]
               [title :label "Summary" :level :level2]
-              [h-box :gap "10px" :align :center
-               :children [[box :width question-width :child [title :label "Analyst summary/notes"]]
-                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/text :analyst_answer ]) :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/text :analyst_answer]) %))]]]
+              [qbox :label "Analyst summary/notes" [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/text :analyst_answer]) :on-change #(update-fn [:additional/text :analyst_answer] %)]]
               [title :label "Project Evaluation" :level :level2]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Category:"]
-                          [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer]) :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer])%)
-                                           (if (= "other" %) (reset! other-disabled? false) (reset! other-disabled? true)) (gb-eligible) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Other:"]
-                          [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) :disabled? other-disabled? :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) %))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Project description:"]
-                          [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer ]) :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer]) %))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is there a potential for social risks and/or other controversies?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
-                           :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) "") )
-                                            (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) %) (gb-eligible) (gb-score-calculator))]]]
-              (case (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
-                            "No" nil
-                             [h-box :gap "10px" :align :center
-                                    :children [[label :width question-width :label "Comment if there is a risk of controversies:"]
-                                               [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer ])
-                                                :on-change #(do (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) %))]]])
+              [qbox :label "Category:" [single-dropdown :width categories-list-width-long  :placeholder "Please select..." :choices project-sub-categories :model (r/cursor gb-calculator-summary [:project-evaluation/categories :analyst_answer]) :on-change #(do (reset! other-disabled? (not (= "other" %))) (update-fn [:project-evaluation/categories :analyst_answer] %))]]
+              [qbox :label "Other:" [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:project-evaluation/categories-other :analyst_answer]) :disabled? other-disabled? :on-change #(update-fn [:project-evaluation/categories-other :analyst_answer] %)]]
+              [qbox :label "Project description:" [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/description :analyst_answer ]) :on-change #(update-fn [:project-evaluation/description :analyst_answer] %)]]
+              [qbox :label "Is there a potential for social risks and/or other controversies?" [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
+                                                                                                :on-change #(do (when (= "No" %) (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) "") )
+                                                                                                                (update-fn [:project-evaluation/controversies :analyst_answer] %))]]
+              (if (= (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) "Yes")
+                [qbox :label "Comment if there is a risk of controversies:" [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer])
+                                                                             :on-change #(update-fn [:project-evaluation/controversies-comment :analyst_answer] %)]])
               [title :label "Independent Verification" :level :level2]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Does the green bond have independent verification?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:independent-verification/independent-verification :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:independent-verification/independent-verification :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Who provides the independent verification?"]
-                          [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:independent-verification/second-opinion :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:independent-verification/second-opinion :analyst_answer]) %))]]]
+              [qbox :label "Does the green bond have independent verification?" [yes-no-dropdown [:independent-verification/independent-verification :analyst_answer]]]
+              [qbox :label "Who provides the independent verification?" [input-text :width categories-list-width-long  :model (r/cursor gb-calculator-summary [:independent-verification/second-opinion :analyst_answer ])
+                                                                         :on-change #(update-fn [:independent-verification/second-opinion :analyst_answer] %)]]
               [title :label "Use and Management of Proceeds" :level :level2 ]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Are all the proceeds used for financing/refinancing green projects?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/use :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/use :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Refinancing of an existing project or initial financing? "]
-                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices existing-choices
-                           :model (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Does the company have a clear process to determine Green Project eligibility?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/clear-process :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/clear-process :analyst_answer ]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Are the use of proceeds tracked?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/tracked :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Are the use of proceeds ringfenced?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:proceed-management/ringfencing :analyst_answer ]) %) (gb-score-calculator))]]]
+              [qbox :label "Are all the proceeds used for financing/refinancing green projects?" [yes-no-dropdown [:proceed-management/use :analyst_answer]]]
+
+              [qbox :label "Refinancing of an existing project or initial financing?" [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices existing-choices
+                                                                                       :model (r/cursor gb-calculator-summary [:proceed-management/refi-or-exi :analyst_answer])
+                                                                                       :on-change #(update-fn [:proceed-management/refi-or-exi :analyst_answer] %)]]
+
+              [qbox :label "Does the company have a clear process to determine Green Project eligibility?" [yes-no-dropdown [:proceed-management/clear-process :analyst_answer]]]
+              [qbox :label "Are the use of proceeds tracked?" [yes-no-dropdown [:proceed-management/tracked :analyst_answer]]]
+              [qbox :label "Are the use of proceeds ringfenced?" [yes-no-dropdown [:proceed-management/ringfencing :analyst_answer]]]
               [title :label "Reporting" :level :level2 ]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is there regular reporting on the impact stemming from the green projects?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting-ni/reporting :analyst_answer ]) %) (gb-score-calculator) (gb-eligible))]]]
-              [title :label "Country Framework" :level :level2 ]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the company framework better than the national framework?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice-3 :model (r/cursor gb-calculator-summary [:country-framework/better-than-national :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:country-framework/better-than-national :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Country:"]
-                          [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices country-names-sorted :filter-box? true :model (r/cursor gb-calculator-summary [:country-framework/country-framework-list :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:country-framework/country-framework-list :analyst_answer]) %) (gb-score-calculator))]]]
-              [title :label "Additional Information" :level :level2 ]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the company net-zero committed?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer])
-                           :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) "") )
-                                         (reset! (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer]) %) (if (= "Yes" %) (reset! year-disabled? false) (reset! year-disabled? true)) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "If yes please indicate the year"]
-                          [input-text :width dropdown-width  :validation-regex #"^[0-9]*$" :attr {:maxlength 12} :model (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) :disabled? year-disabled?
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) %))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the company SBTi aligned?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer])
-                           :on-change #(do (if (= "No" %) (reset! (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) "") )
-                                           (reset! (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer]) %) (if (= "Yes" %) (reset! sbti-disabled? false) (reset! sbti-disabled? true)) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "If yes please indicate the category"]
-                          [single-dropdown :width categories-list-width-long :placeholder "Please select..." :choices categories-if-yes :model (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) :disabled? sbti-disabled?
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) %))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Reference sources:"]
-                          [input-textarea  :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer]) %) (gb-score-calculator))]]]
+              [qbox :label "Is there regular reporting on the impact stemming from the green projects?" [yes-no-dropdown [:reporting-ni/reporting :analyst_answer]]]
+              [title :label "Country Framework" :level :level2]
+              [qbox :label "Is the company framework better than the national framework?" [single-dropdown :width dropdown-width :choices yes-no-choice-3 :model (r/cursor gb-calculator-summary [:country-framework/better-than-national :analyst_answer])
+                                                                                           :on-change #(update-fn [:country-framework/better-than-national :analyst_answer] %)]]
+              [qbox :label "Country:" [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices country-names-sorted :filter-box? true :model (r/cursor gb-calculator-summary [:country-framework/country-framework-list :analyst_answer])
+                                       :on-change #(update-fn [:country-framework/country-framework-list :analyst_answer] %)]]
+              [title :label "Additional Information" :level :level2]
+              [qbox :label "Is the company net-zero committed?" [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/net-zero :analyst_answer])
+                                                                 :on-change #(do (when (= "No" %) (reset! (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) ""))
+                                                                                 (reset! year-disabled? (not (= "Yes" %)))
+                                                                                 (update-fn [:additional/net-zero :analyst_answer] %))]]
+              [qbox :label "If yes please indicate the year" [input-text :width dropdown-width  :validation-regex #"^[0-9]*$" :attr {:maxlength 12} :model (r/cursor gb-calculator-summary [:additional/net-zero-year :analyst_answer]) :disabled? year-disabled?
+                                                              :on-change #(update-fn [:additional/net-zero-year :analyst_answer] %)]]
+              [qbox :label "Is the company SBTi aligned?" [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:additional/sbti :analyst_answer])
+                                                           :on-change #(do (when (= "No" %) (reset! (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) ""))
+                                                                           (reset! sbti-disabled? (not (= "Yes" %)))
+                                                                           (update-fn [:additional/sbti :analyst_answer] %))]]
+              [qbox :label "If yes please indicate the category" [single-dropdown :width categories-list-width-long :placeholder "Please select..." :choices categories-if-yes :model (r/cursor gb-calculator-summary [:additional/sbti-cat :analyst_answer]) :disabled? sbti-disabled?
+                                                                  :on-change #(update-fn [:additional/sbti-cat :analyst_answer] %)]]
+              [qbox :label "Reference sources:" [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:additional/reference-sources :analyst_answer])
+                                                 :on-change #(update-fn [:additional/reference-sources :analyst_answer] %)]]
               [gap :size "10px"]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label ""]
-                          [button :label "Save new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator) (gb-summary-generator false))]]]
+              [qbox :label "" [button :label "Save new issue report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator) (gb-summary-generator false))]]
               [gap :size "20px"]
               [line :size  "2px" :color "black"]
               [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Follow-up score" :level :level2]] [progress-bar :width categories-list-width-long :model gb-score-follow-up ]]]
               [title :label "Reporting" :level :level2]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the project on track?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting/project-on-track :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting/project-on-track :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Is the green project expanded?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting/project-expanded :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting/project-expanded :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Has the company increased green funding as % of spending?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting/increased-green-funding :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting/increased-green-funding :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Does the company undertakes to produce an annual report?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting/annual-report :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting/annual-report :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Does the company reports detailed projects KPIs?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting/project-kpis :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting/project-kpis :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "Are more than 50% of the proceeds spent on green projects?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting/half-proceeds-green :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting/half-proceeds-green :analyst_answer]) %) (gb-score-calculator))]]]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label "On a ongoing basis, does the company reconciled proceeds with uses?"]
-                          [single-dropdown :width dropdown-width :choices yes-no-choice :model (r/cursor gb-calculator-summary [:reporting/reconciliation :analyst_answer])
-                           :on-change #(do (reset! (r/cursor gb-calculator-summary [:reporting/reconciliation :analyst_answer]) %) (gb-score-calculator))]]]
+              [qbox :label "Is the project on track?" [yes-no-dropdown [:reporting/project-on-track :analyst_answer]]]
+              [qbox :label "Is the green project expanded?" [yes-no-dropdown [:reporting/project-expanded :analyst_answer]]]
+              [qbox :label "Has the company increased green funding as % of spending?" [yes-no-dropdown [:reporting/increased-green-funding :analyst_answer]]]
+              [qbox :label "Does the company undertakes to produce an annual report?" [yes-no-dropdown [:reporting/annual-report :analyst_answer]]]
+              [qbox :label "Does the company reports detailed projects KPIs?" [yes-no-dropdown [:reporting/project-kpis :analyst_answer]]]
+              [qbox :label "Are more than 50% of the proceeds spent on green projects?" [yes-no-dropdown [:reporting/half-proceeds-green :analyst_answer]]]
+              [qbox :label "On a ongoing basis, does the company reconciled proceeds with uses?" [yes-no-dropdown [:reporting/reconciliation :analyst_answer]]]
               [gap :size "10px"]
-              [h-box :gap "10px" :align :center
-               :children [[label :width question-width :label ""]
-                          [button :label "Extract follow-up report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator) (gb-summary-generator true))]]]
+              [qbox :label "" [button :label "Extract follow-up report" :class "btn btn-primary btn-block" :on-click #(do (gb-score-calculator) (gb-summary-generator true))]]
               ]]
     ))
 
