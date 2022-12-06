@@ -1030,10 +1030,9 @@
                              :y       {:field "freq", :type "quantitative" :axis {:title "Occurences" :labelFontSize 15 :titleFontSize 15}}
                              :tooltip [{:field "freq" :type "quantitative" :title "#" } {:field "category" :type "nominal" :title "Category" }]
                              :color   {:field "color", :type "nominal" :scale nil :legend nil} ;:legend {:title "sdfgs" :labelFontSize 15 :titleFontSize 15}
-                             }}
-                 ]
+                             }}]
                 [h-box :align :center :children
-                 [[oz/vega-lite (charting/small-pie-esg (add-colors data-sbti-cat :freq colors-esg)     "If SBTI aligned, what category?"  )]
+                 [[oz/vega-lite (charting/small-pie-esg (add-colors data-sbti-cat :freq colors-esg) "If SBTI aligned, what category?"  )]
                   [oz/vega-lite (charting/small-pie-esg (add-colors data-refi-or-exit :freq colors-esg) "Refinancing of an existing project or initial financing?" )]]]
                 [h-box :align :center :children
                  [[oz/vega-lite (charting/small-pie-esg (add-colors data-controversies :freq colors-esg) "Is there a potential for social risks and/or controversies?" )]
