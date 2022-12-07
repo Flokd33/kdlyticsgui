@@ -143,16 +143,18 @@
                                [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [info-button :info "Note: the filtering is made at bond level, not at issuer level." :position :below-center]
                                                             [single-dropdown :width "75px" :model threshold-att :choices static/threshold-choices-attribution :on-change #(rf/dispatch [:multiple-portfolio-attribution/threshold %])]]]
                                [title :label "Filtering:" :level :level3] (gt/filtering-row :multiple-portfolio-attribution/filter)]] ;(filtering-row :multiple-portfolio-attribution/filter)
-                 [h-box :gap "5px" :children
-                  (into [[title :label "Portfolios:" :level :level3]
-                         [gap :size "20px"]
-                         [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-attribution/selected-portfolios (set portfolios)])]
-                                                      [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-attribution/selected-portfolios #{}])]]]]
-                        (for [line static/portfolio-alignment-groups]
-                          (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
-                            [v-box :gap "2px" :children
-                             [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-attribution/selected-portfolios (toggle-portfolios possible-portfolios)])]
-                              [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-attribution/selected-portfolios %])]]])))]
+                   [gt/portfolio-group-selector :multiple-portfolio-attribution/selected-portfolios [:dummies]]
+                 ;[h-box :gap "5px" :children
+                 ; (into [[title :label "Portfolios:" :level :level3]
+                 ;        [gap :size "20px"]
+                 ;        [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-attribution/selected-portfolios (set portfolios)])]
+                 ;                                     [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-attribution/selected-portfolios #{}])]]]]
+                 ;       (for [line static/portfolio-alignment-groups]
+                 ;         (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
+                 ;           [v-box :gap "2px" :children
+                 ;            [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-attribution/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                 ;             [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-attribution/selected-portfolios %])]]])))]
+
                  [multiple-portfolio-attribution-display]])]))
 
 

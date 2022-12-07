@@ -6,7 +6,9 @@
     [re-frame.core :as rf]
     [reagent.core :as r]
     [jasminegui.tools :as t]
-    [jasminegui.static :as static]))
+    [jasminegui.static :as static]
+    [clojure.set :as cset]
+    ))
 
 (defn element-box-generic
   "opts will have either :download-table or :on-click-action, and can have target-id
@@ -130,3 +132,25 @@
                       :class (str "btn btn-primary btn-block" (if (= @(rf/subscribe [navigation-key]) (:code item)) " active"))
                       :label (:name item)
                       :on-click #(rf/dispatch [navigation-key (:code item)])]))])
+
+(defn portfolio-group-selector
+  "Usage: [portfolio-group-selector :stresstest/selected-portfolios [:dummies]]"
+  [selected-portfolios-key excluded-groups-seq]
+  (let [selected-portfolios (rf/subscribe [selected-portfolios-key])
+        toggle-portfolios (fn [setseqp] (if (cset/subset? setseqp @selected-portfolios) (cset/difference @selected-portfolios setseqp) (cset/union @selected-portfolios setseqp)))
+        groups (t/chainfilter {:id #(not (some #{%} excluded-groups-seq))} static/portfolio-alignment-groups)
+        all-portfolios-set (set (apply concat (map :portfolios groups)))]
+    [h-box :gap "5px"
+     :children (into [[title :label "Portfolios:" :level :level3]
+                      [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [selected-portfolios-key all-portfolios-set])]
+                                                   [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [selected-portfolios-key #{}])]]]]
+                     (for [line groups]
+                       (let [possible-portfolios (:portfolios line)]
+                         ^{:key (first possible-portfolios)}                           ;this is so React doesn't get confused by the for loop
+                         [v-box :gap "2px" :children
+                          [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [selected-portfolios-key (toggle-portfolios (set possible-portfolios))])]
+                           [selection-list :width "125px" :model selected-portfolios :choices (mapv (fn [p] {:id p :label p}) possible-portfolios) :on-change #(rf/dispatch [selected-portfolios-key %])]]]))
+
+                     )
+
+     ]))

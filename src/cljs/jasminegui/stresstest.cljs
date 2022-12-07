@@ -179,19 +179,21 @@
                                                {:Header "Description" :accessor "description" :width 300 :style {:whiteSpace "unset"}}
                                                {:Header "Rules" :accessor "rules" :width 900 :style {:textAlign "right"} :Cell rules-handler}]
                               :showPagination false :pageSize (count @(rf/subscribe [:stresstest/scenarios])) :className "-striped -highlight"}]]]
+
                 [v-box :class "element" :gap "10px"
                  :children [[title :label "NAV impact" :level :level1]
-                            [h-box :class "element" :gap "10px "
-                             :children [[title :label "Portfolios:" :level :level3]
-                                        [gap :size "10px"]
-                                        [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:stresstest/selected-portfolios (set portfolios)])]
-                                                                     [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:stresstest/selected-portfolios #{}])]]]
-                                        (for [line (t/chainfilter {:id #(not (some #{%} [:dummies]))} static/portfolio-alignment-groups)]
-                                          (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) (t/chainfilter {:id #(not (some #{%} [:dummies]))} static/portfolio-alignment-groups))))]
-                                            [v-box :gap "2px" :children
-                                             [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:stresstest/selected-portfolios (toggle-portfolios possible-portfolios)])]
-                                              [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:stresstest/selected-portfolios %])]]]))]
-                             ]
+                            [gt/portfolio-group-selector :stresstest/selected-portfolios [:dummies]]
+                            ;[h-box :class "element" :gap "10px "
+                            ; :children [[title :label "Portfolios:" :level :level3]
+                            ;            [gap :size "10px"]
+                            ;            [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:stresstest/selected-portfolios (set portfolios)])]
+                            ;                                         [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:stresstest/selected-portfolios #{}])]]]
+                            ;            (for [line (t/chainfilter {:id #(not (some #{%} [:dummies]))} static/portfolio-alignment-groups)]
+                            ;              (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) (t/chainfilter {:id #(not (some #{%} [:dummies]))} static/portfolio-alignment-groups))))]
+                            ;                [v-box :gap "2px" :children
+                            ;                 [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:stresstest/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                            ;                  [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:stresstest/selected-portfolios %])]]]))]
+                            ; ]
                             (let [cols (into [{:Header "Scenario" :accessor "nickname" :width 120 :style {:textAlign "left"}}] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:stresstest/selected-portfolios]))] ;@(rf/subscribe [:portfolios])
                                                   {:Header p :accessor p :width 80 :style {:textAlign "right"}  :Cell tables/round2pc}))]
                               [:> ReactTable

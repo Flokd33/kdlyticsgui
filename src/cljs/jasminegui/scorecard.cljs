@@ -511,18 +511,20 @@
                                                       {:Header "YTD weights" :columns (mapv tables/attribution-table-columns [:xs-weight-ytd :weight-ytd :bm-weight-ytd])}]
                                      :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}]]))
                  (gt/element-box "scorecard-nav-portfolios" "100%" (str sector " NAV across EMCD portfolios, grouped by issuer") @(rf/subscribe [:scorecard-risk/multiple-tree])
-                                [[h-box :gap " 10px "
-                                  :children [[title :label "Portfolios:" :level :level3]
-                                                    [gap :size "10px"]
-                                                    [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios (set portfolios)])]
-                                                                                 [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios #{}])]]]
-                                             (for [line (t/chainfilter {:id #(not (some #{%} [:hcd :dummies] ))} static/portfolio-alignment-groups)]
-                                               (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) (t/chainfilter {:id #(not (some #{%} [:hcd :dummies] ))} static/portfolio-alignment-groups))))]
-                                                 [v-box :gap "2px" :children
-                                                  [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios (toggle-portfolios possible-portfolios)])]
-                                                   [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios %])]
-                                                   ]]))]
-                                  ]
+                                [
+                                 [gt/portfolio-group-selector :multiple-portfolio-scorecard/selected-portfolios [:hcd :dummies]]
+                                 ;[h-box :gap " 10px "
+                                 ; :children [[title :label "Portfolios:" :level :level3]
+                                 ;                   [gap :size "10px"]
+                                 ;                   [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios (set portfolios)])]
+                                 ;                                                [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios #{}])]]]
+                                 ;            (for [line (t/chainfilter {:id #(not (some #{%} [:hcd :dummies] ))} static/portfolio-alignment-groups)]
+                                 ;              (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) (t/chainfilter {:id #(not (some #{%} [:hcd :dummies] ))} static/portfolio-alignment-groups))))]
+                                 ;                [v-box :gap "2px" :children
+                                 ;                 [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios (toggle-portfolios possible-portfolios)])]
+                                 ;                  [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-scorecard/selected-portfolios %])]
+                                 ;                  ]]))]
+                                 ; ]
                                  (let [cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-scorecard/selected-portfolios]))] ;@(rf/subscribe [:portfolios])
                                                        {:Header p :accessor p :width 80 :style {:textAlign "right"} :aggregate tables/sum-rows :Cell tables/round2-if-not0}))]
                                    ;(println cols)
