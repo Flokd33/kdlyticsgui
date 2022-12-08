@@ -760,6 +760,7 @@
   (fn [{:keys [db]} [_ naked-positions]]
     (let [res (array-of-lists->records naked-positions)
           positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res) [])]
+      ;(println (distinct (map :portfolio positions)))
       {:db (assoc db :naked-positions res
                      :navigation/show-mounting-modal (= positions [])
                      :positions positions
