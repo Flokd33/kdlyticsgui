@@ -293,7 +293,7 @@
      :name                             (text-col "Name" "NAME" 120)
      :isin                             (text-col "ISIN" "isin" 110)
 
-     :description                      (text-col "thinkFolio ID" "description" 400)
+     :description                      (text-col "thinkFolio ID" "description" 300)
      :nav                              (nb-col "Fund" "weight" 50 round2 sum-rows)
      :bm-weight                        (nb-col "Index" "bm-weight" 50 round2 sum-rows)
      :weight-delta                     (nb-col "Delta" "weight-delta" 50 round2 sum-rows)
