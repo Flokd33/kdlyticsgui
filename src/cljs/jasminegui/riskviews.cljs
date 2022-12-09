@@ -108,7 +108,7 @@
                      (for [p portfolios] [(keyword p) (reduce + (map field (get-in grp [[instrument p]])))]))))))
 
 (defn get-pivoted-data-with-nominal [instrument-definition accessors-k table portfolios instruments field]
-  (println field)
+  ;(println field)
   (let [grp (group-by (juxt :id :portfolio) table)
         kswn (map #(keyword (str (name %) "_totalnominal")) portfolios)
         all-fields (conj accessors-k field :isin :description :id)] ;hope is fewer fields makes react-table faster, no need to clj->js unused things
@@ -180,7 +180,7 @@
           pivoted-data-diff-post-th (filter thfil pivoted-data-diff)
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-diff-post-th)]
       ;(println (map :IHPEEEME  pivoted-data))               ; only 0..........
-      (println (t/chainfilter {:portfolio "OGEMEQU"} (:positions db)))
+      (println (sort (keys (first (t/chainfilter {:portfolio "OGEMEQU"} (:positions db))))))
       (if (= (:portfolio-alignment/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:portfolio-alignment/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
         (add-total-line-to-pivot sorted-data kportfolios))
@@ -306,6 +306,7 @@
 
 (defn portfolio-alignment-risk-display []
   (let [group (:portfolios (first (filter #(= (:id %) @(rf/subscribe [:portfolio-alignment/group])) static/portfolio-alignment-groups-eq)))
+        is-equity (if (= @(rf/subscribe [:portfolio-alignment/group]) :equity) true false)
         base-portfolio (first group)
         portfolios (rest group)
         display-key @(rf/subscribe [:portfolio-alignment/field])
@@ -313,7 +314,9 @@
         width-one 80
         is-tree (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))]
+        risk-choices-clean (if is-equity (if (= (some #{:sector} risk-choices) :sector) (vec (conj (remove #(= % :sector) risk-choices) :sector-gics)) risk-choices) risk-choices)
+        grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :name))] (tables/risk-table-columns r)))
+        ]
     ;(println grouping-columns)
     [tables/tree-table-risk-table
      :portfolio-alignment/table
@@ -321,7 +324,8 @@
       {:Header "Actual" :columns [{:Header base-portfolio :accessor base-portfolio :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}]}
       {:Header  (str "Portfolio " (name display-key) " vs " base-portfolio)
        :columns (into [] (for [p portfolios] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}))}
-      {:Header "Description" :columns [{:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
+      {:Header "Description" :columns [{:Header "Isin" :accessor "isin" :width 100}
+                                       {:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
      is-tree
      (mapv :accessor grouping-columns)
      portfolio-alignment-risk-display-view
@@ -462,7 +466,7 @@
                                             [h-box :gap "10px" :children [[title :label "Threshold:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model threshold :choices static/threshold-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/threshold %])]]]]]
                                 [v-box :gap "20px"
                                  :children [[h-box :gap "10px" :children [[title :label "Portfolios:" :level :level3] [gap :size "1"]
-                                                                          [single-dropdown :width dropdown-width :model portfolio-alignment-group :choices static/portfolio-alignment-groups-eq :on-change #(rf/dispatch [:portfolio-alignment/group %])]]]]]
+                                                                          [single-dropdown :width dropdown-width :model portfolio-alignment-group :choices static/portfolio-alignment-groups-eq :on-change #(do (rf/dispatch [:portfolio-alignment/group %]))]]]]]
                                 [v-box :gap "20px"
                                  :children [[h-box :gap "10px" :children (concat [[title :label "Filtering:" :level :level3]] (filtering-row :portfolio-alignment/filter))]]]]]
                               [portfolio-alignment-risk-display]]
