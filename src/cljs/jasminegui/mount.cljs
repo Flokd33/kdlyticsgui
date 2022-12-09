@@ -901,7 +901,10 @@
                   :portfolio-alignment/display-style "Tree"
                   :portfolio-alignment/field-one :nav
                   :portfolio-alignment/filter {1 :country 2 :issuer 3 "None"})
-      3 (assoc db :portfolio-alignment/shortcut snapshot)
+      3 (assoc db :portfolio-alignment/shortcut snapshot
+                  :portfolio-alignment/display-style "Tree"
+                  :portfolio-alignment/field-one :nav
+                  :portfolio-alignment/filter {1 :sector 2 :country 3 :issuer})
       4 (assoc db :portfolio-alignment/shortcut snapshot))))
 
 (rf/reg-event-db
