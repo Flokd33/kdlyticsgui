@@ -166,7 +166,7 @@
     (let [group (map keyword (:portfolios (first (filter #(= (:id %) (:portfolio-alignment/group db)) static/portfolio-alignment-groups-eq))))
           base-kportfolio (first group)
           kportfolios (rest group)
-          risk-choices (let [rfil (:portfolio-alignment/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
+          risk-choices (let [rfil (:portfolio-alignment/filter db)] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1  4)))
           grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
           accessors-k (mapv keyword (mapv :accessor grouping-columns))
           pivoted-data (get-pivoted-data (get db :instruments) (:positions db) (flatten (for [i static/portfolio-alignment-groups-eq] (:portfolios i))) (:all-instrument-ids db) (keyword (get-in tables/risk-table-columns [(:portfolio-alignment/field db) :accessor]))) ;(:portfolios db)
@@ -316,14 +316,14 @@
         risk-choices-clean (if is-equity (if (= (some #{:sector} risk-choices) :sector) (vec (conj (remove #(= % :sector) risk-choices) :sector-gics)) risk-choices) risk-choices)
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :description))] (tables/risk-table-columns r)))
         ]
-    ;(println grouping-columns)
+    (println grouping-columns)
     [tables/tree-table-risk-table
      :portfolio-alignment/table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
       {:Header "Actual" :columns [{:Header base-portfolio :accessor base-portfolio :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}]}
       {:Header  (str "Portfolio " (name display-key) " vs " base-portfolio)
        :columns (into [] (for [p portfolios] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}))}
-      {:Header "Description" :columns [{:Header "Isin" :accessor "isin" :width 100} {:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
+      {:Header "Description" :columns [{:Header "ISIN" :accessor "isin" :width 100} {:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
      is-tree
      (mapv :accessor grouping-columns)
      portfolio-alignment-risk-display-view

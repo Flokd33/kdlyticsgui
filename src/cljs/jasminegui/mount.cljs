@@ -81,10 +81,10 @@
                  ;portfolio-alignment-view
                  :portfolio-alignment/display-style                  "Tree"
                  :portfolio-alignment/field                          :nav
-                 :portfolio-alignment/filter                         {1 :region 2 :country 3 :issuer}
+                 :portfolio-alignment/filter                         {1 :sector 2 :country 3 "None"}
                  :portfolio-alignment/group                          :cembi
                  :portfolio-alignment/threshold                      :zero
-                 :portfolio-alignment/shortcut                       1
+                 :portfolio-alignment/shortcut                       3
                  :portfolio-alignment/table-filter                   []
                  :portfolio-alignment/expander                       {0 {}}
 
@@ -858,7 +858,7 @@
       2 (assoc db :single-portfolio-risk/shortcut snapshot
                   :single-portfolio-risk/display-style "Tree"
                   :single-portfolio-risk/hide-zero-holdings true
-                  :single-portfolio-risk/filter {1 :country 2 :issuer 3 "None"})
+                  :single-portfolio-risk/filter {1 :country 2 :sector 3 "None"})
       3 (assoc db :single-portfolio-risk/shortcut snapshot
                   :single-portfolio-risk/display-style "Tree"
                   :single-portfolio-risk/hide-zero-holdings true
