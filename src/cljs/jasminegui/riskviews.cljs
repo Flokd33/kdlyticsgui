@@ -175,12 +175,11 @@
                                      line
                                      kportfolios))
           pivoted-data-diff (map differentiate pivoted-data)
-          threshold (* 0.01 (cljs.reader/read-string (:label (first (filter #(= (:id %) (:portfolio-alignment/threshold db)) static/threshold-choices-alignment)))))
+          threshold (cljs.reader/read-string (:label (first (filter #(= (:id %) (:portfolio-alignment/threshold db)) static/threshold-choices-alignment))))
           thfil (fn [line] (some (fn [x] (or (< x (- threshold)) (> x threshold))) (map line kportfolios)))
           pivoted-data-diff-post-th (filter thfil pivoted-data-diff)
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-diff-post-th)]
       ;(println (map :IHPEEEME  pivoted-data))               ; only 0..........
-      (println (sort (keys (first (t/chainfilter {:portfolio "OGEMEQU"} (:positions db))))))
       (if (= (:portfolio-alignment/display-style db) "Tree")
         (tables/cljs-text-filter-OR (:portfolio-alignment/table-filter db) (mapv #(assoc %1 :totaldummy "") sorted-data))
         (add-total-line-to-pivot sorted-data kportfolios))
@@ -315,7 +314,7 @@
         is-tree (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         risk-choices-clean (if is-equity (if (= (some #{:sector} risk-choices) :sector) (vec (conj (remove #(= % :sector) risk-choices) :sector-gics)) risk-choices) risk-choices)
-        grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :name))] (tables/risk-table-columns r)))
+        grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :description))] (tables/risk-table-columns r)))
         ]
     ;(println grouping-columns)
     [tables/tree-table-risk-table
@@ -324,8 +323,7 @@
       {:Header "Actual" :columns [{:Header base-portfolio :accessor base-portfolio :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}]}
       {:Header  (str "Portfolio " (name display-key) " vs " base-portfolio)
        :columns (into [] (for [p portfolios] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}))}
-      {:Header "Description" :columns [{:Header "Isin" :accessor "isin" :width 100}
-                                       {:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
+      {:Header "Description" :columns [{:Header "Isin" :accessor "isin" :width 100} {:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
      is-tree
      (mapv :accessor grouping-columns)
      portfolio-alignment-risk-display-view
