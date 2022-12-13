@@ -162,6 +162,18 @@
    ;{:id :dummies    :label "Models"     :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
    ])
 
+(def portfolio-alignment-groups-eq
+  [{:id :cembi      :label "CEMBI"      :portfolios ["OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"]}
+   {:id :allianz    :label "Allianz"    :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
+   {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC" "INMIEMCD"]}
+   {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
+   {:id :munichre   :label "Munich Re"  :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
+   {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
+   {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED" "TRANSLIQU"]}
+   {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON" "OGTRCRED"]}
+   {:id :equity    :label "Equity"     :portfolios ["OGEMEQU" "IFSBAEME" "IAEM1EME" "IBTNZEME" "OLLCEMEQ" "ITASEME2" "IGARDEME" "IHPEEEME" "IAMPEME" "U4EMEQY" "IBOMCAEME" "IHOSTEME" "OGEMMAE" "ICPRLEME" "O40EME" "ITCOREME"]}
+   ])
+
 ;{:id "None"            :label "None"}
 (def risk-field-choices
   [{:id :nav                              :label "NAV"}

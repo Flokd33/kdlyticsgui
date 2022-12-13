@@ -285,6 +285,7 @@
      :issuer                           (text-col "Issuer" "TICKER" 120)
      :sector                           (text-col "Sector" "qt-jpm-sector" 120)
      :sector-baml                      (text-col "Sector BAML3" "qt-BAML-level-3" 120)
+     :sector-gics                      (text-col "Sector GICS" "qt-gics-sector" 120)
      :maturity-band                    (text-col "Maturity" "qt-final-maturity-band" 120)
      :rating                           {:Header "Rating" :accessor "qt-iam-int-lt-median-rating" :show false}
      :rating-score                     {:Header "Rating" :width 120 :accessor "qt-iam-int-lt-median-rating-score" :aggregate first} ; :Cell rating-score-to-string
@@ -292,7 +293,7 @@
      :name                             (text-col "Name" "NAME" 120)
      :isin                             (text-col "ISIN" "isin" 110)
 
-     :description                      (text-col "thinkFolio ID" "description" 400)
+     :description                      (text-col "thinkFolio ID" "description" 300)
      :nav                              (nb-col "Fund" "weight" 50 round2 sum-rows)
      :bm-weight                        (nb-col "Index" "bm-weight" 50 round2 sum-rows)
      :weight-delta                     (nb-col "Delta" "weight-delta" 50 round2 sum-rows)

@@ -704,7 +704,7 @@
   :quant-model/override-price
   (fn [db [_ ISIN price]]
     (reset! show-price-override-modal nil)
-    (println price)
+    ;(println price)
     (if (or (nil? price) (= (clojure.string/replace-all price #" " "") "") (js/isNaN price))
       (update db :quant-model/model-overrides dissoc ISIN)
       (let [m (first (t/filterkey= :ISIN ISIN (db :quant-model/model-output)))
