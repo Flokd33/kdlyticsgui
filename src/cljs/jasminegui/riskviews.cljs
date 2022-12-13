@@ -422,7 +422,7 @@
                               ;           [v-box :gap "2px" :children
                               ;            [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
                               ;             [selection-list :width dropdown-width :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
-                              [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios []]
+                              [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]]
                               (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
                                     width-one 80
                                     risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
