@@ -12,7 +12,7 @@
 
 (def default-db {
                  ;global parameters
-                 :rot13                                             true
+                 :rot13                                             false
                  ;data
                  :positions                                          []
                  :naked-positions                                    []
