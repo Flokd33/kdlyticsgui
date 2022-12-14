@@ -148,7 +148,7 @@
                        (let [possible-portfolios (:portfolios line)]
                          ^{:key (first possible-portfolios)}                           ;this is so React doesn't get confused by the for loop
                          [v-box :gap "2px" :children
-                          [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [selected-portfolios-key (toggle-portfolios (set possible-portfolios))])]
+                          [[button :style {:width "125px"} :label ((if @(rf/subscribe [:rot13]) t/rot13 identity) (:label line)) :on-click #(rf/dispatch [selected-portfolios-key (toggle-portfolios (set possible-portfolios))])]
                            [selection-list :width "125px" :model selected-portfolios :choices (mapv (fn [p] {:id p :label p}) possible-portfolios) :on-change #(rf/dispatch [selected-portfolios-key %])]]]))
 
                      )

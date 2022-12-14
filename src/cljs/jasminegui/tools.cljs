@@ -181,9 +181,9 @@
     (- current-spread s1)))                                 ;                                   ;[ (- current-spread s2)]
 
 (defn rot13 [text]
-  (let [alphabet "abcdefghijklmnopqrstuvwxyz"
+  (let [alphabet "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         cipher (->> (cycle alphabet)
                     (drop 13)
-                    (take 26)
+                    (take 52)
                     (zipmap alphabet))]
     (clojure.string/join (replace cipher text))))

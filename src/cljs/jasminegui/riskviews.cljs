@@ -678,6 +678,7 @@
         port-grp @(rf/subscribe [:portfolios-grp])
         port-grp-zip (zipmap (map :portfolio_name port-grp) port-grp)
         portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)
+        ;rot13 (fn [x]  (t/rot13 (aget x "original" "grp")))                              ;(if @(rf/subscribe [:rot13]) t/rot13 identity)
         ]
     ;(println portfolio-checks-data-nav-grp)
     [h-box :class "subbody rightelement" :gap "20px" :children
@@ -685,7 +686,7 @@
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
                         [[:> ReactTable
                           {:data       portfolio-checks-data-nav-grp
-                           :columns    [{:Header "Group"  :accessor :grp :width 120 :style {:textAlign "left"}}
+                           :columns    [{:Header "Group"  :accessor :grp :width 120 :style {:textAlign "left"} } ;:Cell #(rot13 %)
                                         {:Header "Portfolio" :aggregate tables/empty-txt :accessor :portfolio :width 90 :style {:textAlign "left"}}
                                         {:Header "Check" :aggregate tables/empty-txt :accessor :check-name :width 100 :style {:textAlign "left"}}
                                         {:Header "Status" :aggregate tables/empty-txt :accessor :check-status :width 80 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
@@ -708,7 +709,7 @@
 
         ]]
       [v-box :class "element" :gap "20px" :children
-       [(gt/element-box "talanx-checks" "100%" (str "Talanx concentration corp " date) talanx-checks-data-clean-corp
+       [(gt/element-box "talanx-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "Talanx concentration corp " date)) talanx-checks-data-clean-corp
                       [[:> ReactTable
                         {:data       talanx-checks-data-clean-corp
                          :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
@@ -720,7 +721,7 @@
                                       ]
                          :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-corp) :showPageSizeOptions false :className "-striped -highlight"}]]
                       )
-        (gt/element-box "talanx-checks" "100%" (str "Talanx concentration sov " date) talanx-checks-data-clean-sov
+        (gt/element-box "talanx-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "Talanx concentration sov " date)) talanx-checks-data-clean-sov
                         [[:> ReactTable
                           {:data       talanx-checks-data-clean-sov
                            :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}

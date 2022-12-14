@@ -14,7 +14,7 @@
     [jasminegui.static :as static]
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
-    [jasminegui.tools :as tools]
+    [jasminegui.tools :as t]
     [cljs-time.core :refer [today]])
   )
 
@@ -109,6 +109,7 @@
    :width "400px"
    :class "subbody element"
    :children [[title :label "Debug operations" :level :level1]
+              [button :style {:width "100%"} :label ((if @(rf/subscribe [:rot13]) t/rot13 identity) "Anonymise data!") :on-click #(rf/dispatch [:rot13 (not @(rf/subscribe [:rot13]))])]
               [button :style {:width "100%"} :label "Rebuild positions and VaR!" :on-click #(rf/dispatch [:rebuild])]
               [button :style {:width "100%"} :label "Rebuild positions and integrity report!" :on-click #(rf/dispatch [:rebuild-pos])]
               [button :style {:width "100%"} :label "Compile GUI!" :on-click #(rf/dispatch [:compile-gui])]

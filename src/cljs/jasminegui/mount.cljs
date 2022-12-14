@@ -11,6 +11,8 @@
 
 
 (def default-db {
+                 ;global parameters
+                 :rot13                                             true
                  ;data
                  :positions                                          []
                  :naked-positions                                    []
@@ -390,7 +392,9 @@
 (doseq [k (keys default-db)] (rf/reg-sub k (fn [db] (k db))))
 
 ;list of keys event for which a dispatch will assoc a value to the db given key event
-(doseq [k [:navigation/active-view
+(doseq [k [:rot13
+
+           :navigation/active-view
            :navigation/active-home
            :navigation/active-var
            :navigation/active-qs
