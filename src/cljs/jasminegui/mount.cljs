@@ -151,7 +151,7 @@
                  :multiple-portfolio-attribution/field-one           :total-effect
                  :multiple-portfolio-attribution/field-two           "None"
                  :multiple-portfolio-attribution/selected-portfolios #{}
-                 :multiple-portfolio-scorecard/selected-portfolios   #{"OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"  "IALEEMCD" "IAKLEMCD" "IAUNEMCD"  "IAPKEMCD" "OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"}
+                 :multiple-portfolio-scorecard/selected-portfolios   #{"OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"  "IALEEMCD" "IAKLEMCD" "IAUNEMCD"  "IAPKEMCD" "OGEMIGC" "ICIFEMD" "IKPOEMCD" "IYELEMCD"}
                  :multiple-portfolio-attribution/filter              {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-attribution/shortcut            1
                  :multiple-portfolio-attribution/table-filter        []
