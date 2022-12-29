@@ -43,7 +43,7 @@
    {:code :stresstest             :name "Stress test"}
    {:code :portfolio-history      :name "Portfolio history"}
    {:code :position-history       :name "Position history"}
-   {:code :allianz-loss-report    :name "Allianz P&L budget"}
+   {:code :allianz-loss-report    :name "P&L budget"}                   ;"Allianz P&L budget"
    {:code :gdel                   :name "Global debt levels"}
    {:code :trounce-flow           :name "Trounceflow"}])
 
