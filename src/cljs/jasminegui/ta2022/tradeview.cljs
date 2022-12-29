@@ -387,6 +387,28 @@
                               {:Header "Triggered?" :accessor :triggered :width 85 :style {:textAlign "left"} :Cell #(rt-int->date "triggered-date" %)}])
     :filterable false :showPagination false :pageSize (count data) :showPageSizeOptions false :className "-striped -highlight"}])
 
+(defn alert-table-sql [data with-triggers]
+  (println (first data))
+  [:> ReactTable
+   {:data       (alert-sort data)
+    :columns    (remove nil? [{:Header "UUID" :accessor :uuid :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (str x) "-")) :show false}
+                              ;{:Header "Start date" :accessor :start-date :width 100 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (t/format-date-from-int x)))}
+                              {:Header "Type" :accessor :alert_type :width 100 :style {:textAlign "left"} :show false}
+                              {:Header "Scope" :accessor :alert-scope :width 100 :style {:textAlign "left"}}
+                              {:Header "Description" :accessor :description :width 400 :style {:textAlign "left"}}
+                              {:Header "Query" :accessor :description :width 300 :style {:textAlign "left"}
+                               :Cell (fn [this] (if-let [x (aget this "value")]
+                                                  (str (aget this "original" "bloomberg-request") " "
+                                                       (aget this "original" "comparison") " "
+                                                       (aget this "original" "comparison_value")) "-"))
+                               :show   false}
+                              (if with-triggers {:Header "Implied price" :accessor :implied-price :width 85 :Cell tables/round2 :style {:textAlign "right"}})
+                              {:Header "Start level" :accessor :start_level :width 85 :Cell tables/round2 :style {:textAlign "right"}}
+                              (if with-triggers {:Header "Latest" :accessor :latest-market-price :width 85 :Cell tables/round2 :style {:textAlign "right"}})
+                              (if with-triggers {:Header "Distance" :accessor :distance-to-trigger :width 85 :Cell tables/round0pc :style {:textAlign "right"}})
+                              {:Header "Triggered?" :accessor :triggered :width 85 :style {:textAlign "left"} :Cell #(rt-int->date "triggered_date" %)}])
+    :filterable false :showPagination false :pageSize (count data) :showPageSizeOptions false :className "-striped -highlight"}])
+
 
 (defn trade-description
   [sorted-trades alerts triggers]
@@ -436,7 +458,7 @@
                                                                       [hb [[box :size "1" :child [t3 "Exit date"]] [box :size "3" :child [label :label (t/int->dd-MM-yyyy ((keyword tkh "exit_date") tl))]]]]
                                                                       [hb [[box :size "1" :child [t3 "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent ((keyword tkh "exit_rationale") tl)) (catch js/Error e ((keyword tkh "exit_rationale") tl)))]]]]]]])
                                       [[title :label "Current triggers" :level :level2]
-                                       [alert-table (map #(taalerts/alert->alert-with-triggers-sql triggers %)
+                                       [alert-table-sql (map #(taalerts/alert->alert-with-triggers-sql triggers %)
                                                          (taalerts/trade->alerts-sql tl alerts)) true]])))))
 
 
@@ -469,7 +491,7 @@
                                                                   [hb [[box :size "1" :child [t3 "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent ((keyword tkh "entry_rationale") tl)) (catch js/Error e ((keyword tkh "entry_rationale") tl)))]]]]
                                                                   [hb [[box :size "1" :child [t3 "Exit date"]] [box :size "3" :child [label :label (t/int->dd-MM-yyyy ((keyword tkh "exit_date") tl))]]]]
                                                                   [hb [[box :size "1" :child [t3 "Exit rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent ((keyword tkh "exit_rationale") tl)) (catch js/Error e ((keyword tkh "exit_rationale") tl)))]]]]
-                                                                  [hb [[box :size "1" :child [t3 "Alerts"]] [box :size "3" :child [alert-table (taalerts/trade->alerts-sql tl alerts) false]]]]
+                                                                  [hb [[box :size "1" :child [t3 "Alerts"]] [box :size "3" :child [alert-table-sql (taalerts/trade->alerts-sql tl alerts) false]]]]
                                                                   ]])))))
 
 
