@@ -203,18 +203,19 @@
                   ]])))
 
 (defn morph-or-amend-trade-modal-sql [morph?]
+  (println nil)
   (let [last-trade (last (:trades @(rf/subscribe [:ta2022/trade-history])))
         tkh nil                                             ;(if sql? nil "ta2022.trade")
         tkhh nil                                            ;(if sql? nil "ta2022.alert")
         last-leg-uuid ((keyword tkh "uuid") last-trade)
         exit-rationale (r/atom nil)
-        all-alerts (let [x (taalerts/trade->alerts last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map (keyword tkhh "uuid") x) x))
+        all-alerts (let [x (taalerts/trade->alerts-sql last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map (keyword tkhh "uuid") x) x))
         trade-entry
         (if morph?
           (if (and last-leg-uuid
-                   (= (get-in all-alerts [((keyword tkh "relval_alert-uuid") last-trade) (keyword tkhh "alert_type")]) "spread")
-                   (= (get-in all-alerts [((keyword tkh "target_alert-uuid") last-trade) (keyword tkhh "alert_type")]) "single")
-                   (= (get-in all-alerts [((keyword tkh "review_alert-uuid") last-trade) (keyword tkhh "alert_type")]) "single"))
+                   (= (get-in all-alerts [((keyword tkh "relval_alert_uuid") last-trade) (keyword tkhh "alert_type")]) "spread")
+                   (= (get-in all-alerts [((keyword tkh "target_alert_uuid") last-trade) (keyword tkhh "alert_type")]) "single")
+                   (= (get-in all-alerts [((keyword tkh "review_alert_uuid") last-trade) (keyword tkhh "alert_type")]) "single"))
             (r/atom (merge
                       {:analyst         ((keyword tkh "analyst") last-trade)
                        :strategy        nil
@@ -241,7 +242,7 @@
                           :target-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "target_alert_uuid") last-trade)))
                           :review-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "review_alert_uuid") last-trade)))}
                          {:other-alert-1    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "other_alert_uuid_1") last-trade)) )})
-                   )) ;TODO
+                   ))
         entry-rationale (r/cursor trade-entry [:entry-rationale])
         strategy (r/cursor trade-entry [:strategy])
         analyst (r/cursor trade-entry [:analyst])

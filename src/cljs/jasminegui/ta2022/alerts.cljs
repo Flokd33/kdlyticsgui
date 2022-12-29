@@ -90,7 +90,7 @@
       (assoc :bloomberg-request-field-2 (second ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-2) alert)))
       ))
 
-(defn alert-from-backend-sql [alert] ;TODO tricky with alerts since we know haev seperate fields for sec and field
+(defn alert-from-backend-sql [alert]
   (let [tkhh nil                                            ;(if sql? nil "ta2022.alert")
         ]
     (-> (clojure.set/rename-keys alert
@@ -104,7 +104,8 @@
       (assoc :bloomberg-request-field-1 ((if (= ((keyword tkhh "alert_type") alert) "single") (keyword tkhh "bloomberg_request_field") (keyword tkhh "bloomberg_request_field_1")) alert))
       (assoc :bloomberg-request-security-2 ((if (= ((keyword tkhh "alert_type") alert) "single") (keyword tkhh "bloomberg_request_security") (keyword tkhh "bloomberg_request_security_2")) alert))
       (assoc :bloomberg-request-field-2 ((if (= ((keyword tkhh "alert_type") alert) "single") (keyword tkhh "bloomberg_request_field") (keyword tkhh "bloomberg_request_field_2")) alert))
-      )))
+      )
+    ))
 
 
 ;(defn alert-from-backend-generic [alert sql?] ;TODO tricky with alerts since we know haev seperate fields for sec and field
@@ -194,10 +195,10 @@
 
 (defn spread-alert [trade-entry alert-key alert-number]
   (let [trade-entry-alert            (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number] [alert-key]))
-        bloomberg-request-security-1 (r/cursor trade-entry-alert [:bloomberg-request-security-1])
-        bloomberg-request-field-1    (r/cursor trade-entry-alert [:bloomberg-request-field-1] )
-        bloomberg-request-security-2 (r/cursor trade-entry-alert [:bloomberg-request-security-2])
-        bloomberg-request-field-2    (r/cursor trade-entry-alert [:bloomberg-request-field-2])
+        bloomberg-request-security-1 (r/cursor trade-entry-alert [:bloomberg_request_1_security]) ;TODO HERE FC
+        bloomberg-request-field-1    (r/cursor trade-entry-alert [:bloomberg_request_1_field] )
+        bloomberg-request-security-2 (r/cursor trade-entry-alert [:bloomberg_request_2_security])
+        bloomberg-request-field-2    (r/cursor trade-entry-alert [:bloomberg_request_2_field])
         operator                     (r/cursor trade-entry-alert [:operator])
         description                  (r/cursor trade-entry-alert [:description])
         comparison                   (r/cursor trade-entry-alert [:comparison])
@@ -220,7 +221,7 @@
                                         (some #{(first (.split @bloomberg-request-security-2 " "))} all-isins) (= @bloomberg-request-field-2 "PX_LAST")
                                         (= @operator "-") (= @comparison ">")) (str "> " @comparison-value " px vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
                                    :else "Failed to guess"))]
-    ;(println  @(rf/subscribe [:ta2022/trade-history]))
+    (println  trade-entry-alert)
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Suggestions:"] [v-box :children (vec (remove nil? (into [] (for [line (sort-by :name (:indexcomps @(rf/subscribe [:ta2022/trade-history])))] [p (str (:name line) "@" (:latest line) "bps, code " (:bbg-code line))]))))]]]
                 [hb [[label :width lw :label "Security 1"]
