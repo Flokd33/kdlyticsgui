@@ -143,7 +143,7 @@
                                [h-box :gap "5px" :children [[title :label "Threshold (bps):" :level :level3] [info-button :info "Note: the filtering is made at bond level, not at issuer level." :position :below-center]
                                                             [single-dropdown :width "75px" :model threshold-att :choices static/threshold-choices-attribution :on-change #(rf/dispatch [:multiple-portfolio-attribution/threshold %])]]]
                                [title :label "Filtering:" :level :level3] (gt/filtering-row :multiple-portfolio-attribution/filter)]] ;(filtering-row :multiple-portfolio-attribution/filter)
-                   [gt/portfolio-group-selector :multiple-portfolio-attribution/selected-portfolios [:dummies]]
+                   [gt/portfolio-group-selector :multiple-portfolio-attribution/selected-portfolios [:dummies :models]]
                  ;[h-box :gap "5px" :children
                  ; (into [[title :label "Portfolios:" :level :level3]
                  ;        [gap :size "20px"]

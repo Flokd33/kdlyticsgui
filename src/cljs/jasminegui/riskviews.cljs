@@ -359,7 +359,7 @@
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :name))] (tables/risk-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices-clean "None")) (map :id static/risk-choice-map))
         download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices-clean :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
-    ;(println risk-choices)
+    ;(println @(rf/subscribe [:portfolio-dropdown-map]))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic-new "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
                                  {:target-id       "single-portfolio-risk-table"
@@ -373,7 +373,9 @@
                                           [checkbox :model hide-zero-risk :label "Hide zero positions? (index won't sum to 100!)" :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]
                                           [gap :size "30px"]
                                           [title :label "Filtering:" :level :level3]
-                                          (gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
+
+                                          [single-dropdown :width "125px" :filter-box? true :model (rf/subscribe [:single-portfolio-risk/portfolio]) :choices @(rf/subscribe [:portfolio-dropdown-map]) :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])] ;(gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
+
                                           (gt/filtering-row :single-portfolio-risk/filter)]]
                               [:div {:id "single-portfolio-risk-table"}
                                [tables/tree-table-risk-table
@@ -427,7 +429,7 @@
                               ;           [v-box :gap "2px" :children
                               ;            [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
                               ;             [selection-list :width dropdown-width :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
-                              [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]]
+                              [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]] ;TODO
                               (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
                                     width-one 80
                                     risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
