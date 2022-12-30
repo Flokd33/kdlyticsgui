@@ -512,7 +512,7 @@
                                      :showPagination false :sortable true :filterable false :pageSize (count data) :className "-striped -highlight"}]]))
                  (gt/element-box "scorecard-nav-portfolios" "100%" (str sector " NAV across EMCD portfolios, grouped by issuer") @(rf/subscribe [:scorecard-risk/multiple-tree])
                                 [
-                                 [gt/portfolio-group-selector :multiple-portfolio-scorecard/selected-portfolios [:hcd :dummies]]
+                                 [gt/portfolio-group-selector :multiple-portfolio-scorecard/selected-portfolios [:hcd :dummies :models]]
                                  ;[h-box :gap " 10px "
                                  ; :children [[title :label "Portfolios:" :level :level3]
                                  ;                   [gap :size "10px"]

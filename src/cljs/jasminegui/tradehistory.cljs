@@ -479,7 +479,7 @@
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history with performance") :level :level1]
-                 [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]]
+                 [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies :models]]
                  ;[h-box :gap "5px"  :children
                  ; (into [[title :label "Portfolios:" :level :level3]
                  ;        [gap :size "20px"]
@@ -536,7 +536,7 @@
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history") :level :level1]
-                 [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]]
+                 [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies :models]]
                  ;[h-box :gap "5px"  :children
                  ; (into [[title :label "Portfolios:" :level :level3]
                  ;        [gap :size "20px"]
@@ -670,7 +670,7 @@
                                 [h-box :gap "5px" :align :center :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width "125px" :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]
                                 [h-box :gap "5px" :align :center :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]
                                 ]]
-                              [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]]
+                              [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies :models]]
                               ;TODO HERE FLO
                               ;[h-box :gap "5px" :children
                               ; ;(into [[title :label "Portfolios:" :level :level3]
