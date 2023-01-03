@@ -266,7 +266,7 @@
               [qbox :label "Is there a potential for social risks and/or other controversies?" [single-dropdown :width dropdown-width :choices yes-no-choice-2 :model (r/cursor gb-calculator-summary [:project-evaluation/controversies :analyst_answer])
                                                                                                 :on-change #(do (when (= "No" %) (reset! (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer]) "") )
                                                                                                                 (update-fn [:project-evaluation/controversies :analyst_answer] %))]]
-              (if (= (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) "Yes")
+              (if (or (= (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) "Yes1") (= (get-in @gb-calculator-summary [:project-evaluation/controversies :analyst_answer]) "Yes2"))
                 [qbox :label "Comment if there is a risk of controversies:" [input-textarea :width categories-list-width-long :model (r/cursor gb-calculator-summary [:project-evaluation/controversies-comment :analyst_answer])
                                                                              :on-change #(update-fn [:project-evaluation/controversies-comment :analyst_answer] %)]])
               [title :label "Independent Verification" :level :level2]
