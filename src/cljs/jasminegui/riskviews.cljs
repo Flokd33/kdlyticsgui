@@ -316,7 +316,7 @@
         risk-choices-clean (if is-equity (if (= (some #{:sector} risk-choices) :sector) (vec (conj (remove #(= % :sector) risk-choices) :sector-gics)) risk-choices) risk-choices)
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :description))] (tables/risk-table-columns r)))
         ]
-    (println grouping-columns)
+    ;(println grouping-columns)
     [tables/tree-table-risk-table
      :portfolio-alignment/table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
