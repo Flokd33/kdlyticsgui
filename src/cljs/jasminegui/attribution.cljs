@@ -35,7 +35,7 @@
           (into [] (for [m @(rf/subscribe [:attribution/available-months])] {:id m :label m}))
           (into [] (for [m @(rf/subscribe [:attribution/available-months])] {:id (str "YTD-" m) :label (str "YTD-" m)}))
           ;(into [] (for [m ["20171231" "20181231" "20191231"]] {:id (str "YTD-" m) :label (str "YTD-" m)}))
-          (into [] (for [y (range 2021 2017 -1)] (let [k (str "FY" y)] {:id k :label k})))))
+          (into [] (for [y (range 2022 2017 -1)] (let [k (str "FY" y)] {:id k :label k})))))
 
 (def dropdown-width "150px")
 
