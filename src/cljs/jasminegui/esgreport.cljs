@@ -381,6 +381,7 @@
                 )
 
         ]
+    (println esg-reports-clean)
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]

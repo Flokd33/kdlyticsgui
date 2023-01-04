@@ -156,8 +156,9 @@
    {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
    {:id :munichre   :label "Munich Re"  :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
-   {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED"]}
+   {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED" ]}
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON" "OGTRCRED"]}
+   {:id :models     :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI"]}
    {:id :dummies    :label "Models"     :portfolios ["CEMBI"]}
    {:id :models    :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI"]}
    ;{:id :dummies    :label "Models"     :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
