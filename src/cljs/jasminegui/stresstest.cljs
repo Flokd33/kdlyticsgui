@@ -182,7 +182,7 @@
 
                 [v-box :class "element" :gap "10px"
                  :children [[title :label "NAV impact" :level :level1]
-                            [gt/portfolio-group-selector :stresstest/selected-portfolios []]
+                            [gt/portfolio-group-selector :stresstest/selected-portfolios [:models]]
                             (let [cols (into [{:Header "Scenario" :accessor "nickname" :width 120 :style {:textAlign "left"}}] (for [p (apply concat (map :portfolios static/portfolio-alignment-groups)) :when (some #{p} @(rf/subscribe [:stresstest/selected-portfolios]))] ;@(rf/subscribe [:portfolios])
                                                   {:Header p :accessor p :width 80 :style {:textAlign "right"}  :Cell tables/round2pc}))]
                               (println cols)
