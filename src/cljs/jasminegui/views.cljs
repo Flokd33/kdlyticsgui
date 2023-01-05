@@ -24,6 +24,7 @@
     [jasminegui.tradehistory :as th]
     [jasminegui.ta2022.tradeview :as ta2022.tradeview]
     [jasminegui.implementation :as implementation]
+    [jasminegui.knowledge :as knowledge]
     ))
 
 
@@ -109,6 +110,7 @@
       ;:ta2022           [ta2022.tradeview/ta2022-view]
       :ta2022           [ta2022.tradeview/ta2022-view-sql]  ;gave up on the generic version since names of keys totally different (not just radical but also underscore rather than hyphen)
       :implementation   [implementation/trade-implementation-view]
+      :knowledge        [knowledge/view]
       [:div.output "nothing to display"]))
 
 
