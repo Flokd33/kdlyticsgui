@@ -382,10 +382,11 @@
         months-this-year (mapv #(js/parseInt (jasminegui.tools/gdate->yyyyMMdd (cljs-time.core/plus (cljs-time.core/local-date (.getYear (cljs-time.core/today)) % 1) (cljs-time.core/days -1)))) (range 2 (inc (inc (.getMonth (cljs-time.core/today))))))
         get-period-fn (fn [k]
                         (case k
-                          :yearly {:periodseq ["yearly" "yearly" "ytd"] :fileperiodseq ["yearly_" "yearly_" nil] :dateseq [20201231 20211231 (js/parseInt (t/gdate->yyyyMMdd qt-date))]}
+                          :yearly {:periodseq ["yearly" "yearly" "yearly" "ytd"] :fileperiodseq ["yearly_" "yearly_" "yearly_" nil] :dateseq [20201231 20211231 20221231 (js/parseInt (t/gdate->yyyyMMdd qt-date))]}
                           ;:monthly {:periodseq (conj (vec (repeat (count months-this-year) "monthly")) "mtd") :fileperiodseq (conj (vec (repeat (count months-this-year) "monthly_")) nil) :dateseq (conj months-this-year (js/parseInt (t/gdate->yyyyMMdd qt-date)))}
                           :monthly {:periodseq (conj (vec (repeat (count months-this-year) "monthly")) "mtd" "ytd") :fileperiodseq (conj (vec (repeat (count months-this-year) "monthly_")) nil nil) :dateseq (conj months-this-year (js/parseInt (t/gdate->yyyyMMdd qt-date)) (js/parseInt (t/gdate->yyyyMMdd qt-date)))}
-                          :daily {:periodseq ["yearly" "yearly" "yearly"] :fileperiodseq ["yearly_" "yearly_" nil] :dateseq [20201231 20211231 20220706]}))]
+                          :daily {:periodseq ["yearly" "yearly" "yearly" "yearly"] :fileperiodseq ["yearly_" "yearly_" "yearly_" nil] :dateseq [20201231 20211231 20221231 20220706]}))]
+
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "attribution-history-risk-table" max-width (str "Portfolio history")
                              {:target-id "attribution-history-risk-table" :on-click-action #(tools/react-table-to-csv @attribution-history-display-view @portfolio download-columns is-tree)}
