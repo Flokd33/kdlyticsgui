@@ -1165,6 +1165,7 @@
       :issuer-coverage    [issuer-coverage]
       :model-portfolios   [modelportfolios/model-portfolio-view]
       :score-vs-outlook2  [score-vs-outlook]
+      :betas              [jasminegui.betas/view]
       [:div.output "nothing to display"])))
 
 (defn display-saved-chart [line]

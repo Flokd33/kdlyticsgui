@@ -7,7 +7,7 @@
 (def main-navigation                                        ;:get-pivoted-positions                                       ;
   (let [home-events [:get-qt-date :get-total-positions :get-naked-positions :get-instruments :get-quant-model]
         attr-events [:get-top-bottom-price-change :get-attribution-date :get-attribution-summary :get-attribution-available-months :get-list-dates-month-end-calendar [:get-portfolio-review-summary-data "OGEMCORD"]] ;[:get-single-attribution "OGEMCORD" "ytd"] [:get-attribution-index-returns-portfolio "OGEMCORD" "ytd"] [:get-multiple-attribution "Total Effect" "ytd"]
-        quant-events [:get-esg-report-list :get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts [:post-esg-report-extract "XS2368781477" "2022-09-02" "green-bond"]]
+        quant-events [:get-betas :get-esg-report-list :get-model-date :get-quant-model :get-country-codes :get-generic-rating-curves :get-jpm-sectors :get-model-portfolios :get-issuer-coverage :get-analysts :get-master-security-fields :get-analysts [:post-esg-report-extract "XS2368781477" "2022-09-02" "green-bond"]]
         var-events [:get-var-dates :get-var-proxies [:get-portfolio-var "OGEMCORD"]]
         implementation-events (conj home-events :get-quant-model :get-analysts :get-country-codes :get-jpm-sectors :fx-request :portfolio-nav-request :get-live-cast-parent-positions :get-analyst-coverage)
         trounceflow-events [:get-trounce-flow-cash :get-trounce-flow-duration :get-trounce-flow-country :get-trounce-flow-country-change :get-trounce-flow-date :get-trounce-flow-cash-embi :get-trounce-flow-cash-embi-local :get-trounce-flow-duration-embi :get-trounce-flow-duration-embi-local]
@@ -18,13 +18,14 @@
    ; ~}@:/etn , need to review with Alex
    {:code :attribution      :name "Performance"       :dispatch :attribution      :subs nil :load-events attr-events}
    {:code :portfolio-review :name "Portfolio review"  :dispatch :portfolio-review :subs nil :load-events (concat home-events attr-events var-events [:get-large-exposures]) :mounting-modal true} ;var-events
-   {:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
+   ;{:code :betas            :name "Bond betas"        :dispatch :betas            :subs nil :load-events [:get-betas]  :mounting-modal true}
    {:code :quant-scores     :name "Quant scores"      :dispatch :quant-scores     :subs nil :load-events quant-events :mounting-modal true}
    {:code :scorecard        :name "Scorecard"         :dispatch :scorecard        :subs nil :load-events (concat [:get-attribution-date [:get-scorecard-attribution "OGEMCORD"]] quant-events home-events) :mounting-modal true}
    {:code :esg              :name "ESG"               :dispatch :esg              :subs nil :load-events (concat home-events [:get-esg-carbon-jasmine :get-analysts-emcd :get-esg-tf-report-analytics :get-esg-gb-report-analytics :get-esg-report-list  [:post-esg-report-extract "XS2368781477" "2022-09-02" "green-bond"]  :get-analysts :get-country-codes :get-refinitiv-ids :get-refinitiv-structure :get-msci-scores :get-quant-model])}
    ;{:code :trade-analyser   :name "Trade analyser"    :dispatch :home             :subs nil :href "http://iamlfilive:8192/tradeanalyser/app/"}
    {:code :ta2022           :name "Trade analyser"            :dispatch :ta2022           :subs nil :load-events quant-events :mounting-modal true}
    {:code :implementation   :name "Implementation"    :dispatch :implementation   :subs nil :load-events implementation-events :mounting-modal true}
+   {:code :knowledge             :name "Knowledge"          :dispatch :knowledge             :subs nil}
    {:code :administration   :name "Administration"    :dispatch :administration   :subs nil}
    ]))
 
@@ -44,8 +45,8 @@
    {:code :portfolio-history      :name "Portfolio history"}
    {:code :position-history       :name "Position history"}
    {:code :allianz-loss-report    :name "P&L budget"}                   ;"Allianz P&L budget"
-   {:code :gdel                   :name "Global debt levels"}
-   {:code :trounce-flow           :name "Trounceflow"}])
+
+   ])
 
 (def trade-history-navigation
   [{:code :single-portfolio   :name "Single portfolio"}
@@ -85,7 +86,8 @@
    ;{:code :methodology          :name "Methodology"}
    {:code :issuer-coverage      :name "Issuer coverage"}
    {:code :model-portfolios     :name "Model portfolios (WIP)"}
-   {:code :score-vs-outlook2    :name "Up/down candidates"}])
+   {:code :score-vs-outlook2    :name "Up/down candidates"}
+   {:code :betas                :name "Bond betas"}])
 
 ;{:code :msci                       :name "MSCI"}
 (def esg-navigation
@@ -106,6 +108,15 @@
   [{:code :main                 :name "Table"}
    {:code :trade-view           :name "Trade view"}
    {:code :journal              :name "Journal"}])
+
+(def knowledge-navigation
+  [{:code :entry             :name "Home"}
+   {:code :mandates             :name "Mandates"}
+   {:code :exclusions           :name "Exclusions"}
+   {:code :cre                 :name "China Real Estate"}
+   {:code :allianz-loss-report    :name "P&L budget"}                   ;"Allianz P&L budget"
+   {:code :gdel                   :name "Global debt levels"}
+   {:code :trounce-flow           :name "Trounceflow"}])
 
 (def risk-choice-map
   [{:id "None"         :label "None"}

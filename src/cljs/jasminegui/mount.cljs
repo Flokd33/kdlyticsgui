@@ -39,6 +39,7 @@
 
                  ;navigation
                  :navigation/active-view                             :entry ;:home
+                 :navigation/active-knowledge                        :entry
                  :navigation/active-home                             :summary
                  :navigation/active-var                              :overview
                  :navigation/active-qs                               :table
@@ -397,6 +398,7 @@
 (doseq [k [:rot13
 
            :navigation/active-view
+           :navigation/active-knowledge
            :navigation/active-home
            :navigation/active-var
            :navigation/active-qs
