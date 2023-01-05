@@ -1042,7 +1042,7 @@
    {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
 
 
-   {:get-key :get-trounce-flow-date                         :namespace "jasmine.positions"  :asset "get-trounce-flow-month-as-of"  :dispatch-key [:trounce-flow-date]}
+   {:get-key :get-trounce-flow-date                         :namespace "jasmine.positions"  :asset "get-trounce-flow-date-as-of"  :dispatch-key [:trounce-flow-date]}
 
    {:get-key :get-trounce-flow-cash                         :namespace "jasmine.positions"  :asset "trounce-flow-cash"                  :dispatch-key [:trounce-flow-cash]}
    {:get-key :get-trounce-flow-cash-embi                    :namespace "jasmine.positions"  :asset "trounce-flow-cash-embi"             :dispatch-key [:trounce-flow-cash-embi]}
