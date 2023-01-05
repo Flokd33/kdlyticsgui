@@ -189,6 +189,92 @@
                                                 [button :class btc :label "Cancel" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
                   ]])))
 
+(defn close-trade-modal-sql []
+  (let [exit-rationale (r/atom nil)
+        tkh nil
+        last-leg-uuid ((keyword tkh "uuid") (last (:trades @(rf/subscribe [:ta2022/trade-history]))))]
+    (fn []
+      [v-box :width "850px" :height "300px" :gap "10px" :padding "20px"
+       :children [[h-box :align :center :children [[title :label "Close trade" :level :level1] [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
+                  [label :label "Exit rationale"] [input-textarea :model exit-rationale :status (if (zero? (count @exit-rationale)) :error) :on-change #(reset! exit-rationale %) :width "600px" :rows 5]
+                  [line]
+                  [h-box :gap "10px" :children [[button :class btc :label "Close trade" :on-click #(rf/dispatch [:ta2022/close-trade last-leg-uuid @exit-rationale])]
+                                                [button :class btc :label "Cancel" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
+                  ]])))
+
+(defn morph-or-amend-trade-modal-sql [morph?]
+  (println nil)
+  (let [last-trade (last (:trades @(rf/subscribe [:ta2022/trade-history])))
+        tkh nil                                             ;(if sql? nil "ta2022.trade")
+        tkhh nil                                            ;(if sql? nil "ta2022.alert")
+        last-leg-uuid ((keyword tkh "uuid") last-trade)
+        exit-rationale (r/atom nil)
+        all-alerts (let [x (taalerts/trade->alerts-sql last-trade (:alerts @(rf/subscribe [:ta2022/trade-history])))] (zipmap (map (keyword tkhh "uuid") x) x))
+        trade-entry
+        (if morph?
+          (if (and last-leg-uuid
+                   (= (get-in all-alerts [((keyword tkh "relval_alert_uuid") last-trade) (keyword tkhh "alert_type")]) "spread")
+                   (= (get-in all-alerts [((keyword tkh "target_alert_uuid") last-trade) (keyword tkhh "alert_type")]) "single")
+                   (= (get-in all-alerts [((keyword tkh "review_alert_uuid") last-trade) (keyword tkhh "alert_type")]) "single"))
+            (r/atom (merge
+                      {:analyst         ((keyword tkh "analyst") last-trade)
+                       :strategy        nil
+                       :entry-rationale nil
+                       :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                       :relval-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "relval_alert_uuid") last-trade)) )
+                       :target-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "target_alert_uuid") last-trade)) )
+                       :review-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "review_alert_uuid") last-trade)) )}
+                      {:other-alert-1    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "other_alert_uuid_1") last-trade)) )})
+                    )
+            (r/atom {:analyst         (:ta2022.trade/analyst last-trade)
+                     :strategy        nil
+                     :entry-rationale nil
+                     :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                     :relval-alert    (assoc taalerts/spread-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "Z_SPRD_MID" :operator "-" :bloomberg-request-security-2 "JBCDCBZW Index" :bloomberg-request-field-2 "PX_LAST")
+                     :target-alert    (assoc taalerts/single-alert-template :comparison "<" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
+                     :review-alert    (assoc taalerts/single-alert-template :comparison ">" :bloomberg-request-security-1 (str @(rf/subscribe [:ta2022/trade-isin]) " Corp") :bloomberg-request-field-1 "G_SPREAD_MID_CALC")
+                     :other-alerts    {}}))
+          (r/atom (merge {:analyst         ((keyword tkh "analyst") last-trade)
+                          :strategy        ((keyword tkh "strategy") last-trade)
+                          :entry-rationale ((keyword tkh "entry_rationale") last-trade)
+                          :ISIN            @(rf/subscribe [:ta2022/trade-isin])
+                          :relval-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "relval_alert_uuid") last-trade)))
+                          :target-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "target_alert_uuid") last-trade)))
+                          :review-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "review_alert_uuid") last-trade)))}
+                         {:other-alert-1    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "other_alert_uuid_1") last-trade)) )})
+                   ))
+        entry-rationale (r/cursor trade-entry [:entry-rationale])
+        strategy (r/cursor trade-entry [:strategy])
+        analyst (r/cursor trade-entry [:analyst])
+        ]
+    (fn []
+      [v-box :width "850px" :height "750px" :gap "10px" :padding "20px"
+       :children [[h-box :align :center :children [(if morph? [title :label (if last-leg-uuid "Morph trade" "New trade") :level :level1] [title :label "Amend latest trade" :level :level1]) [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
+                  [gap :size "20px"]
+                  (if (and morph? last-leg-uuid) [label :label "Exit rationale"])
+                  (if (and morph? last-leg-uuid) [input-textarea :model exit-rationale :status (if (zero? (count @exit-rationale)) :error) :on-change #(reset! exit-rationale %) :width "600px" :rows 5])
+                  [h-box :align :center :children [[label :width "125px" :label "New analyst"]
+                                                   [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]]]
+                  [h-box :align :center :children [[label :width "125px" :label "New strategy"]
+                                                   [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
+                  [label :label "New trade rationale"] [input-textarea :model entry-rationale :status (if (zero? (count @entry-rationale)) :error) :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
+                  [h-box :align :center :children [[label :width "125px" :label "Current levels"]
+                                                   [:> ReactTable
+                                                    {:data [(first (t/chainfilter {:ISIN @(rf/subscribe [:ta2022/trade-isin])} @(rf/subscribe [:quant-model/model-output])))] :columns (qstables/table-style->qs-table-col "TA2022morph" nil) :showPagination false :pageSize 1 :filterable false}]
+                                                   ]]
+                  [taalerts/trade-alert-input trade-entry]
+                  (if-let [x @(rf/subscribe [:ta2022/implied-price-difference])] [label :label (str "Implied upside price difference (has to be <1%) " (gstring/format "%.1f%" (* 100 x)))])
+                  (if (< @(rf/subscribe [:ta2022/upside-vs-downside]) 0.5) [label :style {:color "red"} :label (str "Upside/downside too poor (preferred to be > 0.5) " (gstring/format "%.1f" @(rf/subscribe [:ta2022/upside-vs-downside])))])
+                  [line]
+                  [h-box :gap "10px" :children [[button :class btc :label "Test alerts" :on-click #(rf/dispatch [:ta2022/send-trade-to-test @trade-entry])]
+
+                                                (if morph?
+                                                  [button :class btc :label "Morph trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/save-new-trade last-leg-uuid @exit-rationale @trade-entry @(rf/subscribe [:ta2022/test-result])])]
+                                                  [button :class btc :label "Amend trade" :disabled? (not @(rf/subscribe [:ta2022/can-morph])) :on-click #(rf/dispatch [:ta2022/amend-trade last-leg-uuid @trade-entry @(rf/subscribe [:ta2022/test-result])])]
+                                                  )
+
+                                                [button :class btc :label "Cancel" :on-click #(do (rf/dispatch [:ta2022/test-result nil]) (rf/dispatch [:ta2022/close-modal]))]]]
+                  ]])))
 
 (defn morph-or-amend-trade-modal [morph?]
   (let [last-trade (last (:trades @(rf/subscribe [:ta2022/trade-history])))
@@ -259,8 +345,11 @@
                   ]])))
 
 (defn morph-trade-modal [] (morph-or-amend-trade-modal true))
-
 (defn amend-latest-trade-modal [] (morph-or-amend-trade-modal false))
+
+(defn morph-trade-modal-sql [] (morph-or-amend-trade-modal-sql true))
+(defn amend-latest-trade-modal-sql [] (morph-or-amend-trade-modal-sql false))
+
 
 (defn modal-add-attachment [isin]
   (let [close-fn (fn []

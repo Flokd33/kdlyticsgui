@@ -43,7 +43,7 @@
    {:code :stresstest             :name "Stress test"}
    {:code :portfolio-history      :name "Portfolio history"}
    {:code :position-history       :name "Position history"}
-   {:code :allianz-loss-report    :name "Allianz P&L budget"}
+   {:code :allianz-loss-report    :name "P&L budget"}                   ;"Allianz P&L budget"
    {:code :gdel                   :name "Global debt levels"}
    {:code :trounce-flow           :name "Trounceflow"}])
 
@@ -152,14 +152,17 @@
 (def portfolio-alignment-groups
   [{:id :cembi      :label "CEMBI"      :portfolios ["OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"]}
    {:id :allianz    :label "Allianz"    :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
+
    {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC" "INMIEMCD"]}
    {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IKPOEMCD" "IYELEMCD"]}
+
    {:id :munichre   :label "Munich Re"  :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
    {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED" ]}
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON" "OGTRCRED"]}
    {:id :models     :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI"]}
    {:id :dummies    :label "Models"     :portfolios ["CEMBI"]}
+   {:id :models    :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI"]}
    ;{:id :dummies    :label "Models"     :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
    ])
 

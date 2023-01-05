@@ -106,7 +106,8 @@
       :esg              [esg/gb-calculator-summary]
       :scorecard        [scorecard/view]
       :administration   [administration/administration-view]
-      :ta2022           [ta2022.tradeview/ta2022-view]
+      ;:ta2022           [ta2022.tradeview/ta2022-view]
+      :ta2022           [ta2022.tradeview/ta2022-view-sql]  ;gave up on the generic version since names of keys totally different (not just radical but also underscore rather than hyphen)
       :implementation   [implementation/trade-implementation-view]
       [:div.output "nothing to display"]))
 

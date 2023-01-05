@@ -31,6 +31,8 @@
                  :jpm-sectors                                        nil
                  :large-exposures                                    []
 
+                 :factsheet/cre                                       []
+
                  ;local-storage-cache
                  :naked-positions-last-timestamp                     nil
                  :quant-scores-last-timestamp                        nil
@@ -149,7 +151,7 @@
                  :multiple-portfolio-attribution/field-one           :total-effect
                  :multiple-portfolio-attribution/field-two           "None"
                  :multiple-portfolio-attribution/selected-portfolios #{}
-                 :multiple-portfolio-scorecard/selected-portfolios   #{"OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"  "IALEEMCD" "IAKLEMCD" "IAUNEMCD"  "IAPKEMCD" "OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"}
+                 :multiple-portfolio-scorecard/selected-portfolios   #{"OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"  "IALEEMCD" "IAKLEMCD" "IAUNEMCD"  "IAPKEMCD" "OGEMIGC" "ICIFEMD" "IKPOEMCD" "IYELEMCD"}
                  :multiple-portfolio-attribution/filter              {1 :region 2 :country 3 :issuer}
                  :multiple-portfolio-attribution/shortcut            1
                  :multiple-portfolio-attribution/table-filter        []
@@ -415,6 +417,8 @@
            :var/portfolio
            :var/chart-period
            :portfolios-grp
+
+           :factsheet/cre
            
            :single-portfolio-risk/portfolio
            :single-portfolio-risk/display-style
@@ -1028,6 +1032,7 @@
    {:get-key :get-allianz-loss-report     :namespace "common.xlscsvassets" :asset  "allianz-pnl-loss"  :dispatch-key [:allianz-loss-report]}
    {:get-key :get-analyst-coverage        :namespace "common.xlscsvassets" :asset  "analyst-coverage"  :dispatch-key [:quant-model/analyst-coverage]}
    {:get-key :get-emd-weekly              :namespace "common.xlscsvassets" :asset  "emd-weekly-performance-sheet"  :dispatch-key [:attribution/emd-weekly]}
+   {:get-key :get-cre-factsheet              :namespace "common.xlscsvassets" :asset  "cre-factsheet"  :dispatch-key [:factsheet/cre]}
 
    {:get-key :portfolio-nav-request           :namespace "jasmine.positions"  :asset "sod-portfolio-nav"            :dispatch-key [:implementation/portfolio-nav]}
    {:get-key :get-live-cast-parent-positions  :namespace "jasmine.positions"  :asset "live-positions-by-parent-id"  :dispatch-key [:implementation/live-cast-parent-positions]}
