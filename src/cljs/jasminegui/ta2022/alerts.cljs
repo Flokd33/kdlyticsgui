@@ -45,6 +45,10 @@
 (defn alert->alert-with-triggers [triggers a]
   (clojure.set/rename-keys (merge a (triggers (:ta2022.alert/uuid a))) {:latest-market-spread :latest-market-price}))
 
+(defn alert->alert-with-triggers-sql [triggers a]
+  (let [tkh nil]
+    (clojure.set/rename-keys (merge a (triggers ((keyword tkh "uuid") a))) {:latest-market-spread :latest-market-price})))
+
 (defn trade->alerts [trade alerts]
   (remove nil? (concat [(if-let [a (:ta2022.trade/relval-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "relval"))
                         (if-let [a (:ta2022.trade/target-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "target"))
@@ -52,6 +56,25 @@
                         (if-let [a (:ta2022.trade/price-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "price"))]
                        (if (and (:ta2022.trade/other-alert-uuids trade) (pos? (count (:ta2022.trade/other-alert-uuids trade))))
                          (mapv #(assoc (alerts %) :ta2022.alert/alert-scope "other") (:ta2022.trade/other-alert-uuids trade))))))
+
+(defn trade->alerts-sql [trade alerts]
+  (let [tkh nil]                   ;(if sql? nil "ta2022.alert")
+    (remove nil? (concat [(if-let [a ((keyword tkh "relval_alert_uuid")  trade)] (assoc (alerts a) (keyword tkh "alert-scope") "relval"))
+                          (if-let [a ((keyword tkh "target_alert_uuid") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "target"))
+                          (if-let [a ((keyword tkh "review_alert_uuid") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "review"))
+                          (if-let [a ((keyword tkh "price_alert_uuid") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "price"))]
+
+                         [(if-let [a ((keyword tkh "other_alert_uuid_1") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "other"))
+                          (if-let [a ((keyword tkh "other_alert_uuid_2") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "other"))]
+                         ;.... ;TODO add all alerts... 10..
+
+                         ;(if sql?
+                         ;  [(if-let [a ((keyword tkh "other-alert-uuid_1") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "other"))
+                         ;   (if-let [a ((keyword tkh "other-alert-uuid_2") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "other"))] ;TODO add all alerts... 10..
+                         ;  [(if (and (:ta2022.trade/other-alert-uuids  trade) (pos? (count (:ta2022.trade/other-alert-uuids trade)))) ;TODO TRICKY
+                         ;     (mapv #(assoc (alerts %) :ta2022.alert/alert-scope "other") (:ta2022.trade/other-alert-uuids trade)))])
+
+                         ))))
 
 (defn alert-from-backend [alert]
   (-> (clojure.set/rename-keys alert
@@ -66,6 +89,48 @@
       (assoc :bloomberg-request-security-2 (first ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-2) alert)))
       (assoc :bloomberg-request-field-2 (second ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-2) alert)))
       ))
+
+(defn alert-from-backend-sql [alert]
+  (let [tkhh nil                                            ;(if sql? nil "ta2022.alert")
+        ]
+    (-> (clojure.set/rename-keys alert
+                               {(keyword tkhh "alert_type") :alert-type
+                                (keyword tkhh "description") :description
+                                (keyword tkhh "comparison") :comparison
+                                (keyword tkhh "comparison_value") :comparison-value
+                                (keyword tkhh "operator")  :operator})
+      (update :comparison-value str)
+      (assoc :bloomberg-request-security-1 ((if (= ((keyword tkhh "alert_type") alert) "single") (keyword tkhh "bloomberg_request_security") (keyword tkhh "bloomberg_request_security_1")) alert))
+      (assoc :bloomberg-request-field-1 ((if (= ((keyword tkhh "alert_type") alert) "single") (keyword tkhh "bloomberg_request_field") (keyword tkhh "bloomberg_request_field_1")) alert))
+      (assoc :bloomberg-request-security-2 ((if (= ((keyword tkhh "alert_type") alert) "single") (keyword tkhh "bloomberg_request_security") (keyword tkhh "bloomberg_request_security_2")) alert))
+      (assoc :bloomberg-request-field-2 ((if (= ((keyword tkhh "alert_type") alert) "single") (keyword tkhh "bloomberg_request_field") (keyword tkhh "bloomberg_request_field_2")) alert))
+      )
+    ))
+
+
+;(defn alert-from-backend-generic [alert sql?] ;TODO tricky with alerts since we know haev seperate fields for sec and field
+;  (let [tkhh (if sql? nil "ta2022.alert")]
+;    (-> (clojure.set/rename-keys alert
+;                                 {(keyword tkhh "alert-type") :alert-type
+;                                  (keyword tkhh "description") :description
+;                                  (keyword tkhh "comparison") :comparison
+;                                  (keyword tkhh "comparison-value") :comparison-value
+;                                  (keyword tkhh "operator")  :operator})
+;        (update :comparison-value str)
+;        (assoc :bloomberg-request-security-1 (if sql?
+;                                               ((if (= ((keyword tkhh "alert-type") alert) "single") (keyword tkhh "bloomberg-request-security") (keyword tkhh "bloomberg_request_security_1")) alert)
+;                                               (first ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-1) alert))))
+;        (assoc :bloomberg-request-field-1 (if sql?
+;                                            ((if (= ((keyword tkhh "alert-type") alert) "single") (keyword tkhh "bloomberg-request-field") (keyword tkhh "bloomberg_request_field_1")) alert)
+;                                            (second ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-1) alert))))
+;        (assoc :bloomberg-request-security-2 (if sql?
+;                                               ((if (= ((keyword tkhh "alert-type") alert) "single") (keyword tkhh "bloomberg-request-security") (keyword tkhh "bloomberg_request_security_2")) alert)
+;                                               (first ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-1) alert))))
+;        (assoc :bloomberg-request-field-2 (if sql?
+;                                            ((if (= ((keyword tkhh "alert-type") alert) "single") (keyword tkhh "bloomberg-request-field") (keyword tkhh "bloomberg_request_field_2")) alert)
+;                                            (second ((if (= (:ta2022.alert/alert-type alert) "single") :ta2022.alert/bloomberg-request :ta2022.alert/bloomberg-request-1) alert))))
+;        )))
+
 
 (def bloomberg-asset-keys #{"Govt" "Corp" "Mtge" "M-Mkt" "Muni" "Pfd" "Equity" "Comdty" "Index" "Curncy" "Client"})
 (def bloomberg-field-suggestions ["PX_LAST" "YLD_YTM_MID" "Z_SPRD_MID" "YAS_BOND_YLD" "YAS_ZSPREAD" "G_SPREAD_MID_CALC" "BLOOMBERG_MID_G_SPREAD" "NET_DEBT_TO_EBITDA" "TOT_DEBT_TO_EBITDA" "SHORT_AND_LONG_TERM_DEBT" "NET_DEBT" "EBITDA"])
@@ -130,10 +195,10 @@
 
 (defn spread-alert [trade-entry alert-key alert-number]
   (let [trade-entry-alert            (r/cursor trade-entry (if (= alert-key :other-alerts) [alert-key alert-number] [alert-key]))
-        bloomberg-request-security-1 (r/cursor trade-entry-alert [:bloomberg-request-security-1])
-        bloomberg-request-field-1    (r/cursor trade-entry-alert [:bloomberg-request-field-1] )
-        bloomberg-request-security-2 (r/cursor trade-entry-alert [:bloomberg-request-security-2])
-        bloomberg-request-field-2    (r/cursor trade-entry-alert [:bloomberg-request-field-2])
+        bloomberg-request-security-1 (r/cursor trade-entry-alert [:bloomberg_request_1_security]) ;TODO HERE FC
+        bloomberg-request-field-1    (r/cursor trade-entry-alert [:bloomberg_request_1_field] )
+        bloomberg-request-security-2 (r/cursor trade-entry-alert [:bloomberg_request_2_security])
+        bloomberg-request-field-2    (r/cursor trade-entry-alert [:bloomberg_request_2_field])
         operator                     (r/cursor trade-entry-alert [:operator])
         description                  (r/cursor trade-entry-alert [:description])
         comparison                   (r/cursor trade-entry-alert [:comparison])
@@ -156,7 +221,7 @@
                                         (some #{(first (.split @bloomberg-request-security-2 " "))} all-isins) (= @bloomberg-request-field-2 "PX_LAST")
                                         (= @operator "-") (= @comparison ">")) (str "> " @comparison-value " px vs " (:Bond (first (t/chainfilter {:ISIN (first (.split @bloomberg-request-security-2 " "))} @(rf/subscribe [:quant-model/model-output])))))
                                    :else "Failed to guess"))]
-    ;(println  @(rf/subscribe [:ta2022/trade-history]))
+    (println  trade-entry-alert)
     [v-box :gap "5px"
      :children [[hb [[label :width lw :label "Suggestions:"] [v-box :children (vec (remove nil? (into [] (for [line (sort-by :name (:indexcomps @(rf/subscribe [:ta2022/trade-history])))] [p (str (:name line) "@" (:latest line) "bps, code " (:bbg-code line))]))))]]]
                 [hb [[label :width lw :label "Security 1"]

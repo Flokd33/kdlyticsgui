@@ -43,7 +43,7 @@
    {:code :stresstest             :name "Stress test"}
    {:code :portfolio-history      :name "Portfolio history"}
    {:code :position-history       :name "Position history"}
-   {:code :allianz-loss-report    :name "Allianz P&L budget"}
+   {:code :allianz-loss-report    :name "P&L budget"}                   ;"Allianz P&L budget"
    {:code :gdel                   :name "Global debt levels"}
    {:code :trounce-flow           :name "Trounceflow"}])
 
@@ -160,6 +160,7 @@
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON" "OGTRCRED"]}
    {:id :models     :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI"]}
    {:id :dummies    :label "Models"     :portfolios ["CEMBI"]}
+   {:id :models    :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI"]}
    ;{:id :dummies    :label "Models"     :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
    ])
 

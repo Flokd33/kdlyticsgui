@@ -359,7 +359,7 @@
         grouping-columns (into [] (for [r (remove nil? (conj risk-choices-clean :name))] (tables/risk-table-columns r)))
         additional-des-cols (remove (set (conj risk-choices-clean "None")) (map :id static/risk-choice-map))
         download-columns (map #(get-in tables/risk-table-columns [% :accessor]) (remove nil? (concat [:isin] (conj risk-choices-clean :name) [:nav :bm-weight :weight-delta :contrib-mdur :bm-contrib-eir-duration :mdur-delta :contrib-yield :bm-contrib-yield :contrib-zspread :contrib-beta :contrib-BBG_CEMBI_D1Y_BETA :bm-contrib-BBG_CEMBI_D1Y_BETA :contrib-delta-BBG_CEMBI_D1Y_BETA :quant-value-4d :quant-value-2d :value :nominal :yield :z-spread :g-spread :duration :total-return-ytd :cembi-beta-last-year :cembi-beta-previous-year :jensen-ytd] additional-des-cols [:rating :description])))]
-    ;(println risk-choices)
+    ;(println @(rf/subscribe [:portfolio-dropdown-map]))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic-new "single-portfolio-risk" max-width (str "Portfolio drill-down " @(rf/subscribe [:qt-date]))
                                  {:target-id       "single-portfolio-risk-table"
@@ -373,7 +373,9 @@
                                           [checkbox :model hide-zero-risk :label "Hide zero positions? (index won't sum to 100!)" :on-change #(rf/dispatch [:single-portfolio-risk/hide-zero-holdings %])]
                                           [gap :size "30px"]
                                           [title :label "Filtering:" :level :level3]
-                                          (gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
+
+                                          [single-dropdown :width "125px" :filter-box? true :model (rf/subscribe [:single-portfolio-risk/portfolio]) :choices @(rf/subscribe [:portfolio-dropdown-map]) :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])] ;(gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
+
                                           (gt/filtering-row :single-portfolio-risk/filter)]]
                               [:div {:id "single-portfolio-risk-table"}
                                [tables/tree-table-risk-table
@@ -427,7 +429,7 @@
                               ;           [v-box :gap "2px" :children
                               ;            [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
                               ;             [selection-list :width dropdown-width :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
-                              [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]]
+                              [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]] ;TODO
                               (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
                                     width-one 80
                                     risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
@@ -452,7 +454,9 @@
   (let [display-style (rf/subscribe [:portfolio-alignment/display-style])
         portfolio-alignment-group (rf/subscribe [:portfolio-alignment/group])
         field (rf/subscribe [:portfolio-alignment/field])
-        threshold (rf/subscribe [:portfolio-alignment/threshold])]
+        threshold (rf/subscribe [:portfolio-alignment/threshold])
+        grps static/portfolio-alignment-groups-eq
+        grps-clean (for [g grps] (assoc g :label ((if @(rf/subscribe [:rot13]) t/rot13 identity) (:label g))))]
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "pivot-portfolio-risk" max-width (str "Portfolio alignment " @(rf/subscribe [:qt-date]))
                              {:shortcuts       :portfolio-alignment/shortcut
@@ -466,7 +470,7 @@
                                             [h-box :gap "10px" :children [[title :label "Threshold:" :level :level3] [gap :size "1"] [single-dropdown :width dropdown-width :model threshold :choices static/threshold-choices-alignment :on-change #(rf/dispatch [:portfolio-alignment/threshold %])]]]]]
                                 [v-box :gap "20px"
                                  :children [[h-box :gap "10px" :children [[title :label "Portfolios:" :level :level3] [gap :size "1"]
-                                                                          [single-dropdown :width dropdown-width :model portfolio-alignment-group :choices static/portfolio-alignment-groups-eq :on-change #(do (rf/dispatch [:portfolio-alignment/group %]))]]]]]
+                                                                          [single-dropdown :width dropdown-width :model portfolio-alignment-group :choices  grps-clean :on-change #(do (rf/dispatch [:portfolio-alignment/group %]))]]]]]
                                 [v-box :gap "20px"
                                  :children [[h-box :gap "10px" :children (concat [[title :label "Filtering:" :level :level3]] (filtering-row :portfolio-alignment/filter))]]]]]
                               [portfolio-alignment-risk-display]]
@@ -676,11 +680,12 @@
         talanx-checks-data-clean-sov (filter #(= (:sov-or-corp %) "sov") talanx-checks-data-clean)
         date @(rf/subscribe [:qt-date])
         port-grp @(rf/subscribe [:portfolios-grp])
-        port-grp-zip (zipmap (map :portfolio_name port-grp) port-grp)
+        port-grp-clean (for [p port-grp] (assoc p :portfolio_strategy ((if @(rf/subscribe [:rot13]) t/rot13 identity) (p :portfolio_strategy))))
+        port-grp-zip (zipmap (map :portfolio_name port-grp-clean) port-grp-clean)
         portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)
         ;rot13 (fn [x]  (t/rot13 (aget x "original" "grp")))                              ;(if @(rf/subscribe [:rot13]) t/rot13 identity)
         ]
-    ;(println portfolio-checks-data-nav-grp)
+    ;(println port-grp-clean)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
@@ -1045,7 +1050,7 @@
         ]
     ;(println (last data-clean))
     [box :class "subbody rightelement" :child
-   (gt/element-box-generic "allianz-loss-report-table" max-width "Allianz P&L budget"
+   (gt/element-box-generic "allianz-loss-report-table" max-width (str ((if @(re-frame.core/subscribe [:rot13]) jasminegui.tools/rot13 identity) (str "Allianz ")) "P&L budget" )
                            {:target-id "allianz-loss-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:allianz-loss-report]) "allianz")}
                            [[:> ReactTable
                              {:data           data-clean
