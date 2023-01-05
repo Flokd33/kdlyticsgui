@@ -152,8 +152,10 @@
 (def portfolio-alignment-groups
   [{:id :cembi      :label "CEMBI"      :portfolios ["OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"]}
    {:id :allianz    :label "Allianz"    :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-   {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC" "INMIEMCD" "INLIEMCD"]}
-   {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
+
+   {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC" "INMIEMCD"]}
+   {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IKPOEMCD" "IYELEMCD"]}
+
    {:id :munichre   :label "Munich Re"  :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
    {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED" ]}
@@ -167,8 +169,8 @@
 (def portfolio-alignment-groups-eq
   [{:id :cembi      :label "CEMBI"      :portfolios ["OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"]}
    {:id :allianz    :label "Allianz"    :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-   {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC" "INMIEMCD" "INLIEMCD"]}
-   {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IBNPPEMD" "IKPOEMCD" "IYELEMCD"]}
+   {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC" "INMIEMCD"]}
+   {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IKPOEMCD" "IYELEMCD"]}
    {:id :munichre   :label "Munich Re"  :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
    {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED"]}
