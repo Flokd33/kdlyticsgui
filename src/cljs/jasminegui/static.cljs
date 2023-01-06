@@ -171,7 +171,6 @@
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON" "OGTRCRED"]}
    {:id :models     :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI"]}
    {:id :dummies    :label "Models"     :portfolios ["CEMBI"]}
-   {:id :models    :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI"]}
    ;{:id :dummies    :label "Models"     :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
    ])
 
