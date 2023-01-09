@@ -307,13 +307,14 @@
                    (map #(update % :position (fn [x] (if (zero? x) nil x)))))
         leg-by-leg-data (conj (mapv #(merge % (get performances ((keyword tkh "uuid") %))) trades)
                               {:strategy                "Sum"
-                               :entry-date              ((keyword tkh "entry_date") (first trades))
-                               :exit-date               ((keyword tkh "exit_date") (last trades))
+                               :entry_date              ((keyword tkh "entry_date") (first trades))
+                               :exit_date               ((keyword tkh "exit_date") (last trades))
                                :tr                  (reduce + (remove nil? (map :tr (vals performances))))
                                :tr-vs-index         (reduce + (remove nil? (map :tr-vs-index (vals performances))))
                                :tr-vs-index-rating  (reduce + (remove nil? (map :tr-vs-index-rating (vals performances))))
                                :tr-vs-index-country (reduce + (remove nil? (map :tr-vs-index-country (vals performances))))
                                :tr-vs-index-sector  (reduce + (remove nil? (map :tr-vs-index-sector (vals performances))))})]
+    (println leg-by-leg-data)
 
     (gt/element-box-generic "position-table" element-box-width "Positions and performance" nil
                             [
@@ -348,8 +349,8 @@
                               {:data       leg-by-leg-data
                                :columns    [
                                             {:Header "Strategy" :accessor :strategy :width 150 :style {:textAlign "left"}} ; :Cell tables/nb-thousand-cell-format
-                                            {:Header "Entry date" :accessor :entry-date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "entry_date" %)}
-                                            {:Header "Exit date" :accessor :exit-date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "exit_date" %)}
+                                            {:Header "Entry date" :accessor :entry_date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "entry_date" %)}
+                                            {:Header "Exit date" :accessor :exit_date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "exit_date" %)}
                                             {:Header "Gross" :accessor :tr :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                             {:Header "Index" :accessor :tr-vs-index :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                             {:Header "Rating" :accessor :tr-vs-index-rating :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
