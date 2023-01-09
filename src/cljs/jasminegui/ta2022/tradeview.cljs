@@ -314,8 +314,7 @@
                                :tr-vs-index-rating  (reduce + (remove nil? (map :tr-vs-index-rating (vals performances))))
                                :tr-vs-index-country (reduce + (remove nil? (map :tr-vs-index-country (vals performances))))
                                :tr-vs-index-sector  (reduce + (remove nil? (map :tr-vs-index-sector (vals performances))))})]
-    (println leg-by-leg-data)
-
+    ;(println leg-by-leg-data)
     (gt/element-box-generic "position-table" element-box-width "Positions and performance" nil
                             [
                              [title :label "Actual performance" :level :level2]
@@ -619,7 +618,8 @@
                                                                                                                                     ])}
                                                                                            {:Header "Relval" :columns (remove nil? [(if is-table {:Header "Description" :accessor "relval-alert-description" :width 140})
                                                                                                                                     {:Header "Price" :accessor "relval-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "relval-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
-                                                                                                                                    (if @(rf/subscribe [:ta2022/main-table-show-relval-value]) {:Header "Sprd" :accessor "relval-alert-value" :width 45 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1. %) :aggregate #(str "-")})
+                                                                                                                                    (if @(rf/subscribe [:ta2022/main-table-show-relval-value])
+                                                                                                                                      {:Header "Sprd" :accessor "relval-alert-value" :width 45 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1. %) :aggregate tables/median})
                                                                                                                                     ])}
                                                                                            {:Header "Review" :columns (remove nil? [(if is-table {:Header "Description" :accessor "review-alert-description" :width 140})
                                                                                                                                     {:Header "Price" :accessor "review-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "review-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
