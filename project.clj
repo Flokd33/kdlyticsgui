@@ -16,6 +16,7 @@
                  [binaryage/devtools "1.0.6"]
                  [day8.re-frame/tracing      "0.6.2"]
                  [day8.re-frame/re-frame-10x "1.5.0"]
+                 [markdown-clj "1.11.4"]
                  ]
 
   :plugins []

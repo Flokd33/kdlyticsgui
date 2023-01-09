@@ -32,6 +32,7 @@
                  :large-exposures                                    []
 
                  :factsheet/cre                                       []
+                 :knowledge/selected-mandate                          "OGEMCORD"
 
                  ;local-storage-cache
                  :naked-positions-last-timestamp                     nil
@@ -421,6 +422,7 @@
            :portfolios-grp
 
            :factsheet/cre
+           :knowledge/selected-mandate
            
            :single-portfolio-risk/portfolio
            :single-portfolio-risk/display-style
