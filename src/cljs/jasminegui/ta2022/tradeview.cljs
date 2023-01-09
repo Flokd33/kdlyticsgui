@@ -37,7 +37,8 @@
 (defn rt-int->date
   [accessor this]
   (if (aget this "value")
-    (t/int->dd-MM-yyyy (aget this "original" accessor)) "No"))
+    (if (or (nil? (aget this "original" accessor)) (= (aget this "original" accessor) 0)) "No" (t/int->dd-MM-yyyy (aget this "original" accessor)))
+    "No"))
 
 (defn trade-static-and-pricing
   [isin qdata last-trade alerts triggers]
