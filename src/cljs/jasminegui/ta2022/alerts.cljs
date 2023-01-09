@@ -46,8 +46,7 @@
   (clojure.set/rename-keys (merge a (triggers (:ta2022.alert/uuid a))) {:latest-market-spread :latest-market-price}))
 
 (defn alert->alert-with-triggers-sql [triggers a]
-  (let [tkh nil]
-    (clojure.set/rename-keys (merge a (triggers ((keyword tkh "uuid") a))) {:latest-market-spread :latest-market-price})))
+  (clojure.set/rename-keys (merge a (triggers ((keyword "uuid") a))) {:latest-market-spread :latest-market-price}))
 
 (defn trade->alerts [trade alerts]
   (remove nil? (concat [(if-let [a (:ta2022.trade/relval-alert-uuid trade)] (assoc (alerts a) :ta2022.alert/alert-scope "relval"))
@@ -58,22 +57,15 @@
                          (mapv #(assoc (alerts %) :ta2022.alert/alert-scope "other") (:ta2022.trade/other-alert-uuids trade))))))
 
 (defn trade->alerts-sql [trade alerts]
-  (let [tkh nil]                   ;(if sql? nil "ta2022.alert")
-    (remove nil? (concat [(if-let [a ((keyword tkh "relval_alert_uuid")  trade)] (assoc (alerts a) (keyword tkh "alert-scope") "relval"))
-                          (if-let [a ((keyword tkh "target_alert_uuid") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "target"))
+  (let [tkh nil]
+    (remove nil? (concat [(if-let [a ((keyword tkh "target_alert_uuid") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "target"))
+                          (if-let [a ((keyword tkh "relval_alert_uuid")  trade)] (assoc (alerts a) (keyword tkh "alert-scope") "relval"))
                           (if-let [a ((keyword tkh "review_alert_uuid") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "review"))
                           (if-let [a ((keyword tkh "price_alert_uuid") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "price"))]
 
                          [(if-let [a ((keyword tkh "other_alert_uuid_1") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "other"))
                           (if-let [a ((keyword tkh "other_alert_uuid_2") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "other"))]
                          ;.... ;TODO add all alerts... 10..
-
-                         ;(if sql?
-                         ;  [(if-let [a ((keyword tkh "other-alert-uuid_1") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "other"))
-                         ;   (if-let [a ((keyword tkh "other-alert-uuid_2") trade)] (assoc (alerts a) (keyword tkh "alert-scope") "other"))] ;TODO add all alerts... 10..
-                         ;  [(if (and (:ta2022.trade/other-alert-uuids  trade) (pos? (count (:ta2022.trade/other-alert-uuids trade)))) ;TODO TRICKY
-                         ;     (mapv #(assoc (alerts %) :ta2022.alert/alert-scope "other") (:ta2022.trade/other-alert-uuids trade)))])
-
                          ))))
 
 (defn alert-from-backend [alert]

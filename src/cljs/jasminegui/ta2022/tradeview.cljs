@@ -37,7 +37,8 @@
 (defn rt-int->date
   [accessor this]
   (if (aget this "value")
-    (t/int->dd-MM-yyyy (aget this "original" accessor)) "No"))
+    (if (or (nil? (aget this "original" accessor)) (= (aget this "original" accessor) 0)) "No" (t/int->dd-MM-yyyy (aget this "original" accessor)))
+    "No"))
 
 (defn trade-static-and-pricing
   [isin qdata last-trade alerts triggers]
@@ -93,22 +94,20 @@
 
 (defn trade-static-and-pricing-sql
   [isin qdata last-trade alerts triggers]
-  (let [tkh nil                    ;(keyword tkh "entry-date")
-        tkhh nil
-        fmt-rtn (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f%" (* 100. x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
+  (let [fmt-rtn (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f%" (* 100. x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
         fmt-rtn-1 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f" x) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
         fmt-rtn-2 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f" x) "-"))
         fmt-rtn-3 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f%" x) "-"))
         data (if triggers (assoc qdata
-                            :relval (get-in triggers [(last-trade (keyword tkh "relval_alert_uuid")) :implied-tr-1y])
-                            :target (get-in triggers [(last-trade (keyword tkh "target_alert_uuid")) :implied-tr-1y])
-                            :review (get-in triggers [(last-trade (keyword tkh "review_alert_uuid")) :implied-tr-1y])
-                            :relval-price (get-in triggers [(last-trade (keyword tkh "relval_alert_uuid")) :implied-price])
-                            :target-price (get-in triggers [(last-trade (keyword tkh "target_alert_uuid")) :implied-price])
-                            :review-price (get-in triggers [(last-trade (keyword tkh "review_alert_uuid")) :implied-price])
-                            :relval-start-price (get-in alerts [(last-trade (keyword tkh "relval_alert_uuid")) (keyword tkhh "start_implied_price")])
-                            :target-start-price (get-in alerts [(last-trade (keyword tkh "target_alert_uuid")) (keyword tkhh "start_implied_price")])
-                            :review-start-price (get-in alerts [(last-trade (keyword tkh "review_alert_uuid")) (keyword tkhh "start_implied_price")]))
+                            :relval (get-in triggers [(last-trade (keyword "relval_alert_uuid")) :implied-tr-1y])
+                            :target (get-in triggers [(last-trade (keyword "target_alert_uuid")) :implied-tr-1y])
+                            :review (get-in triggers [(last-trade (keyword "review_alert_uuid")) :implied-tr-1y])
+                            :relval-price (get-in triggers [(last-trade (keyword "relval_alert_uuid")) :implied-price])
+                            :target-price (get-in triggers [(last-trade (keyword "target_alert_uuid")) :implied-price])
+                            :review-price (get-in triggers [(last-trade (keyword "review_alert_uuid")) :implied-price])
+                            :relval-start-price (get-in alerts [(last-trade (keyword "relval_alert_uuid")) (keyword "start_implied_price")])
+                            :target-start-price (get-in alerts [(last-trade (keyword "target_alert_uuid")) (keyword "start_implied_price")])
+                            :review-start-price (get-in alerts [(last-trade (keyword "review_alert_uuid")) (keyword "start_implied_price")]))
                           qdata)
         ]
     (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
@@ -307,14 +306,14 @@
                    (map #(update % :position (fn [x] (if (zero? x) nil x)))))
         leg-by-leg-data (conj (mapv #(merge % (get performances ((keyword tkh "uuid") %))) trades)
                               {:strategy                "Sum"
-                               :entry-date              ((keyword tkh "entry_date") (first trades))
-                               :exit-date               ((keyword tkh "exit_date") (last trades))
+                               :entry_date              ((keyword tkh "entry_date") (first trades))
+                               :exit_date               ((keyword tkh "exit_date") (last trades))
                                :tr                  (reduce + (remove nil? (map :tr (vals performances))))
                                :tr-vs-index         (reduce + (remove nil? (map :tr-vs-index (vals performances))))
                                :tr-vs-index-rating  (reduce + (remove nil? (map :tr-vs-index-rating (vals performances))))
                                :tr-vs-index-country (reduce + (remove nil? (map :tr-vs-index-country (vals performances))))
                                :tr-vs-index-sector  (reduce + (remove nil? (map :tr-vs-index-sector (vals performances))))})]
-
+    ;(println leg-by-leg-data)
     (gt/element-box-generic "position-table" element-box-width "Positions and performance" nil
                             [
                              [title :label "Actual performance" :level :level2]
@@ -348,8 +347,8 @@
                               {:data       leg-by-leg-data
                                :columns    [
                                             {:Header "Strategy" :accessor :strategy :width 150 :style {:textAlign "left"}} ; :Cell tables/nb-thousand-cell-format
-                                            {:Header "Entry date" :accessor :entry-date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "entry_date" %)}
-                                            {:Header "Exit date" :accessor :exit-date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "exit_date" %)}
+                                            {:Header "Entry date" :accessor :entry_date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "entry_date" %)}
+                                            {:Header "Exit date" :accessor :exit_date :width 100 :style {:textAlign "right"} :Cell #(rt-int->date "exit_date" %)}
                                             {:Header "Gross" :accessor :tr :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                             {:Header "Index" :accessor :tr-vs-index :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
                                             {:Header "Rating" :accessor :tr-vs-index-rating :width 65 :style {:textAlign "right"} :Cell tables/round1pc}
@@ -512,6 +511,23 @@
                                          [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
                                          [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :add-attachment}])]]]])))
 
+
+(defn isin-picker-new
+  [trades]
+  (let [too-old?
+        (try (> (in-days (interval (t/int->gdate (:entry_date (last trades))) (t/int->gdate (today)))) 4) (catch js/Error e true))]
+    (println (:entry_date (last trades)))
+    (gt/element-box-generic "isin-picker" element-box-width "Actions" {:no-icons true}
+                            [[h-box :gap "10px" :align :center
+                              :children [[label :label "Pick an ISIN:"]
+                                         [input-text :model (rf/subscribe [:ta2022/trade-isin]) :on-change #(rf/dispatch [:ta2022/trade-isin %])]
+                                         [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/go-to-active-trade @(rf/subscribe [:ta2022/trade-isin])])]
+                                         [gap :size "1"]
+                                         [button :label "Amend latest entry" :class btc :disabled? (or (not trades) too-old?) :on-click #(rf/dispatch [:ta2022/show-modal {:type :amend-latest-trade}])]
+                                         [button :label (if trades "Morph trade" "New trade") :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
+                                         [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
+                                         [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :add-attachment}])]]]])))
+
 (defn trade-view                                            ;TODO SQL ?
   []
   (let [isin @(rf/subscribe [:ta2022/trade-isin])
@@ -520,12 +536,12 @@
         {:keys [trades alerts performances triggers]} th]
     [v-box :gap "10px"
      :children [[isin-picker trades]
-                [trade-static-and-pricing isin qdata (last trades) alerts triggers] ;TODO
-                [trade-description trades alerts triggers] ;TODO
-                [historical-chart isin qdata trades triggers] ;TODO
+                [trade-static-and-pricing isin qdata (last trades) alerts triggers]
+                [trade-description trades alerts triggers]
+                [historical-chart isin qdata trades triggers] ;
                 [attachments isin]
-                [positions-and-performance-table trades performances] ;TODO
-                [trade-history trades alerts] ;TODO
+                [positions-and-performance-table trades performances]
+                [trade-history trades alerts]
                 ]])
   )
 
@@ -536,13 +552,13 @@
         th @(rf/subscribe [:ta2022/trade-history])
         {:keys [trades alerts performances triggers]} th]
     [v-box :gap "10px"
-     :children [[isin-picker trades]
-                [trade-static-and-pricing-sql isin qdata (last trades) alerts triggers] ;TODO
-                [trade-description-sql trades alerts triggers] ;TODO
-                [historical-chart-sql isin qdata trades triggers] ;TODO
+     :children [[isin-picker-new trades]
+                [trade-static-and-pricing-sql isin qdata (last trades) alerts triggers]
+                [trade-description-sql trades alerts triggers]
+                [historical-chart-sql isin qdata trades triggers]
                 [attachments isin]
-                [positions-and-performance-table-sql trades performances] ;TODO
-                [trade-history-sql trades alerts] ;TODO
+                [positions-and-performance-table-sql trades performances]
+                [trade-history-sql trades alerts]
                 ]])
   )
 
@@ -618,7 +634,8 @@
                                                                                                                                     ])}
                                                                                            {:Header "Relval" :columns (remove nil? [(if is-table {:Header "Description" :accessor "relval-alert-description" :width 140})
                                                                                                                                     {:Header "Price" :accessor "relval-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "relval-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
-                                                                                                                                    (if @(rf/subscribe [:ta2022/main-table-show-relval-value]) {:Header "Sprd" :accessor "relval-alert-value" :width 45 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1. %) :aggregate #(str "-")})
+                                                                                                                                    (if @(rf/subscribe [:ta2022/main-table-show-relval-value])
+                                                                                                                                      {:Header "Sprd" :accessor "relval-alert-value" :width 45 :style {:textAlign "right"} :Cell #(tables/nb-cell-format "%.0f" 1. %) :aggregate tables/median})
                                                                                                                                     ])}
                                                                                            {:Header "Review" :columns (remove nil? [(if is-table {:Header "Description" :accessor "review-alert-description" :width 140})
                                                                                                                                     {:Header "Price" :accessor "review-alert-implied-price" :width (if is-table 45 60) :style {:textAlign "right"} :Cell (if is-table #(price-fmt "review-alert-distance" %) #(tables/nb-cell-format "%.1f" 1. %)) :aggregate tables/median}
@@ -691,7 +708,7 @@
               [:div.output "nothing to display"])]))
 
 
-(defn active-home-sql []                                    ;TODO add sql?
+(defn active-home-sql []
   (let [active-ta2022 @(rf/subscribe [:ta2022/active-home])]
     (.scrollTo js/window 0 0)
     [box :padding "80px 20px" :class "rightelement"
