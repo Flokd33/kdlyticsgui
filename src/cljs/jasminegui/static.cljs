@@ -113,7 +113,7 @@
   [{:code :entry             :name "Home"}
    {:code :mandates             :name "Mandates"}
    {:code :exclusions           :name "Exclusions"}
-   {:code :cre                 :name "China Real Estate"}
+   {:code :cre                 :name "China real estate"}
    {:code :allianz-loss-report    :name "P&L budget"}                   ;"Allianz P&L budget"
    {:code :gdel                   :name "Global debt levels"}
    {:code :trounce-flow           :name "Trounceflow"}])

@@ -139,20 +139,11 @@
 
 
 (defn mandates []
-  (let [x (md->html
-            "- **Benchmark**:\n        - 63% CEMBIBD IG `JBCDIGIG Index`\n        - 27% EMBIBD IG `JPGCIG Index`\n        - 7% CEMBIBD HY `JBCDNOIG Index`\n        - 3% EMBIBD HY `JPGCHY Index`\n    - **universe:**\n        - bonds in benchmark\n        - USD bonds whose ultimate parent `DX065` has constituents in the benchmark\n        - USD bonds from ultimate parent country `DY011` that is EM as defined by benchmark\n        - UST\n        - Sukuks under intl law with ISIN and listing, but no Sukuk al-Mudharabah\n        - non call perps are not acceptable (but callable perps are OK)\n        - Convertibles are OK\n        - no supranationals\n        - currency: only USD\n    - **duration:** +/- 0.5 years\n    - **limits:** max limit in % of USD market value. At ultimate parent level\n Bloomberg `DX065`.\n        - {{[[table]]}}\n            - Item\n                - Corporates\n                    - Sovereigns\n                        - Total\n            - Cash\n                -  \n                    -  \n                        - 3%\n            - UST\n                -  \n                    - 100%\n            - A- to AA+\n                - 5%\n                    - 5%\n            - BBB to BBB+\n                - 3%\n                    - 4%\n            - BBB-\n                - 2%\n                    - 2.5%\n            - B- to BB+\n                - 1%\n                    - 1.5%\n            - Below\n                - 0%\n                    - 0%\n            - NR\n                -  \n                    -  \n                        - 3%\n            - BRIC\n                -  \n                    -  \n                        - 35%\n            - HY\n                -  \n                    -  \n                        - 20%\n            - BBB+/BBB/BBB-\n                -  \n                    -  \n                        - 75%\n        - **Negative list:** not permitted\n        - Subordinated corporate debt is weighted 1.5x\n        - Insurers are halved, Bloomberg `DS201`\n        - New issue unrated with pending rating is OK\n        - Note you can have both corps and sovs of the same parent issuer, and you add the limits!\n    - rating methodology: one rating permissible, if two or more ratings the second best applies. For senior debt, if issue is unrated the issuer rating will apply\n    - Fallen angels to be notified with suggested action\n    - No borrowing or short selling.\n- **Ultimate parent overrides**: use TAM definition in place of `DX065`, tfolio has something called talanx ultimate parent\n
-
-            ")]
-    (println x)
-
-    [box :class "subbody rightelement" :child
-     (gt/element-box
-       "mandates" "1675px" "Mandates" nil
-       [
-        [h-box :gap "20px" :children [[vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate]) :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]
-                          [box :child [:div {:dangerouslySetInnerHTML {:__html x}}]]]]
-
-        ])]))
+  [box :class "subbody rightelement" :child
+   (gt/element-box
+     "mandates" "1675px" "Mandates" nil
+     [[h-box :gap "20px" :children [[vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate]) :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]
+                                    [box :child [:div {:dangerouslySetInnerHTML {:__html (md->html @(rf/subscribe [:knowledge/selected-mandate]))}}]]]]])])
 
 (defn exclusions []
   [box :class "subbody rightelement" :child
@@ -177,7 +168,7 @@
                                 {:Header "Latest results" :accessor "Latest results" :width 300  :style {:whiteSpace "unset"}}
                                 {:Header "Latest update" :accessor "Latest update" :width 350  :style {:whiteSpace "unset"}}
                                 {:Header "Restructuring comment" :accessor "Restructuring comment" :width 350  :style {:whiteSpace "unset"}}]
-          :defaultPageSize (count data) :showPagination false :filterable true :defaultFilterMethod tables/text-filter-OR}]])]))
+          :pageSize (count data) :showPagination false :filterable true :defaultFilterMethod tables/text-filter-OR}]])]))
 
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-knowledge])]
