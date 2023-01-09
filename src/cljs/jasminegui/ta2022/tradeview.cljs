@@ -94,22 +94,20 @@
 
 (defn trade-static-and-pricing-sql
   [isin qdata last-trade alerts triggers]
-  (let [tkh nil                    ;(keyword tkh "entry-date")
-        tkhh nil
-        fmt-rtn (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f%" (* 100. x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
+  (let [fmt-rtn (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f%" (* 100. x)) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
         fmt-rtn-1 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f" x) (r/as-element [p {:style {:color "red" :padding "0px" :font-style "italic"}} "Triggered"])))
         fmt-rtn-2 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f" x) "-"))
         fmt-rtn-3 (fn [this] (if-let [x (aget this "value")] (gstring/format "%.1f%" x) "-"))
         data (if triggers (assoc qdata
-                            :relval (get-in triggers [(last-trade (keyword tkh "relval_alert_uuid")) :implied-tr-1y])
-                            :target (get-in triggers [(last-trade (keyword tkh "target_alert_uuid")) :implied-tr-1y])
-                            :review (get-in triggers [(last-trade (keyword tkh "review_alert_uuid")) :implied-tr-1y])
-                            :relval-price (get-in triggers [(last-trade (keyword tkh "relval_alert_uuid")) :implied-price])
-                            :target-price (get-in triggers [(last-trade (keyword tkh "target_alert_uuid")) :implied-price])
-                            :review-price (get-in triggers [(last-trade (keyword tkh "review_alert_uuid")) :implied-price])
-                            :relval-start-price (get-in alerts [(last-trade (keyword tkh "relval_alert_uuid")) (keyword tkhh "start_implied_price")])
-                            :target-start-price (get-in alerts [(last-trade (keyword tkh "target_alert_uuid")) (keyword tkhh "start_implied_price")])
-                            :review-start-price (get-in alerts [(last-trade (keyword tkh "review_alert_uuid")) (keyword tkhh "start_implied_price")]))
+                            :relval (get-in triggers [(last-trade (keyword "relval_alert_uuid")) :implied-tr-1y])
+                            :target (get-in triggers [(last-trade (keyword "target_alert_uuid")) :implied-tr-1y])
+                            :review (get-in triggers [(last-trade (keyword "review_alert_uuid")) :implied-tr-1y])
+                            :relval-price (get-in triggers [(last-trade (keyword "relval_alert_uuid")) :implied-price])
+                            :target-price (get-in triggers [(last-trade (keyword "target_alert_uuid")) :implied-price])
+                            :review-price (get-in triggers [(last-trade (keyword "review_alert_uuid")) :implied-price])
+                            :relval-start-price (get-in alerts [(last-trade (keyword "relval_alert_uuid")) (keyword "start_implied_price")])
+                            :target-start-price (get-in alerts [(last-trade (keyword "target_alert_uuid")) (keyword "start_implied_price")])
+                            :review-start-price (get-in alerts [(last-trade (keyword "review_alert_uuid")) (keyword "start_implied_price")]))
                           qdata)
         ]
     (gt/element-box-generic "trade-static" element-box-width "Bond data" nil
@@ -513,6 +511,23 @@
                                          [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
                                          [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :add-attachment}])]]]])))
 
+
+(defn isin-picker-new
+  [trades]
+  (let [too-old?
+        (try (> (in-days (interval (t/int->gdate (:entry_date (last trades))) (t/int->gdate (today)))) 4) (catch js/Error e true))]
+    (println (:entry_date (last trades)))
+    (gt/element-box-generic "isin-picker" element-box-width "Actions" {:no-icons true}
+                            [[h-box :gap "10px" :align :center
+                              :children [[label :label "Pick an ISIN:"]
+                                         [input-text :model (rf/subscribe [:ta2022/trade-isin]) :on-change #(rf/dispatch [:ta2022/trade-isin %])]
+                                         [button :label "Fetch data" :class btc :on-click #(rf/dispatch [:ta2022/go-to-active-trade @(rf/subscribe [:ta2022/trade-isin])])]
+                                         [gap :size "1"]
+                                         [button :label "Amend latest entry" :class btc :disabled? (or (not trades) too-old?) :on-click #(rf/dispatch [:ta2022/show-modal {:type :amend-latest-trade}])]
+                                         [button :label (if trades "Morph trade" "New trade") :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :morph-trade}])]
+                                         [button :label "Close trade" :class btc :disabled? (not trades) :on-click #(rf/dispatch [:ta2022/show-modal {:type :close-trade}])]
+                                         [button :label "Add attachment" :disabled? (not @(rf/subscribe [:ta2022/trade-isin])) :class btc :on-click #(rf/dispatch [:ta2022/show-modal {:type :add-attachment}])]]]])))
+
 (defn trade-view                                            ;TODO SQL ?
   []
   (let [isin @(rf/subscribe [:ta2022/trade-isin])
@@ -521,12 +536,12 @@
         {:keys [trades alerts performances triggers]} th]
     [v-box :gap "10px"
      :children [[isin-picker trades]
-                [trade-static-and-pricing isin qdata (last trades) alerts triggers] ;TODO
-                [trade-description trades alerts triggers] ;TODO
-                [historical-chart isin qdata trades triggers] ;TODO
+                [trade-static-and-pricing isin qdata (last trades) alerts triggers]
+                [trade-description trades alerts triggers]
+                [historical-chart isin qdata trades triggers] ;
                 [attachments isin]
-                [positions-and-performance-table trades performances] ;TODO
-                [trade-history trades alerts] ;TODO
+                [positions-and-performance-table trades performances]
+                [trade-history trades alerts]
                 ]])
   )
 
@@ -537,13 +552,13 @@
         th @(rf/subscribe [:ta2022/trade-history])
         {:keys [trades alerts performances triggers]} th]
     [v-box :gap "10px"
-     :children [[isin-picker trades]
-                [trade-static-and-pricing-sql isin qdata (last trades) alerts triggers] ;TODO
-                [trade-description-sql trades alerts triggers] ;TODO
-                [historical-chart-sql isin qdata trades triggers] ;TODO
+     :children [[isin-picker-new trades]
+                [trade-static-and-pricing-sql isin qdata (last trades) alerts triggers]
+                [trade-description-sql trades alerts triggers]
+                [historical-chart-sql isin qdata trades triggers]
                 [attachments isin]
-                [positions-and-performance-table-sql trades performances] ;TODO
-                [trade-history-sql trades alerts] ;TODO
+                [positions-and-performance-table-sql trades performances]
+                [trade-history-sql trades alerts]
                 ]])
   )
 
@@ -693,7 +708,7 @@
               [:div.output "nothing to display"])]))
 
 
-(defn active-home-sql []                                    ;TODO add sql?
+(defn active-home-sql []
   (let [active-ta2022 @(rf/subscribe [:ta2022/active-home])]
     (.scrollTo js/window 0 0)
     [box :padding "80px 20px" :class "rightelement"
