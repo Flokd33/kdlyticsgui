@@ -33,6 +33,7 @@
 
                  :factsheet/cre                                       []
                  :knowledge/selected-mandate                          "OGEMCORD"
+                 :knowledge/mandate-description                       ""
 
                  ;local-storage-cache
                  :naked-positions-last-timestamp                     nil
@@ -423,7 +424,8 @@
 
            :factsheet/cre
            :knowledge/selected-mandate
-           
+           :knowledge/mandate-description
+
            :single-portfolio-risk/portfolio
            :single-portfolio-risk/display-style
            :single-portfolio-risk/hide-zero-holdings

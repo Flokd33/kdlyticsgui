@@ -143,7 +143,7 @@
    (gt/element-box
      "mandates" "1675px" "Mandates" nil
      [[h-box :gap "20px" :children [[vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate]) :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]
-                                    [box :child [:div {:dangerouslySetInnerHTML {:__html (md->html @(rf/subscribe [:knowledge/selected-mandate]))}}]]]]])])
+                                    [box :child [:div {:dangerouslySetInnerHTML {:__html (md->html @(rf/subscribe [:knowledge/mandate-description]))}}]]]]])])
 
 (defn exclusions []
   [box :class "subbody rightelement" :child
