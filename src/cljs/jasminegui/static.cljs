@@ -37,7 +37,8 @@
    {:code :portfolio-checks       :name "Portfolios checks"}
    {:code :portfolio-alignment    :name "Portfolio alignment"}
    {:code :concentration-risk     :name "Concentration risk"}
-   {:code :irrisk                 :name "Interest rate risk"}
+   {:code :irrisk                 :name "Single IR risk"}
+   {:code :irrisk-multiple        :name "Multiple IR risk"}
    {:code :large-exposures        :name "Large exposures"}
    {:code :var                    :name "VaR and Beta"}
    {:code :proxies                :name "Bond proxies"}

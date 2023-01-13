@@ -187,7 +187,6 @@
   (let [modal-data (get-in @(rf/subscribe [:single-bond-trade-history/data]) [(keyword @(rf/subscribe [:single-portfolio-risk/portfolio]))])
         show-modal @(rf/subscribe [:single-bond-trade-history/show-modal])
         display (reverse (remove #(= (:TransactionTypeName %) "Coupon Payment") modal-data))]
-    @(rf/subscribe [:single-bond-trade-history/chart-data])
     (if show-modal
       [modal-panel
        :wrap-nicely? true
@@ -219,7 +218,6 @@
         display (reverse (sort-by :date (remove #(some #{(:trade %)} ["Coupon Payment" "Scrip Transfer"]) modal-data)))
         nominal (> (Math/abs (first (vals (dissoc (first display) :date :trade :price)))) 100000) ;if bigger than 100k, it's a nominal, otherwise bps
         ]
-    ;(println modal-data)
     (if show-modal
       [modal-panel
        :wrap-nicely? true
@@ -475,21 +473,10 @@
         selected-portfolios (rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
         ]
-    ;(println (first @(rf/subscribe [:traded-since-date-output/flat-data])))
     [box :class "subbody rightelement" :child
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history with performance") :level :level1]
                  [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies :models]]
-                 ;[h-box :gap "5px"  :children
-                 ; (into [[title :label "Portfolios:" :level :level3]
-                 ;        [gap :size "20px"]
-                 ;        [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
-                 ;                                     [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]]]
-                 ;       (for [line static/portfolio-alignment-groups]
-                 ;         (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
-                 ;           [v-box :gap "2px" :children
-                 ;            [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
-                 ;             [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
                  [h-box :gap "50px"
                   :children [[v-box :gap "15px"
                               :children [[h-box
@@ -537,16 +524,6 @@
      [v-box :class "element" :gap "20px" :align :start
       :children [[title :label (str "Recent trade history") :level :level1]
                  [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies :models]]
-                 ;[h-box :gap "5px"  :children
-                 ; (into [[title :label "Portfolios:" :level :level3]
-                 ;        [gap :size "20px"]
-                 ;        [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
-                 ;                                     [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]]]
-                 ;       (for [line static/portfolio-alignment-groups]
-                 ;         (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
-                 ;           [v-box :gap "2px" :children
-                 ;            [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
-                 ;             [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
                  [h-box :align :center :gap "20px" :children [[title :label "From:" :level :level3]
                                                               [datepicker-dropdown
                                                                :model date-from

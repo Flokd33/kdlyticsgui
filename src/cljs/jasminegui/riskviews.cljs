@@ -419,16 +419,6 @@
                                           [title :label "Field:" :level :level3] [single-dropdown :width dropdown-width :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])] [gap :size "30px"]
                                           [title :label "Filtering:" :level :level3] (gt/filtering-row :multiple-portfolio-risk/filter)]]
 
-                              ;[h-box :gap "5px" :children
-                              ; (into [[title :label "Portfolios:" :level :level3]
-                              ;        [gap :size "20px"]
-                              ;        [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
-                              ;                                     [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]]]]
-                              ;       (for [line static/portfolio-alignment-groups]
-                              ;         (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
-                              ;           [v-box :gap "2px" :children
-                              ;            [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
-                              ;             [selection-list :width dropdown-width :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]])))]
                               [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies]] ;TODO
                               (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
                                     width-one 80
@@ -479,17 +469,14 @@
 
 (defn go-to-portfolio-risk [state rowInfo instance] (clj->js {:onClick #(do (rf/dispatch-sync [:navigation/active-home :single-portfolio]) (rf/dispatch [:single-portfolio-risk/portfolio (aget rowInfo "row" "portfolio")])) :style {:cursor "pointer"}}))
 
-(defn irrisk []
+(defn ir-risk-single-portfolio []
   (let [absrel (r/atom :contrib-mdur)
         spread-or-rating (r/atom :rating-score)
         cut-off (r/atom 10.0)
         clicked (r/atom ["Total" "total"])
         show-main-elements (fn [state rowInfo column instance] (clj->js {:onClick #(reset! clicked [(aget rowInfo "original" "maturity-band") (aget column "id")]) :style {:cursor "pointer"}}))]
     (fn []
-
-      (let [portfolio-map @(rf/subscribe [:portfolio-dropdown-map])
-            portfolio (rf/subscribe [:single-portfolio-risk/portfolio])
-            positions (t/chainfilter {:portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])} @(rf/subscribe [:positions])) ;:original-quantity #(not (zero? %))
+      (let [positions (t/chainfilter {:portfolio @(rf/subscribe [:single-portfolio-risk/portfolio])} @(rf/subscribe [:positions])) ;:original-quantity #(not (zero? %))
             ust (t/chainfilter {:TICKER "T"} positions)
             ir-sensitive (t/chainfilter {:TICKER #(not= % "T") @spread-or-rating #(< % @cut-off)} positions)
             ir-insensitive (t/chainfilter {:TICKER #(not= % "T") @spread-or-rating #(>= % @cut-off)} positions) ;futures have no rating
@@ -518,13 +505,10 @@
                                                       "sensitive" ir-sensitive
                                                       "insensitive" ir-insensitive)))
             download-columns [:maturity-band :ust :sensitive :insensitive :total]]
-        ;(println (t/chainfilter {:isin "XS2056723468"} positions))
-        ;(println (select-keys (first (t/chainfilter {:isin "XS2056723468"} positions)) [:mdur-delta :contrib-mdur]))
         [box :class "subbody rightelement" :child
          (gt/element-box-with-cols "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) data
                                    [[h-box :gap "5px" :align :center :children [[title :level :level3 :label "Portfolio:"]
                                                                                 (gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
-                                                                                ;[single-dropdown :width dropdown-width :model portfolio :choices portfolio-map :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])]
                                                                                 [gap :size "20px"]
                                                                                 [title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]]]
 
@@ -570,6 +554,75 @@
                                                        {:Header "Delta" :accessor "mdur-delta" :width 120 :getProps tables/red-negatives :Cell tables/round2}]
                                       :showPagination false :pageSize 20 :className "-striped -highlight"}]]
                                    download-columns
+                                   )]))))
+
+(rf/reg-sub
+  :multiple-interest-risk/table
+  (fn [db [_ absrel spread-or-rating cut-off]]
+    (let [
+          durations ["0 - 1 year" "1 - 3 years" "3 - 5 years" "5 - 7 years" "7 - 10 years" "10 - 20 years" "20 years +"]
+          pos (t/chainfilter {:portfolio #(some #{%} (:multiple-ir-risk/selected-portfolios db))} (:positions db))
+          ust (t/chainfilter {:TICKER "T"} pos)
+          ir-sensitive (t/chainfilter {:TICKER #(not= % "T") spread-or-rating #(< % cut-off)} pos)
+          ir-insensitive (t/chainfilter {:TICKER #(not= % "T") spread-or-rating #(>= % cut-off)} pos) ;futures have no rating
+          prep (fn [data] (let [a (map
+                                    #(assoc
+                                       (apply merge
+                                              (for [p (:multiple-ir-risk/selected-portfolios db)]
+                                                {(keyword p) (reduce + (map absrel (t/chainfilter {:qt-final-maturity-band % :portfolio p} data)))}))
+                                       :maturity-band %) durations)
+                                b (into {:maturity-band "Total"} (for [p (:multiple-ir-risk/selected-portfolios db)] [(keyword p) (reduce + (map (keyword p) a))] ) )
+                                ]
+                            (conj a b)))]
+      {:total (prep pos) :ust (prep ust) :ig (prep ir-sensitive) :hy (prep ir-insensitive)})))
+
+(defn ir-risk-multiple-portfolio []
+  (let [absrel (r/atom :contrib-mdur)
+        spread-or-rating (r/atom :rating-score)
+        cut-off (r/atom 10.0)]
+    (fn []
+      (let [label-insensitive (if (= @spread-or-rating :rating-score) (str (qstables/get-implied-rating (str @cut-off)) " and below") (str @cut-off "bps and above"))
+            label-sensitive (if (= @spread-or-rating :rating-score) (str (qstables/get-implied-rating (str (dec @cut-off))) " and above") (str @cut-off "bps and below"))
+            cols (into [{:Header "Maturity band" :accessor "maturity-band" :width 120}] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-ir-risk/selected-portfolios]))]
+                            {:Header p :accessor p :width 80 :getProps tables/red-negatives :Cell tables/round2}))
+            data @(rf/subscribe [:multiple-interest-risk/table @absrel @spread-or-rating @cut-off])
+            ]
+        [box :class "subbody rightelement" :child
+         (gt/element-box-with-cols "irrisk" "100%" (str "Interest rate risk " @(rf/subscribe [:qt-date])) 2 ;data
+                                   [[h-box :gap "5px" :align :center :children [[title :level :level3 :label "Duration contribution:"] [single-dropdown :width dropdown-width :model absrel :choices [{:id :contrib-mdur :label "Absolute"} {:id :mdur-delta :label "Relative"}] :on-change #(reset! absrel %)]
+                                                                                [gap :size "20px"]
+                                                                                [title :level :level3 :label "Cut-off type:"]
+                                                                                [single-dropdown :width dropdown-width :model spread-or-rating :choices [{:id :rating-score :label "Rating"} {:id :qt-libor-spread :label "Z-spread"}] :on-change #(do (reset! spread-or-rating %) (reset! cut-off (if (= % :rating-score) 10.0 250.0)))]
+                                                                                [gap :size "20px"]
+                                                                                [title :level :level3 :label "Level:"] [slider
+                                                                                                                        :model cut-off
+                                                                                                                        :min (if (= @spread-or-rating :rating-score) 3.0 100.0)
+                                                                                                                        :max (if (= @spread-or-rating :rating-score) 14.0 600.0)
+                                                                                                                        :step (if (= @spread-or-rating :rating-score) 1.0 50.0)
+                                                                                                                        :on-change #(reset! cut-off %)
+                                                                                                                        :width "200px"]
+                                                                                [label :label (if (= @spread-or-rating :rating-score) (qstables/get-implied-rating (str @cut-off)) (str @cut-off "bps"))]]]
+
+                                    [gt/portfolio-group-selector :multiple-ir-risk/selected-portfolios [:dummies :models]]
+                                    [gap :size "20px"]
+                                    [title :level :level2 :label "Total"]
+                                    [:> ReactTable {:data (:total data) :columns cols :showPagination false  :pageSize 8 :className "-striped -highlight"}]
+                                    [title :level :level2 :label "UST & hedges"]
+                                    [:> ReactTable {:data (:ust data) :columns cols :showPagination false  :pageSize 8 :className "-striped -highlight"}]
+                                    [title :level :level2 :label label-sensitive]
+                                    [:> ReactTable {:data (:ig data) :columns cols :showPagination false  :pageSize 8 :className "-striped -highlight"}]
+                                    [title :level :level2 :label label-insensitive]
+                                    [:> ReactTable {:data (:hy data) :columns cols :showPagination false  :pageSize 8 :className "-striped -highlight"}]
+
+
+
+                                    [gap :size "20px"]
+
+
+
+
+                                    ]
+                                   2
                                    )]))))
 
 (defn concentration-risk []

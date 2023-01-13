@@ -95,6 +95,8 @@
                  :portfolio-alignment/table-filter                   []
                  :portfolio-alignment/expander                       {0 {}}
 
+                 :multiple-ir-risk/selected-portfolios              #{}
+
                  ;var view
                  :var/portfolio                                      "OGEMCORD"
                  :var/result                                         nil
@@ -441,6 +443,8 @@
            ;:multiple-portfolio-risk/shortcut
            :multiple-portfolio-risk/table-filter
            :multiple-portfolio-risk/expander
+
+           :multiple-ir-risk/selected-portfolios
 
            :portfolio-alignment/display-style
            :portfolio-alignment/field
