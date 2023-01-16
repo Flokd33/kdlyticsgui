@@ -20,7 +20,10 @@
     [jasminegui.charting :as charting]
     [jasminegui.guitools :as gt]
     [goog.object :as gobj]
-    [markdown.core :refer [md->html md->html-with-meta]])
+    ;[markdown.core :refer [md->html md->html-with-meta]]
+    [showdown]
+
+    )
 
   )
 
@@ -139,11 +142,16 @@
 
 
 (defn mandates []
-  [box :class "subbody rightelement" :child
-   (gt/element-box
-     "mandates" "1675px" "Mandates" nil
-     [[h-box :gap "20px" :children [[vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate]) :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]
-                                    [box :child [:div {:dangerouslySetInnerHTML {:__html (md->html @(rf/subscribe [:knowledge/mandate-description]))}}]]]]])])
+  (let [sd (showdown/Converter. )                           ;#js {"tables" true}
+        nthg (.setFlavor sd "github")]
+    [box :class "subbody rightelement" :child
+     (gt/element-box
+       "mandates" "1675px" "Mandates" nil
+       [[h-box :gap "20px" :children [[vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate]) :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]
+                                      [box :child [:div {:dangerouslySetInnerHTML {:__html (.makeHtml sd @(rf/subscribe [:knowledge/mandate-description]))}}]]
+
+                                      ;[box :child [:div {:dangerouslySetInnerHTML {:__html (md->html @(rf/subscribe [:knowledge/mandate-description]))}}]]
+                                      ]]])]))
 
 (defn exclusions []
   [box :class "subbody rightelement" :child
