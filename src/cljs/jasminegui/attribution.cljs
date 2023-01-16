@@ -537,7 +537,7 @@
                               :columns        (into [{:Header "Strategy" :accessor "strategy" :width 150}
                                                      {:Header "Index" :accessor "index" :width 125}
                                                      {:Header "Period" :accessor "period" :width 75 :style {:textAlign "right"}}]
-                                                    (for [y (range 2016 2023)]
+                                                    (for [y (range 2016 2024)]
                                                       (tables/nb-col y (str "y" y) 75 #(tables/nb-cell-format "%.1f%" 100 %))))
                               :showPagination true :sortable true :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"}]
 
@@ -548,7 +548,7 @@
   [box :class "subbody rightelement" :child
    (gt/element-box-generic "emd-weekly" max-width "EMD weekly"
                            {:target-id "emd-weekly-table" :download-table @(rf/subscribe [:attribution/emd-weekly])}
-                           [                                ;[title :level :level3 :label "Total returns. Momentum strategies rebalanced 1st of month, 25bps cost if rebalanced, and earning 50bps p.a. if in cash."]
+                           [
                             [:> ReactTable
                              {:data           @(rf/subscribe [:attribution/emd-weekly])
                               :columns        (concat [{:Header "Description" :columns [(tables/text-col "Code" "Portfolio_Code" 80)
