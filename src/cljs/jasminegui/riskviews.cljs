@@ -659,7 +659,7 @@
                                     [:> ReactTable
                                      {:data           display
                                       :columns        [{:Header "Bucket overweight" :columns [{:Header "Bucket" :accessor "bucket" :width 240}
-                                                                                              (assoc (tables/nb-col "Maturity multiplier" "weight-multiplier" 120 tables/round1 nil) :filterable false)
+                                                                                              (assoc (tables/nb-col "NAV multiplier" "weight-multiplier" 120 tables/round1 nil) :filterable false)
                                                                                               (assoc (tables/nb-col "Duration multiplier" "mdur-multiplier" 120 tables/round1 nil) :filterable false)]}
                                                        {:Header "NAV" :columns [(assoc (tables/nb-col "Fund" "weight" 120 tables/round2pc-no-mult nil) :filterable false)
                                                                                 (assoc (tables/nb-col "Index" "bm-weight" 120 tables/round2pc-no-mult nil) :filterable false)]}
