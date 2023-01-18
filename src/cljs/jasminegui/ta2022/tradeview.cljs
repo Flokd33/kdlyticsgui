@@ -446,7 +446,7 @@
                                                                     [hb [[box :size "1" :child [t3 "Analyst"]] [box :size "3" :child [label :label ((keyword tkh "analyst") t0)]]]]
                                                                     [hb [[box :size "1" :child [t3 "Strategy"]] [box :size "3" :child [label :label ((keyword tkh "strategy") t0)]]]]
                                                                     [hb [[box :size "1" :child [t3 "Entry date"]] [box :size "3" :child [label :label (t/int->dd-MM-yyyy ((keyword tkh "entry_date") t0))]]]]
-                                                                    [hb [[box :size "1" :child [t3 "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent ((keyword tkh "entry_rationale") t0)) (catch js/Error e ((keyword tkh "exit-rationale") t0)))]]]]]]]
+                                                                    [hb [[box :size "1" :child [t3 "Entry rationale"]] [box :size "3" :child [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent ((keyword tkh "entry_rationale") t0)) (catch js/Error e ((keyword tkh "entry_rationale") t0)))]]]]]]]
                                       (if (> (count sorted-trades) 1)
                                         [[v-box :gap "5px" :children [[title :label (str "Latest update (no." (count sorted-trades) ")") :level :level2]
                                                                       [hb [[box :size "1" :child [t3 "Internal ID"]] [box :size "3" :child [label :label (str ((keyword tkh "uuid") tl))]]]]
