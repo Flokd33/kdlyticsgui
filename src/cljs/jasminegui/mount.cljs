@@ -32,7 +32,7 @@
                  :large-exposures                                    []
 
                  :factsheet/cre                                       []
-                 :knowledge/selected-mandate                          "OGEMCORD"
+                 :knowledge/selected-mandate                          ""
                  :knowledge/mandate-description                       ""
 
                  ;local-storage-cache
@@ -41,7 +41,7 @@
 
                  ;navigation
                  :navigation/active-view                             :entry ;:home
-                 :navigation/active-knowledge                        :entry
+                 :navigation/active-knowledge                        :mandates
                  :navigation/active-home                             :summary
                  :navigation/active-var                              :overview
                  :navigation/active-qs                               :table

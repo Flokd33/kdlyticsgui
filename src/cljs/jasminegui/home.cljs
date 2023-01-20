@@ -42,7 +42,7 @@
       :proxies                        [var/main-proxy-view]
       :portfolio-history              [riskviews/portfolio-history]
       :position-history               [riskviews/position-history]
-      :allianz-loss-report            [riskviews/allianz-loss-report]
+      ;:allianz-loss-report            [riskviews/allianz-loss-report]
 
 
       [:div.output "nothing to display"])))

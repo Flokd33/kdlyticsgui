@@ -33,6 +33,7 @@
 (defn hb [x] [h-box :gap "10px" :width "1024px" :align :center :children x])
 (def btc "btn btn-primary btn-block")
 (defn t3 [txt] [title :level :level3 :label txt])
+(defn decode-uri-p [txt] [p {:style {:white-space "pre-line"}} (try (js/decodeURIComponent txt) (catch js/Error e txt))])
 
 (defn rt-int->date
   [accessor this]

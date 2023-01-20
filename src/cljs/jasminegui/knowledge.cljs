@@ -20,6 +20,7 @@
     [jasminegui.charting :as charting]
     [jasminegui.guitools :as gt]
     [goog.object :as gobj]
+    [jasminegui.tools :as tools]
     ;[markdown.core :refer [md->html md->html-with-meta]]
     [showdown]
 
@@ -143,15 +144,12 @@
 
 (defn mandates []
   (let [sd (showdown/Converter. )                           ;#js {"tables" true}
-        nthg (.setFlavor sd "github")]
+        nthg (.setFlavor sd "github")]                      ;helps with tables and other stuff
     [box :class "subbody rightelement" :child
      (gt/element-box
        "mandates" "1675px" "Mandates" nil
        [[h-box :gap "20px" :children [[vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate]) :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]
-                                      [box :child [:div {:dangerouslySetInnerHTML {:__html (.makeHtml sd @(rf/subscribe [:knowledge/mandate-description]))}}]]
-
-                                      ;[box :child [:div {:dangerouslySetInnerHTML {:__html (md->html @(rf/subscribe [:knowledge/mandate-description]))}}]]
-                                      ]]])]))
+                                      [box :child [:div {:dangerouslySetInnerHTML {:__html (.makeHtml sd @(rf/subscribe [:knowledge/mandate-description]))}}]]]]])]))
 
 (defn exclusions []
   [box :class "subbody rightelement" :child
@@ -178,14 +176,53 @@
                                 {:Header "Restructuring comment" :accessor "Restructuring comment" :width 350  :style {:whiteSpace "unset"}}]
           :pageSize (count data) :showPagination false :filterable true :defaultFilterMethod tables/text-filter-OR}]])]))
 
+(def max-width "1675px")
+(defn allianz-loss-report []
+  (when (empty? @(rf/subscribe [:allianz-loss-report])) (rf/dispatch [:get-allianz-loss-report]))
+  (let [data (sort-by :Bond @(rf/subscribe [:allianz-loss-report]))
+        positions_raw @(rf/subscribe [:positions])
+        positions_IAKLEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAKLEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAKLEMCD"} positions_raw))
+        positions_IALEEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IALEEMCD"} positions_raw)) (t/chainfilter {:portfolio "IALEEMCD"} positions_raw))
+        positions_IAUNEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAUNEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAUNEMCD"} positions_raw))
+        positions_IAPKEMCD (zipmap (map :isin (t/chainfilter {:portfolio "IAPKEMCD"} positions_raw)) (t/chainfilter {:portfolio "IAPKEMCD"} positions_raw))
+        data-clean (for [isin data]
+                     (assoc isin :IAKLEMCD_loss_budget_norm  (/ (isin :IAKLEMCD_loss_budget_pct) (:weight (positions_IAKLEMCD (isin :ISIN))))
+                                 :IAKLEMCD_weight (:weight (positions_IAKLEMCD (isin :ISIN)))
+                                 :IALEEMCD_loss_budget_norm (/ (isin :IALEEMCD_loss_budget_pct) (:weight (positions_IALEEMCD (isin :ISIN))))
+                                 :IALEEMCD_weight (:weight (positions_IALEEMCD (isin :ISIN)))
+                                 :IAUNEMCD_loss_budget_norm (/ (isin :IAUNEMCD_loss_budget_pct) (:weight (positions_IAUNEMCD (isin :ISIN))))
+                                 :IAUNEMCD_weight (:weight (positions_IAUNEMCD (isin :ISIN)))
+                                 :IAPKEMCD_loss_budget_norm (/ (isin :IAPKEMCD_loss_budget_pct) (:weight (positions_IAPKEMCD (isin :ISIN))))
+                                 :IAPKEMCD_weight (:weight (positions_IAPKEMCD (isin :ISIN)))
+                                 )
+                     )
+        ]
+    ;(println (last data-clean))
+    [box :class "subbody rightelement" :child
+     (gt/element-box-generic "allianz-loss-report-table" max-width (str ((if @(re-frame.core/subscribe [:rot13]) jasminegui.tools/rot13 identity) (str "Allianz ")) "P&L budget" )
+                             {:target-id "allianz-loss-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:allianz-loss-report]) "allianz")}
+                             [[:> ReactTable
+                               {:data           data-clean
+                                :columns        (conj
+                                                  (map (fn [x] {:Header x :columns [(tables/nb-col "Loss budget %" (str x "_loss_budget_pct") 100 #(tables/nb-cell-format "%.1f%" 1. %) tables/sum-rows)
+                                                                                    (tables/nb-col "EUR gross P&L" (str x "_eur_gross_pnl") 100 tables/nb-thousand-cell-format tables/sum-rows)
+                                                                                    (tables/nb-col "Weight" (str x "_weight") 80 #(tables/nb-cell-format "%.1f%" 1. %)  tables/sum-rows)
+                                                                                    (tables/nb-col "Loss budget nor." (str x "_loss_budget_norm") 110 #(tables/nb-cell-format "%.1f%" 1. %)  tables/sum-rows)
+                                                                                    ]})
+                                                       ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"])
+                                                  {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 90}
+                                                                            {:Header "ISIN" :accessor "ISIN" :width 100}]})
+                                :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])]))
+
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-knowledge])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-qs
-      :entry              [p "Hello"]
+      ;:entry              [p "Hello"]
       :mandates           [mandates]
       :exclusions         [exclusions]
       :cre                [cre]
+      :allianz-loss-report [allianz-loss-report]
       :trounce-flow                   [trounce-flow-display]
       :gdel                           [global-debt-and-equity-levels]
       [:div.output "nothing to display"]))

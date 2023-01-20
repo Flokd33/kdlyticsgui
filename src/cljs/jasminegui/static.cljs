@@ -45,7 +45,7 @@
    {:code :stresstest             :name "Stress test"}
    {:code :portfolio-history      :name "Portfolio history"}
    {:code :position-history       :name "Position history"}
-   {:code :allianz-loss-report    :name "P&L budget"}                   ;"Allianz P&L budget"
+
 
    ])
 
@@ -111,11 +111,11 @@
    {:code :journal              :name "Journal"}])
 
 (def knowledge-navigation
-  [{:code :entry             :name "Home"}
+  [                                                         ;{:code :entry             :name "Home"}
    {:code :mandates             :name "Mandates"}
    {:code :exclusions           :name "Exclusions"}
    {:code :cre                 :name "China real estate"}
-   {:code :allianz-loss-report    :name "P&L budget"}                   ;"Allianz P&L budget"
+   {:code :allianz-loss-report    :name "Allianz P&L budget"}                   ;"Allianz P&L budget"
    {:code :gdel                   :name "Global debt levels"}
    {:code :trounce-flow           :name "Trounceflow"}])
 
