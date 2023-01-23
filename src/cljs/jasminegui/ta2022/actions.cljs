@@ -203,7 +203,7 @@
                   ]])))
 
 (defn morph-or-amend-trade-modal-sql [morph?]
-  (println nil)
+  ;(println nil)
   (let [last-trade (last (:trades @(rf/subscribe [:ta2022/trade-history])))
         tkh nil                                             ;(if sql? nil "ta2022.trade")
         tkhh nil                                            ;(if sql? nil "ta2022.alert")

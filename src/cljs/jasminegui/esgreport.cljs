@@ -381,7 +381,7 @@
                 )
 
         ]
-    (println esg-reports-clean)
+
     [v-box :gap "5px" :children
     [[v-box :width "1280px" :gap "10px" :class "element"
      :children [[modal-success]
@@ -389,9 +389,7 @@
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label "Report"]
                             [single-dropdown :width categories-list-width-long :choices esg-reports-clean-input :filter-box? true :model esg-report-selected
-                             :on-change #(do (rf/dispatch [:esg/refresh-esg %]))]
-                            ]]
-                ]]
+                             :on-change #(do (rf/dispatch [:esg/refresh-esg %]))]]]]]
     [v-box :width "1280px" :gap "5px" :class "element"
      :children (concat [[h-box :gap "10px" :align :center :children [[:img {:width "37px" :height "64px" :src "assets/91-logo-green.png"}] [title :label report-category :level :level1]]]
                         [gap :size "20px"]
@@ -526,11 +524,7 @@
                                                                                                                                                                      0
                                                                                                                                                                      (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "total-emissions"} report-selected)))))))]]]
                           ]
-                         nil
-                         ))]
-     ]
-     ]
-    ))
+                         nil))]]]))
 
 (def tf-total-score (r/atom 0))
 (def tf-analyst-name (r/atom ""))

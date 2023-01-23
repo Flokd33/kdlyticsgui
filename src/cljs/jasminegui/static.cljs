@@ -184,7 +184,7 @@
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
    {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED"]}
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON"]}
-   {:id :equity    :label "Equity"     :portfolios ["OGEMEQU" "IFSBAEME" "IAEM1EME" "IBTNZEME" "OLLCEMEQ" "ITASEME2" "IGARDEME" "IHPEEEME" "IAMPEME" "U4EMEQY" "IBOMCAEME" "IHOSTEME" "OGEMMAE" "ICPRLEME" "O40EME" "ITCOREME"]}
+   {:id :equity    :label "Equity"     :portfolios ["OGEMEQU" "IFSBAEME" "IAEM1EME" "IBTNZEME" "OLLCEMEQ" "ITASEME2" "IGARDEME" "IHPEEEME" "IAMPEME" "U4EMEQY" "IBOMCAEME" "IHOSTEME" "OGEMMAE" "ICPRLEME" "O40EME" "ITCOREME" "IMAKEME" "AUTEME" "IGESBEME" "IMGIEMEQ" "INEPTUNE" "U4EMEQY" "IBRUNEME" "IHARRIER"]}
    ])
 
 ;{:id "None"            :label "None"}

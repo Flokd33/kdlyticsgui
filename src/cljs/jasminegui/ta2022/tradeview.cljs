@@ -388,7 +388,7 @@
     :filterable false :showPagination false :pageSize (count data) :showPageSizeOptions false :className "-striped -highlight"}])
 
 (defn alert-table-sql [data with-triggers]
-  (println (first data))
+  ;(println (first data))
   [:> ReactTable
    {:data       (alert-sort data)
     :columns    (remove nil? [{:Header "UUID" :accessor :uuid :width 300 :style {:textAlign "left"} :Cell (fn [this] (if-let [x (aget this "value")] (str x) "-")) :show false}
@@ -517,7 +517,7 @@
   [trades]
   (let [too-old?
         (try (> (in-days (interval (t/int->gdate (:entry_date (last trades))) (t/int->gdate (today)))) 4) (catch js/Error e true))]
-    (println (:entry_date (last trades)))
+
     (gt/element-box-generic "isin-picker" element-box-width "Actions" {:no-icons true}
                             [[h-box :gap "10px" :align :center
                               :children [[label :label "Pick an ISIN:"]
