@@ -208,7 +208,7 @@
 
                  :portfolio-trade-history/data                       []
                  :portfolio-trade-history/portfolio                  "OGEMCORD"
-                 :portfolio-trade-history/start-date                 (t/int->gdate 20220101)
+                 :portfolio-trade-history/start-date                 (t/int->gdate 20230101)
                  :portfolio-trade-history/end-date                   (t/int->gdate (today))
                  :portfolio-trade-history/performance                "Yes"
                  :portfolio-trade-history/fwd-return                 "No"
@@ -216,13 +216,13 @@
                  :portfolio-trade-history/comments                   "No"
 
                  :multiple-portfolio-trade-history/data              []
-                 :multiple-portfolio-trade-history/start-date        (t/int->gdate 20220101)
+                 :multiple-portfolio-trade-history/start-date        (t/int->gdate 20230101)
                  :multiple-portfolio-trade-history/end-date          (t/int->gdate (today))
                  :multiple-portfolio-trade-history/pivot             "No"
 
                  :recent-trade-data/trades                           []
                  :traded-since-date-output/trades                    []
-                 :recent-trade-data/date-from                        (t/int->gdate 20220101)
+                 :recent-trade-data/date-from                        (t/int->gdate 20230101)
                  :recent-trade-data/date-to                          (t/int->gdate (today))
                  :recent-trade-data/sector                           "All"
                  :recent-trade-data/country                          "All"

@@ -419,6 +419,7 @@
         portfolios @(rf/subscribe [:portfolios])
         selected-portfolios (rf/subscribe [:multiple-portfolio-scorecard/selected-portfolios])
         toggle-portfolios (fn [seqp] (let [setseqp (set seqp)] (if (clojure.set/subset? setseqp @selected-portfolios) (clojure.set/difference @selected-portfolios setseqp) (clojure.set/union @selected-portfolios setseqp))))
+        ;treedata @(rf/subscribe [:scorecard-risk/tree])
         ]
     ;(println selected-portfolios)
     [v-box :gap "20px" :align :start
@@ -447,18 +448,51 @@
                                                                                             {:Header "Level" :accessor "relval-alert-level" :width 40 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.1f" 1)}
                                                                                             {:Header "Triggered?" :accessor "relval-target-triggered-date" :width 80 :style {:textAlign "right"} :Cell (partial tables/nb-cell-format "%0.0f" 1)}]}]
                                 :showPagination false :sortable true :pageSize (count vdisplay) :showPageSizeOptions false :className "-striped -highlight"}]])
-                (gt/element-box "scorecard-risk-pivot" "100%" (str portfolio " " sector " risk country pivot") @(rf/subscribe [:scorecard-risk/tree])
-                                [[:> ReactTable
-                                  {:data           @(rf/subscribe [:scorecard-risk/tree])
+                (gt/element-box "scorecard-risk-pivot" "100%" (str portfolio " " sector " risk country pivot") filtered-tree
+                                [
+                                 (let [fnav (reduce + (map :weight filtered-tree)) inav (reduce + (map :bm-weight filtered-tree))]
+                                   [:> ReactTable
+                                    {:data           [{:Bond                             "Rebased" :qt-jpm-sector "Rebased" :qt-risk-country-name "Rebased" :weight 100 :bm-weight 100 :weight-delta 0.0
+                                                       :contrib-mdur                     (/ (reduce + (map :contrib-mdur filtered-tree)) fnav 0.01)
+                                                       :bm-contrib-eir-duration          (/ (reduce + (map :bm-contrib-eir-duration filtered-tree)) inav 0.01)
+                                                       :mdur-delta                       (- (/ (reduce + (map :contrib-mdur filtered-tree)) fnav 0.01) (/ (reduce + (map :bm-contrib-eir-duration filtered-tree)) inav 0.01))
+                                                       :contrib-yield                    (/ (reduce + (map :contrib-yield filtered-tree)) fnav 0.01)
+                                                       :bm-contrib-yield                 (/ (reduce + (map :bm-contrib-yield filtered-tree)) inav 0.01)
+                                                       :contrib-zspread                  (/ (reduce + (map :contrib-zspread filtered-tree)) fnav 0.01)
+                                                       :contrib-beta-1y-daily            (/ (reduce + (map :contrib-beta-1y-daily filtered-tree)) fnav 0.01)
+                                                       :contrib-BBG_CEMBI_D1Y_BETA       (/ (reduce + (map :contrib-BBG_CEMBI_D1Y_BETA filtered-tree)) fnav 0.01)
+                                                       :bm-contrib-BBG_CEMBI_D1Y_BETA    (/ (reduce + (map :bm-contrib-BBG_CEMBI_D1Y_BETA filtered-tree)) inav 0.01)
+                                                       :contrib-delta-BBG_CEMBI_D1Y_BETA (- (/ (reduce + (map :contrib-BBG_CEMBI_D1Y_BETA filtered-tree)) fnav 0.01) (/ (reduce + (map :bm-contrib-BBG_CEMBI_D1Y_BETA filtered-tree)) inav 0.01))
+                                                       }]
+                                     :columns        [{:Header "Bond" :columns [(assoc (:sector tables/risk-table-columns) :filterable false)
+                                                                                (assoc (:country tables/risk-table-columns) :filterable false)
+                                                                                (assoc (:name tables/risk-table-columns) :Header "NAV" :width 150 :filterable false)
+                                                                                (assoc (:rating tables/risk-table-columns) :Header "silent")
+                                                                                (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]}
+                                                      {:Header "NAV" :columns (map #(assoc % :getProps tables/red-negatives :filterable false) (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta]))}
+                                                      {:Header "Duration" :columns (map #(assoc % :getProps tables/red-negatives :filterable false) (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta]))}
+                                                      {:Header "Yield" :columns (map #(assoc % :filterable false) (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield]))}
+                                                      {:Header "Z-spread" :columns (map #(assoc % :filterable false) (mapv tables/risk-table-columns [:contrib-zspread]))}
+                                                      {:Header "Beta (Bbg vs CEMBIBD)" :columns (mapv #(assoc % :filterable false)
+                                                                                                      [(tables/risk-table-columns :contrib-beta)
+                                                                                                       (tables/risk-table-columns :contrib-BBG_CEMBI_D1Y_BETA)
+                                                                                                       (tables/risk-table-columns :bm-contrib-BBG_CEMBI_D1Y_BETA)
+                                                                                                       (tables/risk-table-columns :contrib-delta-BBG_CEMBI_D1Y_BETA)])}
+
+                                                      ]
+                                     :showPagination false :sortable false :pageSize 1 :showPageSizeOptions false :className "-striped -highlight"
+                                     }])
+                                 [:> ReactTable
+                                  {:data           filtered-tree ;@(rf/subscribe [:scorecard-risk/tree])
                                    :columns        [{:Header "Bond" :columns [(assoc (:sector tables/risk-table-columns) :filterable false)
                                                                               (assoc (:country tables/risk-table-columns) :filterable false)
                                                                               (assoc (:name tables/risk-table-columns) :Header "NAV" :width 150 :filterable false)
                                                                               (assoc (:rating tables/risk-table-columns) :Header "silent")
                                                                               (assoc (:rating-score tables/risk-table-columns) :Header "Rating" :width 60 :filterable false)]}
                                                     {:Header "NAV" :columns (map #(assoc % :getProps tables/red-negatives :filterable false) (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta]))}
-                                                    {:Header "Duration" :columns (map #(assoc % :getProps tables/red-negatives) (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta]))}
-                                                    {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
-                                                    {:Header "Z-spread" :columns (mapv tables/risk-table-columns [:contrib-zspread])}
+                                                    {:Header "Duration" :columns (map #(assoc % :getProps tables/red-negatives :filterable false) (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta]))}
+                                                    {:Header "Yield" :columns (map #(assoc % :filterable false) (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield]))}
+                                                    {:Header "Z-spread" :columns (map #(assoc % :filterable false) (mapv tables/risk-table-columns [:contrib-zspread]))}
                                                     {:Header "Beta (Bbg vs CEMBIBD)" :columns (mapv #(assoc % :filterable false)
                                                                                                     [(tables/risk-table-columns :contrib-beta)
                                                                                                      (tables/risk-table-columns :contrib-BBG_CEMBI_D1Y_BETA)
