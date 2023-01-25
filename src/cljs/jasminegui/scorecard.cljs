@@ -450,14 +450,16 @@
                                 :showPagination false :sortable true :pageSize (count vdisplay) :showPageSizeOptions false :className "-striped -highlight"}]])
                 (gt/element-box "scorecard-risk-pivot" "100%" (str portfolio " " sector " risk country pivot") filtered-tree
                                 [
-                                 (let [fnav (reduce + (map :weight filtered-tree)) inav (reduce + (map :bm-weight filtered-tree))]
+                                 (let [fnav (reduce + (map :weight filtered-tree)) inav (reduce + (map :bm-weight filtered-tree))
+                                       fnavd (reduce + (map :contrib-mdur filtered-tree)) inavd (reduce + (map :bm-contrib-eir-duration filtered-tree))
+                                       ]
                                    [:> ReactTable
                                     {:data           [{:Bond                             "Rebased" :qt-jpm-sector "Rebased" :qt-risk-country-name "Rebased" :weight 100 :bm-weight 100 :weight-delta 0.0
                                                        :contrib-mdur                     (/ (reduce + (map :contrib-mdur filtered-tree)) fnav 0.01)
                                                        :bm-contrib-eir-duration          (/ (reduce + (map :bm-contrib-eir-duration filtered-tree)) inav 0.01)
                                                        :mdur-delta                       (- (/ (reduce + (map :contrib-mdur filtered-tree)) fnav 0.01) (/ (reduce + (map :bm-contrib-eir-duration filtered-tree)) inav 0.01))
-                                                       :contrib-yield                    (/ (reduce + (map :contrib-yield filtered-tree)) fnav 0.01)
-                                                       :bm-contrib-yield                 (/ (reduce + (map :bm-contrib-yield filtered-tree)) inav 0.01)
+                                                       :contrib-yield                    (/ (reduce + (map :contrib-yield filtered-tree)) fnav 0.01) ;(/ (reduce + (map #(* (:contrib-yield %) (/ (:contrib-mdur %) (:weight %))) (t/chainfilter {:weight pos?} filtered-tree))) fnavd 0.01) ;(/ (reduce + (map #(* (:contrib-yield %) 1) filtered-tree)) fnav 0.01) ;
+                                                       :bm-contrib-yield                 (/ (reduce + (map :bm-contrib-yield filtered-tree)) inav 0.01) ;(/ (reduce + (map #(* (:bm-contrib-yield %) (/ (:bm-contrib-eir-duration %) (:bm-weight %))) (t/chainfilter {:bm-weight pos?} filtered-tree))) inavd 0.01) ;(/ (reduce + (map :bm-contrib-yield filtered-tree)) inav 0.01) ; ;
                                                        :contrib-zspread                  (/ (reduce + (map :contrib-zspread filtered-tree)) fnav 0.01)
                                                        :contrib-beta-1y-daily            (/ (reduce + (map :contrib-beta-1y-daily filtered-tree)) fnav 0.01)
                                                        :contrib-BBG_CEMBI_D1Y_BETA       (/ (reduce + (map :contrib-BBG_CEMBI_D1Y_BETA filtered-tree)) fnav 0.01)

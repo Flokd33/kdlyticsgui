@@ -16,8 +16,7 @@
 ;;;;;;;;;;;;;
 
 (defn sum-rows [vals] (reduce + vals))
-(defn sum-rows-not-nil [vals] (reduce + (remove nil? vals)) ;(reduce + vals)
-  )
+(defn sum-rows-not-nil [vals] (reduce + (remove nil? vals)))
 
 (defn median [coll]
   (let [sorted (sort (remove nil? coll))     ;(remove zero? (remove nil? coll))
@@ -78,7 +77,7 @@
   [this]
   (if-let [x (aget this "value")] (.format (NumberFormat. Format/DECIMAL) (str (js/Math.round x))) "-"))
 
-(defn lower-case-s-in-value?
+(defn old-lower-case-s-in-value?
   "Checks if s (already assumed lower case) is in value. If s starts by -, excludes it"
   [s value]
   (if value                                                 ;checks for nil
@@ -88,6 +87,17 @@
       "=" (= value (* 1 (cljs.reader/read-string (subs s 1))))
       "-" (not (.includes ^js/String (.toLowerCase ^js/String value) (.substring s 1)))
       (if (number? value) (= (cljs.reader/read-string s) value) (.includes ^js/String (.toLowerCase ^js/String value) s)))))
+
+(defn lower-case-s-in-value?
+  "Checks if s (already assumed lower case) is in value. If s starts by -, excludes it"
+  ;removed the = path which isn't a good path
+  [^string s value]
+  (if value                                                 ;checks for nil
+    (case (.charAt s 0)
+      ">" (> value (js/parseFloat (.substring s 1)))
+      "<" (< value (js/parseFloat (.substring s 1)))
+      "-" (not (.includes (.toLowerCase ^js/String value) (.substring s 1)))
+      (if (js/isNaN value) (.includes (.toLowerCase ^string value) s) (= (js/parseFloat s) value)))))
 
 ;(defn lower-case-s-in-value-stable?
 ;  "Checks if s (already assumed lower case) is in value. If s starts by -, excludes it"
@@ -427,3 +437,17 @@
     :pivotBy (if is-tree (concat [:totaldummy] accessors) [])
     :className "-striped -highlight" :getTrProps (if is-tree (fn [state rowInfo instance] #js {}) get-tr-props-fn)
     :filterable true :defaultFiltered @(rf/subscribe [table-filter]) :onFilteredChange #(rf/dispatch [table-filter %])}])
+
+(defn mrt-tree-table-risk-table
+  [data columns is-tree accessors ref table-filter expander get-tr-props-fn]
+  ;(println (first @(rf/subscribe [data])))
+  [:> ReactTable
+   {:data @(rf/subscribe [data]) :columns columns
+    :enablePagination (not is-tree) :pageCount (if is-tree 1 18) :showPageSizeOptions false
+    :enableSorting true
+    :defaultFilterMethod (if is-tree (fn [filterfn row] true) text-filter-OR)
+    :ref #(reset! ref %)
+    :expanded @(rf/subscribe [expander]) :onExpandedChange #(rf/dispatch [expander %])
+    :pivotBy (if is-tree (concat [:totaldummy] accessors) [])
+    :className "-striped -highlight" :getTrProps (if is-tree (fn [state rowInfo instance] #js {}) get-tr-props-fn)
+    :enableColumnFilters true :defaultFiltered @(rf/subscribe [table-filter]) :onFilteredChange #(rf/dispatch [table-filter %])}])

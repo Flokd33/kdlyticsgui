@@ -19,6 +19,7 @@
     [jasminegui.tools :as t]
     [jasminegui.guitools :as gt]
     [jasminegui.qs.qstables :as qstables]
+    [goog.object :as gobj]
     ;[jasminegui.tradehistory :as th]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [cljs-time.core :refer [today day-of-week local-date-time days plus]]
@@ -175,7 +176,7 @@
                                      line
                                      kportfolios))
           pivoted-data-diff (map differentiate pivoted-data)
-          threshold (cljs.reader/read-string (:label (first (filter #(= (:id %) (:portfolio-alignment/threshold db)) static/threshold-choices-alignment))))
+          threshold (js/parseFloat (:label (first (filter #(= (:id %) (:portfolio-alignment/threshold db)) static/threshold-choices-alignment))))
           thfil (fn [line] (some (fn [x] (or (< x (- threshold)) (> x threshold))) (map line kportfolios)))
           pivoted-data-diff-post-th (filter thfil pivoted-data-diff)
           sorted-data (sort-by (apply juxt (concat [(comp first-level-sort (first accessors-k))] (rest accessors-k))) pivoted-data-diff-post-th)]
@@ -305,23 +306,28 @@
 
 (defn portfolio-alignment-risk-display []
   (let [group (:portfolios (first (filter #(= (:id %) @(rf/subscribe [:portfolio-alignment/group])) static/portfolio-alignment-groups-eq)))
-        equity? (= @(rf/subscribe [:portfolio-alignment/group]) :equity)
+        equity? (some #{@(rf/subscribe [:portfolio-alignment/group])} [:equity-tc :equity-eme :equity-india :equity-esg])
         base-portfolio (first group)
         portfolios (rest group)
         display-key @(rf/subscribe [:portfolio-alignment/field])
         cell-one (let [v (get-in tables/risk-table-columns [display-key :Cell])] (case display-key :nav tables/round2-if-not0 :weight-delta tables/round2-if-not0 :contrib-yield tables/round2pc-no-mult :contrib-mdur tables/round2-if-not0 v)) ;(get-in tables/risk-table-columns [display-key :Cell])
+        props (fn [state rowInfo column]
+                (if (and (some? rowInfo) (> (js/Math.abs (gobj/getValueByKeys rowInfo "row" (gobj/get column "id"))) (js/parseFloat (:label (first (filter #(= (:id %) @(rf/subscribe [:portfolio-alignment/threshold])) static/threshold-choices-alignment))))))
+                  #js {:style #js {:textAlign "right" :fontWeight "bold"}}
+                  #js {:style #js {:textAlign "right" :fontWeight "normal"}}))
         width-one 80
         is-tree (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree")
         risk-choices (let [rfil @(rf/subscribe [:portfolio-alignment/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
         risk-choices-clean (if equity? (if (= (some #{:sector} risk-choices) :sector) (vec (concat (conj (remove #(= % :sector) risk-choices) :sector-gics) [:description]) ) (concat risk-choices [:description])) risk-choices)
         grouping-columns (into [] (for [r (remove nil? risk-choices-clean)] (tables/risk-table-columns r)))
         ]
+    (println @(rf/subscribe [:portfolio-alignment/threshold]))
     [tables/tree-table-risk-table
      :portfolio-alignment/table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
       {:Header "Actual" :columns [{:Header base-portfolio :accessor base-portfolio :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}]}
       {:Header  (str "Portfolio " (name display-key) " vs " base-portfolio)
-       :columns (into [] (for [p portfolios] {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :Cell cell-one :filterable false}))}
+       :columns (into [] (for [p portfolios] {:Header p :accessor p :width width-one :getProps props :aggregate tables/sum-rows :Cell cell-one :filterable false}))}
       {:Header "Description" :columns [{:Header "ISIN" :accessor "isin" :width 100} {:Header "thinkFolio ID" :accessor "description" :width 500} (tables/risk-table-columns :rating)]}]
      is-tree
      (mapv :accessor grouping-columns)

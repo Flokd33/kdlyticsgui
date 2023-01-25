@@ -184,7 +184,10 @@
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
    {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED"]}
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON"]}
-   {:id :equity    :label "Equity"     :portfolios ["OGEMEQU" "IFSBAEME" "IAEM1EME" "IBTNZEME" "OLLCEMEQ" "ITASEME2" "IGARDEME" "IHPEEEME" "IAMPEME" "U4EMEQY" "IBOMCAEME" "IHOSTEME" "OGEMMAE" "ICPRLEME" "O40EME" "ITCOREME" "IMAKEME" "AUTEME" "IGESBEME" "IMGIEMEQ" "INEPTUNE" "U4EMEQY" "IBRUNEME" "IHARRIER"]}
+   {:id :equity-tc  :label "4F TCORP"   :portfolios ["OGEMEQU" "IMAKEME" "ITCOREME"]}
+   {:id :equity-eme :label "4F Core"    :portfolios ["OGEMEQU" "AUTEME" "IAMPEME" "IBOMCAEME" "IFSBAEME" "IGARDEME" "IGESBEME" "IHOSTEME" "IMGIEMEQ" "INEPTUNE" "ITASEME2" "O40EME" "OGEMMAE" "OLLCEMEQ" "U4EMEQY"]}
+   {:id :equity-india :label "4F India" :portfolios ["OGEMEQU" "IGARDEME" "IMERGEME" "ITASEME2"]}
+   {:id :equity-esg :label "4F ESG"     :portfolios ["OGEMEQU" "IAEM1EME" "IBRUNEME" "IBTNZEME" "IHARRIER" "IHFEME" "IUBSGE"]}
    ])
 
 ;{:id "None"            :label "None"}
@@ -232,6 +235,7 @@
 
 (def threshold-choices-alignment
   [{:id :zero           :label "0.00"}
+   {:id :tenth          :label "0.10"}
    {:id :quarter        :label "0.25"}
    {:id :half           :label "0.50"}
    {:id :threequarters  :label "0.75"}
