@@ -321,7 +321,7 @@
         risk-choices-clean (if equity? (if (= (some #{:sector} risk-choices) :sector) (vec (concat (conj (remove #(= % :sector) risk-choices) :sector-gics) [:description]) ) (concat risk-choices [:description])) risk-choices)
         grouping-columns (into [] (for [r (remove nil? risk-choices-clean)] (tables/risk-table-columns r)))
         ]
-    (println @(rf/subscribe [:portfolio-alignment/threshold]))
+
     [tables/tree-table-risk-table
      :portfolio-alignment/table
      [{:Header "Groups" :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
@@ -452,11 +452,13 @@
         threshold (rf/subscribe [:portfolio-alignment/threshold])
         grps static/portfolio-alignment-groups-eq
         grps-clean (for [g grps] (assoc g :label ((if @(rf/subscribe [:rot13]) t/rot13 identity) (:label g))))]
+    ;(println @(rf/subscribe [:portfolio-alignment/table]))
+    ;(println (map name (concat [:NAME :description :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups)))))))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "pivot-portfolio-risk" max-width (str "Portfolio alignment " @(rf/subscribe [:qt-date]))
                              {:shortcuts       :portfolio-alignment/shortcut
                               :target-id       :portfolio-alignment/table
-                              :on-click-action #(tools/react-table-to-csv @portfolio-alignment-risk-display-view "alignment" (map name (concat [:NAME :description :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups)))))))}
+                              :on-click-action #(tools/react-table-to-csv @portfolio-alignment-risk-display-view "alignment" (map name (concat [:NAME :description :isin :jpm-region :qt-risk-country-name :qt-jpm-sector :qt-iam-int-lt-median-rating :qt-gics-sector] (map keyword (:portfolios (first (filter (fn [x] (= (:id x) @(rf/subscribe [:portfolio-alignment/group]))) static/portfolio-alignment-groups-eq)))))) (= @(rf/subscribe [:portfolio-alignment/display-style]) "Tree"))}
                              [[h-box :gap "50px"
                                :children
                                [[v-box :gap "10px"
