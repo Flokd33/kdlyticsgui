@@ -19,7 +19,7 @@
         [cljs-time.core :refer [today]]
         ["react-table-v6" :as rt :default ReactTable]
         ["react" :as react :default useMemo]
-        [tech.v3.dataset :as ds]
+        ;[tech.v3.dataset :as ds]
         [goog.object :as gobj]
 
         )
@@ -28,20 +28,20 @@
 
 (def data (map #(zipmap [:a :b :c] [%1 %2 %3]) (range 100) (range 100) (range 100)))
 
-(def datads (ds/->dataset data))
-
-(defn testtable []
-  (when (nil? @(rf/subscribe [:test-data])) (rf/dispatch [:get-test-data]))
-  (when @(rf/subscribe [:test-data])
-    (println (ds/data->dataset (gobj/get @(rf/subscribe [:test-data]) "rep"))) ; "tag" also gives something
-    )
-   ;(.-tag x) also gives something
-  [:> ReactTable
-   {:data           (apply array (ds/rows (ds/select-columns datads [:a :b]))) ;here we have a javascript array of clojure maps
-    :columns        [{:Header "A" :id "a" :accessor (fn [row index] (get row :a)) :width 120} ;because of this we need a clojure function in the accessor
-                     {:Header "B" :id "b" :accessor (fn [row index] (get row :b)) }
-                     ]
-    :pageSize (count data) :className "-striped -highlight"}]
-
-
-  )
+;(def datads (ds/->dataset data))
+;
+;(defn testtable []
+;  (when (nil? @(rf/subscribe [:test-data])) (rf/dispatch [:get-test-data]))
+;  (when @(rf/subscribe [:test-data])
+;    (println (ds/data->dataset (gobj/get @(rf/subscribe [:test-data]) "rep"))) ; "tag" also gives something
+;    )
+;   ;(.-tag x) also gives something
+;  [:> ReactTable
+;   {:data           (apply array (ds/rows (ds/select-columns datads [:a :b]))) ;here we have a javascript array of clojure maps
+;    :columns        [{:Header "A" :id "a" :accessor (fn [row index] (get row :a)) :width 120} ;because of this we need a clojure function in the accessor
+;                     {:Header "B" :id "b" :accessor (fn [row index] (get row :b)) }
+;                     ]
+;    :pageSize (count data) :className "-striped -highlight"}]
+;
+;
+;  )
