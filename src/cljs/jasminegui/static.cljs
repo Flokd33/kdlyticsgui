@@ -178,7 +178,8 @@
 (def portfolio-alignment-groups-eq
   [{:id :cembi      :label "CEMBI"      :portfolios ["OGEMCORD" "ICSCEMCD" "IVGVEMCD" "IEZVKEMD" "IKZVKEMD"]}
    {:id :allianz    :label "Allianz"    :portfolios ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"]}
-   {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC" "INMIEMCD" "INLIEMCD"]}
+   {:id :tr         :label "TR"         :portfolios ["AIFGLBCD" "OOGEMTRC"]}
+   {:id :nationwide :label "Nationwide" :portfolios ["INMIEMCD" "INLIEMCD"]}
    {:id :ig         :label "IG"         :portfolios ["OGEMIGC" "ICIFEMD" "IKPOEMCD" "IYELEMCD"]}
    {:id :munichre   :label "Munich Re"  :portfolios ["IMRAGEMD" "IMEREMD1" "IMEREMD3" "IMRUSEMD"]}
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
