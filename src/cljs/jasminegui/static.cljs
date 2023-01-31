@@ -191,7 +191,7 @@
    {:id :equity-esg :label "4F ESG"     :portfolios ["OGEMEQU" "IAEM1EME" "IBRUNEME" "IBTNZEME" "IHARRIER"]}
    ])
 
-;{:id "None"            :label "None"}
+;{:id "None"            :label "None" }
 (def risk-field-choices
   [{:id :nav                              :label "NAV"}
    {:id :weight-delta                     :label "NAV delta"}
