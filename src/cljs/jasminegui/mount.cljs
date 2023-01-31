@@ -14,6 +14,7 @@
                  ;global parameters
                  :rot13                                             false
                  ;data
+                 :test-data                                           nil
                  :positions                                          []
                  :naked-positions                                    []
                  :instruments                                        {}
@@ -400,6 +401,8 @@
 
 ;list of keys event for which a dispatch will assoc a value to the db given key event
 (doseq [k [:rot13
+
+           :test-data
 
            :navigation/active-view
            :navigation/active-knowledge
@@ -1024,6 +1027,7 @@
    {:get-key :get-top-bottom-price-change :url-tail "top_bottom_price_change" :dis-key  :top-bottom-price-change}
    {:get-key :get-list-dates-position-history :url-tail "list-dates-position-history" :dis-key  :list-dates-position-history}
    {:get-key :get-list-dates-month-end-calendar :url-tail "list-dates-month-end-calendar" :dis-key  :list-dates-month-end-calendar}
+   {:get-key :get-test-data :url-tail "test-route" :dis-key  :test-data}
 
    ])
 

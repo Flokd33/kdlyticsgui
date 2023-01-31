@@ -15,6 +15,7 @@
 
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
     [jasminegui.tools :as t]
+    [jasminegui.playground :as playground]
     [cljs-time.core :refer [today]])
   )
 
@@ -148,4 +149,6 @@
   [v-box                                                  ;:gap "10px"
    :gap "10px"
    :padding "80px 25px"
-   :children [[modal-success] [debug-operations] [integrity] [last-updated-logs]]])
+   :children [[modal-success] [debug-operations]
+              ;[box :class "element" :child [playground/testtable]]
+              [integrity] [last-updated-logs]]])
