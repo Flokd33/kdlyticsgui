@@ -185,10 +185,10 @@
    {:id :talanx     :label "Talanx USD" :portfolios ["ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD5"]}
    {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED"]}
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON"]}
-   {:id :equity-tc  :label "4F TCORP"   :portfolios ["OGEMEQU" "IMAKEME" "ITCOREME"]}
-   {:id :equity-eme :label "4F Core"    :portfolios ["OGEMEQU" "AUTEME" "IAMPEME" "IBOMCAEME" "IFSBAEME" "IGARDEME" "IGESBEME" "IHOSTEME" "IMGIEMEQ" "INEPTUNE" "ITASEME2" "O40EME" "OGEMMAE" "OLLCEMEQ" "U4EMEQY"]}
-   {:id :equity-india :label "4F India" :portfolios ["OGEMEQU" "IGARDEME" "IMERGEME" "ITASEME2"]}
-   {:id :equity-esg :label "4F ESG"     :portfolios ["OGEMEQU" "IAEM1EME" "IBRUNEME" "IBTNZEME" "IHARRIER" "IHFEME" "IUBSGE"]}
+   {:id :equity-tc  :label "4F TCORP"   :portfolios ["OGEMEQU" "IMAKOEME" "ITCOREME"]}
+   {:id :equity-eme :label "4F Core"    :portfolios ["OGEMEQU" "AUTEME" "IAMPEME" "IBOMCAEME" "IFSBAEME" "IGARDEME" "IGESBEME" "IHOSTEME" "IMGIEMEQ" "INEPTUNE" "ITASEME2" "O40EME" "OGEMMAE" "OLLCEMEQ" "U4EMEQY" "ICPRLEME" "IHPEEEME"]}
+   {:id :equity-india :label "4F India" :portfolios ["OGEMEQU" "IGARDEME" "IMERGEME"]}
+   {:id :equity-esg :label "4F ESG"     :portfolios ["OGEMEQU" "IAEM1EME" "IBRUNEME" "IBTNZEME" "IHARRIER"]}
    ])
 
 ;{:id "None"            :label "None"}

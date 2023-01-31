@@ -221,7 +221,7 @@
                        :strategy        nil
                        :entry-rationale nil
                        :ISIN            @(rf/subscribe [:ta2022/trade-isin])
-                       :relval-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "relval_alert_uuid") last-trade)) )
+                       :relval-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "relval_alert_uuid") last-trade)) ) ;issue here with relval
                        :target-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "target_alert_uuid") last-trade)) )
                        :review-alert    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "review_alert_uuid") last-trade)) )}
                       {:other-alert-1    (taalerts/alert-from-backend-sql (all-alerts ((keyword tkh "other_alert_uuid_1") last-trade)) )})
@@ -247,6 +247,7 @@
         strategy (r/cursor trade-entry [:strategy])
         analyst (r/cursor trade-entry [:analyst])
         ]
+
     (fn []
       [v-box :width "850px" :height "750px" :gap "10px" :padding "20px"
        :children [[h-box :align :center :children [(if morph? [title :label (if last-leg-uuid "Morph trade" "New trade") :level :level1] [title :label "Amend latest trade" :level :level1]) [gap :size "1"] [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:ta2022/close-modal])]]]
@@ -257,7 +258,8 @@
                                                    [single-dropdown :width "200px" :choices (for [k @(rf/subscribe [:analysts])] {:id k :label k}) :model analyst :on-change #(reset! analyst %)]]]
                   [h-box :align :center :children [[label :width "125px" :label "New strategy"]
                                                    [single-dropdown :width "200px" :choices tatables/strategy-choices :model strategy :on-change #(reset! strategy %)]]]
-                  [label :label "New trade rationale"] [input-textarea :model entry-rationale :status (if (zero? (count @entry-rationale)) :error) :on-change #(reset! entry-rationale %) :width "600px" :rows 10]
+                  [label :label "New trade rationale"] [input-textarea :model entry-rationale :status (if (zero? (count @entry-rationale)) :error) :on-change #(do (println %)
+                                                                                                                                                                 (reset! entry-rationale %)) :width "600px" :rows 10]
                   [h-box :align :center :children [[label :width "125px" :label "Current levels"]
                                                    [:> ReactTable
                                                     {:data [(first (t/chainfilter {:ISIN @(rf/subscribe [:ta2022/trade-isin])} @(rf/subscribe [:quant-model/model-output])))] :columns (qstables/table-style->qs-table-col "TA2022morph" nil) :showPagination false :pageSize 1 :filterable false}]
