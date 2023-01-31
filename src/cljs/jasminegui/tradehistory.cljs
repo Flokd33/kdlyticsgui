@@ -66,6 +66,7 @@
 (rf/reg-event-fx
   :get-multiple-portfolio-trade-history
   (fn [{:keys [db]} [_ start-date end-date]]
+    ;(println (first @(rf/subscribe [:multiple-portfolio-trade-history/data])))
     {:db (assoc db :multiple-portfolio-trade-history/data [])
      :http-get-dispatch {:url          (str static/server-address "multiple-portfolio-trade-history?date-from=" start-date "&date-to=" end-date)
                          :dispatch-key [:multiple-portfolio-trade-history/data]}}))
@@ -76,8 +77,9 @@
     (let [data (:multiple-portfolio-trade-history/data db)
           portfolios @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios])
           res (->> data
-                   (map #(select-keys % (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name :TICKER] portfolios)))
+                   (map #(select-keys % (concat [:description :jpm-region :qt-jpm-sector :NAME :qt-risk-country-name :TICKER :isin] portfolios)))
                    (filter #(not= 0.0 (reduce + (map % portfolios)))))]
+      ;(println (first data))
       res)))
 
 (rf/reg-event-fx
@@ -644,27 +646,12 @@
                                :children
                                [[h-box :gap "5px" :align :center :children [[title :label "Display type:" :level :level3] [gap :size "1"] [single-dropdown :width "125px" :model display-style :choices static/tree-table-choices :on-change #(do (rf/dispatch [:multiple-portfolio-risk/display-style %])  (rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings (= % "Table")]))]]]
                                 [checkbox :model hide-zero-risk :label "Hide zero lines?"  :on-change #(rf/dispatch [:multiple-portfolio-risk/hide-zero-holdings %])]
-                                [h-box :gap "5px" :align :center :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width "125px" :model field-one :choices static/risk-field-choices :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]
+                                [h-box :gap "5px" :align :center :children [[title :label "Field:" :level :level3] [gap :size "1"] [single-dropdown :width "125px" :model field-one :choices [(first static/risk-field-choices) (nth static/risk-field-choices 2)] :on-change #(rf/dispatch [:multiple-portfolio-risk/field-one %])]]]
                                 [h-box :gap "5px" :align :center :children (into [] (concat [[title :label "Filtering:" :level :level3]] (filtering-row :multiple-portfolio-risk/filter) [[gap :size "30px"]] (shortcut-row :multiple-portfolio-risk/shortcut)))]
                                 ]]
                               [gt/portfolio-group-selector :multiple-portfolio-risk/selected-portfolios [:dummies :models]]
-                              ;TODO HERE FLO
-                              ;[h-box :gap "5px" :children
-                              ; ;(into [[title :label "Portfolios:" :level :level3]
-                              ; ;       [gap :size "20px"]
-                              ; ;       [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (set portfolios)])]
-                              ; ;                                    [button :style {:width "75px"} :label "None" :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios #{}])]
-                              ; ;                                    ]]]
-                              ; ;      (for [line static/portfolio-alignment-groups]
-                              ; ;        (let [possible-portfolios (:portfolios (first (filter (fn [x] (= (:id x) (:id line))) static/portfolio-alignment-groups)))]
-                              ; ;          [v-box :gap "2px" :children
-                              ; ;           [[button :style {:width "125px"} :label (:label line) :on-click #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios (toggle-portfolios possible-portfolios)])]
-                              ; ;            [selection-list :width "125px" :model selected-portfolios :choices (into [] (for [p possible-portfolios] {:id p :label p})) :on-change #(rf/dispatch [:multiple-portfolio-risk/selected-portfolios %])]]]))
-                              ; ;      )
-                              ; ]
-
                               (let [display-key-one @(rf/subscribe [:multiple-portfolio-risk/field-one])
-                                    data @(rf/subscribe [:multiple-portfolio-trade-history/data])
+                                    ;data @(rf/subscribe [:multiple-portfolio-trade-history/data])
                                     width-one 80
                                     risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
                                     grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
