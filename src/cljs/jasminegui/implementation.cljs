@@ -341,6 +341,28 @@
                      ))
     db))
 
+(def clean-esg-imps (fn [x] (if (empty? x) "NA" x)))
+(def clean-esg-nb (fn [x] (if (zero? (Math/round x) ) "NA" (Math/round x))))
+
+(defn fill-esg-value [db esg-data msci ticker]
+  (if (or (some? esg-data) (some? msci))
+    (update-in db [:implementation/trade-implementation :tradeanalyser.implementation/esg-considerations]
+               #(str % "\n-------\n"
+                     ticker " MSCI ESG: "
+                     "\nHeadline: " (clean-esg-imps (:msci-ESG_HEADLINE msci))
+                     "\nESG: " (clean-esg-imps (str (:msci-WEIGHTED_AVERAGE_SCORE msci)))
+                     "  |   E: " (clean-esg-imps (str (:msci-ENVIRONMENTAL_PILLAR_SCORE msci)))
+                     "  |   S: " (clean-esg-imps (str (:msci-SOCIAL_PILLAR_SCORE msci)))
+                     "  |   G: " (clean-esg-imps (str (:msci-GOVERNANCE_PILLAR_SCORE msci)))
+                     "  |  UNGC: " (clean-esg-imps (str (:msci-UNGC_COMPLIANCE msci)))
+                     "\n \n" ticker " Jasmine Carbon: "
+                     "\n" "Scope 1: emissions: " (clean-esg-nb (:amt_carbon_emissions_1 esg-data)) "  |  " "intensity: " (clean-esg-nb (:amt_carbon_intensity_1 esg-data)) "  |  " "footprint: " (clean-esg-nb  (* (:emissions_evic_1 esg-data) 1000000)) "  |  " "method: " (clean-esg-imps (:cat_scope_1_method esg-data))
+                     "\n" "Scope 2: emissions: " (clean-esg-nb (:amt_carbon_emissions_2 esg-data)) "  |  " "intensity: " (clean-esg-nb (:amt_carbon_intensity_2 esg-data)) "  |  " "footprint: " (clean-esg-nb  (* (:emissions_evic_2 esg-data) 1000000)) "  |  " "method: " (clean-esg-imps (:cat_scope_2_method esg-data))
+                     "\n" "Scope 3 up: emissions: " (clean-esg-nb (:amt_carbon_emissions_3_up esg-data)) "  |  " "footprint: " (clean-esg-nb (* (:emissions_evic_3_up esg-data) 1000000)) "  |  " "method: " (clean-esg-imps (:cat_scope_3_up_method esg-data))
+                     "\n" "Scope 3 down: emissions: " (clean-esg-nb (:amt_carbon_emissions_3_down esg-data)) "  |  " "footprint: " (clean-esg-nb (* (:emissions_evic_3_down esg-data) 1000000)) "  |  " "method: " (clean-esg-imps (:cat_scope_3_down_method esg-data))
+                     ))
+    db))
+
 (defn fill-static [db leg-number qmd]
   (if (and (zero? leg-number) (some? qmd))
     (-> db
@@ -357,7 +379,10 @@
 (rf/reg-event-db
   :trade-implementation/bond-pricing
   (fn [db [_ leg-number data]]
-    (let [qmd (first (filter #(= (:ISIN %) (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :ISIN])) (db :quant-model/model-output)))]
+    (let [qmd (first (filter #(= (:ISIN %) (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :ISIN])) (db :quant-model/model-output)))
+          crb-jsm (first ((group-by :ticker (first @(rf/subscribe [:esg/carbon-jasmine]))) (:Ticker qmd)))
+          msci (@(rf/subscribe [:esg/msci-scores]) (:Ticker qmd))
+          ]
       (->
         (recalculate-trade-notional-all-portfolios
           (let [[p v c] (if (:price data) [(:price data) (:value data) (str (:cast-parent-id data))] [100. 100. ""])]
@@ -367,7 +392,8 @@
                 (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :cast-parent-id] c)))
           leg-number)
         (fill-static leg-number qmd)                        ;(:quant-model data)
-        (fill-quant-value leg-number qmd)))))               ;(:quant-model data)
+        (fill-quant-value leg-number qmd)
+        (fill-esg-value crb-jsm msci (:Ticker qmd) )))))
 
 ;(rf/reg-event-db
 ;  :trade-implementation/bond-static-data
