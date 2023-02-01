@@ -344,7 +344,7 @@
 (def clean-esg-imps (fn [x] (if (empty? x) "NA" x)))
 (def clean-esg-nb (fn [x] (if (zero? (Math/round x) ) "NA" (Math/round x))))
 
-(defn fill-esg-value [db esg-data msci ticker]
+(defn fill-esg-value [db esg-data msci ticker]              ;TODO we could use the aggregated data instead of msci + esg jasmine (here we will miss carbon data for off BM secs), to do so we need to split the data cleaning of the esg data jasminegui.esg => esg-data
   (if (or (some? esg-data) (some? msci))
     (update-in db [:implementation/trade-implementation :tradeanalyser.implementation/esg-considerations]
                #(str % "\n-------\n"
