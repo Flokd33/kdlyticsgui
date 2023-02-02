@@ -568,11 +568,16 @@
 
 (defn tf-eligible []
   (let [answers @tf-calculator-summary]
-    (if (and (= (get-in answers [:eligibility/net-zero :analyst_answer]) "Yes")
-             (or (= (get-in answers [:eligibility/intensity :analyst_answer]) "Yes")
-                 (= (get-in answers [:eligibility/clear-plans :analyst_answer]) "Yes")
-                 (= (get-in answers [:eligibility/other-sectors :analyst_answer]) "Yes")
-                 (= (get-in answers [:eligibility/ahead-peers :analyst_answer]) "Yes")))
+    (if (or (= (get-in answers [:eligibility/intensity :analyst_answer]) "Yes")
+            (= (get-in answers [:eligibility/clear-plans :analyst_answer]) "Yes")
+            (= (get-in answers [:eligibility/other-sectors :analyst_answer]) "Yes")
+            (= (get-in answers [:eligibility/ahead-peers :analyst_answer]) "Yes"))
+      ;(and (= (get-in answers [:eligibility/net-zero :analyst_answer]) "Yes")
+      ;     (or (= (get-in answers [:eligibility/intensity :analyst_answer]) "Yes")
+      ;         (= (get-in answers [:eligibility/clear-plans :analyst_answer]) "Yes")
+      ;         (= (get-in answers [:eligibility/other-sectors :analyst_answer]) "Yes")
+      ;         (= (get-in answers [:eligibility/ahead-peers :analyst_answer]) "Yes"))
+      ;     )
       (reset! is-tf-eligible "Yes")
       (reset! is-tf-eligible "No"))))
 
@@ -598,8 +603,8 @@
 (def question-width-label "423px")
 
 (defn transition-fund-scoring-display []
-    (let [analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)})]
-      [v-box :width "1280px" :gap "5px" :class "element"
+  (let [analyst-names-list (for [k @(rf/subscribe [:analysts-emcd])] {:id (:analyst_code k) :label (:analyst_name k)})]
+    [v-box :width "1280px" :gap "5px" :class "element"
      :children [[modal-success]
                 [title :label "Transition fund calculator" :level :level1]
                 [h-box :gap "10px" :align :center
@@ -614,272 +619,277 @@
                             [single-dropdown :width dropdown-width :choices analyst-names-list :model tf-analyst-name
                              :on-change #(reset! tf-analyst-name %)]
                             ]]
-                [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Score" :level :level2]] [progress-bar :width categories-list-width-long :model @tf-total-score ]]]
+                [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Score" :level :level2]] [progress-bar :width categories-list-width-long :model @tf-total-score]]]
                 [h-box :gap "10px" :align :baseline :children [[box :width question-width :child [title :label "Transition fund eligibility" :level :level2]]
-                                                               [box :width dropdown-width :child [button :label @is-tf-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-tf-eligible "Yes") "Chartreuse" "Red" ) :textAlign "center"}]]]]
+                                                               [box :width dropdown-width :child [button :label @is-tf-eligible :disabled? true :style {:width dropdown-width :color "black" :backgroundColor (if (= @is-tf-eligible "Yes") "Chartreuse" "Red") :textAlign "center"}]]]]
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width-label :label "Is the company/issuer working towards net zero alignment?"]
                             [info-button :info "All Transition Investments should have a commitment to achieve carbon neutrality in the future. This includes both an explicit target or a public commitment (without a target date)" :position :left-center]
                             [single-dropdown :width dropdown-width :choices yes-no-choice
                              :model (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer])
                              :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %) (tf-eligible) (tf-score-calculator)
-                                             (if (= % "No") (do (clean-report!) (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %))))]]]
-                (if (= (get-in @tf-calculator-summary [:eligibility/net-zero :analyst_answer]) "Yes")
-                  (concat
-                    [[v-box  :gap "5px"
-                      :children [[h-box :gap "10px" :align :center
-                    :children [[label :width question-width-label :label "Is the company/financed activity supporting one of the five transition sectors?"]
-                               [info-button :info "bla bla " :position :left-center]
-                               [single-dropdown :width dropdown-width :choices yes-no-choice
-                                :model (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer])
-                                :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer]) %) (tf-score-calculator))]]]
-                   (case (get-in @tf-calculator-summary [:eligibility/sectors :analyst_answer])
-                     "Yes" [h-box :gap "10px" :align :center
-                      :children [[label :width question-width :label "Select sector:"]
-                                 [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-sectors-choices
-                                  :model (r/cursor tf-calculator-summary [:eligibility/sectors-choice :analyst_answer])
-                                  :on-change #(reset! (r/cursor tf-calculator-summary [:eligibility/sectors-choice :analyst_answer]) %)]]]
-                     "No" [h-box :gap "10px" :align :start
-                      :children [[label :width question-width :label "Sector comment:"]
-                                 [input-textarea :width categories-list-width-long :rows 5
-                                  :model (r/cursor tf-calculator-summary [:eligibility/sectors-comment :analyst_answer])
-                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/sectors-comment :analyst_answer]) %))]]]
-                     nil
-                     )
-                     [h-box :gap "10px" :align :center
-                      :children [[label :width question-width :label "Is emissions intensity close to zero/green revenue a large majority?"]
-                                 [single-dropdown :width dropdown-width :choices yes-no-choice
-                                  :model (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer])
-                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
-                    [h-box :gap "10px" :align :center
-                     :children [[label :width question-width :label "Does the company have clear plans to transition?"]
-                                [single-dropdown :width dropdown-width :choices yes-no-choice
-                                 :model (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
-                    [h-box :gap "10px" :align :center
-                     :children [[label :width question-width :label "Is the company/asset required to enable the transition to net zero for other sectors?"]
-                                [single-dropdown :width dropdown-width :choices yes-no-choice
-                                 :model (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
-                    [h-box :gap "10px" :align :center
-                     :children [[label :width question-width :label "Is the company ahead of its peer group on climate-related metrics?"]
-                                [single-dropdown :width dropdown-width :choices yes-no-choice
-                                 :model (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
-                     [h-box :gap "10px" :align :center
-                      :children [[label :width question-width :label "Is the company/issuer expanding misaligned activities?"]
-                                 [single-dropdown :width dropdown-width :choices yes-no-choice
-                                  :model (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer])
-                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer]) %) (tf-score-calculator))]]]
-                      (if (= (get-in @tf-calculator-summary [:eligibility/misaligned :analyst_answer]) "Yes")
-                        [h-box :gap "10px" :align :start
-                         :children [[label :width question-width :label "Misaligned activities comment:"]
-                                    [input-textarea :width categories-list-width-long :rows 5
-                                     :model (r/cursor tf-calculator-summary [:eligibility/misaligned-comment :analyst_answer])
-                                     :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned-comment :analyst_answer]) %))]]]
-                        nil
-                        )
-                    [h-box :gap "10px" :align :center
-                     :children [[label :width question-width :label "What is the most appropriate classification for this transition investment?"]
-                                [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-category-choices
-                                 :model (r/cursor tf-calculator-summary [:eligibility/category :analyst_answer])
-                                 :on-change #(reset! (r/cursor tf-calculator-summary [:eligibility/category :analyst_answer]) %)]]]
-                    [h-box :gap "10px" :align :start
-                     :children [[label :width question-width :label "Categorisation comment"]
-                                [input-textarea :width categories-list-width-long :rows 5
-                                 :model (r/cursor tf-calculator-summary [:eligibility/category-comment :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/category-comment :analyst_answer]) %))]]]
-                                                  ]]]))
+                                             ;(if (= % "No") (do (clean-report!) (reset! (r/cursor tf-calculator-summary [:eligibility/net-zero :analyst_answer]) %)))
+                                             )]]]
+
+                ;(if (= (get-in @tf-calculator-summary [:eligibility/net-zero :analyst_answer]) "Yes")
+                (concat
+                  [[v-box :gap "5px"
+                    :children [[h-box :gap "10px" :align :center
+                                :children [[label :width question-width-label :label "Is the company/financed activity supporting one of the five transition sectors?"]
+                                           [info-button :info "bla bla " :position :left-center]
+                                           [single-dropdown :width dropdown-width :choices yes-no-choice
+                                            :model (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer])
+                                            :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/sectors :analyst_answer]) %) (tf-score-calculator))]]]
+                               (case (get-in @tf-calculator-summary [:eligibility/sectors :analyst_answer])
+                                 "Yes" [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Select sector:"]
+                                                   [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-sectors-choices
+                                                    :model (r/cursor tf-calculator-summary [:eligibility/sectors-choice :analyst_answer])
+                                                    :on-change #(reset! (r/cursor tf-calculator-summary [:eligibility/sectors-choice :analyst_answer]) %)]]]
+                                 "No" [h-box :gap "10px" :align :start
+                                       :children [[label :width question-width :label "Sector comment:"]
+                                                  [input-textarea :width categories-list-width-long :rows 5
+                                                   :model (r/cursor tf-calculator-summary [:eligibility/sectors-comment :analyst_answer])
+                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/sectors-comment :analyst_answer]) %))]]]
+                                 nil
+                                 )
+                               [h-box :gap "10px" :align :center
+                                :children [[label :width question-width :label "Is emissions intensity close to zero/green revenue a large majority?"]
+                                           [single-dropdown :width dropdown-width :choices yes-no-choice
+                                            :model (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer])
+                                            :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/intensity :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
+                               [h-box :gap "10px" :align :center
+                                :children [[label :width question-width :label "Does the company have clear plans to transition?"]
+                                           [single-dropdown :width dropdown-width :choices yes-no-choice
+                                            :model (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer])
+                                            :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/clear-plans :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
+                               [h-box :gap "10px" :align :center
+                                :children [[label :width question-width :label "Is the company/asset required to enable the transition to net zero for other sectors?"]
+                                           [single-dropdown :width dropdown-width :choices yes-no-choice
+                                            :model (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer])
+                                            :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/other-sectors :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
+                               [h-box :gap "10px" :align :center
+                                :children [[label :width question-width :label "Is the company ahead of its peer group on climate-related metrics?"]
+                                           [single-dropdown :width dropdown-width :choices yes-no-choice
+                                            :model (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer])
+                                            :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/ahead-peers :analyst_answer]) %) (tf-eligible) (tf-score-calculator))]]]
+                               [h-box :gap "10px" :align :center
+                                :children [[label :width question-width :label "Is the company/issuer expanding misaligned activities?"]
+                                           [single-dropdown :width dropdown-width :choices yes-no-choice
+                                            :model (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer])
+                                            :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned :analyst_answer]) %) (tf-score-calculator))]]]
+                               (if (= (get-in @tf-calculator-summary [:eligibility/misaligned :analyst_answer]) "Yes")
+                                 [h-box :gap "10px" :align :start
+                                  :children [[label :width question-width :label "Misaligned activities comment:"]
+                                             [input-textarea :width categories-list-width-long :rows 5
+                                              :model (r/cursor tf-calculator-summary [:eligibility/misaligned-comment :analyst_answer])
+                                              :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/misaligned-comment :analyst_answer]) %))]]]
+                                 nil
+                                 )
+                               [h-box :gap "10px" :align :center
+                                :children [[label :width question-width :label "What is the most appropriate classification for this transition investment?"]
+                                           [single-dropdown :placeholder "Please select..." :width categories-list-width-long :choices tf-category-choices
+                                            :model (r/cursor tf-calculator-summary [:eligibility/category :analyst_answer])
+                                            :on-change #(reset! (r/cursor tf-calculator-summary [:eligibility/category :analyst_answer]) %)]]]
+                               [h-box :gap "10px" :align :start
+                                :children [[label :width question-width :label "Categorisation comment"]
+                                           [input-textarea :width categories-list-width-long :rows 5
+                                            :model (r/cursor tf-calculator-summary [:eligibility/category-comment :analyst_answer])
+                                            :on-change #(do (reset! (r/cursor tf-calculator-summary [:eligibility/category-comment :analyst_answer]) %))]]]
+                               ]]]
+                  )
+
+                  ;)
                 (if (= @is-tf-eligible "Yes")
                   (concat
-                    [[v-box  :gap "5px" :children
-                     [[title :label "Additional questions" :level :level2 ]
-                      [h-box :gap "10px" :align :center
-                      :children [[label :width question-width :label "Reduced activities:"]
-                                [single-dropdown :placeholder "Please select..." :width categories-list-width-long
-                                 :choices tf-reduced-activities-choices
-                                 :model (r/cursor tf-calculator-summary [:subs/activities :analyst_answer])
-                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/activities :analyst_answer]) %)
-                                                 (tf-score-calculator))]]]
-                      (case (get-in @tf-calculator-summary [:subs/activities :analyst_answer])
-                        "avoid" (concat
-                          [[h-box :gap "10px" :align :center
-                             :children [[label :width question-width :label "What is the annual carbon avoided figure?"]
-                                        [input-text :width categories-list-width-long
-                                         :validation-regex #"^[0-9]*$"
-                                         :model (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer])
-                                         :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer]) %)
-                                                         (tf-score-calculator))]]]])
-                        "reduce" (concat
-                                   [[v-box  :gap "5px" :children
-                                     [[h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"]
-                                                [single-dropdown :width dropdown-width
-                                                 :choices yes-no-choice
-                                                 :model (r/cursor tf-calculator-summary [:subs/paris :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/paris :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Comment on target:"]
-                                                [input-textarea :width categories-list-width-long :rows 5
-                                                 :model (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Target base year:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
-                                                                 (tf-score-calculator))]]]
-                                      [h-box :gap "10px" :align :center
-                                       :children [[label :width question-width :label "Base year emissions:"]
-                                                  [input-text :width categories-list-width-long
-                                                   :validation-regex #"^[0-9]*$"
-                                                   :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
-                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
-                                                                   (tf-score-calculator))]]]
-                                      [h-box :gap "10px" :align :center
-                                       :children [[label :width question-width :label "Base year emissions intensity (if applicable):"]
-                                                  [input-text :width categories-list-width-long
-                                                   :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
-                                                   :model (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer])
-                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer]) %)
-                                                                   (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Emission scopes included:"]
-                                                [input-textarea :width categories-list-width-long :rows 1
-                                                 :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
-                                      [h-box :gap "10px" :align :center
-                                       :children [[label :width question-width :label "Most recent emissions year:"]
-                                                  [input-text :width categories-list-width-long
-                                                   :validation-regex #"^[0-9]*$"
-                                                   :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
-                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Most recent emissions:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %) (tf-score-calculator))]]]
-                                      [h-box :gap "10px" :align :center
-                                       :children [[label :width question-width :label "Most recent emissions intensity (if applicable):"]
-                                                  [input-text :width categories-list-width-long
-                                                   :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
-                                                   :model (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer])
-                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %) (tf-score-calculator))]]]
-                                      [h-box :gap "10px" :align :center
-                                       :children [[label :width question-width :label "Reduction target year:"]
-                                                  [input-text :width categories-list-width-long
-                                                   :validation-regex #"^[0-9]*$"
-                                                   :model (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer])
-                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Reduction target:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %) (tf-score-calculator))]]]
-                                      [h-box :gap "10px" :align :center
-                                       :children [[label :width question-width :label "Reduction target intensity (if applicable):"]
-                                                  [input-text :width categories-list-width-long
-                                                   :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
-                                                   :model (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer])
-                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Total absolute emissions reduction (2030):"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %) (tf-score-calculator))]]]
-                                    ]]])
-                        "both" (concat
-                                 [[h-box :gap "10px" :align :center
-                                   :children [[label :width question-width :label "What is the annual carbon avoided figure?"]
-                                              [input-text :width categories-list-width-long
-                                               :validation-regex #"^[0-9]*$"
-                                               :model (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer])
-                                               :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer]) %) (tf-score-calculator))]]]]
-                                 [[v-box  :gap "5px" :children
+                    [[v-box :gap "5px" :children
+                      [[title :label "Additional questions" :level :level2]
+                       [h-box :gap "10px" :align :center
+                        :children [[label :width question-width :label "Reduced activities:"]
+                                   [single-dropdown :placeholder "Please select..." :width categories-list-width-long
+                                    :choices tf-reduced-activities-choices
+                                    :model (r/cursor tf-calculator-summary [:subs/activities :analyst_answer])
+                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/activities :analyst_answer]) %)
+                                                    (tf-score-calculator))]]]
+                       (case (get-in @tf-calculator-summary [:subs/activities :analyst_answer])
+                         "avoid" (concat
                                    [[h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"]
-                                                [single-dropdown :width dropdown-width
-                                                 :choices yes-no-choice
-                                                 :model (r/cursor tf-calculator-summary [:subs/paris :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/paris :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Comment on target:"]
-                                                [input-textarea :width categories-list-width-long :rows 5
-                                                 :model (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Target base year:"]
+                                     :children [[label :width question-width :label "What is the annual carbon avoided figure?"]
                                                 [input-text :width categories-list-width-long
                                                  :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Base year emissions:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Base year emissions intensity (if applicable):"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Emission scopes included:"]
-                                                [input-textarea :width categories-list-width-long :rows 1
-                                                 :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Most recent emissions year:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Most recent emissions:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Most recent intensity (if applicable):"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Reduction target year:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer]) %))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Reduction target:"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Reduction target intensity (if applicable):"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %) (tf-score-calculator))]]]
-                                    [h-box :gap "10px" :align :center
-                                     :children [[label :width question-width :label "Total absolute emissions reduction (2030):"]
-                                                [input-text :width categories-list-width-long
-                                                 :validation-regex #"^[0-9]*$"
-                                                 :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
-                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %) (tf-score-calculator))]]]
-                                    ]]])
-                        "none" nil
-                        nil)]]]))
+                                                 :model (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer])
+                                                 :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer]) %)
+                                                                 (tf-score-calculator))]]]])
+                         "reduce" (concat
+                                    [[v-box :gap "5px" :children
+                                      [[h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"]
+                                                   [single-dropdown :width dropdown-width
+                                                    :choices yes-no-choice
+                                                    :model (r/cursor tf-calculator-summary [:subs/paris :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/paris :analyst_answer]) %)
+                                                                    (tf-score-calculator))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Comment on target:"]
+                                                   [input-textarea :width categories-list-width-long :rows 5
+                                                    :model (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer]) %))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Target base year:"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[0-9]*$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
+                                                                    (tf-score-calculator))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Base year emissions:"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[0-9]*$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %)
+                                                                    (tf-score-calculator))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Base year emissions intensity (if applicable):"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer]) %)
+                                                                    (tf-score-calculator))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Emission scopes included:"]
+                                                   [input-textarea :width categories-list-width-long :rows 1
+                                                    :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Most recent emissions year:"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[0-9]*$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Most recent emissions:"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[0-9]*$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %) (tf-score-calculator))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Most recent emissions intensity (if applicable):"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %) (tf-score-calculator))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Reduction target year:"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[0-9]*$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer]) %))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Reduction target:"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[0-9]*$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %) (tf-score-calculator))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Reduction target intensity (if applicable):"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %) (tf-score-calculator))]]]
+                                       [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Total absolute emissions reduction (2030):"]
+                                                   [input-text :width categories-list-width-long
+                                                    :validation-regex #"^[0-9]*$"
+                                                    :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %) (tf-score-calculator))]]]
+                                       ]]])
+                         "both" (concat
+                                  [[h-box :gap "10px" :align :center
+                                    :children [[label :width question-width :label "What is the annual carbon avoided figure?"]
+                                               [input-text :width categories-list-width-long
+                                                :validation-regex #"^[0-9]*$"
+                                                :model (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer])
+                                                :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/avoided-figure :analyst_answer]) %) (tf-score-calculator))]]]]
+                                  [[v-box :gap "5px" :children
+                                    [[h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"]
+                                                 [single-dropdown :width dropdown-width
+                                                  :choices yes-no-choice
+                                                  :model (r/cursor tf-calculator-summary [:subs/paris :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/paris :analyst_answer]) %) (tf-score-calculator))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Comment on target:"]
+                                                 [input-textarea :width categories-list-width-long :rows 5
+                                                  :model (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer]) %))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Target base year:"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[0-9]*$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %) (tf-score-calculator))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Base year emissions:"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[0-9]*$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year :analyst_answer]) %) (tf-score-calculator))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Base year emissions intensity (if applicable):"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/emissions-year-intensity :analyst_answer]) %) (tf-score-calculator))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Emission scopes included:"]
+                                                 [input-textarea :width categories-list-width-long :rows 1
+                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Most recent emissions year:"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[0-9]*$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-year :analyst_answer]) %))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Most recent emissions:"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[0-9]*$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions :analyst_answer]) %) (tf-score-calculator))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Most recent intensity (if applicable):"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/recent-emissions-intensity :analyst_answer]) %) (tf-score-calculator))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Reduction target year:"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[0-9]*$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-year :analyst_answer]) %))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Reduction target:"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[0-9]*$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target :analyst_answer]) %) (tf-score-calculator))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Reduction target intensity (if applicable):"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/reduction-target-intensity :analyst_answer]) %) (tf-score-calculator))]]]
+                                     [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Total absolute emissions reduction (2030):"]
+                                                 [input-text :width categories-list-width-long
+                                                  :validation-regex #"^[0-9]*$"
+                                                  :model (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/total-emissions :analyst_answer]) %) (tf-score-calculator))]]]
+                                     ]]])
+                         "none" nil
+                         nil)]]]))
                 [gap :size "10px"]
                 [h-box :gap "10px" :align :center
                  :children [[label :width question-width :label ""]
