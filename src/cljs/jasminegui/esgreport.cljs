@@ -363,11 +363,10 @@
              nil
              )
         eligi (case report-type
-                "transition-fund" (if (and (= (:analyst_answer (first (t/chainfilter {:description_short "net-zero"} report-selected))) "Yes")
-                                           (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))) "Yes")
-                                               (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} report-selected))) "Yes")
-                                               (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} report-selected))) "Yes")
-                                               (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} report-selected))) "Yes")))
+                "transition-fund" (if (or (= (:analyst_answer (first (t/chainfilter {:description_short "intensity"} report-selected))) "Yes")
+                                          (= (:analyst_answer (first (t/chainfilter {:description_short "clear-plans"} report-selected))) "Yes")
+                                          (= (:analyst_answer (first (t/chainfilter {:description_short "other-sectors"} report-selected))) "Yes")
+                                          (= (:analyst_answer (first (t/chainfilter {:description_short "ahead-peers"} report-selected))) "Yes"))
                                     "Yes"
                                     "No")
                 "green-bond" (if (and (not= (:analyst_answer (first (t/chainfilter {:description_short "controversies"} report-selected))) "Yes2")
