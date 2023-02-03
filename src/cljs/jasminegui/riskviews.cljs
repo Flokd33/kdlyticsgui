@@ -727,6 +727,7 @@
 (defn portfolio-checks-display []
   (when (empty? @(rf/subscribe [:talanx-checks])) (rf/dispatch [:get-talanx-checks]))
   (when (empty? @(rf/subscribe [:ogemigc-nr-bucket])) (rf/dispatch [:get-ogemigc-nr-bucket]))
+  (when (empty? @(rf/subscribe [:off-bm-exposure-map])) (rf/dispatch [:get-off-bm-exposure]))
   (when (empty? @(rf/subscribe [:portfolios-grp])) (rf/dispatch [:get-portfolios-grp]))
   (let [portfolio-checks-data-raw @(rf/subscribe [:portfolio-checks])
         portfolio-checks-data (for [e portfolio-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-status-warning)) (get {false 0 true 1} (e :check-status-breach))])))
@@ -734,6 +735,7 @@
         portfolio-checks-data-dur (filter #(or (= (:check-name %) "MDUR Delta") (= (:check-name %) "MDUR") (= (:check-name %) "MDUR vs BM %")) portfolio-checks-data)
         talanx-checks-data-raw @(rf/subscribe [:talanx-checks])
         ogemigc-nr-list @(rf/subscribe [:ogemigc-nr-bucket])
+        off-bm-exposure @(rf/subscribe [:off-bm-exposure-map])
         talanx-checks-data (for [e talanx-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-warning)) (get {false 0 true 1} (e :check-breach))])))
         talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)
         talanx-checks-data-clean-corp (filter #(= (:sov-or-corp %) "corp") talanx-checks-data-clean)
@@ -745,7 +747,7 @@
         portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)
         ;rot13 (fn [x]  (t/rot13 (aget x "original" "grp")))                              ;(if @(rf/subscribe [:rot13]) t/rot13 identity)
         ]
-    ;(println port-grp-clean)
+    (println off-bm-exposure)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
@@ -770,8 +772,6 @@
                                         {:Header "Weight" :accessor :weight :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count ogemigc-nr-list) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
-
-
         ]]
       [v-box :class "element" :gap "20px" :children
        [(gt/element-box "talanx-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "Talanx concentration corp " date)) talanx-checks-data-clean-corp
@@ -809,6 +809,17 @@
                                         {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-dur) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
+
+        (gt/element-box "checks" "100%" (str "Off BM exposure checks " date) off-bm-exposure
+                        [[:> ReactTable
+                          {:data       off-bm-exposure
+                           :columns    [{:Header "Portfolio" :accessor :portfolio :width 90 :style {:textAlign "left"} }
+                                        {:Header "Check" :accessor :check :width 100 :style {:textAlign "left"}}
+                                        {:Header "Limit" :accessor :limit :width 100 :style {:textAlign "left"} :Cell tables/round2pc-no-red}
+                                        {:Header "Current value" :accessor :current :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count off-bm-exposure) :showPageSizeOptions false :className "-striped -highlight"}]]
+                        )
+
         ]]
       ]
      ]))
