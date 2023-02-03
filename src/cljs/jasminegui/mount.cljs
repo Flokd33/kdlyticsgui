@@ -389,6 +389,7 @@
 
                  :allianz-loss-report                                []
                  :ogemigc-nr-bucket                                  []
+                 :off-bm-exposure-map                         []
                  :global-debt-and-equity-levels                       []
                  :backtest-output                                   []
 
@@ -689,6 +690,7 @@
            :allianz-loss-report
            :global-debt-and-equity-levels
            :ogemigc-nr-bucket
+           :off-bm-exposure-map
            :backtest-output
            :dummy
 
@@ -1098,7 +1100,8 @@
    {:get-key :get-integrity         :namespace "jasmine.integrity"  :asset "integrity-map"        :dispatch-key [:integrity]}
    {:get-key :get-portfolio-checks  :namespace "jasmine.integrity"  :asset "portfolio-check-map" :dispatch-key [:portfolio-checks]}
    {:get-key :get-talanx-checks     :namespace "jasmine.integrity"  :asset "talanx-check-map"    :dispatch-key [:talanx-checks]}
-   {:get-key :get-ogemigc-nr-bucket           :namespace "jasmine.integrity"  :asset "ogemigc-nr-map"  :dispatch-key [:ogemigc-nr-bucket]}
+   {:get-key :get-ogemigc-nr-bucket   :namespace "jasmine.integrity"  :asset "ogemigc-nr-map"  :dispatch-key [:ogemigc-nr-bucket]}
+   {:get-key :get-off-bm-exposure     :namespace "jasmine.integrity"  :asset "off-bm-exposure-map"  :dispatch-key [:off-bm-exposure-map]}
 
    {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "msci-data-output" :dispatch-key [:esg/msci-scores]}
    {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
