@@ -333,7 +333,7 @@
       {:db (assoc db :esg/report-type report-type
                      :esg/esg-report-selected (str (case report-type "green-bond" "GB" "TF") "_"
                                                    (:Bond (first (t/chainfilter {:ISIN isin} (:quant-model/model-output db)))) "_"
-                                                   (:date2 (first (t/chainfilter {:security_identifier isin} (:esg-report-list db)))))
+                                                   (:date2 (first (t/chainfilter {:security_identifier isin :date2 esg-date} (:esg-report-list db)))))
                      )
        :fx [[:dispatch [:post-esg-report-extract isin esg-date report-type]]
             ]})
