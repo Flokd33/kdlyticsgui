@@ -98,11 +98,11 @@
    {:code :esg-scores                 :name "ESG summary report"}
    {:code :esg-commentary             :name "ESG analyst commentary"}
    {:code :refinitiv                  :name "Refinitiv"}
-   {:code :gb-scoring                 :name "Green bond scoring (beta)"}
-   {:code :tf-scoring                 :name "Transition fund scoring (beta)"}
-   {:code :reporting                  :name "Scoring report (beta)"}
-   {:code :esg-report-analytics-gb    :name "Scoring analytics GB (beta)"}
-   {:code :esg-report-analytics-tf    :name "Scoring analytics TF (beta)"}
+   {:code :gb-scoring                 :name "Green bond scoring"}
+   {:code :tf-scoring                 :name "Transition fund scoring"}
+   {:code :reporting                  :name "Scoring report"}
+   {:code :esg-report-analytics-gb    :name "Scoring analytics GB"}
+   {:code :esg-report-analytics-tf    :name "Scoring analytics TF"}
    {:code :esg-engagements            :name "ESG interactions"}])
 
 (def ta2022-navigation
