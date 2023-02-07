@@ -473,13 +473,13 @@
                    {:Header "Isin" :accessor "ISIN" :width 100}
                    {:Header "Ticker" :accessor "Ticker" :width 100} {:Header "Region" :accessor "Region" :width 100}
                    {:Header "Country" :accessor "Country" :width 80} {:Header "Sector" :accessor "Sector" :width 80}
-                   {:Header "Rating" :accessor "Rating" :width 80} ; from qs at end
+                   {:Header "Rating" :accessor "Used_Rating_Score" :width 80} ; from qs at end
                    ;{:Header "Rating Grp" :accessor "RatingGroup" :width 80}
                    {:Header "Internal Rtg" :accessor "internal-rating" :width 80} ; from position file at start
                    ]}
                  {:Header  "Actual Weights" :headerStyle header-style :columns
-                  [{:Header "Start" :accessor "start-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
-                   {:Header "End" :accessor "end-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}]}
+                  [{:Header "Start" :accessor "start-weight" :width 60 :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "End" :accessor "end-weight" :width 60 :style {:textAlign "right"} :Cell tables/round2pc}]}
                  {:Header  "Average Weights" :headerStyle header-style :columns
                   [{:Header "Excess " :accessor "Average-Excess-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
                    {:Header "Fund " :accessor "Average-Fund-Weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
@@ -490,9 +490,10 @@
                    [{:Header "Fund" :accessor "Fund-Contribution" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
                     {:Header "Index" :accessor "Index-Contribution" :width 80  :style {:textAlign "right"} :Cell tables/round2pc}]}
                  {:Header  "Analytics (as of month end)" :headerStyle header-style :columns
-                  [{:Header "Duration" :accessor "Duration" :width 90  :style {:textAlign "right"} :Cell tables/round2}
-                   {:Header "YTW" :accessor "Used_YTW" :width 90  :style {:textAlign "right"} :Cell tables/round2pc}
-                   {:Header "ZTW" :accessor "Used_ZTW" :width 90  :style {:textAlign "right"} :Cell tables/zspread-format}]}]
+                  [{:Header "Duration" :accessor "Duration" :width 70  :style {:textAlign "right"} :Cell tables/round2}
+                   {:Header "YTW" :accessor "Used_YTW" :width 70  :style {:textAlign "right"} :Cell tables/round2pc}
+                   {:Header "ZTW" :accessor "Used_ZTW" :width 70  :style {:textAlign "right"} :Cell tables/zspread-format}
+                   {:Header "G" :accessor "G_SPREAD_MID_CALC" :width 70  :style {:textAlign "right"} :Cell tables/zspread-format}]}]
        :showPagination true :sortable true :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize 25 :className "-striped"
        :ref #(reset! attribution-view-atom %)
            }]]
