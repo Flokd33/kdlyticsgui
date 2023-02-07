@@ -463,7 +463,7 @@
                                               :RatingGroup (str "'" (sec :RatingGroup))
                                               ))
         header-style {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}]
-    ;(println (sort (keys (first data))))
+    (println (sort (keys (first data))))
     ;(println (second (t/chainfilter {:Region "Cash"} data-clean)))
     [:div {:id "attribution-analytics-table"}
      [:> ReactTable
@@ -473,7 +473,10 @@
                    {:Header "Isin" :accessor "ISIN" :width 100}
                    {:Header "Ticker" :accessor "Ticker" :width 100} {:Header "Region" :accessor "Region" :width 100}
                    {:Header "Country" :accessor "Country" :width 80} {:Header "Sector" :accessor "Sector" :width 80}
-                   {:Header "Rating" :accessor "Rating" :width 80} {:Header "Rating Grp" :accessor "RatingGroup" :width 80}]}
+                   {:Header "Rating" :accessor "Rating" :width 80} ; from qs at end
+                   ;{:Header "Rating Grp" :accessor "RatingGroup" :width 80}
+                   {:Header "Internal Rtg" :accessor "internal-rating" :width 80} ; from position file at start
+                   ]}
                  {:Header  "Actual Weights" :headerStyle header-style :columns
                   [{:Header "Start" :accessor "start-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}
                    {:Header "End" :accessor "end-weight" :width 80 :style {:textAlign "right"} :Cell tables/round2pc}]}
