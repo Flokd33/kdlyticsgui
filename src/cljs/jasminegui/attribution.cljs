@@ -475,7 +475,7 @@
                    {:Header "Country" :accessor "Country" :width 80} {:Header "Sector" :accessor "Sector" :width 80}
                    {:Header "Rating" :accessor "Used_Rating_Score" :width 80} ; from qs at end
                    ;{:Header "Rating Grp" :accessor "RatingGroup" :width 80}
-                   {:Header "Internal Rtg" :accessor "internal-rating" :width 80} ; from position file at start
+                   {:Header "Internal Rtg" :accessor "internal-rating" :width 80} ; from position file at end period
                    ]}
                  {:Header  "Actual Weights" :headerStyle header-style :columns
                   [{:Header "Start" :accessor "start-weight" :width 60 :style {:textAlign "right"} :Cell tables/round2pc}
