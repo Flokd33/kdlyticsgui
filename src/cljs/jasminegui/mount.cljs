@@ -388,6 +388,7 @@
                  :implementation/success-modal                       {:show false :on-close nil :response nil}
 
                  :allianz-loss-report                                []
+                 :mure-aum    []
                  :ogemigc-nr-bucket                                  []
                  :off-bm-exposure-map                         []
                  :global-debt-and-equity-levels                       []
@@ -688,6 +689,7 @@
            :implementation/live-cast-parent-positions
 
            :allianz-loss-report
+           :mure-aum
            :global-debt-and-equity-levels
            :ogemigc-nr-bucket
            :off-bm-exposure-map
@@ -1046,6 +1048,8 @@
    {:get-key :fx-request                  :namespace "common.static" :asset "fx"                      :dispatch-key [:implementation/fx]}
    {:get-key :get-mini-security-master    :namespace "common.static"  :asset "mini-security-master"              :dispatch-key [:quant-model/mini-security-master]}
    {:get-key :get-allianz-loss-report     :namespace "common.xlscsvassets" :asset  "allianz-pnl-loss"  :dispatch-key [:allianz-loss-report]}
+   {:get-key :get-mure-aum                :namespace "common.xlscsvassets" :asset  "mure-aum"  :dispatch-key [:mure-aum]}
+
    {:get-key :get-analyst-coverage        :namespace "common.xlscsvassets" :asset  "analyst-coverage"  :dispatch-key [:quant-model/analyst-coverage]}
    {:get-key :get-emd-weekly              :namespace "common.xlscsvassets" :asset  "emd-weekly-performance-sheet"  :dispatch-key [:attribution/emd-weekly]}
    {:get-key :get-cre-factsheet              :namespace "common.xlscsvassets" :asset  "cre-factsheet"  :dispatch-key [:factsheet/cre]}

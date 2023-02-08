@@ -178,6 +178,7 @@
 
 (def max-width "1675px")
 (defn allianz-loss-report []
+  (when (empty? @(rf/subscribe [:mure-aum])) (rf/dispatch [:get-mure-aum]))
   (when (empty? @(rf/subscribe [:allianz-loss-report])) (rf/dispatch [:get-allianz-loss-report]))
   (let [data (sort-by :Bond @(rf/subscribe [:allianz-loss-report]))
         positions_raw @(rf/subscribe [:positions])
@@ -197,7 +198,6 @@
                                  )
                      )
         ]
-    ;(println (last data-clean))
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "allianz-loss-report-table" max-width (str ((if @(re-frame.core/subscribe [:rot13]) jasminegui.tools/rot13 identity) (str "Allianz ")) "P&L budget" )
                              {:target-id "allianz-loss-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:allianz-loss-report]) "allianz")}
@@ -212,7 +212,33 @@
                                                        ["IALEEMCD" "IAUNEMCD" "IAPKEMCD" "IAKLEMCD"])
                                                   {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 90}
                                                                             {:Header "ISIN" :accessor "ISIN" :width 100}]})
-                                :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])]))
+                                :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]])]
+    ))
+
+
+(defn mure-aum []
+  (when (empty? @(rf/subscribe [:mure-aum])) (rf/dispatch [:get-mure-aum]))
+  (let [data (sort-by :Bond @(rf/subscribe [:mure-aum]))]
+    (println data)
+    [box :class "subbody rightelement" :child
+     (gt/element-box-generic "mure_aum-report-table" max-width (str ((if @(re-frame.core/subscribe [:rot13]) jasminegui.tools/rot13 identity) (str "Munich Re ")) "AUM Report" )
+                             {:target-id "mure_aum-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:mure-aum-report]) "mure")}
+                             [[:> ReactTable
+                               {:data           data
+                                :columns        (conj
+                                                  (map (fn [x] {:Header x :columns [(tables/nb-col "Nominal" (str x "_Nominal") 100 tables/nb-thousand-cell-format tables/sum-rows)
+                                                                                    (tables/nb-col "IFRS MV" (str x "_IFRS_FAK_OW") 100 tables/nb-thousand-cell-format tables/sum-rows)
+                                                                                    (tables/nb-col "Nominal_per_mv" (str x "_Nominal_IFRS_FAK_OW") 110 #(tables/nb-cell-format "%.1f%" 1. %) tables/sum-rows)
+                                                                                    ]})
+                                                       ["IMEREMD1" "IMEREMD3"])
+                                                  {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 90}
+                                                                            {:Header "ISIN" :accessor "WP-ID" :width 100}
+                                                                            {:Header "CCY" :accessor "CCY" :width 50}]})
+                                :showPagination true :defaultPageSize 20 :className "-striped -highlight" :filterable true :defaultFilterMethod tables/text-filter-OR}]]
+                             )]
+    ))
+
+
 
 (defn active-home []
   (let [active-qs @(rf/subscribe [:navigation/active-knowledge])]
@@ -223,6 +249,7 @@
       :exclusions         [exclusions]
       :cre                [cre]
       :allianz-loss-report [allianz-loss-report]
+      :mure-aum-report           [mure-aum]
       :trounce-flow                   [trounce-flow-display]
       :gdel                           [global-debt-and-equity-levels]
       [:div.output "nothing to display"]))
