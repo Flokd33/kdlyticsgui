@@ -228,7 +228,8 @@
                                 :columns        (conj
                                                   (map (fn [x] {:Header x :columns [(tables/nb-col "Nominal" (str x "_Nominal") 100 tables/nb-thousand-cell-format tables/sum-rows)
                                                                                     (tables/nb-col "IFRS MV" (str x "_IFRS_FAK_OW") 100 tables/nb-thousand-cell-format tables/sum-rows)
-                                                                                    (tables/nb-col "Nominal_per_mv" (str x "_Nominal_IFRS_FAK_OW") 110 #(tables/nb-cell-format "%.2f" 1. %) tables/sum-rows)
+                                                                                    (tables/nb-col "Implied dirty price" (str x "_Nominal_IFRS_FAK_OW") 110 #(tables/nb-cell-format "%.2f" 1. %) tables/sum-rows) ;MV/ nominal
+
                                                                                     ]})
                                                        ["IMEREMD1" "IMEREMD3"])
                                                   {:Header "Bond" :columns [{:Header "Name" :accessor "Bond" :width 90}
