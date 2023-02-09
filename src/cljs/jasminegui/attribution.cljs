@@ -460,8 +460,7 @@
                                               :Fund-Contribution (/ (sec :Fund-Contribution) 100)
                                               :Index-Contribution (/ (sec :Index-Contribution) 100)
                                               :Total-Effect (/ (sec :Total-Effect) 100)
-                                              :RatingGroup (str "'" (sec :RatingGroup))
-                                              ))
+                                              :internal-rating (str "'" (sec :internal-rating))))
         header-style {:overflow nil :whiteSpace "pre-line" :wordWrap "break-word"}]
     ;(println (sort (keys (first data))))
     ;(println (second (t/chainfilter {:Region "Cash"} data-clean)))
