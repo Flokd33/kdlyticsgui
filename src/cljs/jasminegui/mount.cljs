@@ -188,9 +188,9 @@
                  :attribution-history/report-type                       :yearly
                  :attribution-history/data                              []
 
-                 :attribution-analytics/portfolio                       "OGEMCORD"
-                 :attribution-analytics/month-end                       "20220630"
-                 :attribution-analytics/period                          "monthly"
+                 :attribution-analytics/portfolio                       "IMRAGEMD"
+                 :attribution-analytics/month-end                       "20221231"
+                 :attribution-analytics/period                          "quarterly"
                  :attribution-analytics/data                            []
                  :list-dates-month-end-calendar                        []
 

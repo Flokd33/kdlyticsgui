@@ -505,8 +505,8 @@
         portfolio @(rf/subscribe [:attribution-analytics/portfolio])
         period @(rf/subscribe [:attribution-analytics/period])
         month-end @(rf/subscribe [:attribution-analytics/month-end])
-        download-columns ["Bond" "ISIN" "Region" "Country" "Sector" "Ticker" "Rating" "RatingGroup" "start-weight" "end-weight" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"
-                          "Fund-Contribution" "Index-Contribution" "Total-Effect" "Duration" "Used_YTW" "Used_ZTW" "internal-rating" "Used_Rating_Score"]
+        download-columns ["Bond" "ISIN" "Ticker" "Region" "Country" "Sector" "Used_Rating_Score" "internal-rating" "start-weight" "end-weight" "Average-Fund-Weight" "Average-Index-Weight" "Average-Excess-Weight"
+                          "Total-Effect" "Fund-Contribution" "Index-Contribution" "Duration" "Used_YTW" "Used_ZTW"  "G_SPREAD_MID_CALC"]
         month-end-choices-raw @(rf/subscribe [:list-dates-month-end-calendar])
         month-end-choices-clean  (if (= "quarterly" period)
                                    ["20220331" "20220630" "20220930" "20221231"] ; TODO ADD QUARTERS END
