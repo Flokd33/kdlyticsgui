@@ -591,7 +591,6 @@
         mtvs (rf/subscribe [:ta2022/main-table-view-selector])
         mtp (rf/subscribe [:ta2022/main-table-pivot])
         is-table (= @mtp "No")]
-    ;(println data)
     [v-box :gap "10px"
      :children [(gt/element-box-generic "isin-picker" element-box-width "Filtering" {:no-icons true}
                                         [[h-box :gap "10px" :align :center
