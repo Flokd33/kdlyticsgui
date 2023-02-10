@@ -477,8 +477,8 @@
                                                                                                                                                                     (tools/nf (:analyst_answer (first (t/chainfilter {:description_short "avoided-figure"} report-selected)))))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Short-term (2030) targets which are at or near Paris aligned?"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "paris"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Comment on target:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-comment"} report-selected))))]]]
-                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Target base year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-year"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Emission scopes included:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "scope-comment"} report-selected))))]]]
+                          [h-box :gap "10px" :align :center :children [[label :width question-width :label "Target base year:"] [p (str (:analyst_answer (first (t/chainfilter {:description_short "target-year"} report-selected))))]]]
                           [h-box :gap "10px" :align :center :children [[label :width question-width :label "Base year emissions:"] [p (str (case (:analyst_answer (first (t/chainfilter {:description_short "emissions-year"} report-selected)))
                                                                                                                                              "" ""
                                                                                                                                              nil ""
@@ -744,6 +744,11 @@
                                                     :model (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer])
                                                     :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer]) %))]]]
                                        [h-box :gap "10px" :align :center
+                                        :children [[label :width question-width :label "Emission scopes included:"]
+                                                   [input-textarea :width categories-list-width-long :rows 1
+                                                    :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
+                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
+                                       [h-box :gap "10px" :align :center
                                         :children [[label :width question-width :label "Target base year:"]
                                                    [input-text :width categories-list-width-long
                                                     :validation-regex #"^[0-9]*$"
@@ -751,11 +756,6 @@
                                                     :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %)
                                                                     ;(tf-score-calculator)
                                                                     )]]]
-                                       [h-box :gap "10px" :align :center
-                                        :children [[label :width question-width :label "Emission scopes included:"]
-                                                   [input-textarea :width categories-list-width-long :rows 1
-                                                    :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
-                                                    :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
                                        [h-box :gap "10px" :align :center
                                         :children [[label :width question-width :label "Base year emissions:"]
                                                    [input-text :width categories-list-width-long
@@ -842,17 +842,18 @@
                                                   :model (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer])
                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-comment :analyst_answer]) %))]]]
                                      [h-box :gap "10px" :align :center
+                                      :children [[label :width question-width :label "Emission scopes included:"]
+                                                 [input-textarea :width categories-list-width-long :rows 1
+                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
+                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
+                                     [h-box :gap "10px" :align :center
                                       :children [[label :width question-width :label "Target base year:"]
                                                  [input-text :width categories-list-width-long
                                                   :validation-regex #"^[0-9]*$"
                                                   :model (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer])
                                                   :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/target-year :analyst_answer]) %) ;(tf-score-calculator)
                                                                   )]]]
-                                     [h-box :gap "10px" :align :center
-                                      :children [[label :width question-width :label "Emission scopes included:"]
-                                                 [input-textarea :width categories-list-width-long :rows 1
-                                                  :model (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer])
-                                                  :on-change #(do (reset! (r/cursor tf-calculator-summary [:subs/scope-comment :analyst_answer]) %))]]]
+
                                      [h-box :gap "10px" :align :center
                                       :children [[label :width question-width :label "Base year emissions:"]
                                                  [input-text :width categories-list-width-long
