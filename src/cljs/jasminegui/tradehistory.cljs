@@ -258,6 +258,7 @@
         data-with-held (for [trade data] (assoc trade :held (if (some #(= (trade :NAME) %) position-name-list) 1 0)
                                                       :held-name (if (some #(= (trade :TICKER) %) position-ticker-list) 1 0)))
         ]
+    (println pivot)
     (if @(rf/subscribe [:single-bond-trade-history/show-throbber])
       [box :align-self :center :align :center :child [throbber :size :large]]
       [box :align :center
@@ -266,7 +267,8 @@
          [:> ReactTable
           {:data                data-with-held
            :columns             (concat [{:Header  "Trade"
-                                          :columns [{:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10 }
+                                          :columns [{:Header "Trade Id" :accessor "ultimate_parent_trade_id" :width 70}
+                                                    {:Header "Trade Date" :accessor "TradeDate" :width 80 :Cell subs10 }
                                                     {:Header "Type" :accessor "TransactionTypeName" :width 75}
                                                     {:Header "Instrument" :accessor "NAME" :width 80}
                                                     {:Header "Ticker" :accessor "TICKER" :width 80}
@@ -322,20 +324,24 @@
          [:> ReactTable
           {:data            (sort-by (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score :NAME) (map #(-> % (update :Quantity int)) data))
            :columns         [;{:Header "" :accessor "totaldummy" :width 30 :filterable false}
+                             {:Header "ID" :accessor "ultimate_parent_trade_id" :width 160}
                              {:Header "Issuer" :accessor "TICKER" :width 160}
                              {:Header "Instrument" :accessor "NAME" :width 180}
                              {:Header "ISIN" :accessor "ISIN" :width 105}
                              {:Header "CCY" :accessor "LocalCcy" :width 50}
                              {:Header "Notional" :accessor "Quantity" :width 90 :style {:textAlign "right"} :Cell nfh :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
+                             {:Header "Price" :accessor "PriceLcl" :width 65 :style {:textAlign "right"} :Cell tables/round2 :aggregate tables/median}
                              {:Header "Vs NAV(*)" :accessor "bps" :width 90 :getProps tables/red-negatives :Cell tables/zspread-format :filterMethod tables/nb-filter-OR-AND :aggregate tables/sum-rows}
                              {:Header "Country" :accessor "CNTRY_OF_RISK" :width 120}
                              {:Header "Sector" :accessor "JPM_SECTOR" :width 120}
                              {:Header "Region" :accessor "JPMRegion" :width 120}
                              {:Header "Rating" :accessor "Used_Rating_Score" :width 120 :PivotValue (fn [x] (str (tables/sub-low-level-rating-score-to-string (aget x "row" "_pivotVal")) " (" (count (aget x "row" "_subRows")) ")"))}]
-           :defaultPageSize (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK :NAME) data)))
-           :filterable      false
+           :defaultPageSize (count (distinct (map (case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "ID" :ultimate_parent_trade_id :NAME) data)))
+           :filterable      true
            ;:defaultSorted   [{:id :Quantity :desc true}]
-           :pivotBy         [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score "Issuer" :TICKER :NAME) :TICKER :NAME]
+           :pivotBy         (case pivot "ID"
+                                        [:TICKER :ultimate_parent_trade_id]
+                                        [(case pivot "Region" :JPMRegion "Sector" :JPM_SECTOR "Country" :CNTRY_OF_RISK "Rating" :Used_Rating_Score "Issuer" :TICKER :NAME) :TICKER :NAME])
            :className       "-striped -highlight"}])])))
 
 
@@ -386,7 +392,7 @@
                                                      [single-dropdown :width riskviews/mini-dropdown-width :model (rf/subscribe [:portfolio-trade-history/fwd-return]) :choices [{:id "No" :label "No"} {:id "Yes" :label "Yes"}] :on-change #(rf/dispatch [:portfolio-trade-history/fwd-return %])]
                                                      [gap :size "20px"]
                                                      [title :label "Pivot?" :level :level3]
-                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Region" "Sector" "Rating" "Issuer"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
+                                                     [single-dropdown :width riskviews/dropdown-width :model (rf/subscribe [:portfolio-trade-history/pivot]) :choices (into [] (for [k ["No" "Country" "Region" "Sector" "Rating" "ID" "Issuer"]] {:id k :label k})) :on-change #(rf/dispatch [:portfolio-trade-history/pivot %])]
                                                      [gap :size "20px"]
                                                      [button :label "Fetch" :class "btn btn-primary btn-block" :on-click #(rf/dispatch [:get-portfolio-trade-history @portfolio @start-date @end-date])]
                                                      [gap :size "20px"]
