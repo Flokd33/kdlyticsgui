@@ -139,7 +139,8 @@
   (let [selected-portfolios (rf/subscribe [selected-portfolios-key])
         toggle-portfolios (fn [setseqp] (if (cset/subset? setseqp @selected-portfolios) (cset/difference @selected-portfolios setseqp) (cset/union @selected-portfolios setseqp)))
         groups (t/chainfilter {:id #(not (some #{%} excluded-groups-seq))} static/portfolio-alignment-groups)
-        all-portfolios-set (set (apply concat (map :portfolios groups)))]
+        all-portfolios-set (set (apply concat (map :portfolios groups)))
+        rot13? @(rf/subscribe [:rot13])]
     [h-box :gap "5px"
      :children (into [[title :label "Portfolios:" :level :level3]
                       [v-box :gap "2px" :children [[button :style {:width "75px"} :label "All" :on-click #(rf/dispatch [selected-portfolios-key all-portfolios-set])]
@@ -148,8 +149,8 @@
                        (let [possible-portfolios (:portfolios line)]
                          ^{:key (first possible-portfolios)}                           ;this is so React doesn't get confused by the for loop
                          [v-box :gap "2px" :children
-                          [[button :style {:width "125px"} :label ((if @(rf/subscribe [:rot13]) t/rot13 identity) (:label line)) :on-click #(rf/dispatch [selected-portfolios-key (toggle-portfolios (set possible-portfolios))])]
-                           [selection-list :width "125px" :model selected-portfolios :choices (mapv (fn [p] {:id p :label p}) possible-portfolios) :on-change #(rf/dispatch [selected-portfolios-key %])]]]))
+                          [[button :style {:width "125px"} :label ((if rot13? t/rot13 identity) (:label line)) :on-click #(rf/dispatch [selected-portfolios-key (toggle-portfolios (set possible-portfolios))])]
+                           [selection-list :width "125px" :model selected-portfolios :choices (mapv (fn [p] {:id p :label ((if rot13? t/rot13 identity) p)}) possible-portfolios) :on-change #(rf/dispatch [selected-portfolios-key %])]]]))
 
                      )
 
