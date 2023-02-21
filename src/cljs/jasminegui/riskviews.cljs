@@ -379,13 +379,14 @@
                                           [gap :size "30px"]
                                           [title :label "Filtering:" :level :level3]
 
-                                          [single-dropdown :width "125px" :filter-box? true :model (rf/subscribe [:single-portfolio-risk/portfolio]) :choices @(rf/subscribe [:portfolio-dropdown-map]) :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])] ;(gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
+                                          (gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
+                                          ;[single-dropdown :width "125px" :filter-box? true :model (rf/subscribe [:single-portfolio-risk/portfolio]) :choices @(rf/subscribe [:portfolio-dropdown-map]) :on-change #(rf/dispatch [:single-portfolio-risk/portfolio %])] ;(gt/portfolio-dropdown-selector :single-portfolio-risk/portfolio)
 
                                           (gt/filtering-row :single-portfolio-risk/filter)]]
                               [:div {:id "single-portfolio-risk-table"}
                                [tables/tree-table-risk-table
                                 :single-portfolio-risk/table
-                                [{:Header (str "Groups (" @(rf/subscribe [:single-portfolio-risk/portfolio]) " " @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
+                                [{:Header (str "Groups (" ((if @(rf/subscribe [:rot13]) t/rot13 identity) @(rf/subscribe [:single-portfolio-risk/portfolio])) " " @(rf/subscribe [:qt-date]) ")") :columns (concat (if is-tree [{:Header "" :accessor "totaldummy" :width 30 :filterable false}] []) (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns))}
                                  {:Header "NAV" :columns (mapv tables/risk-table-columns [:nav :bm-weight :weight-delta])}
                                  {:Header "Duration" :columns (mapv tables/risk-table-columns [:contrib-mdur :bm-contrib-eir-duration :mdur-delta])}
                                  {:Header "Yield" :columns (mapv tables/risk-table-columns [:contrib-yield :bm-contrib-yield])}
@@ -430,7 +431,7 @@
                                     risk-choices (let [rfil @(rf/subscribe [:multiple-portfolio-risk/filter])] (mapv #(if (not= "None" (rfil %)) (rfil %)) (range 1 4)))
                                     grouping-columns (into [] (for [r (remove nil? (conj risk-choices :name))] (tables/risk-table-columns r)))
                                     cols (into [] (for [p @(rf/subscribe [:portfolios]) :when (some #{p} @(rf/subscribe [:multiple-portfolio-risk/selected-portfolios]))]
-                                                    {:Header p :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
+                                                    {:Header ((if @(rf/subscribe [:rot13]) t/rot13 identity) p) :accessor p :width width-one :style {:textAlign "right"} :aggregate tables/sum-rows :filterable false
                                                      :Cell   (let [v (get-in tables/risk-table-columns [display-key-one :Cell])] (case display-key-one :nav tables/round2-if-not0 :weight-delta tables/round2-if-not0 :contrib-yield tables/round2pc-no-mult :contrib-mdur tables/round2-if-not0 v))}))]
                                 [:div {:id "multiple-portfolio-risk-table"}
                                  [tables/tree-table-risk-table
@@ -678,13 +679,14 @@
                                    )]))))
 
 (defn summary-display []
-  (let [data @(rf/subscribe [:summary-display/table])]
+  (let [data @(rf/subscribe [:summary-display/table])
+        rot13? @(rf/subscribe [:rot13])]
     ;(println (first @(rf/subscribe [:summary-display/table])))
     [box :class "subbody rightelement" :child
      (gt/element-box "summary" "100%" (str "Summary " @(rf/subscribe [:qt-date])) data
                      [[:> ReactTable
                        {:data           data
-                        :columns        [{:Header "Portfolio" :accessor "portfolio" :width 90 :filterable true :filterMethod tables/text-filter-OR}
+                        :columns        [{:Header "Portfolio" :accessor "portfolio" :width 90 :filterable true :filterMethod tables/text-filter-OR :Cell #((if rot13? t/rot13 identity) (gobj/get % "value"))}
                                          {:Header "Balance" :columns (mapv #(assoc % :filterable false) (mapv tables/risk-table-columns [:value :cash-pct]))}
                                          {:Header "Value" :columns (mapv #(assoc % :filterable false)
                                                                          [(assoc (tables/risk-table-columns :contrib-yield) :Header "Yield")

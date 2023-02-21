@@ -76,10 +76,9 @@
   ([id width title-str download-table on-click-action children cols] (element-box-generic-with-cols id width title-str {:on-click-action on-click-action} children cols)))
 
 (defn portfolio-dropdown-selector
-  ([re-frame-db-key]
-   [single-dropdown :width "125px" :filter-box? true :model (rf/subscribe [re-frame-db-key]) :choices @(rf/subscribe [:portfolio-dropdown-map]) :on-change #(rf/dispatch [re-frame-db-key %])])
+  ([re-frame-db-key] (portfolio-dropdown-selector re-frame-db-key re-frame-db-key))
   ([re-frame-db-key on-change-key-event]
-   [single-dropdown :width "125px" :filter-box? true :model (rf/subscribe [re-frame-db-key]) :choices @(rf/subscribe [:portfolio-dropdown-map]) :on-change #(rf/dispatch [on-change-key-event %])]))
+   [single-dropdown :width "125px" :filter-box? true :model (rf/subscribe [re-frame-db-key]) :choices (map (if @(rf/subscribe [:rot13]) #(clojure.set/rename-keys % {:labelrot13 :label}) identity) @(rf/subscribe [:portfolio-dropdown-map])) :on-change #(rf/dispatch [on-change-key-event %])]))
 
 (rf/reg-event-db
   :quant-model-new-bond/save-bond-response

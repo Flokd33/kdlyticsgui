@@ -849,7 +849,7 @@
     (assoc db :portfolios portfolios
               :multiple-portfolio-risk/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :cembi)) static/portfolio-alignment-groups)))) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
               :multiple-portfolio-attribution/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :cembi)) static/portfolio-alignment-groups)))) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
-              :portfolio-dropdown-map (into [] (for [p portfolios] {:id p :label p}))
+              :portfolio-dropdown-map (into [] (for [p portfolios] {:id p :label p :labelrot13 (t/rot13 p)}))
               )))
 
 (doseq [k [:single-portfolio-risk/filter

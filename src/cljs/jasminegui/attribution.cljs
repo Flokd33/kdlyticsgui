@@ -17,6 +17,7 @@
     [jasminegui.tools :as t]
     [jasminegui.tables :as tables]
     [jasminegui.guitools :as gt]
+    [goog.object :as gobj]
     [oz.core :as oz]
     [jasminegui.charting :as charting]
     [re-com.validate :refer [string-or-hiccup? alert-type? vector-of-maps?]]
@@ -166,12 +167,13 @@
         timeframes [["Year to date" "ytd"] ["Month to date" "mtd"] ["Weekly" "wtd"] ["Daily" "day"]]
         targets [["Fund" "-Fund-Contribution"] ["Benchmark" "-Index-Contribution"] ["Relative" "-Total-Effect"]]
         download-columns [:portfolio :ytd-Fund-Contribution :ytd-Index-Contribution :ytd-Total-Effect :mtd-Fund-Contribution :mtd-Index-Contribution :mtd-Total-Effect :wtd-Index-Contribution :wtd-Fund-Contribution :wtd-Total-Effect :day-Fund-Contribution :day-Index-Contribution :day-Total-Effect]
+        rot13? @(rf/subscribe [:rot13])
         ]
   [box :class "subbody rightelement" :child
    (gt/element-box-with-cols "performance-summary" "100%" (str "Summary " @(rf/subscribe [:attribution-date])) @(rf/subscribe [:attribution/summary])
       [[:> ReactTable
                 {:data           @(rf/subscribe [:attribution/summary])
-                 :columns        (into [{:Header "Portfolio" :accessor "portfolio" :width 120}]
+                 :columns        (into [{:Header "Portfolio" :accessor "portfolio" :width 120 :Cell #((if rot13? t/rot13 identity) (gobj/get % "value"))}]
                                        (for [[k1 v1] timeframes]
                                          {:Header k1
                                           :columns (into [] (for [[k2 v2] targets] (merge {:Header k2 :accessor (str v1 v2)} fmt)))}))
@@ -429,7 +431,7 @@
                               [:div {:id "attribution-history-risk-table"}
                                [tables/tree-table-risk-table
                                 :attribution-history/table
-                                (into [{:Header  (str "Groups (" @(rf/subscribe [:attribution-history/portfolio]) " " @(rf/subscribe [:qt-date]) ") ")
+                                (into [{:Header  (str "Groups (" ((if @(rf/subscribe [:rot13]) t/rot13 identity) @(rf/subscribe [:attribution-history/portfolio])) " " @(rf/subscribe [:qt-date]) ") ")
                                         :columns (if is-tree (update grouping-columns 0 assoc :Aggregated tables/total-txt) grouping-columns)}]
                                       (for [dt (map #(keyword (str "dt" %)) all-dates2)]
                                         (tables/nb-col (if (= (name @report-type) "yearly")
