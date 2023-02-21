@@ -271,6 +271,20 @@
                           :edn-params  (trade-implementation-format-before-saving trade)
                           :dispatch-key [:trade-implementation-save-response]}}))
 
+
+(rf/reg-event-fx
+  :get-isin-strategy
+  (fn [{:keys [db]} [_ isin]]
+    {:db db
+     :http-get-dispatch {:url          (str static/server-address "ta2022-strategy?isin=" isin)
+                         :dispatch-key [:trade-implementation/isin-strategy]}}))
+
+(rf/reg-event-db
+  :trade-implementation/isin-strategy
+  (fn [db [_ data]]
+    (assoc-in db [:implementation/trade-implementation :tradeanalyser.implementation/strategy] data)
+    ))
+
 (rf/reg-event-db
   :trade-implementation-save-response
   (fn [db [_ data]]
@@ -363,7 +377,8 @@
                      ))
     db))
 
-(defn fill-static [db leg-number qmd]
+(defn fill-static [db leg-number qmd] ;TODO strategy auto-fill from TA
+  (rf/dispatch [:get-isin-strategy (:ISIN qmd)])
   (if (and (zero? leg-number) (some? qmd))
     (-> db
         (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/analyst]
@@ -381,8 +396,7 @@
   (fn [db [_ leg-number data]]
     (let [qmd (first (filter #(= (:ISIN %) (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :ISIN])) (db :quant-model/model-output)))
           crb-jsm (first ((group-by :ticker (first @(rf/subscribe [:esg/carbon-jasmine]))) (:Ticker qmd)))
-          msci (@(rf/subscribe [:esg/msci-scores]) (:Ticker qmd))
-          ]
+          msci (@(rf/subscribe [:esg/msci-scores]) (:Ticker qmd))]
       (->
         (recalculate-trade-notional-all-portfolios
           (let [[p v c] (if (:price data) [(:price data) (:value data) (str (:cast-parent-id data))] [100. 100. ""])]
@@ -391,7 +405,7 @@
                 (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :value] v)
                 (assoc-in [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs leg-number :cast-parent-id] c)))
           leg-number)
-        (fill-static leg-number qmd)                        ;(:quant-model data)
+        (fill-static leg-number qmd )
         (fill-quant-value leg-number qmd)
         (fill-esg-value crb-jsm msci (:Ticker qmd) )))))
 
@@ -564,7 +578,7 @@
                 [hb [[label :width fw :label "Sector"][single-dropdown :width lw :model sector :choices (into [] (for [x @(rf/subscribe [:jpm-sectors])] {:id x :label x})) :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/sector %])]]]
                 [hb [[label :width fw :label "Country"][single-dropdown :width lw :model country :choices (sort-by :label (mapv #(clojure.set/rename-keys % {:CountryCode :id :LongName :label}) @(rf/subscribe [:country-codes]))) :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/country %])]]]
                 [hb [[label :width fw :label "Rating group"][single-dropdown :width lw :model ighy :choices (into [] (for [x ["IG" "HY"]] {:id x :label x})) :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/IGHY %])]]]
-                [hb [[label :width fw :label "Strategy"]  [single-dropdown :width lw :model strategy :choices jasminegui.ta2022.tables/strategy-choices :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/strategy %])]]]
+                [hb [[label :width fw :label "Strategy"] [single-dropdown :width lw :model strategy :choices jasminegui.ta2022.tables/strategy-choices :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/strategy %])]]]
                 [hb [[label :width fw :label "ThinkFolio reason"][single-dropdown :width lw :model thinkfolio-reason :choices thinkfolio-reason-choices :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/thinkfolio-reason %])]]]
                 [hb [[label :width fw :label "Trade agreed by (1/2):"] [single-dropdown :width lw :model approver-1 :choices (conj analyst-map {:id "None" :label "None"}) :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/approver-1 %])]]]
                 [hb [[label :width fw :label "Trade agreed by (2/2):"][single-dropdown :width lw :model approver-2 :choices (conj analyst-map {:id "None" :label "None"}) :filter-box? true :on-change #(rf/dispatch [:trade-implementation/trade-item :tradeanalyser.implementation/approver-2 %])]]]
