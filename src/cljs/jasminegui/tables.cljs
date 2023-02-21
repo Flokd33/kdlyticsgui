@@ -18,6 +18,8 @@
 (defn sum-rows [vals] (reduce + vals))
 (defn sum-rows-not-nil [vals] (reduce + (remove nil? vals)))
 
+(defn sum-rows-dummy [vals rows] (println rows))            ;(map * (map price) (map qty))
+
 (defn median [coll]
   (let [sorted (sort (remove nil? coll))     ;(remove zero? (remove nil? coll))
         cnt (count sorted)

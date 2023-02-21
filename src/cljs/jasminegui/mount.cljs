@@ -381,6 +381,7 @@
                  :implementation/live-positions                      nil
                  :implementation/live-cast-parent-positions          nil
                  :implementation/implementation-list                 []
+                 :trade-implementation-strategy                     nil
 
                  ; Trade implementation
                  :implementation/trade-implementation                nil
@@ -687,6 +688,7 @@
            :implementation/portfolio-nav
            :implementation/fx
            :implementation/live-cast-parent-positions
+           :trade-implementation-strategy
 
            :allianz-loss-report
            :mure-aum
