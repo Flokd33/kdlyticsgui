@@ -1109,7 +1109,7 @@
    {:get-key :get-ogemigc-nr-bucket   :namespace "jasmine.integrity"  :asset "ogemigc-nr-map"  :dispatch-key [:ogemigc-nr-bucket]}
    {:get-key :get-off-bm-exposure     :namespace "jasmine.integrity"  :asset "off-bm-exposure-map"  :dispatch-key [:off-bm-exposure-map]}
 
-   {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "msci-data-output" :dispatch-key [:esg/msci-scores]}
+   {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "esg-msci-data-cache" :dispatch-key [:esg/msci-scores]}
    {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
 
    {:get-key :get-esg-analyst-commentary :namespace "common.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
