@@ -407,7 +407,7 @@
           leg-number)
         (fill-static leg-number qmd )
         (fill-quant-value leg-number qmd)
-        (fill-esg-value crb-jsm msci (:Ticker qmd) )))))
+        (fill-esg-value crb-jsm msci (:Ticker qmd))))))
 
 ;(rf/reg-event-db
 ;  :trade-implementation/bond-static-data
