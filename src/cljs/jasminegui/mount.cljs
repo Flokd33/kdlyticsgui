@@ -113,7 +113,7 @@
 
                  ;position-history
                  :portfolio-history/portfolio                         "OGEMCORD"
-                 :portfolio-history/start-period                      "20211231"
+                 :portfolio-history/start-period                      "20221230"
                  :portfolio-history/end-period                        "20220831"
                  :portfolio-history/filter                            {1 :region 2 :country 3 :issuer}
                  :portfolio-history/hide-zero-holdings                true
