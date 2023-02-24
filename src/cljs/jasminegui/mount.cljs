@@ -1064,30 +1064,25 @@
    {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
 
 
-   {:get-key :get-trounce-flow-date                         :namespace "jasmine.positions"  :asset "get-trounce-flow-date-as-of"  :dispatch-key [:trounce-flow-date]}
-
-   {:get-key :get-trounce-flow-cash                         :namespace "jasmine.positions"  :asset "trounce-flow-cash"                  :dispatch-key [:trounce-flow-cash]}
-   {:get-key :get-trounce-flow-cash-embi                    :namespace "jasmine.positions"  :asset "trounce-flow-cash-embi"             :dispatch-key [:trounce-flow-cash-embi]}
-   {:get-key :get-trounce-flow-cash-embi-local              :namespace "jasmine.positions"  :asset "trounce-flow-cash-embi-local"       :dispatch-key [:trounce-flow-cash-embi-local]}
-   ;{:get-key :get-trounce-flow-cash-jaci                   :namespace "jasmine.positions"  :asset "trounce-flow-cash-jaci"             :dispatch-key [:trounce-flow-cash-jaci]}
-
-   {:get-key :get-trounce-flow-duration                     :namespace "jasmine.positions"  :asset "trounce-flow-duration"              :dispatch-key [:trounce-flow-duration]}
-   {:get-key :get-trounce-flow-duration-embi                :namespace "jasmine.positions"  :asset "trounce-flow-duration-embi"         :dispatch-key [:trounce-flow-duration-embi]}
-   {:get-key :get-trounce-flow-duration-embi-local          :namespace "jasmine.positions"  :asset "trounce-flow-duration-embi-local"   :dispatch-key [:trounce-flow-duration-embi-local]}
-
-   {:get-key :get-trounce-flow-country                      :namespace "jasmine.positions"  :asset "trounce-flow-country"               :dispatch-key [:trounce-flow-country]}
-   {:get-key :get-trounce-flow-country-embi                 :namespace "jasmine.positions"  :asset "trounce-flow-country-embi"          :dispatch-key [:trounce-flow-country-embi]}
-   {:get-key :get-trounce-flow-country-embi-local           :namespace "jasmine.positions"  :asset "trounce-flow-country-embi-local"    :dispatch-key [:trounce-flow-country-embi-local]}
-   {:get-key :get-trounce-flow-country-jaci                 :namespace "jasmine.positions"  :asset "trounce-flow-country-jaci"          :dispatch-key [:trounce-flow-country-jaci]}
-
-   {:get-key :get-trounce-flow-country-change               :namespace "jasmine.positions"  :asset "trounce-flow-country-change"        :dispatch-key [:trounce-flow-country-change]}
-   {:get-key :get-trounce-flow-country-change-embi          :namespace "jasmine.positions"  :asset "trounce-flow-country-change-embi"   :dispatch-key [:trounce-flow-country-change-embi]}
-   {:get-key :get-trounce-flow-country-change-embi-local    :namespace "jasmine.positions"  :asset "trounce-flow-country-change-embi-local"  :dispatch-key [:trounce-flow-country-change-embi-local]}
-   {:get-key :get-trounce-flow-country-change-jaci          :namespace "jasmine.positions"  :asset "trounce-flow-country-change-jaci"   :dispatch-key [:trounce-flow-country-change-jaci]}
-
-   {:get-key :get-trounce-flow-rating                       :namespace "jasmine.positions"  :asset "trounce-flow-rating"                  :dispatch-key [:trounce-flow-rating]}
-   {:get-key :get-trounce-flow-rating-embi                  :namespace "jasmine.positions"  :asset "trounce-flow-rating-embi"             :dispatch-key [:trounce-flow-rating-embi]}
-   {:get-key :get-trounce-flow-rating-embi-local            :namespace "jasmine.positions"  :asset "trounce-flow-rating-embi-local"       :dispatch-key [:trounce-flow-rating-embi-local]}
+   {:get-key :get-trounce-flow-date                         :namespace "jasmine.trounceflow"  :asset "get-trounce-flow-date-as-of"        :dispatch-key [:trounce-flow-date]}
+   {:get-key :get-trounce-flow-cash                         :namespace "jasmine.trounceflow"  :asset "trounce-flow-cash"                  :dispatch-key [:trounce-flow-cash]}
+   {:get-key :get-trounce-flow-cash-embi                    :namespace "jasmine.trounceflow"  :asset "trounce-flow-cash-embi"             :dispatch-key [:trounce-flow-cash-embi]}
+   {:get-key :get-trounce-flow-cash-embi-local              :namespace "jasmine.trounceflow"  :asset "trounce-flow-cash-embi-local"       :dispatch-key [:trounce-flow-cash-embi-local]}
+   ;{:get-key :get-trounce-flow-cash-jaci                   :namespace "jasmine.positions"  :asset "trounce-flow-cash-jaci"               :dispatch-key [:trounce-flow-cash-jaci]}
+   {:get-key :get-trounce-flow-duration                     :namespace "jasmine.trounceflow"  :asset "trounce-flow-duration"              :dispatch-key [:trounce-flow-duration]}
+   {:get-key :get-trounce-flow-duration-embi                :namespace "jasmine.trounceflow"  :asset "trounce-flow-duration-embi"         :dispatch-key [:trounce-flow-duration-embi]}
+   {:get-key :get-trounce-flow-duration-embi-local          :namespace "jasmine.trounceflow"  :asset "trounce-flow-duration-embi-local"   :dispatch-key [:trounce-flow-duration-embi-local]}
+   {:get-key :get-trounce-flow-country                      :namespace "jasmine.trounceflow"  :asset "trounce-flow-country"               :dispatch-key [:trounce-flow-country]}
+   {:get-key :get-trounce-flow-country-embi                 :namespace "jasmine.trounceflow"  :asset "trounce-flow-country-embi"          :dispatch-key [:trounce-flow-country-embi]}
+   {:get-key :get-trounce-flow-country-embi-local           :namespace "jasmine.trounceflow"  :asset "trounce-flow-country-embi-local"    :dispatch-key [:trounce-flow-country-embi-local]}
+   {:get-key :get-trounce-flow-country-jaci                 :namespace "jasmine.trounceflow"  :asset "trounce-flow-country-jaci"          :dispatch-key [:trounce-flow-country-jaci]}
+   {:get-key :get-trounce-flow-country-change               :namespace "jasmine.trounceflow"  :asset "trounce-flow-country-change"        :dispatch-key [:trounce-flow-country-change]}
+   {:get-key :get-trounce-flow-country-change-embi          :namespace "jasmine.trounceflow"  :asset "trounce-flow-country-change-embi"   :dispatch-key [:trounce-flow-country-change-embi]}
+   {:get-key :get-trounce-flow-country-change-embi-local    :namespace "jasmine.trounceflow"  :asset "trounce-flow-country-change-embi-local"  :dispatch-key [:trounce-flow-country-change-embi-local]}
+   {:get-key :get-trounce-flow-country-change-jaci          :namespace "jasmine.trounceflow"  :asset "trounce-flow-country-change-jaci"   :dispatch-key [:trounce-flow-country-change-jaci]}
+   {:get-key :get-trounce-flow-rating                       :namespace "jasmine.trounceflow"  :asset "trounce-flow-rating"                  :dispatch-key [:trounce-flow-rating]}
+   {:get-key :get-trounce-flow-rating-embi                  :namespace "jasmine.trounceflow"  :asset "trounce-flow-rating-embi"             :dispatch-key [:trounce-flow-rating-embi]}
+   {:get-key :get-trounce-flow-rating-embi-local            :namespace "jasmine.trounceflow"  :asset "trounce-flow-rating-embi-local"       :dispatch-key [:trounce-flow-rating-embi-local]}
    ;{:get-key :get-trounce-flow-rating-jaci                 :namespace "jasmine.positions"  :asset "trounce-flow-rating-jaci"             :dispatch-key [:trounce-flow-rating-jaci]}
 
    {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
