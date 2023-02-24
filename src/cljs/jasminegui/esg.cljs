@@ -272,7 +272,7 @@
                 :className      "-striped -highlight"}]]])
 
 
-(def esg-checkboxes (r/atom {:funda false :score true :check false :scope1 true :scope2 false :scope3 false :tree "no" :field-chart "amt_carbon_emissions_1"}))
+(def esg-checkboxes (r/atom {:funda false :score true :check false :scope1 true :scope2 true :scope3 false :tree "no" :field-chart "amt_carbon_emissions_1"}))
 (def esg-view (r/atom nil))
 (def esg-data-chart-data (r/atom nil))
 (def esg-data-chart-data-scatter (r/atom nil))

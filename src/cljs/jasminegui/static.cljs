@@ -172,7 +172,7 @@
    {:id :otheremcd  :label "Other EMCD" :portfolios ["ITLXEMD4" "OGADB" "OGEMCRED"]}
    {:id :hcd        :label "HCD"        :portfolios ["OGEMHCD" "IUSSEMD" "IOTPEMHC" "IOTPECON" ]}
    {:id :models     :label "Models"     :portfolios ["TRANSLIQU" "CEMBIHY" "INLFROMINM" "INLFROMCEMBI" "OGTRCRED"]}
-   {:id :dummies    :label "Models"     :portfolios ["CEMBI"]}
+   {:id :dummies    :label "Models"     :portfolios ["CEMBI" "EMBI"]}
    ;{:id :dummies    :label "Models"     :portfolios ["OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE"]}
    ])
 

@@ -114,37 +114,37 @@
 (defn scatter-esg [raw-data pivot show-tickers]
   (let [data-raw-clean (if (= pivot "no")
                          raw-data
-                         (for [f (flatten (for [t raw-data] (get t "_subRows")))] (get f "_original") )) ; sorry...
-        data-clean (map (fn [x] (update x "emissions_evic_1" * 1000000)) data-raw-clean)
+                         (for [f (flatten (for [t raw-data] (get t "_subRows")))] (get f "_original") ))
+        data-clean (map (fn [x] (update x "emissions_evic_1_2" * 1000000)) data-raw-clean)
         second-mark (if show-tickers
                       {:mark     {:type "text" :dx 10 :align "left"}
-                       :encoding {:x       {:field "amt_carbon_intensity_1" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
-                                  :y       {:field "emissions_evic_1" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
+                       :encoding {:x       {:field "amt_carbon_intensity_1_2" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
+                                  :y       {:field "emissions_evic_1_2" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
                                   :text    {:field "Ticker" :type "nominal"}
                                   }}
                       nil
                       )
         ]
-    ;(println (first data-raw-clean))
     {:$schema  "https://vega.github.io/schema/vega-lite/v5.json",
      :data     {:values data-clean}
-     :title {:text "Footprint/Intensity - Scope 1" :fontSize 20}
+     :title {:text "Footprint/Intensity - Scope 1 and 2 " :fontSize 20}
      ;:params {:name "grid" :select "interval" :bind "scales"}
      :width    1000
      :height   800
      :layer (remove nil? (concat [{:selection {:grid {:type "interval" :bind "scales"}}
               :mark     {:opacity 0.5 :type "circle" }
-              :encoding {:x       {:field "amt_carbon_intensity_1" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
-                         :y       {:field "emissions_evic_1" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
+              :encoding {:x       {:field "amt_carbon_intensity_1_2" :type "quantitative" :scale {:zero false} :axis {:title "Intensity" :labelFontSize 15 :titleFontSize 15}}
+                         :y       {:field "emissions_evic_1_2" :type "quantitative" :scale {:zero false} :axis {:title "Footprint" :labelFontSize 15 :titleFontSize 15}}
                          :text    {:field "Ticker" :type "nominal"}
                          ;:shape   {:field "method_cat_scope_1", :type "nominal" :legend {:title "Method" :labelFontSize 15 :titleFontSize 15}} ;method_cat_scope_1
                          :color   {:field "sector", :type "nominal" :scale {:range esg-colors} :legend {:title "Sector" :labelFontSize 15 :titleFontSize 15}}
-                         :size   {:field "amt_carbon_emissions_1" :type "quantitative" :legend {:title "Emissions" :labelFontSize 15 :titleFontSize 15}}
+                         :size   {:field "amt_carbon_emissions_1_2" :type "quantitative" :legend {:title "Emissions" :labelFontSize 15 :titleFontSize 15}}
                          :tooltip [{:field "Ticker" :type "nominal" :title "Ticker"} {:field "sector" :type "nominal" :title "Sector"}
-                                   {:field "cat_scope_1_method" :type "nominal" :title "Method"}
-                                   {:field "amt_carbon_emissions_1" :type "quantitative" :title "Emissions" :format ",.2s"}
-                                   {:field "amt_carbon_intensity_1" :type "quantitative" :title "Intensity" :format ",.0f"}
-                                   {:field "emissions_evic_1" :type "quantitative" :title "Footprint" :format ",.0f"}
+                                   {:field "cat_scope_1_method" :type "nominal" :title "Method Scope 1"}
+                                   {:field "cat_scope_2_method" :type "nominal" :title "Method Scope 2"}
+                                   {:field "amt_carbon_emissions_1_2" :type "quantitative" :title "Emissions" :format ",.2s"}
+                                   {:field "amt_carbon_intensity_1_2" :type "quantitative" :title "Intensity" :format ",.0f"}
+                                   {:field "emissions_evic_1_2" :type "quantitative" :title "Footprint" :format ",.0f"}
                                    ]
                          }
               }
