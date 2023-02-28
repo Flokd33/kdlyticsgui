@@ -727,6 +727,7 @@
 (def expanded (r/atom {1 {} 2 {} 0 {} 3 {} 4 {} 5 {} 6 {} }))
 
 (defn portfolio-checks-display []
+  (when (empty? @(rf/subscribe [:mure-checks])) (rf/dispatch [:get-mure-checks]))
   (when (empty? @(rf/subscribe [:talanx-checks])) (rf/dispatch [:get-talanx-checks]))
   (when (empty? @(rf/subscribe [:ogemigc-nr-bucket])) (rf/dispatch [:get-ogemigc-nr-bucket]))
   (when (empty? @(rf/subscribe [:off-bm-exposure-map])) (rf/dispatch [:get-off-bm-exposure]))
@@ -738,6 +739,7 @@
         talanx-checks-data-raw @(rf/subscribe [:talanx-checks])
         ogemigc-nr-list @(rf/subscribe [:ogemigc-nr-bucket])
         off-bm-exposure @(rf/subscribe [:off-bm-exposure-map])
+        mure-checks-data-raw @(rf/subscribe [:mure-checks])
         talanx-checks-data (for [e talanx-checks-data-raw] (assoc e :check-status (reduce + [(get {false 0 true 1} (e :check-warning)) (get {false 0 true 1} (e :check-breach))])))
         talanx-checks-data-clean (filter #(> (:check-status %) 0) talanx-checks-data)
         talanx-checks-data-clean-corp (filter #(= (:sov-or-corp %) "corp") talanx-checks-data-clean)
@@ -749,7 +751,6 @@
         portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)
         ;rot13 (fn [x]  (t/rot13 (aget x "original" "grp")))                              ;(if @(rf/subscribe [:rot13]) t/rot13 identity)
         ]
-    (println off-bm-exposure)
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
@@ -775,8 +776,20 @@
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count ogemigc-nr-list) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
         ]]
+
       [v-box :class "element" :gap "20px" :children
-       [(gt/element-box "talanx-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "Talanx concentration corp " date)) talanx-checks-data-clean-corp
+       [
+        (gt/element-box "mure-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "MuRe HY concentration" date)) mure-checks-data-raw
+                        [[:> ReactTable
+                          {:data       mure-checks-data-raw
+                           :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
+                                        {:Header "Status" :accessor :check-status :width 100 :style {:textAlign "left"} :getProps tables/breach-status-color :Cell tables/round0}
+                                        {:Header "Rating" :accessor :rating-score :width 100 :style {:textAlign "left"}}
+                                        {:Header "%" :accessor :weight :width 100 :style {:textAlign "right"} :Cell tables/round2pc-no-red}
+                                        {:Header "Name" :accessor :ticker :width 100 :style {:textAlign "left"}}]
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count mure-checks-data-raw) :showPageSizeOptions false :className "-striped -highlight"}]]
+                        )
+        (gt/element-box "talanx-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "Talanx concentration corp " date)) talanx-checks-data-clean-corp
                       [[:> ReactTable
                         {:data       talanx-checks-data-clean-corp
                          :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
@@ -784,8 +797,7 @@
                                       {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
                                       {:Header "Breach" :accessor :threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                       {:Header "Max %" :accessor :max :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                      {:Header "Max name" :accessor :max-name :width 100 :style {:textAlign "left"}}
-                                      ]
+                                      {:Header "Max name" :accessor :max-name :width 100 :style {:textAlign "left"}}]
                          :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-corp) :showPageSizeOptions false :className "-striped -highlight"}]]
                       )
         (gt/element-box "talanx-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "Talanx concentration sov " date)) talanx-checks-data-clean-sov
@@ -796,8 +808,7 @@
                                         {:Header "Median rating" :accessor :median-rating :width 100 :style {:textAlign "right"}}
                                         {:Header "Breach" :accessor :threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                         {:Header "Max %" :accessor :max :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
-                                        {:Header "Max name" :accessor :max-name :width 100 :style {:textAlign "left"}}
-                                        ]
+                                        {:Header "Max name" :accessor :max-name :width 100 :style {:textAlign "left"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-sov) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
         (gt/element-box "checks" "100%" (str "Duration checks " date) portfolio-checks-data-dur
@@ -821,7 +832,6 @@
                                         {:Header "Current value" :accessor :current :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count off-bm-exposure) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
-
         ]]
       ]
      ]))
