@@ -354,6 +354,7 @@
                  :integrity                                          nil
                  :portfolio-checks                                   {}
                  :talanx-checks                                      {}
+                 :mure-checks                                        []
 
                  :analysts                                           nil
                  :analysts-emcd                                      nil
@@ -661,6 +662,7 @@
            :integrity
            :portfolio-checks
            :talanx-checks
+           :mure-checks
 
            :analysts
            :analysts-emcd
@@ -1108,6 +1110,7 @@
    {:get-key :get-integrity         :namespace "jasmine.integrity"  :asset "integrity-map"        :dispatch-key [:integrity]}
    {:get-key :get-portfolio-checks  :namespace "jasmine.integrity"  :asset "portfolio-check-map" :dispatch-key [:portfolio-checks]}
    {:get-key :get-talanx-checks     :namespace "jasmine.integrity"  :asset "talanx-check-map"    :dispatch-key [:talanx-checks]}
+   {:get-key :get-mure-checks     :namespace "jasmine.integrity"  :asset "mure-check-map"    :dispatch-key [:mure-checks]}
    {:get-key :get-ogemigc-nr-bucket   :namespace "jasmine.integrity"  :asset "ogemigc-nr-map"  :dispatch-key [:ogemigc-nr-bucket]}
    {:get-key :get-off-bm-exposure     :namespace "jasmine.integrity"  :asset "off-bm-exposure-map"  :dispatch-key [:off-bm-exposure-map]}
 
