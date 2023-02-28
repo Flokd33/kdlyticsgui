@@ -7,7 +7,8 @@
     [jasminegui.tables :as tables]
     [cljs-time.core :refer [today]]
     [jasminegui.tools :as t]
-    [tech.v3.dataset :as ds])
+    ;[tech.v3.dataset :as ds]
+    )
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 
@@ -17,7 +18,7 @@
                  ;data
                  :test-data                                           nil
                  :positions                                          []
-                 :positions-ds                                       (ds/->dataset nil)
+                 ;:positions-ds                                       (ds/->dataset nil)
                  :naked-positions                                    []
                  :instruments                                        {}
                  :rating-to-score                                    nil
@@ -298,7 +299,7 @@
                  :esg/elig                                           "No"
 
                  :quant-model/model-output                           []
-                 :quant-model/model-output-ds                        (ds/->dataset nil)
+                 ;:quant-model/model-output-ds                        (ds/->dataset nil)
                  :quant-model/model-js-output                        #js []
                  :quant-model/model-overrides                        {}
                  :quant-model/bond-isin-map                          {}
@@ -794,7 +795,7 @@
       {:db (assoc db :naked-positions res
                      :navigation/show-mounting-modal (= positions [])
                      :positions positions
-                     :positions-ds (ds/->dataset positions)
+                     ;:positions-ds (ds/->dataset positions)
                      :implementation/live-positions (into {} (for [[p g] (group-by :portfolio positions)]
                                                                [p (into {} (for [line g :when (and (some? (:isin line)) (pos? (:weight line)))] [(:isin line) (:weight line)]))])) ;(* 100. (:weight line))
                      )
@@ -813,7 +814,7 @@
       {:db (assoc db :all-instrument-ids (keys instruments)
                      :instruments instruments
                      :positions positions
-                     :positions-ds (ds/->dataset positions)
+                     ;:positions-ds (ds/->dataset positions)
                      :navigation/show-mounting-modal (= positions [])
                      :implementation/live-positions (into {} (for [[p g] (group-by :portfolio positions)]
                                                                [p (into {} (for [line g :when (and (some? (:isin line)) (pos? (:weight line)))] [(:isin line) (:weight line)]))])) ;(* 100. (:weight line))
@@ -837,7 +838,7 @@
   (fn [db [_ model]]
     (let [mo (array-of-lists->records model)]
       (assoc db
-        :quant-model/model-output-ds (ds/->dataset mo)
+        ;:quant-model/model-output-ds (ds/->dataset mo)
         :quant-model/model-output mo
         :quant-model/model-js-output (clj->js mo)           ;we do that once it's fast enough
         :navigation/show-mounting-modal false
