@@ -16,7 +16,7 @@
                  [binaryage/devtools "1.0.6"]
                  [day8.re-frame/tracing      "0.6.2"]
                  [day8.re-frame/re-frame-10x "1.5.0"]
-                 ;[com.cnuernber/tmdjs "2.000-beta-1"]
+                 [com.cnuernber/tmdjs "2.000-beta-3"]
                  ;[markdown-clj "1.11.4"]
                  ]
 

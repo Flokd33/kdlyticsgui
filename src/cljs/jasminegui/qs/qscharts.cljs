@@ -20,24 +20,33 @@
     [goog.string.format]
     [reagent-contextmenu.menu :as rcm]
     [jasminegui.qs.qstables :as qstables]
-    )
+    [tech.v3.dataset :as ds])
 
   )
 
 (def n91-color-palette (take 50 (cycle ["#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E"])))
 
 (defn spot-chart-vega-spec-quant-model [model chart-type ratings issuers rating-curves-key]
+  ;(println (ds/column-names @(rf/subscribe [:quant-model/model-output-ds])))
   (let [raw-data (@(rf/subscribe [:quant-model/generic-rating-curves]) rating-curves-key)
         data (filter #(contains? ratings (:Rating %)) raw-data)                                       ;(filter #(< 3 (:Duration %) 10) raw-data)
         target (case model "Legacy" "predicted_spread_legacy" "New" "predicted_spread_new" "SVR" "predicted_spread_svr")
         ktarget (keyword target)
-        bonds (filter #(contains? issuers (:Ticker %)) @(rf/subscribe [:quant-model/model-output]))
-        bond-data (map #(select-keys % [:Bond :rule-max :rule-min :cheap :Used_Duration :Used_ZTW ktarget :Duration :Rating])
-                       (map #(assoc %
-                               :rule-max (max (ktarget %) (:Used_ZTW %))
-                               :rule-min (min (ktarget %) (:Used_ZTW %))
-                               :cheap (if (< (ktarget %) (:Used_ZTW %)) "cheap" "expensive"))
-                            bonds))
+        ;bonds (filter #(contains? issuers (:Ticker %)) @(rf/subscribe [:quant-model/model-output]))
+        ;bond-data (map #(select-keys % [:Bond :rule-max :rule-min :cheap :Used_Duration :Used_ZTW ktarget :Duration :Rating])
+        ;               (map #(assoc %
+        ;                       :rule-max (max (ktarget %) (:Used_ZTW %))
+        ;                       :rule-min (min (ktarget %) (:Used_ZTW %))
+        ;                       :cheap (if (< (ktarget %) (:Used_ZTW %)) "cheap" "expensive"))
+        ;                    bonds))
+        bond-data (-> @(rf/subscribe [:quant-model/model-output-ds])
+                      (ds/select-columns [:Ticker :Bond :Used_ZTW :Used_Duration ktarget :Duration])
+                      (ds/filter-column :Ticker #(contains? issuers %))
+                      (ds/column-map :rule-max #(max %1 %2) [ktarget :Used_ZTW])
+                      (ds/column-map :rule-min #(min %1 %2) [ktarget :Used_ZTW])
+                      (ds/column-map :cheap #(if (< %1 %2) "cheap" "expensive") [ktarget :Used_ZTW])
+                      (ds/rows)
+                      )
         min-domain (max (dec (apply min (map :Used_Duration bond-data))) 0.)
         max-domain (min (inc (apply max (map :Used_Duration bond-data))) 25)
         rating-text-data (into [] (for [line (filter #(= (:Duration %) (Math/round (* 0.25 (+ min-domain max-domain)))) data)] {:Duration (:Duration line) :spread (ktarget line) :txt (qstables/get-implied-rating (str (:Rating line)))}))
