@@ -35,6 +35,10 @@
                  :jpm-sectors                                        nil
                  :large-exposures                                    []
 
+                 :check-cash-proxy                                    []
+                 :check-coverage                                      []
+                 :check-missing-trades                                []
+
                  :factsheet/cre                                       []
                  :knowledge/selected-mandate                          ""
                  :knowledge/mandate-description                       ""
@@ -434,6 +438,10 @@
            :var/portfolio
            :var/chart-period
            :portfolios-grp
+
+           :check-cash-proxy
+           :check-coverage
+           :check-missing-trades
 
            :factsheet/cre
            :knowledge/selected-mandate
@@ -1057,13 +1065,13 @@
    {:get-key :get-master-security-fields  :namespace "common.static" :asset "master-security-fields"  :dispatch-key [:master-security-fields-list]}
    {:get-key :get-rating-to-score         :namespace "common.static" :asset "rating-to-score-rating"  :dispatch-key [:rating-to-score]}
    {:get-key :fx-request                  :namespace "common.static" :asset "fx"                      :dispatch-key [:implementation/fx]}
-   {:get-key :get-mini-security-master    :namespace "common.static"  :asset "mini-security-master"              :dispatch-key [:quant-model/mini-security-master]}
-   {:get-key :get-allianz-loss-report     :namespace "common.xlscsvassets" :asset  "allianz-pnl-loss"  :dispatch-key [:allianz-loss-report]}
-   {:get-key :get-mure-aum                :namespace "common.xlscsvassets" :asset  "mure-aum"  :dispatch-key [:mure-aum]}
+   {:get-key :get-mini-security-master    :namespace "common.static"  :asset "mini-security-master"   :dispatch-key [:quant-model/mini-security-master]}
+   {:get-key :get-allianz-loss-report     :namespace "common.xlscsvassets" :asset  "allianz-pnl-loss" :dispatch-key [:allianz-loss-report]}
+   {:get-key :get-mure-aum                :namespace "common.xlscsvassets" :asset  "mure-aum"         :dispatch-key [:mure-aum]}
 
-   {:get-key :get-analyst-coverage        :namespace "common.xlscsvassets" :asset  "analyst-coverage"  :dispatch-key [:quant-model/analyst-coverage]}
-   {:get-key :get-emd-weekly              :namespace "common.xlscsvassets" :asset  "emd-weekly-performance-sheet"  :dispatch-key [:attribution/emd-weekly]}
-   {:get-key :get-cre-factsheet              :namespace "common.xlscsvassets" :asset  "cre-factsheet"  :dispatch-key [:factsheet/cre]}
+   {:get-key :get-analyst-coverage            :namespace "common.xlscsvassets" :asset  "analyst-coverage"               :dispatch-key [:quant-model/analyst-coverage]}
+   {:get-key :get-emd-weekly                  :namespace "common.xlscsvassets" :asset  "emd-weekly-performance-sheet"   :dispatch-key [:attribution/emd-weekly]}
+   {:get-key :get-cre-factsheet               :namespace "common.xlscsvassets" :asset  "cre-factsheet"                  :dispatch-key [:factsheet/cre]}
 
    {:get-key :portfolio-nav-request           :namespace "jasmine.positions"  :asset "sod-portfolio-nav"            :dispatch-key [:implementation/portfolio-nav]}
    {:get-key :get-live-cast-parent-positions  :namespace "jasmine.positions"  :asset "live-positions-by-parent-id"  :dispatch-key [:implementation/live-cast-parent-positions]}
@@ -1072,6 +1080,9 @@
    {:get-key :get-instruments                 :namespace "jasmine.positions"  :asset "instruments"                  :dispatch-key [:instruments]}
    {:get-key :get-large-exposures             :namespace "jasmine.positions"  :asset "large-exposures"              :dispatch-key [:large-exposures]}
 
+   {:get-key :get-check-cash-proxy          :namespace "ta2022.api"  :asset "check-cash-proxy"                  :dispatch-key [:check-cash-proxy]}
+   {:get-key :get-check-coverage            :namespace "ta2022.api"  :asset "check-coverage"                    :dispatch-key [:check-coverage]}
+   {:get-key :get-check-missing-trades      :namespace "ta2022.api"  :asset "check-missing-trades"    :dispatch-key [:check-missing-trades ]}
 
    {:get-key :get-trounce-flow-date                         :namespace "jasmine.trounceflow"  :asset "get-trounce-flow-date-as-of"        :dispatch-key [:trounce-flow-date]}
    {:get-key :get-trounce-flow-cash                         :namespace "jasmine.trounceflow"  :asset "trounce-flow-cash"                  :dispatch-key [:trounce-flow-cash]}
@@ -1092,44 +1103,36 @@
    {:get-key :get-trounce-flow-rating                       :namespace "jasmine.trounceflow"  :asset "trounce-flow-rating"                  :dispatch-key [:trounce-flow-rating]}
    {:get-key :get-trounce-flow-rating-embi                  :namespace "jasmine.trounceflow"  :asset "trounce-flow-rating-embi"             :dispatch-key [:trounce-flow-rating-embi]}
    {:get-key :get-trounce-flow-rating-embi-local            :namespace "jasmine.trounceflow"  :asset "trounce-flow-rating-embi-local"       :dispatch-key [:trounce-flow-rating-embi-local]}
-   ;{:get-key :get-trounce-flow-rating-jaci                 :namespace "jasmine.positions"  :asset "trounce-flow-rating-jaci"             :dispatch-key [:trounce-flow-rating-jaci]}
+   ;{:get-key :get-trounce-flow-rating-jaci                 :namespace "jasmine.trounceflow"  :asset "trounce-flow-rating-jaci"             :dispatch-key [:trounce-flow-rating-jaci]}
 
-   {:get-key :get-esg-summary-report         :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
-   {:get-key :get-esg-carbon-jasmine         :namespace "common.ninetyoneapi":asset "esg-jasmine-data-cache"       :dispatch-key [:esg/carbon-jasmine]}
-   {:get-key :get-ccc-weight                 :namespace "jasmine.positions"  :asset  "msci-ccc-weight"             :dispatch-key [:esg/msci-ccc-weight]}
-   {:get-key :get-esg-gb-report-analytics          :namespace "common.static" :asset  "gb-analytics"                  :dispatch-key [:esg/gb-analytics]}
-   {:get-key :get-esg-tf-report-analytics          :namespace "common.static" :asset  "tf-analytics"                  :dispatch-key [:esg/tf-analytics]}
+   {:get-key :get-esg-summary-report                :namespace "jasmine.positions"  :asset  "esg-summary-report"          :dispatch-key [:esg/summary-report]}
+   {:get-key :get-esg-carbon-jasmine                :namespace "common.ninetyoneapi":asset "esg-jasmine-data-cache"       :dispatch-key [:esg/carbon-jasmine]}
+   {:get-key :get-ccc-weight                        :namespace "jasmine.positions"  :asset  "msci-ccc-weight"             :dispatch-key [:esg/msci-ccc-weight]}
+   {:get-key :get-esg-gb-report-analytics           :namespace "common.static" :asset  "gb-analytics"                  :dispatch-key [:esg/gb-analytics]}
+   {:get-key :get-esg-tf-report-analytics           :namespace "common.static" :asset  "tf-analytics"                  :dispatch-key [:esg/tf-analytics]}
+   {:get-key :get-betas                             :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}
+   {:get-key :get-quant-rating-curves               :namespace "jasmine.quantscreen.qsdata" :asset "rating-curves" :dispatch-key [:quant-model/rating-curves]}
+   {:get-key :get-quant-rating-curves-sov-only      :namespace "jasmine.quantscreen.qsdata" :asset  "rating-curves-sov-only" :dispatch-key [:quant-model/rating-curves-sov-only]}
+   {:get-key :get-generic-rating-curves             :namespace "jasmine.quantscreen.qsdata" :asset "generic-rating-curves" :dispatch-key [:quant-model/generic-rating-curves]}
+   {:get-key :get-model-date                        :namespace "jasmine.quantscreen.qsdata" :asset "model-date"          :dispatch-key [:quant-model/model-date]}
 
-   {:get-key :get-betas              :namespace "jasmine.betas" :asset "unique-bonds"          :dispatch-key [:betas/table]}
-
-   {:get-key :get-quant-rating-curves :namespace "jasmine.quantscreen.qsdata" :asset "rating-curves" :dispatch-key [:quant-model/rating-curves]}
-   {:get-key :get-quant-rating-curves-sov-only :namespace "jasmine.quantscreen.qsdata" :asset  "rating-curves-sov-only" :dispatch-key [:quant-model/rating-curves-sov-only]}
-   {:get-key :get-generic-rating-curves :namespace "jasmine.quantscreen.qsdata" :asset "generic-rating-curves" :dispatch-key [:quant-model/generic-rating-curves]}
-   {:get-key :get-model-date   :namespace "jasmine.quantscreen.qsdata" :asset "model-date"          :dispatch-key [:quant-model/model-date]}
-
-   {:get-key :get-integrity         :namespace "jasmine.integrity"  :asset "integrity-map"        :dispatch-key [:integrity]}
-   {:get-key :get-portfolio-checks  :namespace "jasmine.integrity"  :asset "portfolio-check-map" :dispatch-key [:portfolio-checks]}
-   {:get-key :get-talanx-checks     :namespace "jasmine.integrity"  :asset "talanx-check-map"    :dispatch-key [:talanx-checks]}
-   {:get-key :get-mure-checks     :namespace "jasmine.integrity"  :asset "mure-check-map"    :dispatch-key [:mure-checks]}
-   {:get-key :get-ogemigc-nr-bucket   :namespace "jasmine.integrity"  :asset "ogemigc-nr-map"  :dispatch-key [:ogemigc-nr-bucket]}
-   {:get-key :get-off-bm-exposure     :namespace "jasmine.integrity"  :asset "off-bm-exposure-map"  :dispatch-key [:off-bm-exposure-map]}
-
-   {:get-key :get-msci-scores    :namespace "jasmine.quantscreen.msci"  :asset "esg-msci-data-cache" :dispatch-key [:esg/msci-scores]}
-   {:get-key :get-ungc-problem-securities :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
-
-   {:get-key :get-esg-analyst-commentary :namespace "common.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
-   {:get-key :get-global-debt-and-equity-levels :namespace "common.xlscsvassets"  :asset "global-debt-and-equity-levels" :dispatch-key [:global-debt-and-equity-levels]}
-
-   {:get-key :get-issuer-coverage   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
-
-   {:get-key :get-refresh-attribution   :namespace "jasmine.core"                 :asset "build-attribution!"              :dispatch-key [:dummy]}
-   {:get-key :get-refresh-sedols        :namespace "jasmine.quantscreen.blpload"  :asset "refresh-sedols-sm!"              :dispatch-key [:dummy]}
-   {:get-key :get-refresh-tf-ids        :namespace "jasmine.quantscreen.blpload"  :asset "refresh-tf-ids-sm!"              :dispatch-key [:dummy]}
-
-   {:get-key :get-backtest-output        :namespace "jasmine.backtesting.momentum"  :asset "backtest-output"              :dispatch-key [:backtest-output]}
-
-   {:get-key :get-stress-test-results        :namespace "jasmine.stresstest"  :asset "stress-test-results"              :dispatch-key [:stresstest/results]}
-   {:get-key :get-stress-test-scenarios      :namespace "jasmine.stresstest"  :asset "stress-test-scenarios-for-gui"            :dispatch-key [:stresstest/scenarios]}
+   {:get-key :get-integrity                         :namespace "jasmine.integrity"  :asset "integrity-map"        :dispatch-key [:integrity]}
+   {:get-key :get-portfolio-checks                  :namespace "jasmine.integrity"  :asset "portfolio-check-map" :dispatch-key [:portfolio-checks]}
+   {:get-key :get-talanx-checks                     :namespace "jasmine.integrity"  :asset "talanx-check-map"    :dispatch-key [:talanx-checks]}
+   {:get-key :get-mure-checks                       :namespace "jasmine.integrity"  :asset "mure-check-map"    :dispatch-key [:mure-checks]}
+   {:get-key :get-ogemigc-nr-bucket                 :namespace "jasmine.integrity"  :asset "ogemigc-nr-map"  :dispatch-key [:ogemigc-nr-bucket]}
+   {:get-key :get-off-bm-exposure                   :namespace "jasmine.integrity"  :asset "off-bm-exposure-map"  :dispatch-key [:off-bm-exposure-map]}
+   {:get-key :get-msci-scores                       :namespace "jasmine.quantscreen.msci"  :asset "esg-msci-data-cache" :dispatch-key [:esg/msci-scores]}
+   {:get-key :get-ungc-problem-securities           :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
+   {:get-key :get-esg-analyst-commentary            :namespace "common.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
+   {:get-key :get-global-debt-and-equity-levels     :namespace "common.xlscsvassets"  :asset "global-debt-and-equity-levels" :dispatch-key [:global-debt-and-equity-levels]}
+   {:get-key :get-issuer-coverage                   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
+   {:get-key :get-refresh-attribution               :namespace "jasmine.core"                 :asset "build-attribution!"              :dispatch-key [:dummy]}
+   {:get-key :get-refresh-sedols                    :namespace "jasmine.quantscreen.blpload"  :asset "refresh-sedols-sm!"              :dispatch-key [:dummy]}
+   {:get-key :get-refresh-tf-ids                    :namespace "jasmine.quantscreen.blpload"  :asset "refresh-tf-ids-sm!"              :dispatch-key [:dummy]}
+   {:get-key :get-backtest-output                   :namespace "jasmine.backtesting.momentum"  :asset "backtest-output"              :dispatch-key [:backtest-output]}
+   {:get-key :get-stress-test-results               :namespace "jasmine.stresstest"  :asset "stress-test-results"              :dispatch-key [:stresstest/results]}
+   {:get-key :get-stress-test-scenarios             :namespace "jasmine.stresstest"  :asset "stress-test-scenarios-for-gui"            :dispatch-key [:stresstest/scenarios]}
 
    ])
 

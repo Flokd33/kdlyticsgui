@@ -441,14 +441,47 @@
                                                                                alert-columns-for-amend-trigger-tables)
                                                              :filterable true :pageSize 20 :showPagination true :getTrProps go-to-active-trade! :className "-striped -highlight"}]]]])]]))
 
+(defn ta-checks []
+  (when (empty? @(rf/subscribe [:check-cash-proxy])) (rf/dispatch [:get-check-cash-proxy]))
+  (when (empty? @(rf/subscribe [:check-coverage])) (rf/dispatch [:get-check-coverage]))
+  (when (empty? @(rf/subscribe [:check-missing-trades])) (rf/dispatch [:get-check-missing-trades]))
+  (let [cash-proxy @(rf/subscribe [:check-cash-proxy])
+        coverage @(rf/subscribe [:check-coverage])
+        missing-trades @(rf/subscribe [:check-missing-trades])]
+    [h-box :class "leftelement" :gap "20px" :children
+     [[v-box :class "element" :gap "20px" :children
+       [(gt/element-box "ta-checks" "55%" "Cash Proxy with duration >= 2.5" cash-proxy
+                               [[h-box :children [[:> ReactTable
+                                                   {:data       cash-proxy
+                                                    :columns    (concat [{:Header "Bond" :accessor :Bond :width 100} {:Header "Strategy" :accessor :strategy :width 100}
+                                                                         {:Header "Duration" :accessor :Used_Duration :width 100 :style {:textAlign "right"}}])
+                                                    :filterable true :defaultFilterMethod tables/text-filter-OR  :pageSize (count cash-proxy) :showPagination false :className "-striped -highlight"}]]]])
+       (gt/element-box "ta-checks" "40%" "Coverage" coverage
+                               [[h-box :children [[:> ReactTable
+                                                   {:data       coverage
+                                                    :columns    (concat [{:Header "Portfolio" :accessor :portfolio  :width 100}
+                                                                         {:Header "Coverage" :accessor :coverage :Cell tables/round2pc :width 100 :style {:textAlign "right"}}])
+                                                    :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize (count coverage) :showPagination false  :className "-striped -highlight"}]]]])]]
+     [v-box :class "element" :gap "20px" :children
+       [(gt/element-box "ta-checks" "100%" "Missing trades with nominal >5mils" missing-trades
+                               [[h-box :children [[:> ReactTable
+                                                   {:data       missing-trades
+                                                    :columns    (concat [{:Header "Portfolio" :accessor :portfolio :width 100 :aggregate tables/empty-txt}
+                                                                         {:Header "Name" :accessor :NAME :width 120 }
+                                                                         ;{:Header "Sector" :accessor :sector :width 120 :aggregate tables/empty-txt}
+                                                                         {:Header "Total Nominal $mil" :accessor :total-nominal :width 120 :aggregate tables/median :Cell #(tables/nb-cell-format "%.1f" 0.000001 %)}]) ;:Cell #(tables/nb-cell-format "%.0f" 0.0000001 %)
+                                                    :filterable true :defaultFilterMethod tables/text-filter-OR :pivotBy [:NAME] :pageSize 30 :showPagination true  :className "-striped -highlight"}]]]])]]]]))
+
+
 (defn active-home-sql []
   (let [active-ta2022 @(rf/subscribe [:ta2022/active-home])]
     (.scrollTo js/window 0 0)
     [box :padding "80px 20px" :class "rightelement"
      :child (case active-ta2022
               :main [main-table]
-              :trade-view [trade-view-new]                      ;sql
+              :trade-view [trade-view-new]
               :journal [journal-table]
+              :checks [ta-checks]
               [:div.output "nothing to display"])]))
 
 (defn modal-ta2022-sql []
