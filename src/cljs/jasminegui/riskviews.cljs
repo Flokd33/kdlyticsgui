@@ -748,9 +748,7 @@
         port-grp @(rf/subscribe [:portfolios-grp])
         port-grp-clean (for [p port-grp] (assoc p :portfolio_strategy ((if @(rf/subscribe [:rot13]) t/rot13 identity) (p :portfolio_strategy))))
         port-grp-zip (zipmap (map :portfolio_name port-grp-clean) port-grp-clean)
-        portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)
-        ;rot13 (fn [x]  (t/rot13 (aget x "original" "grp")))                              ;(if @(rf/subscribe [:rot13]) t/rot13 identity)
-        ]
+        portfolio-checks-data-nav-grp (map #(assoc % :grp (:portfolio_strategy (port-grp-zip (:portfolio %)))) portfolio-checks-data-nav)]
     [h-box :class "subbody rightelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
        [(gt/element-box "checks" "100%" (str "General checks " date) portfolio-checks-data-nav
@@ -776,10 +774,8 @@
                            :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count ogemigc-nr-list) :showPageSizeOptions false :className "-striped -highlight"}]]
                         )
         ]]
-
       [v-box :class "element" :gap "20px" :children
-       [
-        (gt/element-box "mure-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "MuRe HY concentration" date)) mure-checks-data-raw
+       [(gt/element-box "mure-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "MuRe HY concentration " date)) mure-checks-data-raw
                         [[:> ReactTable
                           {:data       mure-checks-data-raw
                            :columns    [{:Header "Portfolio" :accessor :portfolio :width 100 :style {:textAlign "left"}}
@@ -787,8 +783,7 @@
                                         {:Header "Rating" :accessor :rating-score :width 100 :style {:textAlign "left"}}
                                         {:Header "%" :accessor :weight :width 100 :style {:textAlign "right"} :Cell tables/round2pc-no-red}
                                         {:Header "Name" :accessor :ticker :width 100 :style {:textAlign "left"}}]
-                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count mure-checks-data-raw) :showPageSizeOptions false :className "-striped -highlight"}]]
-                        )
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count mure-checks-data-raw) :showPageSizeOptions false :className "-striped -highlight"}]])
         (gt/element-box "talanx-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "Talanx concentration corp " date)) talanx-checks-data-clean-corp
                       [[:> ReactTable
                         {:data       talanx-checks-data-clean-corp
@@ -798,8 +793,7 @@
                                       {:Header "Breach" :accessor :threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                       {:Header "Max %" :accessor :max :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                       {:Header "Max name" :accessor :max-name :width 100 :style {:textAlign "left"}}]
-                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-corp) :showPageSizeOptions false :className "-striped -highlight"}]]
-                      )
+                         :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-corp) :showPageSizeOptions false :className "-striped -highlight"}]])
         (gt/element-box "talanx-checks" "100%" ((if @(rf/subscribe [:rot13]) t/rot13 identity) (str "Talanx concentration sov " date)) talanx-checks-data-clean-sov
                         [[:> ReactTable
                           {:data       talanx-checks-data-clean-sov
@@ -809,8 +803,7 @@
                                         {:Header "Breach" :accessor :threshold-breach :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                         {:Header "Max %" :accessor :max :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}
                                         {:Header "Max name" :accessor :max-name :width 100 :style {:textAlign "left"}}]
-                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-sov) :showPageSizeOptions false :className "-striped -highlight"}]]
-                        )
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count talanx-checks-data-clean-sov) :showPageSizeOptions false :className "-striped -highlight"}]])
         (gt/element-box "checks" "100%" (str "Duration checks " date) portfolio-checks-data-dur
                         [[:> ReactTable
                           {:data       portfolio-checks-data-dur
@@ -820,9 +813,7 @@
                                         {:Header "Breach" :accessor :check-threshold-breach :width 100 :style {:textAlign "right"}}
                                         {:Header "Warning" :accessor :check-threshold-warning :width 100 :style {:textAlign "right"}}
                                         {:Header "Value" :accessor :check-value :width 100 :Cell tables/round2 :style {:textAlign "right"}}]
-                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-dur) :showPageSizeOptions false :className "-striped -highlight"}]]
-                        )
-
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count portfolio-checks-data-dur) :showPageSizeOptions false :className "-striped -highlight"}]])
         (gt/element-box "checks" "100%" (str "Off BM exposure checks " date) off-bm-exposure
                         [[:> ReactTable
                           {:data       off-bm-exposure
@@ -830,11 +821,8 @@
                                         {:Header "Check" :accessor :check :width 100 :style {:textAlign "left"}}
                                         {:Header "Limit" :accessor :limit :width 100 :style {:textAlign "left"} :Cell tables/round2pc-no-red}
                                         {:Header "Current value" :accessor :current :width 100 :Cell tables/round2pc-no-red :style {:textAlign "right"}}]
-                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count off-bm-exposure) :showPageSizeOptions false :className "-striped -highlight"}]]
-                        )
-        ]]
-      ]
-     ]))
+                           :filterable true :defaultFilterMethod tables/text-filter-OR :showPagination true :pageSize (count off-bm-exposure) :showPageSizeOptions false :className "-striped -highlight"}]])
+        ]]]]))
 
 
 (defn large-exposures

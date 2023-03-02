@@ -108,7 +108,8 @@
 (def ta2022-navigation
   [{:code :main                 :name "Table"}
    {:code :trade-view           :name "Trade view"}
-   {:code :journal              :name "Journal"}])
+   {:code :journal              :name "Journal"}
+   {:code :checks               :name "Checks"}])
 
 (def knowledge-navigation
   [                                                         ;{:code :entry             :name "Home"}
@@ -287,37 +288,6 @@
                   {:id "Event driven"             :label "Event driven"           :group "Other"              :shortcut "Oth event"}
                   ]] [(line :id) (line :shortcut)])))
 
-
-(def position-historical-dates ["20181231"
-                                "20190329"
-                                "20190628"
-                                "20190930"
-                                "20191231"
-                                "20200331"
-                                "20200630"
-                                "20200929"                            ; "30Sep20"
-                                "20201231"
-                                "20210129"
-                                "20210226"
-                                "20210331"
-                                "20210429"                            ; "30Apr21"
-                                "20210528"
-                                "20210630"
-                                "20210730"
-                                "20210831"
-                                "20210930"
-                                "20211102"                             ; "29Oct21"
-                                "20211130"
-
-                                "20211231"
-                                "20220131"
-                                "20220228"
-                                "20220331"
-                                "20220430"
-                                "20220531"
-                                "20220630"
-                                "20220729"
-                                ])
 
 
 
