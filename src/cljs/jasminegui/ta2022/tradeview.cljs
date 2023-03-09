@@ -445,32 +445,68 @@
   (when (empty? @(rf/subscribe [:check-cash-proxy])) (rf/dispatch [:get-check-cash-proxy]))
   (when (empty? @(rf/subscribe [:check-coverage])) (rf/dispatch [:get-check-coverage]))
   (when (empty? @(rf/subscribe [:check-missing-trades])) (rf/dispatch [:get-check-missing-trades]))
+  (when (empty? @(rf/subscribe [:check-long-trades])) (rf/dispatch [:get-check-long-trades]))
+  (when (empty? @(rf/subscribe [:check-trade-avg-life])) (rf/dispatch [:get-check-trade-avg-life]))
+  (when (empty? @(rf/subscribe [:check-trigger-rate])) (rf/dispatch [:get-check-trigger-rate]))
   (let [cash-proxy @(rf/subscribe [:check-cash-proxy])
         coverage @(rf/subscribe [:check-coverage])
-        missing-trades @(rf/subscribe [:check-missing-trades])]
+        missing-trades @(rf/subscribe [:check-missing-trades])
+        long-trades @(rf/subscribe [:check-long-trades])
+        avg-trade-life @(rf/subscribe [:check-trade-avg-life])
+        trigger-rate @(rf/subscribe [:check-trigger-rate])]
     [h-box :class "leftelement" :gap "20px" :children
      [[v-box :class "element" :gap "20px" :children
-       [(gt/element-box "ta-checks" "55%" "Cash Proxy with duration >= 2.5" cash-proxy
-                               [[h-box :children [[:> ReactTable
-                                                   {:data       cash-proxy
-                                                    :columns    (concat [{:Header "Bond" :accessor :Bond :width 100} {:Header "Strategy" :accessor :strategy :width 100}
-                                                                         {:Header "Duration" :accessor :Used_Duration :width 100 :style {:textAlign "right"}}])
-                                                    :filterable true :defaultFilterMethod tables/text-filter-OR  :pageSize (count cash-proxy) :showPagination false :className "-striped -highlight"}]]]])
-       (gt/element-box "ta-checks" "40%" "Coverage" coverage
-                               [[h-box :children [[:> ReactTable
-                                                   {:data       coverage
-                                                    :columns    (concat [{:Header "Portfolio" :accessor :portfolio  :width 100}
-                                                                         {:Header "Coverage" :accessor :coverage :Cell tables/round2pc :width 100 :style {:textAlign "right"}}])
-                                                    :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize (count coverage) :showPagination false  :className "-striped -highlight"}]]]])]]
+       [(gt/element-box-generic-new "ta-checks" "75%" "Cash proxy w/ duration >= 3" {:no-icons true}
+                        [[h-box :children [[:> ReactTable
+                                            {:data      cash-proxy
+                                             :columns   (concat [{:Header "Bond" :accessor :Bond :width 80} {:Header "Strategy" :accessor :strategy :width 80}
+                                                                 {:Header "Duration" :accessor :Used_Duration :width 80 :style {:textAlign "right"}}])
+                                             :filterable true :defaultFilterMethod tables/text-filter-OR  :pageSize (count cash-proxy) :showPagination false :className "-striped -highlight"}]]]])
+       (gt/element-box-generic-new "ta-checks" "75%" "% coverage" {:no-icons true}
+                       [[h-box :children [[:> ReactTable
+                                           {:data       coverage
+                                            :columns    (concat [{:Header "Portfolio" :accessor :portfolio  :width 80}
+                                                                 {:Header "Coverage" :accessor :coverage :Cell tables/round2pc :width 80 :style {:textAlign "right"}}])
+                                            :filterable true :defaultFilterMethod tables/text-filter-OR :pageSize (count coverage) :showPagination false  :className "-striped -highlight"}]]]])]]
      [v-box :class "element" :gap "20px" :children
-       [(gt/element-box "ta-checks" "100%" "Missing trades with nominal >5mils" missing-trades
-                               [[h-box :children [[:> ReactTable
-                                                   {:data       missing-trades
-                                                    :columns    (concat [{:Header "Portfolio" :accessor :portfolio :width 100 :aggregate tables/empty-txt}
-                                                                         {:Header "Name" :accessor :NAME :width 120 }
-                                                                         ;{:Header "Sector" :accessor :sector :width 120 :aggregate tables/empty-txt}
-                                                                         {:Header "Total Nominal $mil" :accessor :total-nominal :width 120 :aggregate tables/median :Cell #(tables/nb-cell-format "%.1f" 0.000001 %)}]) ;:Cell #(tables/nb-cell-format "%.0f" 0.0000001 %)
-                                                    :filterable true :defaultFilterMethod tables/text-filter-OR :pivotBy [:NAME] :pageSize 30 :showPagination true  :className "-striped -highlight"}]]]])]]]]))
+       [(gt/element-box-generic-new "ta-checks" "100%" "Missing trades w/ nominal >5mils" {:no-icons true}
+                        [[h-box :children [[:> ReactTable
+                                            {:data       missing-trades
+                                             :columns    (concat [{:Header "Portfolio" :accessor :portfolio :width 100 :aggregate tables/empty-txt}
+                                                                  {:Header "Name" :accessor :NAME :width 120 }
+                                                                  ;{:Header "Sector" :accessor :sector :width 120 :aggregate tables/empty-txt}
+                                                                  {:Header "Total Nominal $mil" :accessor :total-nominal :width 110 :aggregate tables/median :Cell #(tables/nb-cell-format "%.1f" 0.000001 %)}]) ;:Cell #(tables/nb-cell-format "%.0f" 0.0000001 %)
+                                             :filterable true :defaultFilterMethod tables/text-filter-OR :pivotBy [:NAME] :pageSize 30 :showPagination true  :className "-striped -highlight"}]]]])
+        ]]
+      [v-box :class "element" :gap "20px" :children
+       [(gt/element-box-generic-new "ta-checks" "100%" "Trades longer than 150 days" {:no-icons true}
+                        [[h-box :children [[:> ReactTable
+                                          {:data       long-trades
+                                           :columns    (concat [{:Header "Bond" :accessor :Bond :width 100 }
+                                                                {:Header "Analyst" :accessor :analyst :width 100}
+                                                                {:Header "Strategy" :accessor :strategy :width 100}
+                                                                {:Header "Entry date" :accessor :entry_date :width 100}
+                                                                {:Header "# days" :accessor :trade-time :width 100}
+                                                                ])
+                                           :filterable true :defaultFilterMethod tables/text-filter-OR  :pageSize 20 :showPagination true  :className "-striped -highlight"}]]]])
+        ]]
+      [v-box :class "element" :gap "20px" :children
+       [(gt/element-box-generic-new "ta-checks" "100%" "Trades average life per analyst" {:no-icons true}
+                                    [[h-box :children [[:> ReactTable
+                                                        {:data       avg-trade-life
+                                                         :columns    (concat [{:Header "Analyst" :accessor :analyst :width 100}
+                                                                              {:Header "Avg life" :accessor :avg-trade-life :width 100 :Cell #(tables/round1 %)}
+                                                                              ])
+                                                         :filterable false :pageSize 12 :showPagination false  :className "-striped -highlight"}]]]])
+        (gt/element-box-generic-new "ta-checks" "100%" "Trigger rate last 3 months" {:no-icons true}
+                                    [[h-box :children [[:> ReactTable
+                                                        {:data       trigger-rate
+                                                         :columns    (concat [{:Header "Analyst" :accessor :analyst :width 100}
+                                                                              {:Header "Live trades" :accessor :live_trades :width 100 :Cell #(tables/round0 %)}
+                                                                              {:Header "Trigger rate %" :accessor :trigger_rate :width 100 :Cell #(tables/round1*100 %)}])
+                                                         :filterable false :pageSize 10 :showPagination false  :className "-striped -highlight"}]]]])
+        ]]
+      ]]))
 
 
 (defn active-home-sql []

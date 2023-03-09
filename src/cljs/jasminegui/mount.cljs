@@ -38,6 +38,9 @@
                  :check-cash-proxy                                    []
                  :check-coverage                                      []
                  :check-missing-trades                                []
+                 :check-long-trades                                   []
+                 :check-trade-avg-life                                []
+                 :check-trigger-rate []
 
                  :factsheet/cre                                       []
                  :knowledge/selected-mandate                          ""
@@ -442,6 +445,9 @@
            :check-cash-proxy
            :check-coverage
            :check-missing-trades
+           :check-long-trades
+           :check-trade-avg-life
+           :check-trigger-rate
 
            :factsheet/cre
            :knowledge/selected-mandate
@@ -1082,7 +1088,10 @@
 
    {:get-key :get-check-cash-proxy          :namespace "ta2022.api"  :asset "check-cash-proxy"                  :dispatch-key [:check-cash-proxy]}
    {:get-key :get-check-coverage            :namespace "ta2022.api"  :asset "check-coverage"                    :dispatch-key [:check-coverage]}
-   {:get-key :get-check-missing-trades      :namespace "ta2022.api"  :asset "check-missing-trades"    :dispatch-key [:check-missing-trades ]}
+   {:get-key :get-check-missing-trades      :namespace "ta2022.api"  :asset "check-missing-trades"              :dispatch-key [:check-missing-trades]}
+   {:get-key :get-check-long-trades         :namespace "ta2022.api"  :asset "check-long-trades"                 :dispatch-key [:check-long-trades]}
+   {:get-key :get-check-trade-avg-life      :namespace "ta2022.api"  :asset "check-trade-avg-life"              :dispatch-key [:check-trade-avg-life]}
+   {:get-key :get-check-trigger-rate      :namespace "ta2022.api"  :asset "check-trigger-rate"                 :dispatch-key [:check-trigger-rate]}
 
    {:get-key :get-trounce-flow-date                         :namespace "jasmine.trounceflow"  :asset "get-trounce-flow-date-as-of"        :dispatch-key [:trounce-flow-date]}
    {:get-key :get-trounce-flow-cash                         :namespace "jasmine.trounceflow"  :asset "trounce-flow-cash"                  :dispatch-key [:trounce-flow-cash]}
