@@ -488,7 +488,7 @@
                                                                 {:Header "Entry date" :accessor :entry_date :width 100}
                                                                 {:Header "# days" :accessor :trade-time :width 100}
                                                                 ])
-                                           :filterable true :defaultFilterMethod tables/text-filter-OR  :pageSize 20 :showPagination true  :className "-striped -highlight"}]]]])
+                                           :filterable true :defaultFilterMethod tables/text-filter-OR  :pageSize 30 :showPagination true  :className "-striped -highlight"}]]]])
         ]]
       [v-box :class "element" :gap "20px" :children
        [(gt/element-box-generic-new "ta-checks" "100%" "Trades average life per analyst" {:no-icons true}

@@ -135,6 +135,23 @@
                                 (assoc (tables/nb-col "IAM Ultimate Parent & Subsidiaries Total % Owned" "IAM_Ultimate_Parent_&_Subsidiaries_Total_%_Owned" 100 #(tables/nb-cell-format "%.1f" 100 %)) :headerStyle header-style)]
           :defaultPageSize 20 :showPagination true :getTrProps conditional-color :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])]))
 
+(defn exclusion-list-talanx []
+  (let [data @(rf/subscribe [:exclusion-list-talanx])]
+    (when (zero? (count data)) (rf/dispatch [:get-exclusion-list-talanx]))
+    (println (first data))
+    [box :class "subbody rightelement" :child
+     (gt/element-box
+       "talanx exclusion" "1675px" (str ((if @(re-frame.core/subscribe [:rot13]) jasminegui.tools/rot13 identity) (str "Talanx ")) "X list" ) data
+       [[:> ReactTable
+         {:data                (if-not (string? data) data [])
+          :columns             [{:Header "Name" :accessor "Name" :width 200}
+                                {:Header "ISIN" :accessor "ISIN" :width 200}
+                                {:Header "BB_Ticker" :accessor "BB_Ticker" :width 200}
+                                {:Header "Sector" :accessor "Sector" :width 200 }
+                                {:Header "Reason" :accessor "Reason" :width 200 }
+                                {:Header "Comment" :accessor "Comment" :width 400}]
+          :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])]))
+
 (rf/reg-event-fx
   :knowledge/select-mandate
   (fn [{:keys [db]} [_ portfolio]]
@@ -253,6 +270,7 @@
       :mure-aum-report           [mure-aum]
       :trounce-flow                   [trounce-flow-display]
       :gdel                           [global-debt-and-equity-levels]
+      :exclusion-lists          [exclusion-list-talanx]
       [:div.output "nothing to display"]))
 
   )
