@@ -1141,6 +1141,7 @@
 
 
 
+
    {:get-key :get-issuer-coverage                   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
    {:get-key :get-refresh-attribution               :namespace "jasmine.core"                 :asset "build-attribution!"              :dispatch-key [:dummy]}
    {:get-key :get-refresh-sedols                    :namespace "jasmine.quantscreen.blpload"  :asset "refresh-sedols-sm!"              :dispatch-key [:dummy]}
