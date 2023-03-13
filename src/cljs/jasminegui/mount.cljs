@@ -405,6 +405,7 @@
                  :ogemigc-nr-bucket                                  []
                  :off-bm-exposure-map                         []
                  :global-debt-and-equity-levels                       []
+                 :exclusion-list-talanx []
                  :backtest-output                                   []
 
 
@@ -713,6 +714,7 @@
            :allianz-loss-report
            :mure-aum
            :global-debt-and-equity-levels
+           :exclusion-list-talanx
            :ogemigc-nr-bucket
            :off-bm-exposure-map
            :backtest-output
@@ -1135,6 +1137,11 @@
    {:get-key :get-ungc-problem-securities           :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
    {:get-key :get-esg-analyst-commentary            :namespace "common.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
    {:get-key :get-global-debt-and-equity-levels     :namespace "common.xlscsvassets"  :asset "global-debt-and-equity-levels" :dispatch-key [:global-debt-and-equity-levels]}
+   {:get-key :get-exclusion-list-talanx     :namespace "common.xlscsvassets"  :asset "exclusion-list-talanx" :dispatch-key [:exclusion-list-talanx]}
+
+
+
+
    {:get-key :get-issuer-coverage                   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
    {:get-key :get-refresh-attribution               :namespace "jasmine.core"                 :asset "build-attribution!"              :dispatch-key [:dummy]}
    {:get-key :get-refresh-sedols                    :namespace "jasmine.quantscreen.blpload"  :asset "refresh-sedols-sm!"              :dispatch-key [:dummy]}

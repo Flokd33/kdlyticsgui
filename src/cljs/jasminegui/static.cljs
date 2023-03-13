@@ -119,6 +119,7 @@
    {:code :allianz-loss-report    :name "Allianz P&L budget"}                   ;"Allianz P&L budget"
    {:code :mure-aum-report    :name "MuRe AUM report"}
    {:code :gdel                   :name "Global debt levels"}
+   {:code :exclusion-lists   :name "Exclusion lists"}
    {:code :trounce-flow           :name "Trounceflow"}])
 
 (def risk-choice-map
