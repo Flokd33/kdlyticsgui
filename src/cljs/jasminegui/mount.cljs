@@ -405,7 +405,17 @@
                  :ogemigc-nr-bucket                                  []
                  :off-bm-exposure-map                         []
                  :global-debt-and-equity-levels                       []
-                 :exclusion-list-talanx []
+                 :exclu-talanx []
+                 :exclu-allianz-aim []
+                 :exclu-allianz-grgr []
+                 :exclu-ezvk []
+                 :exclu-kzvk []
+                 :exclu-mure-og []
+                 :exclu-mure-x-rus-issuers []
+                 :exclu-mure-x-rus-gri []
+                 :exclu-mure-rus-issuers []
+                 :exclu-mure-rus-gri []
+
                  :backtest-output                                   []
 
 
@@ -714,11 +724,22 @@
            :allianz-loss-report
            :mure-aum
            :global-debt-and-equity-levels
-           :exclusion-list-talanx
            :ogemigc-nr-bucket
            :off-bm-exposure-map
            :backtest-output
            :dummy
+
+           :exclu-talanx
+           :exclu-allianz-aim
+           :exclu-allianz-grgr
+           :exclu-ezvk
+           :exclu-kzvk
+           :exclu-mure-og
+           :exclu-mure-x-rus-issuers
+           :exclu-mure-x-rus-gri
+           :exclu-mure-rus-issuers
+           :exclu-mure-rus-gri
+
 
            :stresstest/selected-portfolios
            :stresstest/scenarios
@@ -1137,9 +1158,17 @@
    {:get-key :get-ungc-problem-securities           :namespace "jasmine.quantscreen.msci"  :asset "ungc-problem-securities" :dispatch-key [:esg/ungc-problem-securities]}
    {:get-key :get-esg-analyst-commentary            :namespace "common.xlscsvassets"  :asset "esg-analyst-commentary" :dispatch-key [:esg/analyst-commentary]}
    {:get-key :get-global-debt-and-equity-levels     :namespace "common.xlscsvassets"  :asset "global-debt-and-equity-levels" :dispatch-key [:global-debt-and-equity-levels]}
-   {:get-key :get-exclusion-list-talanx     :namespace "common.xlscsvassets"  :asset "exclusion-list-talanx" :dispatch-key [:exclusion-list-talanx]}
 
-
+   {:get-key :get-exclu-talanx                      :namespace "common.xlscsvassets"  :asset "exclu-talanx" :dispatch-key [:exclu-talanx]}
+   {:get-key :get-exclu-allianz-aim                 :namespace "common.xlscsvassets"  :asset "exclu-allianz-aim" :dispatch-key [:exclu-allianz-aim]}
+   {:get-key :get-exclu-allianz-grgr                :namespace "common.xlscsvassets"  :asset "exclu-allianz-grgr" :dispatch-key [:exclu-allianz-grgr]}
+   {:get-key :get-exclu-ezvk                        :namespace "common.xlscsvassets"  :asset "exclu-ezvk" :dispatch-key [:exclu-ezvk]}
+   {:get-key :get-exclu-kzvk                        :namespace "common.xlscsvassets"  :asset "exclu-kzvk" :dispatch-key [:exclu-kzvk]}
+   {:get-key :get-exclu-mure-og                     :namespace "common.xlscsvassets"  :asset "exclu-mure-og" :dispatch-key [:exclu-mure-og]}
+   {:get-key :get-exclu-mure-x-rus-issuers          :namespace "common.xlscsvassets"  :asset "exclu-mure-x-rus-issuers" :dispatch-key [:exclu-mure-x-rus-issuers]}
+   {:get-key :get-exclu-mure-x-rus-gri                   :namespace "common.xlscsvassets"  :asset "exclu-mure-x-rus-gri" :dispatch-key [:exclu-mure-x-rus-gri]}
+   {:get-key :get-exclu-mure-rus-issuers            :namespace "common.xlscsvassets"  :asset "exclu-mure-rus-issuers" :dispatch-key [:exclu-mure-rus-issuers]}
+   {:get-key :get-exclu-mure-rus-gri                :namespace "common.xlscsvassets"  :asset "exclu-mure-rus-gri" :dispatch-key [:exclu-mure-rus-gri]}
 
 
    {:get-key :get-issuer-coverage                   :namespace "jasmine.quantscreen.issuernotes"  :asset "issuer-notes"              :dispatch-key [:quant-model/issuer-coverage]}
