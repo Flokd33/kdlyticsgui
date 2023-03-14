@@ -135,22 +135,6 @@
                                 (assoc (tables/nb-col "IAM Ultimate Parent & Subsidiaries Total % Owned" "IAM_Ultimate_Parent_&_Subsidiaries_Total_%_Owned" 100 #(tables/nb-cell-format "%.1f" 100 %)) :headerStyle header-style)]
           :defaultPageSize 20 :showPagination true :getTrProps conditional-color :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])]))
 
-(defn exclusion-list-talanx []
-  (let [data @(rf/subscribe [:exclusion-list-talanx])]
-    (when (zero? (count data)) (rf/dispatch [:get-exclusion-list-talanx]))
-    (println (first data))
-    [box :class "subbody rightelement" :child
-     (gt/element-box
-       "talanx exclusion" "1675px" (str ((if @(re-frame.core/subscribe [:rot13]) jasminegui.tools/rot13 identity) (str "Talanx ")) "X list" ) data
-       [[:> ReactTable
-         {:data                (if-not (string? data) data [])
-          :columns             [{:Header "Name" :accessor "Name" :width 200}
-                                {:Header "ISIN" :accessor "ISIN" :width 200}
-                                {:Header "BB_Ticker" :accessor "BB_Ticker" :width 200}
-                                {:Header "Sector" :accessor "Sector" :width 200 }
-                                {:Header "Reason" :accessor "Reason" :width 200 }
-                                {:Header "Comment" :accessor "Comment" :width 400}]
-          :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])]))
 
 (rf/reg-event-fx
   :knowledge/select-mandate
@@ -168,15 +152,148 @@
        [[h-box :gap "20px" :children [[vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate]) :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]
                                       [box :child [:div {:dangerouslySetInnerHTML {:__html (.makeHtml sd @(rf/subscribe [:knowledge/mandate-description]))}}]]]]])]))
 
-(defn exclusions []
-  [box :class "subbody rightelement" :child
-   (gt/element-box
-     "mandates" "1675px" "Exclusions" nil
-     [
-      [h-box :children [
-                        [vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate])  :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]]]
+(defn exclusions []                                         ;TODO
+  (let [data-talanx @(rf/subscribe [:exclu-talanx])
+        data-allianz-aim @(rf/subscribe [:exclu-allianz-aim])
+        data-allianz-grgr @(rf/subscribe [:exclu-allianz-grgr])
+        data-ezvk @(rf/subscribe [:exclu-ezvk])
+        data-kzvk @(rf/subscribe [:exclu-kzvk])
+        data-mure-og @(rf/subscribe [:exclu-mure-og])
+        data-mure-x-rus-issuers @(rf/subscribe [:exclu-mure-x-rus-issuers])
+        data-mure-x-rus-gri @(rf/subscribe [:exclu-mure-x-rus-gri])
+        data-mure-rus-issuers @(rf/subscribe [:exclu-mure-rus-issuers])
+        data-mure-rus-gri @(rf/subscribe [:exclu-mure-rus-gri])
+        ]
+    (when (zero? (count data-talanx)) (rf/dispatch [:get-exclu-talanx]))
+    (when (zero? (count data-allianz-aim)) (rf/dispatch [:get-exclu-allianz-aim]))
+    (when (zero? (count data-allianz-grgr)) (rf/dispatch [:get-exclu-allianz-grgr]))
+    (when (zero? (count data-ezvk)) (rf/dispatch [:get-exclu-ezvk]))
+    (when (zero? (count data-kzvk)) (rf/dispatch [:get-exclu-kzvk]))
+    (when (zero? (count data-mure-og)) (rf/dispatch [:get-exclu-mure-og]))
+    (when (zero? (count data-mure-x-rus-issuers)) (rf/dispatch [:get-exclu-mure-x-rus-issuers]))
+    (when (zero? (count data-mure-x-rus-gri)) (rf/dispatch [:get-exclu-mure-x-rus-gri]))
+    (when (zero? (count data-mure-rus-issuers)) (rf/dispatch [:get-exclu-mure-rus-issuers]))
+    (when (zero? (count data-mure-rus-gri)) (rf/dispatch [:get-exclu-mure-rus-gri]))
+    ;(println (first data-mure-og))
+    ;(println @(rf/subscribe [:knowledge/selected-mandate]))
+   [box :class "subbody rightelement" :child
+   (gt/element-box-generic-new
+     "mandates" "1675px" "Exclusions" {:no-icons true}
+     [[h-box :children [[vertical-bar-tabs :model (rf/subscribe [:knowledge/selected-mandate]) :tabs (into [] (for [p @(rf/subscribe [:portfolios])] {:id p :label p})) :on-change #(rf/dispatch [:knowledge/select-mandate %])]
+                        (case @(rf/subscribe [:knowledge/selected-mandate])
+                          ("ITLXEMD" "ITLNXEMD" "ITLXEMD3" "ITLXEMD4" ) (gt/element-box "talanx exclusion" "1475px" (str "Talanx exclusion list" ) data-talanx
+                                                                                        [[:> ReactTable
+                                                                                          {:data                (if-not (string? data-talanx) data-talanx [])
+                                                                                           :columns             [{:Header "Name" :accessor "Name" :width 200}
+                                                                                                                 {:Header "ISIN" :accessor "ISIN" :width 200}
+                                                                                                                 {:Header "BB_Ticker" :accessor "BB_Ticker" :width 200}
+                                                                                                                 {:Header "Sector" :accessor "Sector" :width 200 }
+                                                                                                                 {:Header "Reason" :accessor "Reason" :width 200 }
+                                                                                                                 {:Header "Comment" :accessor "Comment" :width 300}]
+                                                                                           :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])
+                          ("IEZVKEMD") (gt/element-box "ezvk exclusion" "1475px" (str "IEZVKEMD exclusion list" ) data-ezvk
+                                                       [[:> ReactTable
+                                                         {:data                (if-not (string? data-ezvk) data-ezvk [])
+                                                          :columns             [{:Header "Ticker" :accessor "Ticker" :width 200}
+                                                                                {:Header "Name" :accessor "Name" :width 200}
+                                                                                {:Header "Reason" :accessor "Reason" :width 200}
+                                                                                {:Header "Do_we_own_in_IEZVKEMD?" :accessor "Do_we_own_in_IEZVKEMD?" :width 200}
+                                                                                {:Header "Do_we_own_in_any_portfolio?" :accessor "Do_we_own_in_any_portfolio?" :width 200}
+                                                                                {:Header "Can_we_buy:_yes/no?" :accessor "Can_we_buy:_yes/no?" :width 200 }]
+                                                          :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])
+                          ("IKZVKEMD") (gt/element-box "kzvk exclusion" "1475px" (str "IKZVKEMD exclusion list" ) data-kzvk
+                                                       [[:> ReactTable
+                                                         {:data                (if-not (string? data-kzvk) data-kzvk [])
+                                                          :columns             [{:Header "ISIN" :accessor "ISSUER_ISIN" :width 200}
+                                                                                {:Header "Name" :accessor "ISSUER_NAME" :width 200}]
+                                                          :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])
 
-      ])])
+                          ("IALEEMCD" "IAPKEMCD" "IAUNEMCD" "IAKLEMCD") (gt/element-box "allianz exclusion" "1475px" (str "Allianz exclusions lists - AIM and GRGR" ) data-allianz-aim
+                                                                                        [[:> ReactTable
+                                                                                          {:data                (if-not (string? data-allianz-aim) data-allianz-aim [])
+                                                                                           :columns             [{:Header "Name" :accessor "Issue/_Issuer_name_" :width 200}
+                                                                                                                 {:Header "BBG_ID" :accessor "Bloomberg_Company_ID_" :width 200}
+                                                                                                                 {:Header "ISIN" :accessor "Investment_ID_(ISIN)" :width 200}
+                                                                                                                 {:Header "Status" :accessor "Status" :width 200}
+                                                                                                                 {:Header "Reason" :accessor "Reason" :width 200}
+                                                                                                                 {:Header "Comment" :accessor "Comment" :width 200}]
+                                                                                           :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]
+                                                                                         [:> ReactTable
+                                                                                          {:data                (if-not (string? data-allianz-grgr) data-allianz-grgr [])
+                                                                                           :columns             [{:Header "Name" :accessor "Issue/_Issuer_name" :width 200}
+                                                                                                                 {:Header "BBG_ID" :accessor "Bloomberg_Company_ID" :width 200}
+                                                                                                                 {:Header "ISIN" :accessor "Investment_ID_(ISIN)" :width 200}
+                                                                                                                 {:Header "Limit specification" :accessor "Limit_specification" :width 200}
+                                                                                                                 {:Header "Status" :accessor "Status" :width 200}
+                                                                                                                 {:Header "Comments" :accessor "Comments" :width 200}]
+                                                                                           :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]
+                                                                                         ])
+                          ("IMRUSEMD") (gt/element-box "imrus exclusion" "1475px" (str "IMRUSEMD exclusions lists - Issuers, GRI and O&G" ) data-mure-rus-issuers
+                                                       [[:> ReactTable
+                                                         {:data                (if-not (string? data-mure-rus-issuers) data-mure-rus-issuers [])
+                                                          :columns             [{:Header "Name" :accessor "Issuer_Name" :width 300}
+                                                                                {:Header "Restriction" :accessor "Restriction" :width 600}]
+                                                          :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]
+                                                        [:> ReactTable
+                                                         {:data                (if-not (string? data-mure-rus-gri) data-mure-rus-gri [])
+                                                          :columns             [{:Header "Name" :accessor "Name" :width 300}
+                                                                                {:Header "Issuer" :accessor "Issuer" :width 300}
+                                                                                {:Header "BBG_ID" :accessor "ID_BB_Company" :width 200}]
+                                                          :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]
+                                                        [:> ReactTable
+                                                         {:data                (if-not (string? data-mure-og) data-mure-og [])
+                                                          :columns             [{:Header "Name" :accessor "Name1" :width 200}
+                                                                                {:Header "Code" :accessor "Code" :width 200}
+                                                                                {:Header "Description" :accessor "Description" :width 200}
+                                                                                {:Header "Excluded" :accessor "EXCLUDED" :width 200}]
+                                                          :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])
+
+                          ("IMRAGEMD" "IMEREMD1" "IMEREMD3") (gt/element-box "mure exclusion" "1475px" (str "MuRe X RUS exclusions lists - Issuers, GRI and O&G" ) data-mure-x-rus-issuers
+                                                                             [[:> ReactTable
+                                                                               {:data                (if-not (string? data-mure-x-rus-issuers) data-mure-x-rus-issuers [])
+                                                                                :columns             [{:Header "Name" :accessor "Issuer_Name" :width 300}
+                                                                                {:Header "Restriction" :accessor "Restriction" :width 600}
+                                                                                ]
+                                                                                :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]
+                                                                              [:> ReactTable
+                                                                               {:data                (if-not (string? data-mure-x-rus-gri) data-mure-x-rus-gri [])
+                                                                                :columns             [{:Header "Name" :accessor "Name" :width 300}
+                                                                                                      {:Header "Issuer" :accessor "Issuer" :width 300}
+                                                                                                      {:Header "BBG_ID" :accessor "ID_BB_Company" :width 200}]
+                                                                                :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]
+                                                                              [:> ReactTable
+                                                                               {:data                (if-not (string? data-mure-og) data-mure-og [])
+                                                                                :columns             [{:Header "Name" :accessor "Name1" :width 200}
+                                                                                                      {:Header "Code" :accessor "Code" :width 200}
+                                                                                                      {:Header "Description" :accessor "Description" :width 200}
+                                                                                                      {:Header "Excluded" :accessor "EXCLUDED" :width 200}]
+                                                                                :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])
+                          nil
+                          )
+
+                        ]]]
+     )])
+  )
+
+(defn exclusion-list-talanx []
+  (let [data @(rf/subscribe [:exclusion-list-talanx])]
+    (when (zero? (count data)) (rf/dispatch [:get-exclusion-list-talanx]))
+    (println (first data))
+    [box :class "subbody rightelement" :child
+     (gt/element-box
+       "talanx exclusion" "1675px" (str ((if @(re-frame.core/subscribe [:rot13]) jasminegui.tools/rot13 identity) (str "Talanx ")) "X list" ) data
+       [[:> ReactTable
+         {:data                (if-not (string? data) data [])
+          :columns             [{:Header "Name" :accessor "Name" :width 200}
+                                {:Header "ISIN" :accessor "ISIN" :width 200}
+                                {:Header "BB_Ticker" :accessor "BB_Ticker" :width 200}
+                                {:Header "Sector" :accessor "Sector" :width 200 }
+                                {:Header "Reason" :accessor "Reason" :width 200 }
+                                {:Header "Comment" :accessor "Comment" :width 400}]
+          :defaultPageSize 30 :showPagination true  :filterable true :defaultFilterMethod tables/text-filter-OR :className "-highlight"}]])]))
+
+
+
 
 (defn cre []
   (when (zero? (count @(rf/subscribe [:factsheet/cre]))) (rf/dispatch [:get-cre-factsheet]))
@@ -236,7 +353,7 @@
 (defn mure-aum []
   (when (empty? @(rf/subscribe [:mure-aum])) (rf/dispatch [:get-mure-aum]))
   (let [data (sort-by :Bond @(rf/subscribe [:mure-aum]))]
-    (println data)
+    ;(println data)
     [box :class "subbody rightelement" :child
      (gt/element-box-generic "mure_aum-report-table" max-width (str ((if @(re-frame.core/subscribe [:rot13]) jasminegui.tools/rot13 identity) (str "Munich Re ")) "AUM Report" )
                              {:target-id "mure_aum-report-table" :on-click-action #(tools/csv-link @(rf/subscribe [:mure-aum-report]) "mure")}
@@ -270,7 +387,6 @@
       :mure-aum-report           [mure-aum]
       :trounce-flow                   [trounce-flow-display]
       :gdel                           [global-debt-and-equity-levels]
-      :exclusion-lists          [exclusion-list-talanx]
       [:div.output "nothing to display"]))
 
   )
