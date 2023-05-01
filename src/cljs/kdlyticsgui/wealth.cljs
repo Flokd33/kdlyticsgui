@@ -10,6 +10,7 @@
 
   )
 
+
 (defn summary-display []
   (let [data nil]                                              ;@(rf/subscribe [:summary-display/table])
     [box :class "subbody rightelement" :child
