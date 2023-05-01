@@ -13,7 +13,7 @@
 
 (defn init []
   ;(rf/dispatch-sync [::mount/initialize-db])
-  ;(rf/dispatch-sync [::rp/add-keyboard-event-listener "keypress"])
+  (rf/dispatch-sync [::rp/add-keyboard-event-listener "keypress"])
   (mount-root))
 ;
 ;(rf/dispatch [:get-portfolios])

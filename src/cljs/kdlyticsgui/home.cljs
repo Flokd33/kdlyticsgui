@@ -17,11 +17,13 @@
 ;(defn mod-date [date]  (str (subs date 0 4) (subs date 5 7) (subs date 8 10) ))
 
 
+
 (defn active-home []
-  (let [active-home @(rf/subscribe [:navigation/active-home])]
+  (let [active-home :summary]                                       ;@(rf/subscribe [:navigation/active-home])
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-home
-      :summary                        []
+      :summary                        [p "View 1 here"]
+      :view2                        [p "View 2 here"]
       ;:single-portfolio               [riskviews/single-portfolio-risk-display]
 
       [:div.output "nothing to display"])))

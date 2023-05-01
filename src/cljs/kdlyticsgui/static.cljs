@@ -5,12 +5,13 @@
 
 (def main-navigation
   (let [home-events [:get-qt-date]]
-  [{:code :home        :name "W"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
+  [{:code :home        :name "Section 1"          :dispatch :home             :subs nil :load-events home-events :mounting-modal true}
    ]))
 
 
 (def risk-navigation
-  [{:code :summary                :name "DHFSKJDFHJKSD"}
+  [{:code :summary                :name "View 1"}
+   {:code :view2                :name "View 2"}
 
    ])
 

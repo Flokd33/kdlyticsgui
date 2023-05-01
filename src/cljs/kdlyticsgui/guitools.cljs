@@ -18,7 +18,7 @@
                    (for [item choices]
                      ^{:key item}
                      [button
-                      :class (str "btn btn-primary btn-block" (if (= @(rf/subscribe [navigation-key]) (:code item)) " active"))
+                      :class (str "btn btn-primary btn-block" (if (= :summary (:code item)) " active")) ;@(rf/subscribe [navigation-key])
                       :label (:name item)
                       :on-click #(rf/dispatch [navigation-key (:code item)])]))])
 
