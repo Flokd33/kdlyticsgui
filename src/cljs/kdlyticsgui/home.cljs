@@ -7,10 +7,11 @@
     [kdlyticsgui.static :as static]
     [reagent.core :as r]
     [reagent-contextmenu.menu :as rcm]
-    [jasminegui.guitools :as gt]
+    [kdlyticsgui.guitools :as gt]
 
     [oz.core :as oz]
-    ["react-table-v6" :as rt :default ReactTable]))
+    ;["react-table-v6" :as rt :default ReactTable]
+    ))
 
 
 ;(defn mod-date [date]  (str (subs date 0 4) (subs date 5 7) (subs date 8 10) ))
