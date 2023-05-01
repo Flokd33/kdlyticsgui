@@ -11,6 +11,7 @@
     [kdlyticsgui.mount :as mount]
     [kdlyticsgui.static :as static]
     [kdlyticsgui.guitools :as gt]
+    [kdlyticsgui.wealth :as wealth]
     [goog.string :as gstring]
     ))
 ;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -85,8 +86,8 @@
   (let [active-view @(rf/subscribe [:navigation/active-view-wealth])]
     (.scrollTo js/window 0 0)                             ;on view change we go back to top
     (case active-view
-      :summary                          [label :label "Please select an item at the top."]
-      :projection                       [:div.output "VIEW 2 HERE"]
+      :summary                          [wealth/summary-display]
+      :projection                       [wealth/projection-display]
 
       [:div.output "nothing to display"])))
 
@@ -152,8 +153,8 @@
 
 ;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 (defn active-section []
-  (println @(rf/subscribe [:navigation/active-section]))
-  (println @(rf/subscribe [:navigation/active-view-wealth]))
+  ;(println @(rf/subscribe [:navigation/active-section]))
+  (println "HELLO")
   (.scrollTo js/window 0 0)                             ;on view change we go back to top
   (case @(rf/subscribe [:navigation/active-section])
     :entry            [entry]
@@ -162,7 +163,6 @@
     :vault            [vault-view]
     :cellar           [cellar-view]
     :tools            [tools-view]
-
 
     [:div.output "nothing to display"]))
 
