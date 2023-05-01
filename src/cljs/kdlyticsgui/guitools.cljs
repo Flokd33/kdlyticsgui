@@ -11,17 +11,6 @@
 
 
 
-(defn left-nav-bar
-  [choices navigation-key]
-  [v-box :gap "20px" :class "leftnavbar"
-   :children (into []
-                   (for [item choices]
-                     ^{:key item}
-                     [button
-                      :class (str "btn btn-primary btn-block" (if (= :summary (:code item)) " active")) ;@(rf/subscribe [navigation-key])
-                      :label (:name item)
-                      :on-click #(rf/dispatch [navigation-key (:code item)])]))])
-
 
 
 ;(defn element-box-generic

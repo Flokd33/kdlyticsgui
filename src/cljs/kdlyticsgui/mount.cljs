@@ -5,32 +5,27 @@
     [cljs-http.client :as http]
     [cljs.core.async :refer [<!]]
     [cljs-time.core :refer [today]]
-    ;[jasminegui.tools :as t]
+    [kdlyticsgui.tools :as t]
     ;[tech.v3.dataset :as ds]
     )
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
-(def default-db {:rot13                                             false
-                 :test-data                                           nil
+(def default-db {:rot13                          false
+                 :test-data                      nil
 
-                 :navigation/active-view                             :entry ;:home
-                 :navigation/active-knowledge                        :mandates
-                 :navigation/active-home                             :summary
-                 :navigation/active-var                              :overview
-                 :navigation/active-qs                               :table
-                 :navigation/active-attribution                      :summary
-                 :navigation/active-scorecard                        :filter
-                 :navigation/active                                  {:view        :entry
-                                                                      :home        :summary
-                                                                      :var         :overview
-                                                                      :qs          :table
-                                                                      :attribution :summary
-                                                                      :scorecard   :filter}
-                 :navigation/success-modal                           {:show false :on-close nil :response nil}
-                 :navigation/success-compile                         {:show false :on-close nil :response nil}
-                 :navigation/show-mounting-modal                     false
+                 :navigation/active-section         :entry
+                 :navigation/active-view-wealth     :summary
+                 :navigation/active-view-positions  :summary
+                 :navigation/active-view-vault      :inventory
+                 :navigation/active-view-cellar     :inventory
+                 :navigation/active-view-tools      :scrapping
 
-                 :dummy                                              nil                                 ;can be useful
+                 ;:navigation/active              {:view        :entry :home        :summary}
+
+                 :navigation/success-modal       {:show false :on-close nil :response nil}
+                 :navigation/success-compile     {:show false :on-close nil :response nil}
+                 :navigation/show-mounting-modal false
+                 :dummy                          nil                                 ;can be useful
                  })
 (rf/reg-event-db ::initialize-db (fn [_ _] default-db))
 
@@ -39,14 +34,13 @@
 
 (doseq [k [:rot13
            :test-data
-           :navigation/active-view
-           :navigation/active-knowledge
-           :navigation/active-home
-           :navigation/active-var
-           :navigation/active-qs
-           :navigation/active-esg
-           :navigation/active-attribution
-           :navigation/active-scorecard
+           :navigation/active-section
+           :navigation/active-view-wealth
+           :navigation/active-view-positions
+           :navigation/active-view-vault
+           :navigation/active-view-cellar
+           :navigation/active-view-tools
+
            :navigation/show-mounting-modal
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
 
@@ -54,52 +48,8 @@
   :navigation/active
   (fn [db [_ page sub-page]] (assoc-in db [:navigation/active page] sub-page)))
 
-(rf/reg-event-db
-  :single-portfolio-attribution/table
-  (fn [db [_ data]] (assoc db :single-portfolio-attribution/table data :navigation/show-mounting-modal false)))
-
-(rf/reg-event-db
-  :multiple-portfolio-attribution/table
-  (fn [db [_ data]] (assoc db :multiple-portfolio-attribution/table data :navigation/show-mounting-modal false)))
-
-(defn array-of-lists->records-stable [data]
-  (let [model (into {} (for [[k v] data] [k (vec v)]))]
-    (mapv #(into {} (for [k (keys model)] [k (nth (model k) %)]))
-          (range (count (model (first (keys model))))))))
 
 
-(defn array-of-lists->records
-  "Converts transit [[:key1 [values]] [:key2 [values]]] to [{:key1 val01 :key2 val02} {:key1 val11 :key2 val12}]
-  This implementation is about 10-15% than the above."
-  [data]
-  (let [ks (mapv first data)                                ;mapv faster than map
-        values (mapv vec (mapv second data))                ;mapv faster than map, but transducer fails for some reason
-        n (count (first values))]
-    (loop [i 0 records (transient [])]                      ;using transients. Atom failed on memory.
-      (if (< i n)
-        (recur (inc i) (conj! records (zipmap ks (mapv #(nth % i) values)))) ;mapv faster than map
-        (persistent! records)))))
-
-(rf/reg-event-db
-  :quant-model/history-result
-  (fn [db [_ data]] (assoc db :quant-model/history-result (array-of-lists->records data)
-                              :quant-model/history-throbber false
-                              :quant-model/curves-throbber false
-                              )))
-
-(rf/reg-event-db
-  :quant-model/history-result-prediction
-  (fn [db [_ data]] (assoc db :quant-model/history-result-prediction (array-of-lists->records data)
-                              :quant-model/history-prediction-throbber false
-                              )))
-
-(rf/reg-event-db
-  :quant-model/history-result-curves-one
-  (fn [db [_ data]] (assoc db :quant-model/history-result-curves-one  (array-of-lists->records data)
-                              :quant-model/curves-throbber false
-                              )))
-
-;(rf/reg-event-db
 ;  :positions
 ;  (fn [db [_ positions]]
 ;    ;(println positions)
@@ -122,44 +72,9 @@
 
 ;(def nkp (atom nil))
 
-(rf/reg-event-db
-  :quant-model/history-result-curves-two
-  (fn [db [_ data]] (assoc db :quant-model/history-result-curves-two  (array-of-lists->records data)
-                              :quant-model/curves-throbber false
-                              )))
 
 
 
-(rf/reg-event-fx
-  :naked-positions
-  (fn [{:keys [db]} [_ naked-positions]]
-    (let [res (array-of-lists->records naked-positions)
-          positions (if (and (= (:positions db) []) (:instruments db)) (mapv #(merge % (get-in db [:instruments (:id %)])) res) [])]
-      ;(println (distinct (map :portfolio positions)))
-      {:db (assoc db :naked-positions res
-                     :navigation/show-mounting-modal (= positions [])
-                     :positions positions
-                     ;:positions-ds (ds/->dataset positions)
-                     :implementation/live-positions (into {} (for [[p g] (group-by :portfolio positions)]
-                                                               [p (into {} (for [line g :when (and (some? (:isin line)) (pos? (:weight line)))] [(:isin line) (:weight line)]))])) ;(* 100. (:weight line))
-                     )
-       ;fx below is tricky - this is so at mount you can go to quant screen then right click implementation. Probably a better way to do this
-       :fx (let [isin (get-in db [:implementation/trade-implementation :tradeanalyser.implementation/trade-legs 0 :ISIN])]
-             (if (and (some? isin) (not= isin "NEW ISSUE")) [[:dispatch [:implementation/on-isin-change 0 isin]]] []))
-       })))
-
-;(rf/reg-event-db
-;  :pivoted-positions
-;  (fn [db [_ pivoted-positions]]
-;    (assoc db                                               ;:positions positions
-;      :pivoted-positions (mapv #(into {} (for [k (keys pivoted-positions)] [k (nth (pivoted-positions k) %)])) (range (count (pivoted-positions (first (keys pivoted-positions))))))
-;      :navigation/show-mounting-modal false)))
-
-;(rf/reg-event-db
-;  :quant-model/model-output
-;  (fn [db [_ model]]
-;    (assoc db :quant-model/model-output model
-;              :navigation/show-mounting-modal false)))
 
 (rf/reg-event-fx
   :instruments
@@ -175,33 +90,9 @@
                                                                [p (into {} (for [line g :when (and (some? (:isin line)) (pos? (:weight line)))] [(:isin line) (:weight line)]))])) ;(* 100. (:weight line))
                      )})))
 
-;(rf/reg-event-db
-;  :positions-new
-;  (fn [db [_ portfolio positions]]
-;    (-> db
-;        (assoc-in [:positions-new portfolio] positions)
-;        (assoc :navigation/show-mounting-modal false))))
 
-(rf/reg-event-db
-  :quant-model/model-output
-  (fn [db [_ model]]
-    (let [mo (array-of-lists->records model)]
-      (assoc db
-        ;:quant-model/model-output-ds (ds/->dataset mo)
-        :quant-model/model-output mo
-        :quant-model/model-js-output (clj->js mo)           ;we do that once it's fast enough
-        :navigation/show-mounting-modal false
-        ;:quant-model/bond-isin-map (merge bond-isin (clojure.set/map-invert bond-isin))
-        ))))
 
-;(rf/reg-event-db
-;  :portfolios
-;  (fn [db [_ portfolios]]
-;    (assoc db :portfolios portfolios
-;              :multiple-portfolio-risk/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :cembi)) static/portfolio-alignment-groups)))) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
-;              :multiple-portfolio-attribution/selected-portfolios (set (:portfolios (first (filter (fn [x] (= (:id x) :cembi)) static/portfolio-alignment-groups)))) ;(disj (set portfolios) "OGEMHCD" "IUSSEMD" "OG-EQ-HDG" "OG-INF-HDG" "OG-LESS-CHRE")
-;              :portfolio-dropdown-map (into [] (for [p portfolios] {:id p :label p :labelrot13 (t/rot13 p)}))
-;              )))
+
 
 (doseq [k [:single-portfolio-risk/filter
            :multiple-portfolio-risk/filter
@@ -286,7 +177,7 @@
 (rf/reg-event-db
   :cycle-shortcut
   (fn [db [_ _ _]]
-    (let [shortcut-key (keyword (str (name (:navigation/active-home db)) "-risk/shortcut"))
+    (let [shortcut-key (keyword (str (name (:navigation/active-view db)) "-risk/shortcut"))
           shortcut-value (shortcut-key db)]
       (cond
         (< shortcut-value 4) (assoc db shortcut-key (inc shortcut-value))
@@ -299,7 +190,7 @@
 (rf/reg-event-db
   :tree-table
   (fn [db [_ _ _]]
-    (let [shortcut-key (keyword (str (name (:navigation/active-home db)) "-risk/display-style"))]
+    (let [shortcut-key (keyword (str (name (:navigation/active-view db)) "-risk/display-style"))]
       (case (shortcut-key db)
         "Tree"  (assoc db shortcut-key "Table")
         "Table" (assoc db shortcut-key "Tree")))))

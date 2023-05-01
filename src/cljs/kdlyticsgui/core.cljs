@@ -1,14 +1,14 @@
 (ns kdlyticsgui.core
   (:require
+    [kdlyticsgui.views :as views]
    [reagent.dom :as dom]
    [re-frame.core :as rf]
    [re-pressed.core :as rp]
-   [kdlyticsgui.home :as home]
    ))
 
 (defn ^:dev/after-load mount-root []
   (rf/clear-subscription-cache!)
-  (dom/render [home/home-view]
+  (dom/render [views/main-panel]
             (.getElementById js/document "app")))
 
 (defn init []
