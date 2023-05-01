@@ -1,4 +1,4 @@
-(defproject jasminegui "0.1.0-SNAPSHOT"
+(defproject kdlyticsgui "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/clojurescript "1.11.60"
                   :exclusions [com.google.javascript/closure-compiler-unshaded

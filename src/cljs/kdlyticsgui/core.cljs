@@ -1,14 +1,14 @@
-(ns jasminegui.core
+(ns kdlyticsgui.core
   (:require
    [reagent.dom :as dom]
    [re-frame.core :as rf]
    [re-pressed.core :as rp]
-   [jasminegui.views :as views]
-   [jasminegui.mount :as mount]))
+   [kdlyticsgui.home :as home]
+   ))
 
 (defn ^:dev/after-load mount-root []
   (rf/clear-subscription-cache!)
-  (dom/render [views/main-panel]
+  (dom/render [home/home-view]
             (.getElementById js/document "app")))
 
 (defn init []
