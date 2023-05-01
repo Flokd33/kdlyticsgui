@@ -20,16 +20,13 @@
                  ;[markdown-clj "1.11.4"]
                  ]
 
+  ;npm install react
+  ;mpm install react-dom
+
   :plugins []
-
   :min-lein-version "2.5.3"
-
   :source-paths ["src/clj" "src/cljs"]
-
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
-
-
   :aliases {"dev"  ["with-profile" "dev" "run" "-m" "shadow.cljs.devtools.cli" "watch" "app"]
             "prod" ["with-profile" "prod" "run" "-m" "shadow.cljs.devtools.cli" "release" "app"]}
-
   :profiles {:dev {:dependencies []} :prod {}})

@@ -11,10 +11,10 @@
   (dom/render [home/home-view]
             (.getElementById js/document "app")))
 
-;(defn init []
-;  (rf/dispatch-sync [::mount/initialize-db])
-;  (rf/dispatch-sync [::rp/add-keyboard-event-listener "keypress"])
-;  (mount-root))
+(defn init []
+  ;(rf/dispatch-sync [::mount/initialize-db])
+  ;(rf/dispatch-sync [::rp/add-keyboard-event-listener "keypress"])
+  (mount-root))
 ;
 ;(rf/dispatch [:get-portfolios])
 ;(rf/dispatch [:get-portfolios-grp])
