@@ -1,5 +1,5 @@
 (ns kdlyticsgui.tools
-  (:require ["html2canvas" :as html2canvas]
+  (:require                                                 ;["html2canvas" :as html2canvas]
             [goog.string :as gstring]
             [goog.string.format]
             [cljs-time.format :as tf])

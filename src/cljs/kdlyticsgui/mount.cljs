@@ -22,6 +22,9 @@
 
                  ;:navigation/active              {:view        :entry :home        :summary}
 
+                 :positions-summary                 []
+
+
                  :navigation/success-modal       {:show false :on-close nil :response nil}
                  :navigation/success-compile     {:show false :on-close nil :response nil}
                  :navigation/show-mounting-modal false
@@ -40,6 +43,9 @@
            :navigation/active-view-vault
            :navigation/active-view-cellar
            :navigation/active-view-tools
+
+
+           :positions-summary
 
            :navigation/show-mounting-modal
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -261,6 +267,14 @@
 (def simple-http-assets
   [{:get-key :get-portfolios              :namespace "common.static" :asset "portfolios"              :dispatch-key [:portfolios]}
    ])
+
+
+
+(rf/reg-event-fx
+  :get-positions-summary
+  (fn [{:keys [db]} [_ ]]
+    {:http-get-dispatch {:url          (str static/server-address "positions-summary" )
+                         :dispatch-key [:positions-summary]}}))
 
 ;(doseq [line simple-http-get-events]
 ;  (rf/reg-event-fx

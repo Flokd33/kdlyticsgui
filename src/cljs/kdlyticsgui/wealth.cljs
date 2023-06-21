@@ -1,18 +1,16 @@
 (ns kdlyticsgui.wealth
   (:require [kdlyticsgui.guitools :as gt]
-
+            [re-frame.core :as rf]
             [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                                  single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
                                  input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
-
-
             )
-
   )
 
 
 (defn summary-display []
-  (let [data nil]                                              ;@(rf/subscribe [:summary-display/table])
+  (rf/dispatch [:get-positions-summary])
+  (let [data @(rf/subscribe [:positions-summary])]                                              ;@(rf/subscribe [:positions-summary])
     [box :class "subbody rightelement" :child
      (gt/element-box "summary" "100%" (str "Summary ") data
                      []
