@@ -10,15 +10,18 @@
                                         }}
                 :devtools        {:http-root    "resources/public"
                                   :http-port    8280
-                                  :preloads [day8.re-frame-10x.preload]
+                                  ;:preloads [day8.re-frame-10x.preload]
                                   }
                 :dev
                 {:compiler-options
-                 {:closure-defines
-                  {re-frame.trace.trace-enabled?        true
-                   day8.re-frame.tracing.trace-enabled? true}}}
+                 {:output-feature-set :es6
+                  ;:closure-defines
+                  ;{re-frame.trace.trace-enabled?        true
+                  ; day8.re-frame.tracing.trace-enabled? true}
+                  }}
                 :release
-                {:build-options
+                {:compiler-options {:output-feature-set :es6}
+                 :build-options
                  {:ns-aliases
                   {day8.re-frame.tracing day8.re-frame.tracing-stubs}}}
                 }}

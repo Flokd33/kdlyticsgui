@@ -1,7 +1,7 @@
 (ns kdlyticsgui.views
   (:require
     [re-frame.core :as rf]
-    [reagent.core :as r]
+    ;[reagent.core :as r]
     [reagent-contextmenu.menu :as rcm]
 
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button

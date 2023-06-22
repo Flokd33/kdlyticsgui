@@ -21,6 +21,7 @@
                  ]
 
   ;npm install react
+  ;npm ad react
   ;mpm install react-dom
 
   :plugins []
