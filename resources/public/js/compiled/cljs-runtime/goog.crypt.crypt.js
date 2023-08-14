@@ -1,10 +1,24 @@
 goog.provide("goog.crypt");
 goog.require("goog.asserts");
-goog.crypt.stringToByteArray = function(str) {
+goog.require("goog.async.throwException");
+goog.crypt.ASYNC_THROW_ON_UNICODE_TO_BYTE = goog.define("goog.crypt.ASYNC_THROW_ON_UNICODE_TO_BYTE", goog.DEBUG);
+goog.crypt.TEST_ONLY = {};
+goog.crypt.TEST_ONLY.throwException = goog.async.throwException;
+goog.crypt.TEST_ONLY.alwaysThrowSynchronously = goog.DEBUG;
+goog.crypt.binaryStringToByteArray = function(str) {
+  return goog.crypt.stringToByteArray(str, true);
+};
+goog.crypt.stringToByteArray = function(str, throwSync) {
   var output = [], p = 0;
   for (var i = 0; i < str.length; i++) {
     var c = str.charCodeAt(i);
     if (c > 255) {
+      var err = new Error("go/unicode-to-byte-error");
+      if (goog.crypt.TEST_ONLY.alwaysThrowSynchronously || throwSync) {
+        throw err;
+      } else if (goog.crypt.ASYNC_THROW_ON_UNICODE_TO_BYTE) {
+        goog.crypt.TEST_ONLY.throwException(err);
+      }
       output[p++] = c & 255;
       c >>= 8;
     }
@@ -13,6 +27,9 @@ goog.crypt.stringToByteArray = function(str) {
   return output;
 };
 goog.crypt.byteArrayToString = function(bytes) {
+  return goog.crypt.byteArrayToBinaryString(bytes);
+};
+goog.crypt.byteArrayToBinaryString = function(bytes) {
   var CHUNK_SIZE = 8192;
   if (bytes.length <= CHUNK_SIZE) {
     return String.fromCharCode.apply(null, bytes);
@@ -39,6 +56,9 @@ goog.crypt.hexToByteArray = function(hexString) {
   return arr;
 };
 goog.crypt.stringToUtf8ByteArray = function(str) {
+  return goog.crypt.textToByteArray(str);
+};
+goog.crypt.textToByteArray = function(str) {
   var out = [], p = 0;
   for (var i = 0; i < str.length; i++) {
     var c = str.charCodeAt(i);
@@ -62,6 +82,9 @@ goog.crypt.stringToUtf8ByteArray = function(str) {
   return out;
 };
 goog.crypt.utf8ByteArrayToString = function(bytes) {
+  return goog.crypt.byteArrayToText(bytes);
+};
+goog.crypt.byteArrayToText = function(bytes) {
   var out = [], pos = 0, c = 0;
   while (pos < bytes.length) {
     var c1 = bytes[pos++];

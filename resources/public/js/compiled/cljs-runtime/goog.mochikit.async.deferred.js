@@ -146,7 +146,8 @@ goog.async.Deferred.prototype.then = function(opt_onFulfilled, opt_onRejected, o
     } else {
       reject(reason);
     }
-  });
+    return goog.async.Deferred.CONVERTED_TO_PROMISE_;
+  }, this);
   return promise.then(opt_onFulfilled, opt_onRejected, opt_context);
 };
 goog.Thenable.addImplementation(goog.async.Deferred);
@@ -185,6 +186,7 @@ goog.async.Deferred.prototype.hasErrback_ = function() {
 goog.async.Deferred.prototype.getLastValueForMigration = function() {
   return this.hasFired() && !this.hadError_ ? this.result_ : undefined;
 };
+goog.async.Deferred.CONVERTED_TO_PROMISE_ = {};
 goog.async.Deferred.prototype.fire_ = function() {
   if (this.unhandledErrorId_ && this.hasFired() && this.hasErrback_()) {
     goog.async.Deferred.unscheduleError_(this.unhandledErrorId_);
@@ -197,7 +199,9 @@ goog.async.Deferred.prototype.fire_ = function() {
   let res = this.result_;
   let unhandledException = false;
   let isNewlyBlocked = false;
+  let wasConvertedToPromise = false;
   while (this.sequence_.length && !this.blocked_) {
+    wasConvertedToPromise = false;
     const sequenceEntry = this.sequence_.shift();
     const callback = sequenceEntry[0];
     const errback = sequenceEntry[1];
@@ -205,7 +209,11 @@ goog.async.Deferred.prototype.fire_ = function() {
     const f = this.hadError_ ? errback : callback;
     if (f) {
       try {
-        const ret = f.call(scope || this.defaultScope_, res);
+        let ret = f.call(scope || this.defaultScope_, res);
+        if (ret === goog.async.Deferred.CONVERTED_TO_PROMISE_) {
+          wasConvertedToPromise = true;
+          ret = undefined;
+        }
         if (ret !== undefined) {
           this.hadError_ = this.hadError_ && (ret == res || this.isError(ret));
           this.result_ = res = ret;
@@ -234,7 +242,7 @@ goog.async.Deferred.prototype.fire_ = function() {
     } else {
       res.then(onCallback, onErrback);
     }
-  } else if (goog.async.Deferred.STRICT_ERRORS && this.isError(res) && !(res instanceof goog.async.Deferred.CanceledError)) {
+  } else if (goog.async.Deferred.STRICT_ERRORS && !wasConvertedToPromise && this.isError(res) && !(res instanceof goog.async.Deferred.CanceledError)) {
     this.hadError_ = true;
     unhandledException = true;
   }

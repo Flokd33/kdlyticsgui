@@ -26,5 +26,21 @@
     "vega-embed": "^6.20.5",
     "vega-lite": "^4.17.0",
     "vega-tooltip": "^0.19.1"
-  }
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Flokd33/kdlyticsgui.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Flokd33/kdlyticsgui/issues"
+  },
+  "homepage": "https://github.com/Flokd33/kdlyticsgui#readme",
+  "description": ""
 }

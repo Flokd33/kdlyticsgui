@@ -3,15 +3,15 @@
                  [org.clojure/clojurescript "1.11.60"
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library]]
-                 [thheller/shadow-cljs "2.18.0"]
-                 [reagent "1.1.1"]
+                 [thheller/shadow-cljs "2.25.0"]
+                 [reagent "1.2.0"]
                  [re-frame "1.3.0"]
                  [re-com "2.13.2"]
                  [cljs-http "0.1.46"]
                  [re-pressed "0.3.2"]
                  [cljs-drag-n-drop/cljs-drag-n-drop "0.1.0"]
                  [org.clojars.frozenlock/reagent-contextmenu "0.4.3"]
-                 [metasoarous/oz "2.0.0-alpha5"]           ;"1.6.0-alpha34"
+                 ;[metasoarous/oz "2.0.0-alpha5"]           ;"1.6.0-alpha34"
                  [lilactown/helix "0.1.9"]
                  [binaryage/devtools "1.0.6"]
                  ;[day8.re-frame/tracing      "0.6.2"]
@@ -20,7 +20,7 @@
                  ;[markdown-clj "1.11.4"]
                  ]
 
-  ;npm install react
+  ;npm i react react-dom
   ;npm ad react
   ;mpm install react-dom
 

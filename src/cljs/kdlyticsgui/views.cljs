@@ -93,7 +93,8 @@
 
 (defn wealth-view []
   [h-box :gap "10px" :padding "0px"
-   :children [[left-nav-bar wealth-navigation :navigation/active-view-wealth]
+   :children [
+              [left-nav-bar wealth-navigation :navigation/active-view-wealth]
               [wealth-active-view]
               ;[tradehistory/modal-single-bond-flat-trade-history]
               [rcm/context-menu]]])

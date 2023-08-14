@@ -53,13 +53,25 @@ goog.crypt.base64.encodeByteArray = function(input, alphabet) {
   }
   return output.join("");
 };
-goog.crypt.base64.encodeString = function(input, alphabet) {
+goog.crypt.base64.encodeBinaryString = function(input, alphabet) {
+  return goog.crypt.base64.encodeString(input, alphabet, true);
+};
+goog.crypt.base64.encodeString = function(input, alphabet, throwSync) {
   if (goog.crypt.base64.HAS_NATIVE_ENCODE_ && !alphabet) {
     return goog.global.btoa(input);
   }
-  return goog.crypt.base64.encodeByteArray(goog.crypt.stringToByteArray(input), alphabet);
+  return goog.crypt.base64.encodeByteArray(goog.crypt.stringToByteArray(input, throwSync), alphabet);
 };
-goog.crypt.base64.decodeString = function(input, useCustomDecoder) {
+goog.crypt.base64.encodeStringUtf8 = function(input, alphabet) {
+  return goog.crypt.base64.encodeText(input, alphabet);
+};
+goog.crypt.base64.encodeText = function(input, alphabet) {
+  if (goog.crypt.base64.HAS_NATIVE_ENCODE_ && !alphabet) {
+    return goog.global.btoa(unescape(encodeURIComponent(input)));
+  }
+  return goog.crypt.base64.encodeByteArray(goog.crypt.stringToUtf8ByteArray(input), alphabet);
+};
+goog.crypt.base64.decodeToBinaryString = function(input, useCustomDecoder) {
   if (goog.crypt.base64.HAS_NATIVE_DECODE_ && !useCustomDecoder) {
     return goog.global.atob(input);
   }
@@ -70,6 +82,13 @@ goog.crypt.base64.decodeString = function(input, useCustomDecoder) {
   goog.crypt.base64.decodeStringInternal_(input, pushByte);
   return output;
 };
+goog.crypt.base64.decodeString = goog.crypt.base64.decodeToBinaryString;
+goog.crypt.base64.decodeStringUtf8 = function(input, useCustomDecoder) {
+  return goog.crypt.base64.decodeToText(input, useCustomDecoder);
+};
+goog.crypt.base64.decodeToText = function(input, useCustomDecoder) {
+  return decodeURIComponent(escape(goog.crypt.base64.decodeString(input, useCustomDecoder)));
+};
 goog.crypt.base64.decodeStringToByteArray = function(input, opt_ignored) {
   var output = [];
   function pushByte(b) {
@@ -79,7 +98,6 @@ goog.crypt.base64.decodeStringToByteArray = function(input, opt_ignored) {
   return output;
 };
 goog.crypt.base64.decodeStringToUint8Array = function(input) {
-  goog.asserts.assert(!goog.userAgent.IE || goog.userAgent.isVersionOrHigher("10"), "Browser does not support typed arrays");
   var len = input.length;
   var approxByteLength = len * 3 / 4;
   if (approxByteLength % 3) {
@@ -97,7 +115,7 @@ goog.crypt.base64.decodeStringToUint8Array = function(input) {
     output[outLen++] = b;
   }
   goog.crypt.base64.decodeStringInternal_(input, pushByte);
-  return output.subarray(0, outLen);
+  return outLen !== approxByteLength ? output.subarray(0, outLen) : output;
 };
 goog.crypt.base64.decodeStringInternal_ = function(input, pushByte) {
   goog.crypt.base64.init_();

@@ -1,4 +1,5 @@
 goog.provide("goog.net.Jsonp");
+goog.require("goog.functions");
 goog.require("goog.html.TrustedResourceUrl");
 goog.require("goog.net.jsloader");
 goog.require("goog.object");
@@ -76,7 +77,7 @@ goog.net.Jsonp.cleanup_ = function(id, deleteReplyHandler) {
         goog.global[callbackId] = undefined;
       }
     } else {
-      goog.global[callbackId] = goog.nullFunction;
+      goog.global[callbackId] = goog.functions.UNDEFINED;
     }
   }
 };
