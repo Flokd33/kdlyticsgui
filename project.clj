@@ -19,6 +19,8 @@
   ;npm ad react
   ;mpm install react-dom
 
+  ;add in html head the bootstrap href (see comment in re-com.css)
+
   ;https://www.material-react-table.com/docs/getting-started/install
   ;npm install material-react-table @mui/material @mui/icons-material @emotion/react @emotion/styled
 

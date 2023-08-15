@@ -18,32 +18,31 @@
                                                                     (mrt/text-col "Asset class" "asset-class" 50)
                                                                     (mrt/text-col "Acc." "account" 50)
                                                                     (mrt/text-col "CCY" "currency" 50)]}
-                 {:header "Position & PnL" :id "position" :columns [(mrt/nb-col "Qt" "quantity" 50 mrt/round0)
-                                                                    (mrt/nb-col "CPU" "cost-per-unit" 50 mrt/round1)
-                                                                    (mrt/nb-col "Price" "regularMarketPrice" 50 mrt/round1)
-
-                                                                    (mrt/nb-col "Nav lcl" "nav-local" 50 mrt/round0) ;hide
-                                                                    (mrt/nb-col "Nav €" "nav-eur" 50 mrt/round0)
-                                                                    (mrt/nb-col "Nav € %" "nav-eur-perc" 50 mrt/round2pc100) ;formating >5%
-
-                                                                    (mrt/nb-col "Pnl lcl" "pnl-local" 50 mrt/round0) ;hide
-                                                                    (mrt/nb-col "Pnl €" "pnl-eur" 50 mrt/round0)
-                                                                    (mrt/nb-col "Pnl € %" "pnl-eur-perc" 50 mrt/round2pc100) ;formating here
-
-                                                                    ]}
-                 {:header "Allocation" :id "allocation" :columns [(mrt/text-col "#" "nb-strategies" 50)
-                                                                  (mrt/text-col "Strategy 1" "strategy-1" 50)
-                                                                  (mrt/text-col "Strategy 2" "strategy-2" 50)
-                                                                  (mrt/text-col "Strategy 3" "strategy-3" 50)
-
-                                                                  (mrt/nb-col "Alloc. 1" "alloc-strat-1" 50 mrt/round0) ;hide
-                                                                  (mrt/nb-col "Alloc. 2" "alloc-strat-2" 50 mrt/round0) ;hide
-                                                                  (mrt/nb-col "Alloc. 3" "alloc-strat-3" 50 mrt/round0) ;hide
-
-                                                                  (mrt/nb-col "Total" "alloc-strat-total" 50 mrt/round0)
-                                                                  (mrt/nb-col "Delta" "alloc-strat-delta" 50 mrt/round0) ;if >500 green ?, if below -500 red ?
-
-                                                                    ]}
+                 ;{:header "Position & PnL" :id "position" :columns [(mrt/nb-col "Qt" "quantity" 50 mrt/round0)
+                 ;                                                   (mrt/nb-col "CPU" "cost-per-unit" 50 mrt/round1)
+                 ;                                                   (mrt/nb-col "Price" "regularMarketPrice" 50 mrt/round1)
+                 ;
+                 ;                                                   (mrt/nb-col "Nav lcl" "nav-local" 50 mrt/round0) ;hide
+                 ;                                                   (mrt/nb-col "Nav €" "nav-eur" 50 mrt/round0)
+                 ;                                                   (mrt/nb-col "Nav € %" "nav-eur-perc" 50 mrt/round2pc100) ;formating >5%
+                 ;
+                 ;                                                   (mrt/nb-col "Pnl lcl" "pnl-local" 50 mrt/round0) ;hide
+                 ;                                                   (mrt/nb-col "Pnl €" "pnl-eur" 50 mrt/round0)
+                 ;                                                   (mrt/nb-col "Pnl € %" "pnl-eur-perc" 50 mrt/round2pc100) ;formating here
+                 ;
+                 ;                                                   ]}
+                 ;{:header "Allocation" :id "allocation" :columns [(mrt/text-col "#" "nb-strategies" 50)
+                 ;                                                 (mrt/text-col "Strategy 1" "strategy-1" 50)
+                 ;                                                 (mrt/text-col "Strategy 2" "strategy-2" 50)
+                 ;                                                 (mrt/text-col "Strategy 3" "strategy-3" 50)
+                 ;
+                 ;                                                 (mrt/nb-col "Alloc. 1" "alloc-strat-1" 50 mrt/round0) ;hide
+                 ;                                                 (mrt/nb-col "Alloc. 2" "alloc-strat-2" 50 mrt/round0) ;hide
+                 ;                                                 (mrt/nb-col "Alloc. 3" "alloc-strat-3" 50 mrt/round0) ;hide
+                 ;
+                 ;                                                 (mrt/nb-col "Total" "alloc-strat-total" 50 mrt/round0)
+                 ;                                                 (mrt/nb-col "Delta" "alloc-strat-delta" 50 mrt/round0) ;if >500 green ?, if below -500 red ?
+                 ;                                                   ]}
                  ;{:header "Quant metrics" :id "quant" :columns [(mrt/nb-col "Mkt Cap $mil" "marketCap" 50 mrt/nb-thousand-cell-format)
                  ;                                               (mrt/nb-col "Margin" "profitMargin" 50 mrt/round0)
                  ;                                               (mrt/nb-col "TrailEPS" "trailingEps" 50 mrt/round0)

@@ -17,11 +17,11 @@
 ;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 (def main-navigation
   (let [home-events nil]                                                                                                                                                    ;[:get-qt-date]
-    [{:code :wealth          :name "Wealth"            :dispatch :wealth          :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :positions       :name "Positions"         :dispatch :positions       :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :vault           :name "Vault"             :dispatch :vault           :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :cellar          :name "Cellar"            :dispatch :cellar          :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :tools           :name "Tools"             :dispatch :tools           :subs nil       :load-events home-events        :mounting-modal true}
+    [{:code :wealth          :name "BLa"            :dispatch :wealth          :subs nil       :load-events home-events        :mounting-modal true}
+     {:code :positions       :name "BLa"         :dispatch :positions       :subs nil       :load-events home-events        :mounting-modal true}
+     {:code :vault           :name "asdlt"             :dispatch :vault           :subs nil       :load-events home-events        :mounting-modal true}
+     {:code :cellar          :name "Casdellar"            :dispatch :cellar          :subs nil       :load-events home-events        :mounting-modal true}
+     {:code :tools           :name "asddTools"             :dispatch :tools           :subs nil       :load-events home-events        :mounting-modal true}
      ]))
 
 (defn modal-mounting []
