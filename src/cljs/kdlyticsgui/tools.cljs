@@ -7,13 +7,13 @@
            (goog.i18n.NumberFormat Format))
   )
 
-;(defn int->gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
-;(defn gdate->yyyyMMdd [x] (subs (.toString x) 0 8))
-;(defn gdate->yyyy-MM-dd [x] (let [a (subs (.toString x) 0 8)] (str (subs a 0 4) "-" (subs a 4 6) "-" (subs a 6 8))))
+(defn int->gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
+(defn gdate->yyyyMMdd [x] (subs (.toString x) 0 8))
+(defn gdate->yyyy-MM-dd [x] (let [a (subs (.toString x) 0 8)] (str (subs a 0 4) "-" (subs a 4 6) "-" (subs a 6 8))))
 
-;(defn ddMMMyyyy->gdate [x] (tf/parse (tf/formatter "dd MMMyyyy") (str (subs x 0 2) " " (subs x 2))))
-;(defn gdate->ddMMMyy [x] (tf/unparse (cljs-time.format/formatter "ddMMMyy") x))
-;(defn gdate->MMM-yy [x] (tf/unparse (cljs-time.format/formatter "MMM-yy") x))
+(defn ddMMMyyyy->gdate [x] (tf/parse (tf/formatter "dd MMMyyyy") (str (subs x 0 2) " " (subs x 2))))
+(defn gdate->ddMMMyy [x] (tf/unparse (cljs-time.format/formatter "ddMMMyy") x))
+(defn gdate->MMM-yy [x] (tf/unparse (cljs-time.format/formatter "MMM-yy") x))
 ;(defn gdate->yyyyMMdd [x] (tf/unparse (cljs-time.format/formatter "yyyyMMdd") x))
 
 
@@ -130,7 +130,7 @@
 ;        (.then #(save-png (.toDataURL %) (str id "-" (gdate->yyyyMMdd (cljs-time.core/today)))))
 ;        (.catch #(js/console.log %))
 ;        (.finally #(js/console.log "cleanup")))))
-
+;
 ;(defn open-image-in-new-tab
 ;  "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
 ;  [id]

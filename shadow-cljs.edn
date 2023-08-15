@@ -5,18 +5,12 @@
  :builds {:app {:target          :browser
                 :output-dir      "resources/public/js/compiled"
                 :asset-path      "/js/compiled"
-                :modules         {:app {:init-fn kdlyticsgui.core/init
-                                        ;:preloads [devtools.preload]
-                                        }}
-                :devtools        {:http-root    "resources/public"
-                                  :http-port    8280
-                                  ;:preloads [day8.re-frame-10x.preload]
-                                  }
+                :modules         {:app {:init-fn kdlyticsgui.core/init}}
+                :devtools        {:http-root    "resources/public" :http-port    8280}
                 :dev
                 {:compiler-options
-                 {:output-feature-set :es6
-                  ;:optimizations :advanced
-                  }}
+                 {:output-feature-set :es6}
+                 }
                 :release
                 {:compiler-options {:output-feature-set :es6}
                  :build-options {}}

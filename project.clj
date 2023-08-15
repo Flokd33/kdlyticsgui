@@ -11,18 +11,16 @@
                  [re-pressed "0.3.2"]
                  [cljs-drag-n-drop/cljs-drag-n-drop "0.1.0"]
                  [org.clojars.frozenlock/reagent-contextmenu "0.4.3"]
-                 ;[metasoarous/oz "2.0.0-alpha5"]           ;"1.6.0-alpha34"
                  [lilactown/helix "0.1.9"]
                  [binaryage/devtools "1.0.6"]
-                 ;[day8.re-frame/tracing      "0.6.2"]
-                 ;[day8.re-frame/re-frame-10x "1.5.0"]
-                 [com.cnuernber/tmdjs "2.000-beta-3"]
-                 ;[markdown-clj "1.11.4"]
                  ]
 
   ;npm i react react-dom
   ;npm ad react
   ;mpm install react-dom
+
+  ;https://www.material-react-table.com/docs/getting-started/install
+  ;npm install material-react-table @mui/material @mui/icons-material @emotion/react @emotion/styled
 
   :plugins []
   :min-lein-version "2.5.3"

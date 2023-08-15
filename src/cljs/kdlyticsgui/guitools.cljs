@@ -6,7 +6,7 @@
     [re-frame.core :as rf]
     [reagent.core :as r]
     [kdlyticsgui.tools :as t]
-    ;[jasminegui.static :as static]
+    [kdlyticsgui.static :as static]
     [clojure.set :as cset]
     [kdlyticsgui.mrttables :as mrt]
     [helix.core :refer [$ defnc]]

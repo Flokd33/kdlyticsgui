@@ -4,9 +4,8 @@
             [goog.string :as gstring]
             [goog.string.format]
             [re-com.core :refer [p]]
-            [tech.v3.dataset :as ds]
             [re-frame.core :as rf]
-            [jasminegui.tools :as t]
+            [kdlyticsgui.tools :as t]
             [helix.core :refer [defnc $]]
             [helix.dom :as hd]
             [cljs-time.core :refer [today]]
@@ -361,7 +360,7 @@
    ($ icon-element-button-helix {:key "ExpandIcon" :icon ExpandIcon :tooltip-text "Show more rows" :on-click-fn (fn [] (if (pos? (count (.-grouping (.getState table)))) (.setPageSize table 50) (.setPageSize table (if (= (.-pageSize (.-pagination (.getState table))) 200) 15 200))))})
    ($ icon-element-button-helix {:key "FilterListOffIcon" :icon FilterListOffIcon :tooltip-text "Clear filters" :on-click-fn (fn [] (.resetColumnFilters table #js []))})
    ($ MRT_ShowHideColumnsButton {:table table :key "show-columns"})
-   ($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
+   ;($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
    ($ icon-element-button-helix {:key "SystemUpdateAltIcon" :icon SystemUpdateAltIcon :tooltip-text "Download view" :on-click-fn (fn [] (download-view table download-fn photo-id))})
    ($ icon-element-button-helix {:key "DownloadIcon" :icon DownloadIcon :tooltip-text "Full download" :on-click-fn (fn [] (download-fn data))})])
 
@@ -378,7 +377,7 @@
    ($ icon-element-button-helix {:key "ExpandIcon" :icon ExpandIcon :tooltip-text "Show more rows" :on-click-fn (fn [] (if (pos? (count (.-grouping (.getState table)))) (.setPageSize table 50) (.setPageSize table (if (= (.-pageSize (.-pagination (.getState table))) 200) 15 200))))})
    ($ icon-element-button-helix {:key "FilterListOffIcon" :icon FilterListOffIcon :tooltip-text "Clear filters" :on-click-fn (fn [] (.resetColumnFilters table #js []))})
    ($ MRT_ShowHideColumnsButton {:table table :key "show-columns"})
-   ($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
+   ;($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
    ($ icon-element-button-helix {:key "SystemUpdateAltIcon" :icon SystemUpdateAltIcon :tooltip-text "Download view" :on-click-fn (fn [] (download-view table download-fn photo-id))})
    ($ icon-element-button-helix {:key "DownloadIcon" :icon DownloadIcon :tooltip-text "Full download" :on-click-fn (fn [] (download-fn data))})])
 
@@ -395,7 +394,7 @@
    ($ icon-element-button-helix {:key "ExpandIcon" :icon ExpandIcon :tooltip-text "Show more rows" :on-click-fn (fn [] (if (pos? (count (.-grouping (.getState table)))) (.setPageSize table 50) (.setPageSize table (if (= (.-pageSize (.-pagination (.getState table))) 200) 15 200))))})
    ($ icon-element-button-helix {:key "FilterListOffIcon" :icon FilterListOffIcon :tooltip-text "Clear filters" :on-click-fn (fn [] (.resetColumnFilters table #js []))})
    ($ MRT_ShowHideColumnsButton {:table table :key "show-columns"})
-   ($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
+   ;($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
    ($ icon-element-button-helix {:key "SystemUpdateAltIcon" :icon SystemUpdateAltIcon :tooltip-text "Download view" :on-click-fn (fn [] (download-view table download-fn photo-id))})
    ($ icon-element-button-helix {:key "DownloadIcon" :icon DownloadIcon :tooltip-text "Full download" :on-click-fn (fn [] (download-fn data))})])
 
@@ -410,7 +409,7 @@
    ($ icon-element-button-helix {:key "ExpandIcon" :icon ExpandIcon :tooltip-text "Show more rows" :on-click-fn (fn [] (if (pos? (count (.-grouping (.getState table)))) (.setPageSize table 50) (.setPageSize table (if (= (.-pageSize (.-pagination (.getState table))) 200) 15 200))))})
    ($ icon-element-button-helix {:key "FilterListOffIcon" :icon FilterListOffIcon :tooltip-text "Clear filters" :on-click-fn (fn [] (.resetColumnFilters table #js []))})
    ($ MRT_ShowHideColumnsButton {:table table :key "show-columns"})
-   ($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
+   ;($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
    ($ icon-element-button-helix {:key "SystemUpdateAltIcon" :icon SystemUpdateAltIcon :tooltip-text "Download view" :on-click-fn (fn [] (download-view table download-fn photo-id))})
    ($ icon-element-button-helix {:key "DownloadIcon" :icon DownloadIcon :tooltip-text "Full download" :on-click-fn (fn [] (download-fn data))})])
 
@@ -419,7 +418,7 @@
   [{:keys [table data download-fn photo-id]} ]
   [($ icon-element-button-helix {:key "FilterListOffIcon" :icon FilterListOffIcon :tooltip-text "Clear filters" :on-click-fn (fn [] (.resetColumnFilters table #js []))})
    ($ MRT_ShowHideColumnsButton {:table table :key "show-columns"})
-   ($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
+   ;($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
    ($ icon-element-button-helix {:key "SystemUpdateAltIcon" :icon SystemUpdateAltIcon :tooltip-text "Download view" :on-click-fn (fn [] (download-view table download-fn photo-id))}) ;(t/csv-link (download-table-view table) filename)
    ($ icon-element-button-helix {:key "DownloadIcon" :icon DownloadIcon :tooltip-text "Full download" :on-click-fn (fn [] (download-fn data))})]) ;(t/csv-link data filename)
 
@@ -472,7 +471,7 @@
    ($ Divider {:key "divider3" :variant "middle" :orientation "vertical"})
    ($ icon-element-button-helix {:key "ExpandIcon" :icon ExpandIcon :tooltip-text "Show more rows" :on-click-fn (fn [] (.setPageSize table (if (= (.-pageSize (.-pagination (.getState table))) 200) 15 200)))})
    ($ MRT_ShowHideColumnsButton {:table table :key "show-columns"})
-   ($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
+   ;($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
    ($ icon-element-button-helix {:key "SystemUpdateAltIcon" :icon SystemUpdateAltIcon :tooltip-text "Download view" :on-click-fn (fn [] (download-fn (.map (.-rows (.getPrePaginationRowModel table)) (fn [row] (.-original row)))))}) ;(t/csv-link (download-table-view table) filename)
    ($ icon-element-button-helix {:key "DownloadIcon" :icon DownloadIcon :tooltip-text "Full download" :on-click-fn (fn [] (download-fn data))})])
 
