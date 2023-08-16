@@ -163,35 +163,6 @@
                                                       (assoc (js->clj %) item value)
                                                       (assoc (js->clj %) item value "expanded" "dummy:"))))))
 
-
-(rf/reg-event-db
-  :tree-table-toggle
-  (fn [db [_  tbl-kw-str display-style]]
-    (let [grouping (if (clojure.string/includes? tbl-kw-str "attribution")
-                     (conj (map :accessorKey (mapv mrt/attribution-table-columns (distinct (remove #{"None"} (vals (get db (keyword tbl-kw-str "filter"))))))) "dummy")
-                     (conj (map :accessorKey (mapv mrt/risk-table-columns (distinct (remove #{"None"} (vals (get db (keyword tbl-kw-str "filter"))))))) "dummy"))]
-      (if (clojure.string/includes? tbl-kw-str "attribution")
-        (-> db
-            (assoc (keyword tbl-kw-str "display-style") display-style)
-            (update (keyword tbl-kw-str "mrt-table-state") #(if (= display-style "Table") (update-js-map % "grouping" [] "expanded" {}) (update-js-map % "grouping" grouping "expanded" {"dummy:" true}))))
-        (-> db
-            (assoc (keyword tbl-kw-str "display-style") display-style)
-            (assoc (keyword tbl-kw-str "hide-zero-holdings") (= display-style "Table"))
-            (update (keyword tbl-kw-str "mrt-table-state") #(if (= display-style "Table") (update-js-map % "grouping" [] "expanded" {}) (update-js-map % "grouping" grouping "expanded" {"dummy:" true}))))))))
-
-(rf/reg-event-db
-  :tree-table-toggle-alignment
-  (fn [db [_  tbl-kw-str display-style is-equity?]]
-    (let [;is-equity? (if (some #{@(rf/subscribe [:portfolio-alignment/group])} [:equity-tc :equity-eme :equity-india :equity-esg]) true false)
-          risk-choices (vec (distinct (remove #{"None"} (vals (get db (keyword tbl-kw-str "filter"))))))
-          risk-choices-clean (if is-equity? (if (= (some #{:sector} risk-choices) :sector) (vec (concat (conj (remove #(= % :sector) risk-choices) :sector-gics)) ) risk-choices) risk-choices)
-          grouping (conj (map :accessorKey (mapv mrt/risk-table-columns risk-choices-clean)) "dummy")]
-      ;(println is-equity?)
-      ;(println grouping)
-      (-> db
-          (assoc (keyword tbl-kw-str "display-style") display-style)
-          (update (keyword tbl-kw-str "mrt-table-state") #(if (= display-style "Table") (update-js-map % "grouping" [] "expanded" {}) (update-js-map % "grouping" grouping "expanded" {"dummy:" true})))))))
-
 (rf/reg-event-db
   :tree-table-toggle-esg
   (fn [db [_  display-style]]
@@ -231,19 +202,6 @@
 ;   :choices static/tree-table-choices
 ;   :on-change #(rf/dispatch [:tree-table-toggle table-keyword-string %])])
 
-(rf/reg-event-db
-  :filtering-row-change
-  (fn [db [_ risk-filter-key risk-filter-nb value]]
-    (let [tbl-kw-str (namespace risk-filter-key)
-          rfv (assoc (get db risk-filter-key) risk-filter-nb value)
-          grouping (if (clojure.string/includes? tbl-kw-str "attribution")
-                     (conj (map :accessorKey (mapv mrt/attribution-table-columns (distinct (remove #{"None"} (vals rfv))))) "dummy")
-                     (conj (map :accessorKey (mapv mrt/risk-table-columns (distinct (remove #{"None"} (vals rfv))))) "dummy"))]
-      (-> db
-          (assoc risk-filter-key rfv)
-          (update (keyword tbl-kw-str "mrt-table-state") #(if (= (db (keyword tbl-kw-str "display-style")) "Table") (identity %) (update-js-map % "grouping" grouping "expanded" {"dummy:" true})))
-          (assoc :portfolio-history/data [])))))
-
 (defn redesign-table!
   [tbl table? grouping extra-pins]
   (let [all-cols (js->clj (.map (.filter (.getAllColumns tbl) #(not= (.-id %) "mrt-row-expand")) (fn [c] (.map (.-columns c) (fn [sc] (.-id sc))))))
@@ -256,43 +214,7 @@
     (.setColumnVisibility tbl (if table? #js {"dummy" false "mrt-row-expand" false} #js {"dummy" true "mrt-row-expand" true}))
     (.setColumnOrder tbl (clj->js (concat grouping extra-pins (if table? [] ["mrt-row-expand"]) (apply concat (rest all-cols)) additional-cols)))))
 
-(rf/reg-event-fx
-  :filtering-row-change-managed
-  (fn [{:keys [db]} [_ risk-filter-key risk-filter-nb value tbl]]
-    (let [tbl-kw-str (namespace risk-filter-key)
-          rfv (assoc (get db risk-filter-key) risk-filter-nb value)
-          grouping (if (clojure.string/includes? tbl-kw-str "attribution")
-                     (conj (map :accessorKey (mapv mrt/attribution-table-columns (distinct (remove #{"None"} (vals rfv))))) "dummy")
-                     (conj (map :accessorKey (mapv mrt/risk-table-columns (distinct (remove #{"None"} (vals rfv))))) "dummy"))
-          ;table? (= (db (keyword tbl-kw-str "display-style")) "Table")
-          ;extra-pins (if (clojure.string/includes? tbl-kw-str "attribution") [] [:NAME])
-          ]
-      ;(redesign-table! tbl table? grouping extra-pins)
-      {:db (-> db
-               (assoc risk-filter-key rfv)
-               (update (keyword tbl-kw-str "mrt-table-state") #(if (= (db (keyword tbl-kw-str "display-style")) "Table") (identity %) (update-js-map % "grouping" grouping "expanded" {"dummy:" true})))
-               (assoc :portfolio-history/data []))
-       :fx [(if (clojure.string/includes? tbl-kw-str "attribution") [:dispatch [:redesign-single-attribution-table tbl]] [:dispatch [:redesign-single-portfolio-table tbl]])]
-       })))
 
-(rf/reg-event-fx
-  :tree-table-toggle-managed
-  (fn [{:keys [db]} [_ tbl-kw-str display-style tbl]]
-    (let [grouping (if (clojure.string/includes? tbl-kw-str "attribution")
-                     (conj (map :accessorKey (mapv mrt/attribution-table-columns (distinct (remove #{"None"} (vals (get db (keyword tbl-kw-str "filter"))))))) "dummy")
-                     (conj (map :accessorKey (mapv mrt/risk-table-columns (distinct (remove #{"None"} (vals (get db (keyword tbl-kw-str "filter"))))))) "dummy"))
-          extra-pins (if (clojure.string/includes? tbl-kw-str "attribution") [] [:NAME])]
-      ;(redesign-table! tbl (= display-style "Table") grouping extra-pins)
-      {:db (if (clojure.string/includes? tbl-kw-str "attribution")
-             (-> db
-                 (assoc (keyword tbl-kw-str "display-style") display-style)
-                 (update (keyword tbl-kw-str "mrt-table-state") #(if (= display-style "Table") (update-js-map % "grouping" [] "expanded" {}) (update-js-map % "grouping" grouping "expanded" {"dummy:" true}))))
-             (-> db
-                 (assoc (keyword tbl-kw-str "display-style") display-style)
-                 (assoc (keyword tbl-kw-str "hide-zero-holdings") (= display-style "Table"))
-                 (update (keyword tbl-kw-str "mrt-table-state") #(if (= display-style "Table") (update-js-map % "grouping" [] "expanded" {}) (update-js-map % "grouping" grouping "expanded" {"dummy:" true})))))
-       :fx [(if (clojure.string/includes? tbl-kw-str "attribution") [:dispatch [:redesign-single-attribution-table tbl]] [:dispatch [:redesign-single-portfolio-table tbl]])]
-       })))
 
 ;(defn filtering-row
 ;  "key can be equal to :single-portfolio-risk/filter"
@@ -330,45 +252,14 @@
 ;   :choices static/tree-table-choices
 ;   :on-change #(rf/dispatch [:tree-table-toggle-managed table-keyword-string % (.-current table-ref)])])
 
-(rf/reg-event-db
-  :redesign-single-portfolio-table
-  (fn [db [_ tbl]]
-    (redesign-table! tbl
-                     (= (db :single-portfolio-risk/display-style) "Table")
-                     (conj (map :accessorKey (mapv mrt/risk-table-columns (distinct (remove #{"None"} (vals (db :single-portfolio-risk/filter)))))) "dummy")
-                     [:NAME])
-    db))
-
-(rf/reg-event-db
-  :redesign-single-attribution-table
-  (fn [db [_ tbl]]
-    (redesign-table! tbl
-                     (= (db :single-portfolio-attribution/display-style) "Table")
-                     (conj (map :accessorKey (mapv mrt/attribution-table-columns (distinct (remove #{"None"} (vals (db :single-portfolio-attribution/filter)))))) "dummy")
-                     [:Security])
-    db))
-
-(rf/reg-event-fx
-  :single-portfolio-risk/shortcut
-  (fn [{:keys [db]} [_ snapshot tbl]]
-    (let [shortcuts [{:empty 0}                             ;this is snapshot 0
-                     {:display-style "Table" :hide-zero-holdings true  :filter {1 :region 2 :country 3 :issuer} :mrt-table-state #js {"columnFilters" #js [] "grouping" #js [] "expanded" #js {}}}
-                     {:display-style "Tree"  :hide-zero-holdings false :filter {1 :country 2 :sector 3 "None"}  :mrt-table-state #js {"columnFilters" #js [] "grouping" #js ["dummy" "qt-risk-country-name" "qt-jpm-sector"] "expanded" #js {"dummy:" true}}}
-                     {:display-style "Tree"  :hide-zero-holdings false :filter {1 :sector 2 :country 3 "None"}  :mrt-table-state #js {"columnFilters" #js [] "grouping" #js ["dummy" "qt-jpm-sector" "qt-risk-country-name"] "expanded" #js {"dummy:" true}}}
-                     {:display-style "Tree"  :hide-zero-holdings false :filter {1 :sector 2 :country 3 :issuer} :mrt-table-state #js {"columnFilters" #js [] "grouping" #js ["dummy" "qt-jpm-sector" "qt-risk-country-name" "TICKER"] "expanded" #js {"dummy:" true}}}]]
-      {:db (reduce-kv #(assoc %1 (keyword "single-portfolio-risk" (name %2)) %3) db (assoc (nth shortcuts snapshot) "shortcut" snapshot))
-       :fx [[:dispatch [:redesign-single-portfolio-table tbl]]]})))
-
-(rf/reg-event-fx
-  :single-portfolio-attribution/shortcut
-  (fn [{:keys [db]} [_ snapshot tbl]]
-    (let [shortcuts [{:empty 0}                             ;this is snapshot 0
-                     {:display-style "Tree" :filter {1 :region 2 :country 3 :issuer} :mrt-table-state #js {"columnFilters" #js [] "grouping" #js ["dummy" "Region" "Country" "Issuer"] "expanded" #js {"dummy:" true}}}
-                     {:display-style "Tree" :filter {1 :country 2 :sector 3 :issuer} :mrt-table-state #js {"columnFilters" #js [] "grouping" #js ["dummy" "Region" "Sector" "Issuer"] "expanded" #js {"dummy:" true}}}
-                     {:display-style "Tree" :filter {1 :sector 2 :country 3 :issuer} :mrt-table-state #js {"columnFilters" #js [] "grouping" #js ["dummy" "Sector" "Country" "Issuer"] "expanded" #js {"dummy:" true}}}
-                     {:display-style "Tree" :filter {1 :issuer 2 "None" 3 "None"}    :mrt-table-state #js {"columnFilters" #js [] "grouping" #js ["dummy" "Issuer"] "expanded" #js {"dummy:" true}}}]]
-      {:db (reduce-kv #(assoc %1 (keyword "single-portfolio-attribution" (name %2)) %3) db (assoc (nth shortcuts snapshot) "shortcut" snapshot))
-       :fx [[:dispatch [:redesign-single-attribution-table tbl]]]})))
+;(rf/reg-event-db
+;  :redesign-single-portfolio-table
+;  (fn [db [_ tbl]]
+;    (redesign-table! tbl
+;                     (= (db :single-portfolio-risk/display-style) "Table")
+;                     (conj (map :accessorKey (mapv mrt/risk-table-columns (distinct (remove #{"None"} (vals (db :single-portfolio-risk/filter)))))) "dummy")
+;                     [:NAME])
+;    db))
 
 
 (defn left-nav-bar

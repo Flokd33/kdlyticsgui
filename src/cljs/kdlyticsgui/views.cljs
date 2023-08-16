@@ -17,11 +17,11 @@
 ;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 (def main-navigation
   (let [home-events nil]                                                                                                                                                    ;[:get-qt-date]
-    [{:code :wealth          :name "BLa"            :dispatch :wealth          :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :positions       :name "BLa"         :dispatch :positions       :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :vault           :name "asdlt"             :dispatch :vault           :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :cellar          :name "Casdellar"            :dispatch :cellar          :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :tools           :name "asddTools"             :dispatch :tools           :subs nil       :load-events home-events        :mounting-modal true}
+    [{:code :wealth          :name "W"            :dispatch :wealth          :subs nil       :load-events home-events        :mounting-modal true}
+     {:code :positions       :name "P"         :dispatch :positions       :subs nil       :load-events home-events        :mounting-modal true}
+     {:code :vault           :name "V"             :dispatch :vault           :subs nil       :load-events home-events        :mounting-modal true}
+     {:code :cellar          :name "C"            :dispatch :cellar          :subs nil       :load-events home-events        :mounting-modal true}
+     {:code :tools           :name "T"             :dispatch :tools           :subs nil       :load-events home-events        :mounting-modal true}
      ]))
 
 (defn modal-mounting []
