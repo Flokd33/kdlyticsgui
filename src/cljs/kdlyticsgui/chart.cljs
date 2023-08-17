@@ -1,4 +1,4 @@
-(ns kdlyticsgui.charting
+(ns kdlyticsgui.chart
   (:require [re-frame.core :as rf])
   (:require [kdlyticsgui.static :as static]))
 ;
@@ -184,20 +184,28 @@
 ;     :resolve {:scale {:y "independent" }}}))
 ;
 ;
-;(defn small-pie-esg [data title]
-;  (let []
-;    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
-;   :title {:text title :fontSize 20} :data     {:values data} :width 600 :height 300 :mark "arc"
-;   :encoding {:theta  {:field "freq" :type "quantitative" :stack true}}
-;   :layer [{:mark {:type "arc" :outerRadius 115}
-;            :encoding {:color {:field "color" :type "nominal" :scale nil :legend nil }
-;                       :order {:field "freq" :type "quantitative"}}}
-;           {:mark {:type "text" :radius 155 :size 15}
-;            :encoding {:text {:field "category" :type "nominal"}
-;                       :order {:field "freq" :type "quantitative"}}}
-;           {:mark {:type "text" :radius 90 :size 15 :fontWeight "bold"}
-;            :encoding {:text {:field "freq" :type "quantitative"}}}]})
-;  )
+
+(def colors-risk ["#19A68C" "#E89687" "#B2A896" "#652043" "#392B5E" "#CF6F13" "#809A96" "#222222" "#DB4857" "#E8E5CE" "#FFB43D" "#004042" "#134848" "#009D80" "#FDAA94" "#74908D" "#591739" "#0D3232" "#026E62" "#C0746D" "#54666D" "#3C0E2E" "#C87A1B" "#0A3323" "#9A293D"])
+(defn add-colors [vec-map field colors] (map #(assoc %1 :color %2) (sort-by field > vec-map) colors))
+
+(defn pie-chart-strategy [data title]
+  (let [data-with-color (add-colors data :nav-eur-perc (cycle colors-risk))]
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
+     :title {:text title :fontSize 20}
+     :data  {:values data-with-color}
+     :width 400 :height 350
+     :encoding {:theta  {:field "nav-eur-perc" :type "quantitative" :stack true}}
+     :layer [{:mark {:type "arc" :outerRadius 115}
+            :encoding {:color {:field "color" :type "nominal" :scale nil :legend nil}
+                       :order {:field "nav-eur-perc" :type "quantitative"}}}
+           {:mark {:type "text" :radius 130 :size 14}
+            :encoding {:text {:field "strategy" :type "nominal"}
+                       :order {:field "nav-eur-perc" :type "quantitative"}}}
+           {:mark {:type "text" :radius 80 :size 10 :fontWeight "bold"}
+            :encoding {:text {:field "value-display" :type "nominal"}
+                       :order {:field "nav-eur-perc" :type "quantitative"}}}
+           ]})
+  )
 ;
 ;(defn mod-date [date]  (str (subs date 0 4) (subs date 5 7) (subs date 8 10) ))
 ;
@@ -261,6 +269,42 @@
 ;              :encoding {:y       {:field "cash", :type "quantitative" :aggregate "mean"}
 ;                         :color {:value "#C33345"}
 ;                         :size {:value 3}}}]}))
+
+(defn line-chart-price-simple [data]
+  (let []
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
+     :title    {:text @(rf/subscribe [:price-history/name]) :fontSize 15}
+     :width    1000
+     :height   400
+     :data     {:values data :format {:parse {:date "date:'%Y-%m-%d'" :price "number"}}}
+     :mark     "line"
+     :selection {:grid {:type "interval" :bind "scales"}}
+     :encoding {:y  {:field "close" :type "quantitative" :axis {:title "Price" :titleFontSize 14 :labelFontSize 12} :scale {:domain [(dec (apply min (map :close data))) (inc (apply max (map :close data)))]}}
+                :x  {:field "date" :type "temporal" :axis {:title "Date" :titleFontSize 14 :labelFontSize 12 :format "%b-%y" }  :sort "ascending"}
+                :tooltip [{:field "date" :type "temporal", :title "Date"}
+                          {:field "close" :type "quantitative" :title "Close price"}]
+                ;:color {:field "Bond" :type "nominal" :scale {:range ["#134848" "#FDAA94"]}}
+                }}))
+
+
+(defn line-chart-price-hover [data]
+  "2 marks: line, circle"
+  (let []
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
+     :title    {:text @(rf/subscribe [:price-history/name]) :fontSize 15} :width 1000  :height 400
+     :data     {:values data :format {:parse {:date "date:'%Y-%m-%d'" :price "number"}}}
+     :encoding {:x  {:field "date" :type "temporal" :axis {:title "Date" :titleFontSize 14 :labelFontSize 12 :format "%b-%y" }  :sort "ascending"}
+                :y  {:field "close" :type "quantitative" :axis {:title "Price" :titleFontSize 14 :labelFontSize 12} :scale {:domain [(dec (apply min (map :close data))) (inc (apply max (map :close data)))]}}}
+     :layer [{:mark     "line" :selection {:grid {:type "interval" :bind "scales"}}}
+             {:mark     {:type "circle" }
+              :encoding {:opacity {:condition {:test {:param "hover" :empty false} :value 1} :value 0}
+                         :size {:condition {:test {:param "hover" :empty false} :value 100} :value 0}
+                         :tooltip [{:field "date" :type "temporal", :title "Date"} {:field "close" :type "quantitative" :title "Close price"}]
+                         :color {:value "#4dfffc"}
+                         }
+              :params [{:name "hover" :select {:type "point" :fields ["date"] :nearest true :on "mouseover" :clear "mouseout"}}]}
+             ]
+     }))
 
 
 

@@ -2,11 +2,15 @@
   (:require                                                 ;["html2canvas" :as html2canvas]
             [goog.string :as gstring]
             [goog.string.format]
-            [cljs-time.format :as tf])
+            [cljs-time.format :as tf]
+            ["react-vega" :as react-vega :refer (VegaLite)])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
 
+;------------------------------------------------------VEGA-------------------------------------------------------------
+(defn vega-lite [spec] [VegaLite (clj->js {:spec spec})])
+;------------------------------------------------------????-------------------------------------------------------------
 (defn int->gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
 (defn gdate->yyyyMMdd [x] (subs (.toString x) 0 8))
 (defn gdate->yyyy-MM-dd [x] (let [a (subs (.toString x) 0 8)] (str (subs a 0 4) "-" (subs a 4 6) "-" (subs a 6 8))))

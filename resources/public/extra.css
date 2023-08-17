@@ -27,8 +27,9 @@ background-color: #FAF9F6;
 border-radius: 15px;
 padding: 20px 20px;
 margin-left: 185px;
-margin-top: 70px;}
-
+}
+/*not need to add margin top because the right element will be in a subbody that is already set up to pad 65px corresponding to the top nav bar*/
+/*margin-top: 70px;*/
 
 .leftnavbar {
 display: flex;

@@ -22,8 +22,21 @@
 
                  ;:navigation/active              {:view        :entry :home        :summary}
 
-                 :positions-summary                 []
+                 :wealth-summary                    []
 
+                 :positions-summary                 []
+                 :positions-top10                   []
+                 :positions-characteristics         []
+                 :positions-strategy-exposure       []
+
+                 :cellar-summary                    []
+                 :vault-summary                     []
+
+                 :price-history/data                []
+                 :price-history/ticker              nil
+                 :price-history/name                nil
+                 :price-history/show-modal          false
+                 :price-history/show-throbber       false
 
                  :navigation/success-modal       {:show false :on-close nil :response nil}
                  :navigation/success-compile     {:show false :on-close nil :response nil}
@@ -44,8 +57,21 @@
            :navigation/active-view-cellar
            :navigation/active-view-tools
 
+           :wealth-summary
 
            :positions-summary
+           :positions-top10
+           :positions-characteristics
+           :positions-strategy-exposure
+
+           :cellar-summary
+           :vault-summary
+
+           :price-history/data
+           :price-history/ticker
+           :price-history/name
+           :price-history/show-modal
+           :price-history/show-throbber
 
            :navigation/show-mounting-modal
            ]] (rf/reg-event-db k (fn [db [_ data]] (assoc db k data))))
@@ -189,9 +215,8 @@
         (< shortcut-value 4) (assoc db shortcut-key (inc shortcut-value))
         :else (assoc db shortcut-key 1)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;
-;;HTTP GET DEFINITION;;
-;;;;;;;;;;;;;;;;;;;;;;;
+
+;--------------------------------------HTTP GET/POST DEFINITION--------------------------------------------------------------
 
 (rf/reg-event-db
   :tree-table
@@ -245,7 +270,6 @@
 
 
 (rf/reg-fx :http-post-dispatch-test http-post-dispatch-test)
-
 (rf/reg-fx :http-json-post-dispatch http-post-dispatch)
 
 (defn http-put-dispatch [request]
@@ -256,19 +280,38 @@
 
 (rf/reg-fx :http-put-dispatch http-put-dispatch)
 
+;-----------------------------------------------------------------------------------------------------------------------
 
 (def simple-http-get-events
-  [
-   {:get-key :get-naked-positions     :url-tail "naked-position-transit-array"           :dis-key :naked-positions :mounting-modal true}
-
-
+  [{:get-key :get-naked-positions     :url-tail "naked-position-transit-array"           :dis-key :naked-positions :mounting-modal true}
    ])
 
 (def simple-http-assets
   [{:get-key :get-portfolios              :namespace "common.static" :asset "portfolios"              :dispatch-key [:portfolios]}
    ])
 
+(doseq [line simple-http-get-events]
+  (rf/reg-event-fx
+    (:get-key line)
+    (fn [{:keys [db]} [_]]
+      (if (zero? (count (get-in db [(:dis-key line)])))     ;if it wasn't mounted yet we need to load it
+        {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
+         :http-get-dispatch {:url           (str static/server-address (:url-tail line))
+                             :dispatch-key  [(:dis-key line)]}}))))
 
+(doseq [line simple-http-assets]
+  (rf/reg-event-fx
+    (:get-key line)
+    (fn [{:keys [db]} [_]]
+      (if (zero? (count (get-in db (:dispatch-key line))))     ;if it wasn't mounted yet we need to load it
+        {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
+         :http-get-asset line}))))
+
+(rf/reg-event-fx
+  :get-wealth-summary
+  (fn [{:keys [db]} [_ ]]
+    {:http-get-dispatch {:url          (str static/server-address "wealth-summary" )
+                         :dispatch-key [:positions-summary]}}))
 
 (rf/reg-event-fx
   :get-positions-summary
@@ -276,116 +319,67 @@
     {:http-get-dispatch {:url          (str static/server-address "positions-summary" )
                          :dispatch-key [:positions-summary]}}))
 
-;(doseq [line simple-http-get-events]
-;  (rf/reg-event-fx
-;    (:get-key line)
-;    (fn [{:keys [db]} [_]]
-;      (if (zero? (count (get-in db [(:dis-key line)])))     ;if it wasn't mounted yet we need to load it
-;        {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
-;         :http-get-dispatch {:url           (str static/server-address (:url-tail line))
-;                             :dispatch-key  [(:dis-key line)]}}))))
-;
-;(doseq [line simple-http-assets]
-;  (rf/reg-event-fx
-;    (:get-key line)
-;    (fn [{:keys [db]} [_]]
-;      (if (zero? (count (get-in db (:dispatch-key line))))     ;if it wasn't mounted yet we need to load it
-;        {:db (if (:mounting-modal line) (assoc db :navigation/show-mounting-modal true) db) ;some events take time, let's show a throbber
-;         :http-get-asset line}))))
-;
+(rf/reg-event-fx
+  :get-positions-top10
+  (fn [{:keys [db]} [_ ]]
+    {:http-get-dispatch {:url          (str static/server-address "positions-top10" )
+                         :dispatch-key [:positions-top10]}}))
+
+(rf/reg-event-fx
+  :get-positions-characteristics
+  (fn [{:keys [db]} [_ ]]
+    {:http-get-dispatch {:url          (str static/server-address "positions-characteristics" )
+                         :dispatch-key [:positions-characteristics]}}))
+(rf/reg-event-fx
+  :get-positions-strategy-exposure
+  (fn [{:keys [db]} [_ ]]
+    {:http-get-dispatch {:url          (str static/server-address "positions-strategy-exposure" )
+                         :dispatch-key [:positions-strategy-exposure]}}))
+
+
+(rf/reg-event-fx
+  :get-vault-summary
+  (fn [{:keys [db]} [_ ]]
+    {:http-get-dispatch {:url          (str static/server-address "vault-summary" )
+                         :dispatch-key [:vault-summary]}}))
+
+(rf/reg-event-fx
+  :get-cellar-summary
+  (fn [{:keys [db]} [_ ]]
+    {:http-get-dispatch {:url          (str static/server-address "cellar-summary" )
+                         :dispatch-key [:cellar-summary]}}))
+
+
+(rf/reg-event-db
+  :receive-price-history-data
+  (fn [db [_ data]] (assoc db :price-history/data data
+                              :price-history/show-throbber false)))
+
+(rf/reg-event-fx
+  :get-price-history
+  (fn [{:keys [db]} [_ ticker name]]
+    {:db                (assoc db :price-history/ticker ticker
+                                  :price-history/name   name
+                                  :price-history/show-modal true
+                                  :price-history/show-throbber true)
+     :http-get-dispatch {:url          (str static/server-address "price-history?ticker=" ticker)
+                         :dispatch-key [:receive-price-history-data]}}))
+
 ;(rf/reg-event-fx
 ;  :implementation-list-request
 ;  (fn [{:keys [db]} [_]]
 ;    {:db             db
 ;     :http-get-asset {:namespace "jasmine.implementation" :asset "list-all-implementations" :dispatch-key [:implementation/implementation-list]}}))
 ;
-;
-;(rf/reg-event-fx
-;  :get-var-data
-;  (fn [{[db] :keys} [_ portfolio]]
-;    {:http-get-dispatch {:url          (str static/server-address "var-data?portfolio=" portfolio)
-;                         :dispatch-key [:var/data]}}))
-;
-;
-;
-;
 ;(rf/reg-event-fx
 ;  :get-naked-positions-timestamp
 ;  (fn [{:keys [db]} [_]]
 ;    {:http-get-dispatch {:url          (str static/server-address "last-updated")
 ;                         :dispatch-key [:check-naked-positions-timestamp]}}))
-;
-;(rf/reg-event-fx
-;  :get-portfolio-var
-;  (fn [{:keys [db]} [_ portfolio]]
-;    {:db (assoc db :var/portfolio portfolio)
-;     :http-get-dispatch {:url          (str static/server-address "var-data?portfolio=" portfolio)
-;                         :dispatch-key [:var/data]}}))
-;
-;;SINGLE ATTRIBUTION
-;(rf/reg-event-fx
-;  :get-single-attribution
-;  (fn [{:keys [db]} [_ portfolio period]]
-;    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" period)
-;                         :dispatch-key [:single-portfolio-attribution/table]}}))
-;
-;(rf/reg-event-fx
-;  :change-single-attribution-portfolio
-;  (fn [{:keys [db]} [_ portfolio]]
-;    {:db (assoc db :single-portfolio-attribution/portfolio portfolio :navigation/show-mounting-modal true)
-;     :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:single-portfolio-attribution/period db))
-;                         :dispatch-key [:single-portfolio-attribution/table]}}))
-;
-;(rf/reg-event-fx
-;  :change-single-attribution-period
-;  (fn [{:keys [db]} [_ period]]
-;    {:db (assoc db :single-portfolio-attribution/period period  :navigation/show-mounting-modal true)
-;     :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" (:single-portfolio-attribution/portfolio db) "&period=" period)
-;                         :dispatch-key [:single-portfolio-attribution/table]}}))
-;
-;;MULTIPLE ATTRIBUTION
-;(rf/reg-event-fx
-;  :get-multiple-attribution
-;  (fn [{:keys [db]} [_ target period]]
-;    {:db (assoc db  :navigation/show-mounting-modal true)
-;     :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
-;                         :dispatch-key [:multiple-portfolio-attribution/table]}}))
-;
-;(rf/reg-event-fx
-;  :change-multiple-attribution-target
-;  (fn [{:keys [db]} [_ ktarget]]
-;    (let [target (.replace ^string (get-in tables/attribution-table-columns [ktarget :accessor]) "-" " ")]
-;      {:db                (assoc db :multiple-portfolio-attribution/field-one ktarget  :navigation/show-mounting-modal true)
-;       :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" (:multiple-portfolio-attribution/period db))
-;                           :dispatch-key [:multiple-portfolio-attribution/table]}})))
-;
-;(rf/reg-event-fx
-;  :change-multiple-attribution-period
-;  (fn [{:keys [db]} [_ period]]
-;    (let [target (.replace ^string (get-in tables/attribution-table-columns [(:multiple-portfolio-attribution/field-one db) :accessor]) "-" " ")]
-;      {:db                (assoc db :multiple-portfolio-attribution/period period  :navigation/show-mounting-modal true)
-;       :http-get-dispatch {:url          (str static/server-address "attribution?query-type=multiple-portfolio&target=" target "&period=" period)
-;                           :dispatch-key [:multiple-portfolio-attribution/table]}})))
-;
-;;scorecard
-;
-;(rf/reg-event-fx
-;  :get-scorecard-attribution
-;  (fn [{:keys [db]} [_ portfolio]]
-;    {:http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio-wtd-ytd&portfolio=" portfolio)
-;                         :dispatch-key [:scorecard/attribution-table]}}))
-;
-;;INDEX RETURNS
+
 ;(rf/reg-event-fx
 ;  :get-attribution-index-returns-portfolio
 ;  (fn [{:keys [db]} [_ portfolio]]
 ;    {:db (assoc db :attribution-index-returns/portfolio portfolio)
 ;     :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" portfolio "&period=" (:attribution-index-returns/period db))
-;                         :dispatch-key [:attribution-index-returns/table]}}))
-;
-;(rf/reg-event-fx
-;  :get-attribution-index-returns-period
-;  (fn [{:keys [db]} [_ period]]
-;    {:db (assoc db :attribution-index-returns/period period)
-;     :http-get-dispatch {:url          (str static/server-address "attribution?query-type=single-portfolio&portfolio=" (:attribution-index-returns/portfolio db) "&period=" period)
 ;                         :dispatch-key [:attribution-index-returns/table]}}))

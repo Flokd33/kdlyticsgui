@@ -46,21 +46,6 @@
                                             )]]
                           (if @show-element children))]])))
 
-(defn mrt-element-box-generic-old
-  [id width title-str opts children]
-  (let [show-element (r/atom true)]
-    (fn [id width title-str opts children]                  ;see https://github.com/reagent-project/reagent/blob/master/doc/CreatingReagentComponents.md need to repeat the arguments!
-      [:div {:id id}
-       [v-box :class "element" :align-self :center :justify :center :gap "20px" :width width
-        :children (concat [[h-box :gap "10px" :align :center
-                            :children (concat [[title :label title-str :level :level1]
-                                               [gap :size "1"]]
-                                              (if (:shortcuts opts)
-                                                (mapv (fn [i] [md-circle-icon-button :md-icon-name (str "zmdi-collection-item-" i) :tooltip (str "Saved view " i) :tooltip-position :above-center :class (if (= @(rf/subscribe [(:shortcuts opts)]) i) "active" "default") :on-click #(rf/dispatch [(:shortcuts opts) i])])
-                                                      (range 1 5)))
-                                              (if (:show-hide opts)
-                                                [($ switch-helix {:checked-atom show-element :default-checked (not (:hide-by-default opts))})]))]]
-                          (if @show-element children))]])))
 
 (defn element-box-generic
   "opts will have either :download-table or :on-click-action, and can have target-id

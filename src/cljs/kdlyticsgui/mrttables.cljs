@@ -8,6 +8,7 @@
             [kdlyticsgui.tools :as t]
             [helix.core :refer [defnc $]]
             [helix.dom :as hd]
+            [reagent-contextmenu.menu :as rcm]
             [cljs-time.core :refer [today]]
             [helix.hooks :refer [use-state use-effect use-memo]]
             ["material-react-table" :as rt :default MaterialReactTable :refer ( MRT_ShowHideColumnsButton MRT_ToggleDensePaddingButton MRT_FullScreenToggleButton )] ;<MRT_FullScreenToggleButton table={table} />
@@ -36,6 +37,23 @@
            (goog.i18n.NumberFormat Format))
   )
 
+;---------------------------------------------------ON CLICK EVENTS-----------------------------------------------------
+
+;(defn on-click-position-summary [ticker]
+;  (fn [e]
+;    (rcm/context!
+;      e
+;      (concat
+;        [NAME
+;         ["Copy ISIN" (fn [] (tools/copy-to-clipboard isin))]]
+;        (case which
+;          :single [["Trade history" (fn [] (rf/dispatch [:get-single-bond-trade-history NAME id [@(rf/subscribe [:single-portfolio-risk/portfolio])] "01Jan2019" @(rf/subscribe [:qt-date])]))]]
+;          :multiple [["Trade history" (fn [] (multiple-bond-trade-history-event "nominal" NAME id))]
+;                     ["Trade history (% NAV)" (fn [] (multiple-bond-trade-history-event "nav" NAME id))]])
+;        [["Trade analyser" (fn [] (rf/dispatch [:quant-screen-to-ta2022 isin]))]
+;         ["Ticker scorecard news" (fn [] (rf/dispatch [:get-ticker-scorecard-news (mrt/get-js-row-key row "TICKER")]))]
+;         ])))
+;  )
 ;---------------------------------------------------CONDITIONAL FORMATTING----------------------------------------------
 (defn cell-value [c] (.getValue (.-cell c)))
 (defn get-js-row-key [row key] (gobj/getValueByKeys row "row" "original" key))
@@ -50,24 +68,42 @@
 (defn allocation-delta-formatting [this]
   (if-let [x (get-js-row-key this "alloc-strat-delta")]
     (condp > x
-      -500   #js {:sx #js {"cursor" "pointer" "backgroundColor" "#f08080"}}
+      -500   #js {:sx #js {"backgroundColor" "#f08080"}}
       500    #js{}
       ;(if (odd? (.-index (.-row this)))
       ;         #js {:sx #js {"cursor" "pointer" "backgroundColor" "#F5F5F5"}}
       ;         #js {:sx #js {"cursor" "pointer"}})
-      #js {:sx #js {"cursor" "pointer" "backgroundColor" "#9CD7AB"}})
+      #js {:sx #js {"backgroundColor" "#9CD7AB"}})
     #js{}))
 
-(defn full-row-formatting [this]
-  (if-let [r (get-js-row-key this "shortName")]
-    (case (str r)
-      "CASH" #js {:sx #js {"cursor" "pointer" "backgroundColor" "#e1ecf7"}}
-      #js {}
-       ;(if (odd? (.-index (.-row this)))
-       ;   #js {:sx #js {"cursor" "pointer" "backgroundColor" "#F5F5F5"}}
-       ;   #js {:sx #js {"cursor" "pointer"}})
-       )
-    #js {}
+(defn positions-full-row-formatting [this]
+  "Include name formatting and on click event"
+  ;(println (get-js-row-key this "ticker"))
+  (case (get-js-row-key this "shortName")
+    "CASH" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#e1ecf7"}
+                "onClick" #(do (rf/dispatch [:get-price-history (get-js-row-key this "ticker") (get-js-row-key this "shortName")]))
+                }
+    #js {"sx" #js {"cursor" "pointer"}
+         "onClick" #(do (rf/dispatch [:get-price-history (get-js-row-key this "ticker") (get-js-row-key this "shortName")]))}
+
+    ;(if (odd? (.-index (.-row this)))
+    ;   #js {:sx #js {"cursor" "pointer" "backgroundColor" "#F5F5F5"}}
+    ;   #js {:sx #js {"cursor" "pointer"}})
+    ))
+
+(defn cellar-row-formatting [this]
+  "Include name formatting and on click event"
+  ;(println (get-js-row-key this "ticker"))
+  (case (get-js-row-key this "type")
+    "red" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#b42421"}} ;9C2421
+    "white" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#f1f285"}}
+    "sweet" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#eccd13"}}
+    "champagne" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#F7E7CE"}}
+    #js {"sx" #js {"cursor" "pointer"}}
+
+    ;(if (odd? (.-index (.-row this)))
+    ;   #js {:sx #js {"cursor" "pointer" "backgroundColor" "#F5F5F5"}}
+    ;   #js {:sx #js {"cursor" "pointer"}})
     ))
 
 (defn breach-status-color-nb
@@ -280,13 +316,6 @@
                      (map :accessorKey)
                      (map keyword))]
     (fn [js-data] (t/csv-link (js->clj js-data {:keywordize-keys true}) id dw-cols))))
-
-(defn mrt-th-download-fn [id clj-cols]
-  (let [nested? (contains? (first clj-cols) :columns)
-        dw-cols (->> (if nested? (apply concat (map :columns clj-cols)) clj-cols)
-                     (map :accessorKey)
-                     (map keyword))]
-    (fn [js-data] (t/csv-link (js->clj js-data {:keywordize-keys true}) id dw-cols "|"))))
 
 (defn show-if-any-is-hidden [table groupset]
   (let [visible-ids (set (.map (.getVisibleLeafColumns table) #(.-id %)))

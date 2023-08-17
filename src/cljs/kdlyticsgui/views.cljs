@@ -12,9 +12,12 @@
     [kdlyticsgui.static :as static]
     [kdlyticsgui.guitools :as gt]
     [kdlyticsgui.wealth :as wealth]
+    [kdlyticsgui.positions :as positions]
+    [kdlyticsgui.cellar :as cellar]
+    [kdlyticsgui.vault :as vault]
     [goog.string :as gstring]
     ))
-;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------------------
 (def main-navigation
   (let [home-events nil]                                                                                                                                                    ;[:get-qt-date]
     [{:code :wealth          :name "W"            :dispatch :wealth          :subs nil       :load-events home-events        :mounting-modal true}
@@ -76,7 +79,7 @@
                       :class (str "btn btn-primary btn-block" (if (= @(rf/subscribe [navigation-key]) (:code item)) " active")) ;@(rf/subscribe [navigation-key])
                       :label (:name item)
                       :on-click #(rf/dispatch [navigation-key (:code item)])]))])
-;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------------------
 (def wealth-navigation
   [{:code :summary          :name "Summary"}
    {:code :projection       :name "Projection"}
@@ -88,37 +91,42 @@
     (case active-view
       :summary                          [wealth/summary-display]
       :projection                       [wealth/projection-display]
-
       [:div.output "nothing to display"])))
 
 (defn wealth-view []
   [h-box :gap "10px" :padding "0px"
    :children [
               [left-nav-bar wealth-navigation :navigation/active-view-wealth]
-              [wealth-active-view]
-              ;[tradehistory/modal-single-bond-flat-trade-history]
+              [box :class "subbody" :child [wealth-active-view]]
+              ;[wealth/modal-price-history]
               [rcm/context-menu]]])
 
-;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------------------
 (def positions-navigation
   [{:code :summary          :name "Summary"}
    {:code :trades           :name "Trades"}
    ])
 
+(defn positions-active-view []
+  (let [active-view @(rf/subscribe [:navigation/active-view-positions])]
+    (.scrollTo js/window 0 0)
+    (case active-view
+      :summary                          [positions/summary-display]
+      ;:trades                          [positions/trades-display]
+      [:div.output "nothing to display"])))
 
 (defn positions-view []
   [h-box :gap "10px" :padding "0px"
    :children [[left-nav-bar positions-navigation :navigation/active-view-positions]
-
+              [box :class "subbody" :child [positions-active-view]]
+              [positions/modal-price-history]
               [rcm/context-menu]]])
 
-
-;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------------------
 (def vault-navigation
   [{:code :inventory        :name "Inventory"}
    {:code :transaction      :name "Transactions"}
    ])
-
 
 (defn vault-view []
   [h-box :gap "10px" :padding "0px"
@@ -126,21 +134,27 @@
 
               [rcm/context-menu]]])
 
-;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------------------
 (def cellar-navigation
   [{:code :inventory        :name "Inventory"}
-   {:code :transaction      :name "Transactions"}
+   ;{:code :transaction      :name "Transactions"}
    ])
 
+(defn cellar-active-view []
+  (let [active-view @(rf/subscribe [:navigation/active-view-cellar])]
+    (.scrollTo js/window 0 0)
+    (case active-view
+      :inventory                          [cellar/summary-display]
+      ;:transaction                       [positions/trades-display]
+      [:div.output "nothing to display"])))
 
 (defn cellar-view []
   [h-box :gap "10px" :padding "0px"
    :children [[left-nav-bar cellar-navigation :navigation/active-view-cellar]
-
-
+              [box :class "subbody" :child [cellar-active-view]]
               [rcm/context-menu]]])
 
-;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------------------
 (def tools-navigation
   [{:code :scrapping        :name "Scraper"}
    ])
@@ -152,11 +166,11 @@
 
               [rcm/context-menu]]])
 
-;-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;-----------------------------------------------------------------------------------------------------------------------
 (defn active-section []
   ;(println @(rf/subscribe [:navigation/active-section]))
   (println "HELLO")
-  (.scrollTo js/window 0 0)                             ;on view change we go back to top
+  (.scrollTo js/window 0 0)
   (case @(rf/subscribe [:navigation/active-section])
     :entry            [entry]
     :wealth           [wealth-view]
