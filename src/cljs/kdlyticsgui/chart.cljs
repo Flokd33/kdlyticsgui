@@ -206,6 +206,41 @@
                        :order {:field "nav-eur-perc" :type "quantitative"}}}
            ]})
   )
+
+(defn bullet-chart-characteristic [data title]
+  (let []
+    {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
+     :title {:text title :fontSize 20}
+     :data  {:values data}
+     :facet {:row {:field "title" :type "ordinal" :header {:labelAngle 0 :title ""}}}
+     :spacing 10
+     :spec {:encoding {:x  {:type "quantitative" :scale {:nice false} :title ""}}
+            :layer [{:mark {:type "bar" :color "#eee"}
+                     :encoding {:x {:field "ranges[2]"}}}
+                    {:mark {:type "bar" :color "#ddd"}
+                     :encoding {:x {:field "ranges[1]"}}}
+                    {:mark {:type "bar" :color "#ccc"}
+                     :encoding {:x {:field "ranges[0]"}}}
+
+                    {:mark {:type "bar" :color "lightsteelblue" :size 10}
+                     :encoding {:x {:field "measures[1]"}}}
+                    {:mark {:type "bar" :color "steelblue" :size 10}
+                     :encoding {:x {:field "measures[0]"}}}
+
+                    {:mark {:type "tick" :color "black" :size 10}
+                     :encoding {:x {:field "markers[0]"}}}
+                    ]
+            }
+     :resolve {:scale {:x "independent"}}
+     :config {:tick {:thickness 2} :scale {:barBandPaddingInner 0}}
+
+     })
+
+  )
+
+
+
+
 ;
 ;(defn mod-date [date]  (str (subs date 0 4) (subs date 5 7) (subs date 8 10) ))
 ;

@@ -210,7 +210,7 @@ background-color: #414141;/*#D6E0EA */
 }
 */
 
-.titlescreen p {
+/*.titlescreen p {
                   position: relative;
                   font-family:    Segoe UI, Roboto, sans-serif;
                   text-transform: lowercase;
@@ -233,9 +233,84 @@ background-color: #414141;/*#D6E0EA */
                   100% {
                     background-position: 500%;
                   }
+                }*/
+
+.titlescreen p {
+                  position: relative;
+                  font-family:    Segoe UI, Roboto, sans-serif;
+                  text-transform: lowercase;
+                  font-size: 12em;
+                  letter-spacing: 3px;
+                  overflow: hidden;
+                  background: linear-gradient(90deg, #000000, #06f9f9, #000000);
+                  background-repeat: no-repeat;
+                  background-size: 80%;
+                  animation: animate-titlescreen 5s linear;
+                  animation-iteration-count: infinite;
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: rgba(255, 255, 255, 0);
+                }
+
+                @keyframes animate-titlescreen {
+                  0% {
+                    background-position: -500%;
+                  }
+                  100% {
+                    background-position: 500%;
+                  }
                 }
 
 
 #vg-tooltip-element {
 z-index: 2000;
+}
+
+
+/* ---- particles.js container ---- */
+
+#particles-js {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #b61924;
+  background-image: url("");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: 50% 50%;
+}
+
+/* ---- stats.js ---- */
+
+.count-particles{
+  background: #000022;
+  position: absolute;
+  top: 48px;
+  left: 0;
+  width: 80px;
+  color: #13E8E9;
+  font-size: .8em;
+  text-align: left;
+  text-indent: 4px;
+  line-height: 14px;
+  padding-bottom: 2px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: bold;
+}
+
+.js-count-particles{
+  font-size: 1.1em;
+}
+
+#stats,
+.count-particles{
+  -webkit-user-select: none;
+}
+
+#stats{
+  border-radius: 3px 3px 0 0;
+  overflow: hidden;
+}
+
+.count-particles{
+  border-radius: 0 0 3px 3px;
 }

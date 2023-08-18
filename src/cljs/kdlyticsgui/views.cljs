@@ -34,10 +34,12 @@
      :child [alert-box :padding "15px" :style {:width "120px"} :heading [box :align :center :child [throbber :size :large]] :closeable? false]]))
 
 (defn entry [] [box :padding "280px 0px" :class "subbody" :child
+                ;[:p {:class "particlesscreen"}]
                 [v-box :align-self :center :class "titlescreen" :children
                  ;[label :label "Please select an item at the top."]
-                 [[:p {:class "titlescreen"} "kdlytics"] [:p ""]] ;2nd [:p] to avoid the cursor blinking next to the logo
-                 ]])
+                 [[:p {:class "titlescreen"} "Hello"] [:p ""]] ;2nd [:p] to avoid the cursor blinking next to the logo
+                 ]
+                ])
 
 (defn navigation-event
   "This is really not pure. But it saves loading time at mount."

@@ -51,6 +51,10 @@
   (let [data-summary @(rf/subscribe [:positions-summary])
         data-top10 @(rf/subscribe [:positions-top10])
         data-characteristics @(rf/subscribe [:positions-characteristics])
+
+        data-characteristics-test [{:title "Revenue" :subtitle "Revenue bla bla " :ranges [150 225 300]  :measures [220 270] :markers [250]}
+                                   {:title "Profit" :subtitle "Profit bla bla " :ranges [15 22 30]  :measures [21 23] :markers [26]}]
+
         data-strategy-exposure @(rf/subscribe [:positions-strategy-exposure])
         data-strategy-exposure-clean (map #(assoc % :value-display (gstring/format "%.2f%" (* 100. (% :nav-eur-perc))) ) data-strategy-exposure)
         columns-summary [{:header "Description" :id "description" :columns [(mrt/text-col "Ticker" "ticker" 60)
@@ -96,7 +100,7 @@
                                                                 (mrt/nb-col "Payout" "payoutRatio" 50 mrt/round2pc100)]}]
         columns-characteristics [(mrt/text-col "Metric" "metric" 30) (mrt/nb-col "Value" "value" 90 mrt/round2)]
         ]
-    (println data-strategy-exposure-clean)
+    ;(println data-strategy-exposure-clean)
     ;(rf/dispatch [:get-price-history ticker])
     [v-box :gap "10px"
      :children [[h-box :class "subbody rightelement" :gap "20px" :children [[t/vega-lite (chart/pie-chart-strategy data-strategy-exposure-clean "Strategy %")]
@@ -107,7 +111,10 @@
                                                                                 :js-initial-state #js {"density" "compact" "showColumnFilters" false "pagination" #js {"pageSize" 50} "grouping" #js []}
                                                                                 :toolbar          mrt/mrt-table-toolbar
                                                                                 :download-fn      (mrt/mrt-default-download-fn "characteristics-summary" columns-characteristics)
-                                                                                :photo-id         "characteristics-summary"})]
+                                                                                :photo-id         "characteristics-summary"})
+                                                                            [t/vega-lite (chart/bullet-chart-characteristic data-characteristics-test "TRY")]
+                                                                            ]
+
                  ]
 
                 [gt/mrt-right-element-box-generic "positions-summary" maxrw "" {}

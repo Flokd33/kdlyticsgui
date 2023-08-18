@@ -24,6 +24,8 @@
   ;https://www.material-react-table.com/docs/getting-started/install
   ;npm install material-react-table @mui/material @mui/icons-material @emotion/react @emotion/styled
 
+  ;https://vincentgarreau.com/particles.js/#default
+
   :plugins []
   :min-lein-version "2.5.3"
   :source-paths ["src/clj" "src/cljs"]
