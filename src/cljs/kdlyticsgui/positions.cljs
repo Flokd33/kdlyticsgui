@@ -102,7 +102,7 @@
         ]
     ;(println data-strategy-exposure-clean)
     ;(rf/dispatch [:get-price-history ticker])
-    [v-box :gap "10px"
+    [v-box :gap "30px"
      :children [[h-box :class "subbody rightelement" :gap "20px" :children [[t/vega-lite (chart/pie-chart-strategy data-strategy-exposure-clean "Strategy %")]
                                                                             ($ mrt/material-react-table-template-basic
                                                                                {:clj-data data-characteristics
@@ -116,7 +116,6 @@
                                                                             ]
 
                  ]
-
                 [gt/mrt-right-element-box-generic "positions-summary" maxrw "" {}
                  [($ mrt/material-react-table-template-fast
                      {:clj-data data-summary

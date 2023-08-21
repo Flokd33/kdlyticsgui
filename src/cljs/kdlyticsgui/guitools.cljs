@@ -27,11 +27,10 @@
   [id width title-str opts children]
   (let [show-element (r/atom true)]
     (fn [id width title-str opts children]                  ;see https://github.com/reagent-project/reagent/blob/master/doc/CreatingReagentComponents.md need to repeat the arguments!
-      [:div {:id id}
-       [v-box :class "rightelement" :gap "20px" :width width
-        :children (concat [[h-box :align :center :children (into [[title :label title-str :level :level1] [gap :size "1"]]
-                                                                 (if (:show-hide opts) [($ switch-helix {:checked-atom show-element :default-checked (not (:hide-by-default opts))})]))]]
-                          (if @show-element children))]])))
+      [v-box :class "rightelement" :gap "0px" :width width
+       :children (concat [[h-box :align :center :children (into [[title :label title-str :level :level1] [gap :size "1"]]
+                                                                (if (:show-hide opts) [($ switch-helix {:checked-atom show-element :default-checked (not (:hide-by-default opts))})]))]]
+                         (if @show-element children))])))
 
 (defn mrt-element-box-generic
   [id width title-str opts children]

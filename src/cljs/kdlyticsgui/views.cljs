@@ -34,11 +34,16 @@
      :child [alert-box :padding "15px" :style {:width "120px"} :heading [box :align :center :child [throbber :size :large]] :closeable? false]]))
 
 (defn entry [] [box :padding "280px 0px" :class "subbody" :child
-                ;[:p {:class "particlesscreen"}]
                 [v-box :align-self :center :class "titlescreen" :children
                  ;[label :label "Please select an item at the top."]
                  [[:p {:class "titlescreen"} "Hello"] [:p ""]] ;2nd [:p] to avoid the cursor blinking next to the logo
                  ]
+
+                ;[v-box :align-self :center :class "particles-js" :children
+                ; ;[label :label "Please select an item at the top."]
+                ; [[:p {:class "particles-js"} ] ]
+                ; ]
+
                 ])
 
 (defn navigation-event
