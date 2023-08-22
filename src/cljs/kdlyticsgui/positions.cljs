@@ -120,7 +120,10 @@
                  [($ mrt/material-react-table-template-fast
                      {:clj-data data-summary
                       :clj-columns columns-summary
-                      :clj-option-map   {:enableGrouping false :enablePinning true :enablePagination true :muiTableBodyRowProps mrt/positions-full-row-formatting :muiTableBodyProps nil}  ;to avoid the cell formatting to mess up this the row formatting :muiTableBodyRowProps, we set the :muiTableBodyProps to nil, cell format override row formating
+                      :clj-option-map   {:enableGrouping false :enablePinning true :enablePagination true
+                                         :muiTableBodyRowProps mrt/positions-full-row-formatting
+                                         :muiTableBodyProps #js {"sx" #js {"backgroundColor" "white"}}
+                                         :muiTableHeadCellProps  #js {"sx" #js {"backgroundColor" "white" }}}  ;to avoid the cell formatting to mess up this the row formatting :muiTableBodyRowProps, we set the :muiTableBodyProps to nil, cell format override row formating
                       :js-initial-state #js {"density" "compact"
                                              "showColumnFilters" true
                                              "pagination" #js {"pageSize" 50}

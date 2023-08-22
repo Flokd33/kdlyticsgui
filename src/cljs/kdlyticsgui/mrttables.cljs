@@ -12,7 +12,7 @@
             [cljs-time.core :refer [today]]
             [helix.hooks :refer [use-state use-effect use-memo]]
             ["material-react-table" :as rt :default MaterialReactTable :refer ( MRT_ShowHideColumnsButton MRT_ToggleDensePaddingButton MRT_FullScreenToggleButton )] ;<MRT_FullScreenToggleButton table={table} />
-            ["@mui/material" :as mm :refer ( Button IconButton Tooltip Box Divider)]
+            ["@mui/material" :as mm :refer ( Button IconButton Tooltip Box Divider createTheme ThemeProvider useTheme)]
             ["@mui/icons-material/PhotoCamera" :default PhotoCameraIcon]
             ["@mui/icons-material/Download" :default DownloadIcon]
             ["@mui/icons-material/SystemUpdateAlt" :default SystemUpdateAltIcon]
@@ -83,7 +83,7 @@
     "CASH" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#e1ecf7"}
                 "onClick" #(do (rf/dispatch [:get-price-history (get-js-row-key this "ticker") (get-js-row-key this "shortName")]))
                 }
-    #js {"sx" #js {"cursor" "pointer"}
+    #js {"sx" #js {"cursor" "pointer" }
          "onClick" #(do (rf/dispatch [:get-price-history (get-js-row-key this "ticker") (get-js-row-key this "shortName")]))}
 
     ;(if (odd? (.-index (.-row this)))
@@ -393,8 +393,21 @@
         props (merge
                 (base-props mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id)
                 (if (seq pinned-cols) {:state #js {"columnPinning" #js {"left" pinned-cols "right" #js []}}}))]
-    ($ "div" {:id photo-id} ($ MaterialReactTable {& props}))))
+    ($ "div" {:id photo-id} ($ MaterialReactTable {& props}))
+    ;(println ($ "div" {:id photo-id} ($ MaterialReactTable {& props})))
+    ))
 
 (defnc material-react-table-template-basic
   [argument-map]
   ($ material-react-table-template-fast {& (update argument-map :clj-option-map #(merge {:enablePagination false :enableBottomToolbar false} %))}))
+
+
+
+
+
+
+
+
+
+
+

@@ -9,7 +9,7 @@
   )
 
 ;------------------------------------------------------VEGA-------------------------------------------------------------
-(defn vega-lite [spec] [VegaLite (clj->js {:spec spec})])
+(defn vega-lite [spec] [VegaLite (clj->js {:spec spec}  ) ])
 ;------------------------------------------------------????-------------------------------------------------------------
 (defn int->gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
 (defn gdate->yyyyMMdd [x] (subs (.toString x) 0 8))

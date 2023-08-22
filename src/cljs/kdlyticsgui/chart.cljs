@@ -191,15 +191,17 @@
 (defn pie-chart-strategy [data title]
   (let [data-with-color (add-colors data :nav-eur-perc (cycle colors-risk))]
     {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
-     :title {:text title :fontSize 20}
+     :title {:text title :fontSize 20 :color "white"}
      :data  {:values data-with-color}
+     :background "#1e1e1e"                                  ;DARK 200  1e1e1e
+
      :width 400 :height 350
      :encoding {:theta  {:field "nav-eur-perc" :type "quantitative" :stack true}}
      :layer [{:mark {:type "arc" :outerRadius 115}
             :encoding {:color {:field "color" :type "nominal" :scale nil :legend nil}
                        :order {:field "nav-eur-perc" :type "quantitative"}}}
-           {:mark {:type "text" :radius 130 :size 14}
-            :encoding {:text {:field "strategy" :type "nominal"}
+           {:mark {:type "text" :radius 130 :size 14 :color "white"}
+            :encoding {:text {:field "strategy" :type "nominal" }
                        :order {:field "nav-eur-perc" :type "quantitative"}}}
            {:mark {:type "text" :radius 80 :size 10 :fontWeight "bold"}
             :encoding {:text {:field "value-display" :type "nominal"}
@@ -210,9 +212,10 @@
 (defn bullet-chart-characteristic [data title]
   (let []
     {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
-     :title {:text title :fontSize 20}
+     :title {:text title :fontSize 20 :color "white" }
      :data  {:values data}
-     :facet {:row {:field "title" :type "ordinal" :header {:labelAngle 0 :title ""}}}
+     :background "#1e1e1e"
+     :facet {:row {:field "title" :type "ordinal" :header {:labelAngle 0 :title "" :labelColor "white"}} }
      :spacing 10
      :spec {:encoding {:x  {:type "quantitative" :scale {:nice false} :title ""}}
             :layer [{:mark {:type "bar" :color "#eee"}
@@ -233,6 +236,7 @@
             }
      :resolve {:scale {:x "independent"}}
      :config {:tick {:thickness 2} :scale {:barBandPaddingInner 0}}
+
 
      })
 

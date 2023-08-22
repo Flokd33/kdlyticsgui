@@ -27,6 +27,10 @@
   ;https://vincentgarreau.com/particles.js/#default
   ;https://codepen.io/VincentGarreau/pen/bGxvQd
   ;https://shekhar-gupta.medium.com/how-to-use-particles-js-and-create-particle-animation-fa3e99187292#:~:text=Start%20by%20including%20the%20HTML,DIV%20element%20with%20id%20particle.&text=Once%20the%20script%20is%20added,event%20to%20load%20our%20particles.
+  ;https://vincentgarreau.com/particles.js/
+  ;TODO https://stackoverflow.com/questions/45101039/particles-js-as-a-background-for-only-a-specific-section
+
+  ;https://colorffy.com/dark-theme-generator
 
   :plugins []
   :min-lein-version "2.5.3"

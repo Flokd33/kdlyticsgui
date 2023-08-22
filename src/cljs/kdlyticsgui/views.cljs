@@ -39,6 +39,11 @@
                  [[:p {:class "titlescreen"} "Hello"] [:p ""]] ;2nd [:p] to avoid the cursor blinking next to the logo
                  ]
 
+                ;[v-box :align-self :center :class "page-section" :children
+                ; ;[label :label "Please select an item at the top."]
+                ; [[:p {:class "page-section"} ] [:p ""]] ;2nd [:p] to avoid the cursor blinking next to the logo
+                ; ]
+
                 ;[v-box :align-self :center :class "particles-js" :children
                 ; ;[label :label "Please select an item at the top."]
                 ; [[:p {:class "particles-js"} ] ]
@@ -64,17 +69,17 @@
                  :align :stretch
                  :children (into [] (concat (into [] (for [item main-navigation]
                                                        [box
-                                                        :width (if (= (:code item) :wealth) "175px" "150px")
+                                                        :width (if (= (:code item) :wealth) "150px" "150px")
                                                         :class (if (= active-view (:code item)) "dropdown-active" "dropdown")
                                                         :child (if (:href item)
                                                                  [hyperlink-href :label (:name item) :href (:href item)]
                                                                  [hyperlink :label (:name item) :on-click #(navigation-event item)])])) ;#(rf/dispatch [:navigation/active-view (:code item)])
                                             [[gap :size "1"]
-                                             [box :align-self :center :height "50%" :width "3px" :child [line :color "#C33345" :size "3px"]]
+                                             [box :align-self :center :height "50%" :width "3px" :child [line :color "#2bcff0" :size "3px"]]
                                              [box :width "3px" :child ""] ;this is just equal to line above - ugly hack
                                              [box :width "150px" :class "dropdown" :child [hyperlink :label (gstring/unescapeEntities "kdlytics &trade;") :on-click #(do (set! (. js/document -title) "kdlytics") (rf/dispatch [:navigation/active-section :entry]))]]
                                              ]))]
-                [line :color "#C33345" :class "separatorline"]]]))
+                [line :color "#2bcff0" :class "separatorline"]]]))
 
 (defn left-nav-bar [choices navigation-key]
   (println navigation-key)
