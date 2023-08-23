@@ -306,7 +306,7 @@
   [{:keys [table data download-fn photo-id]} ]
   [($ icon-element-button-helix {:key "FilterListOffIcon" :icon FilterListOffIcon :tooltip-text "Clear filters" :on-click-fn (fn [] (.resetColumnFilters table #js []))})
    ($ MRT_ShowHideColumnsButton {:table table :key "show-columns"})
-   ;($ icon-element-button-helix {:key "PhotoCameraIcon" :icon PhotoCameraIcon :tooltip-text "Open image" :on-click-fn (fn [] (t/open-image-in-new-tab-mrt photo-id))})
+   ;($ MRT_FullScreenToggleButton {:table table :key "show-columns"})
    ($ icon-element-button-helix {:key "SystemUpdateAltIcon" :icon SystemUpdateAltIcon :tooltip-text "Download view" :on-click-fn (fn [] (download-view table download-fn photo-id))}) ;(t/csv-link (download-table-view table) filename)
    ($ icon-element-button-helix {:key "DownloadIcon" :icon DownloadIcon :tooltip-text "Full download" :on-click-fn (fn [] (download-fn data))})]) ;(t/csv-link data filename)
 
@@ -335,6 +335,48 @@
 
 (defn mrt-ref->filtered-rows-seq [ref]
   (js->clj (.map (.-rows (.getPrePaginationRowModel (aget ref "current"))) (fn [row] (.-original ^js/Object row))) {:keywordize-keys true}))
+
+(defn base-props-dark
+  "note use of or as subsitute for (if value-is-not-nil value default). This is to make the basic table subset of fast table"
+  [mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id]
+  (merge {:data                         mdata
+          :columns                      mcolumns
+          :enableColumnActions          false
+          :initialState                 (or js-initial-state #js {"density" "compact" "showColumnFilters" true "columnFilters" #js [] "pagination" #js {}})
+          :displayColumnDefOptions      #js {"mrt-row-expand" #js {"size" 75 "muiTableBodyCellProps" #js {"sx" #js {"backgroundColor" "inherit"}}}}
+
+          :muiTableHeadCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(113,113,113,0.5)"
+                                                       "borderBottom" "1px solid rgba(113,113,113,0.5)"
+                                                       "color" "white"
+
+                                                       "backgroundColor" "#3f3f3f" } } ; "flex" "0 0 auto"
+          :muiTableBodyCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(113,113,113,0.5)"
+
+                                                       "backgroundColor" "#3f3f3f"}} ; "flex" "0 0 auto"
+
+          :muiTablePaperProps            #js {"sx" #js {
+                                                        ;"borderTopLeftRadius" "20px" "borderTopRightRadius" "20px" "borderBottomLeftRadius" "20px" "borderBottomRightRadius" "20px"
+                                                        "backgroundColor" "#1e1e1e" ;DARK 200
+                                                        }}  ;this is the ultimate element of the MUI Table, we can either match the radius with the one of the toolbar or just change the background color which is eaiser tbh
+          ;:muiExpandAllButtonProps      #js {"sx" #js {"backgroundColor" "white" "color" "white" "size" "50px"}}
+          ;:muiExpandButtonProps      #js {"sx" #js {"backgroundColor" "white" "color" "white" "size" "50px"}}
+          ;:muiTableHeadCellColumnActionsButtonProps #js {"sx" #js {"backgroundColor" "white" "color" "white" "size" "50px"}}
+
+          :muiTableBodyProps            #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
+          :muiTableBodyContainerProps   #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
+
+          :muiTablePaginationProps      #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
+
+          :muiTopToolbarProps           #js {"sx" #js {"backgroundColor" "#3f3f3f"
+                                                       "color" "white"
+                                                       "borderTopLeftRadius" "15px"
+                                                       "borderTopRightRadius" "15px"}} ;"borderTopLeftRadius" "20px"
+          :muiBottomToolbarProps           #js {"sx" #js {"backgroundColor" "#3f3f3f" "borderBottomLeftRadius" "15px" "borderBottomRightRadius" "15px"}} ;"borderBottomLeftRadius" "20px"
+
+          :muiTableContainerProps        #js {"sx" #js {"backgroundColor" "#3f3f3f"}} ;yes slider ..
+
+          :renderToolbarInternalActions (fn [x] ($ (or toolbar mrt-table-toolbar) {:table (.-table x) :data mdata :download-fn (or download-fn (mrt-default-download-fn photo-id (js->clj mcolumns {:keywordize-keys true}))) :photo-id photo-id}))}
+         clj-option-map))
 
 (defn base-props
   "note use of or as subsitute for (if value-is-not-nil value default). This is to make the basic table subset of fast table"
@@ -391,7 +433,7 @@
                           (clj->js (if (:enableGrouping clj-option-map) (mapv #(assoc % :dummy "") clj-data) clj-data))))
         mcolumns (use-memo [clj-columns] (clj->js clj-columns))
         props (merge
-                (base-props mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id)
+                (base-props-dark mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id)
                 (if (seq pinned-cols) {:state #js {"columnPinning" #js {"left" pinned-cols "right" #js []}}}))]
     ($ "div" {:id photo-id} ($ MaterialReactTable {& props}))
     ;(println ($ "div" {:id photo-id} ($ MaterialReactTable {& props})))
