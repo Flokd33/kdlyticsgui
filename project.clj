@@ -31,7 +31,9 @@
   ;TODO https://stackoverflow.com/questions/45101039/particles-js-as-a-background-for-only-a-specific-section
 
   ;https://colorffy.com/dark-theme-generator
-  ;@mui => material => iconbutton => IconButton.js
+  ;For Icons setting (used in MRT Table Toolbar) => node_modules\@mui\material\node\SvgIcon\SvgIcon.js
+  ;For page number (TablePaginationSelect) and TablePaginationRoot => node_modules\@mui\material\node\TablePagination\TablePagination.js
+  ;Remain the table hover   => node_modules\@mui\material\node\TableRow\TableRow.js
 
   :plugins []
   :min-lein-version "2.5.3"

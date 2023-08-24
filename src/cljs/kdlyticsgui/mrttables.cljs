@@ -62,28 +62,42 @@
   "right align, with red text if negative"
   [cell]
   (if (and (some? cell) (neg? (cell-value cell)))
-    #js {"align" "right" "sx" #js {"color" "red" "borderRight" "1px solid rgba(224,224,224,1)"}}
-    #js {"align" "right" "sx" #js {"borderRight" "1px solid rgba(224,224,224,1)"}}))
+    #js {"align" "right" "sx" #js {"color" "red"
+                                   "borderRight" "1px solid rgba(113,113,113,0.5)"
+                                   "borderBottom" "1px solid rgba(113,113,113,0.5)"
+                                   }}
+    #js {"align" "right" "sx" #js {"color" "white"
+                                   "borderRight" "1px solid rgba(113,113,113,0.5)"
+                                   "borderBottom" "1px solid rgba(113,113,113,0.5)"}}))
 
 (defn allocation-delta-formatting [this]
   (if-let [x (get-js-row-key this "alloc-strat-delta")]
     (condp > x
-      -500   #js {:sx #js {"backgroundColor" "#f08080"}}
-      500    #js{}
+      -500   #js {:sx #js {"color" "white"
+                           "backgroundColor" "#f08080"
+                           "borderRight" "1px solid rgba(113,113,113,0.5)"
+                           "borderBottom" "1px solid rgba(113,113,113,0.5)"}}
+      500    #js{:sx #js {"color" "white"
+                          "backgroundColor" "#4e4e4e"
+                          "borderRight" "1px solid rgba(113,113,113,0.5)"
+                          "borderBottom" "1px solid rgba(113,113,113,0.5)"
+                          }}
       ;(if (odd? (.-index (.-row this)))
       ;         #js {:sx #js {"cursor" "pointer" "backgroundColor" "#F5F5F5"}}
       ;         #js {:sx #js {"cursor" "pointer"}})
-      #js {:sx #js {"backgroundColor" "#9CD7AB"}})
+      #js {:sx #js {"color" "white" "backgroundColor" "#9CD7AB"
+                    "borderRight" "1px solid rgba(113,113,113,0.5)"
+                    "borderBottom" "1px solid rgba(113,113,113,0.5)"}})
     #js{}))
 
 (defn positions-full-row-formatting [this]
   "Include name formatting and on click event"
   ;(println (get-js-row-key this "ticker"))
   (case (get-js-row-key this "shortName")
-    "CASH" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#e1ecf7"}
+    "CASH" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#696969"} ;DARK 500
                 "onClick" #(do (rf/dispatch [:get-price-history (get-js-row-key this "ticker") (get-js-row-key this "shortName")]))
                 }
-    #js {"sx" #js {"cursor" "pointer" }
+    #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#4e4e4e"} ;DARK 400
          "onClick" #(do (rf/dispatch [:get-price-history (get-js-row-key this "ticker") (get-js-row-key this "shortName")]))}
 
     ;(if (odd? (.-index (.-row this)))
@@ -222,23 +236,13 @@
     :enablePinning                        false
     :muiTableHeadCellFilterTextFieldProps {:placeholder "" :sx {:minWidth "0px"}}
     :filterFn                             text-filter-OR
-    :muiTableBodyRowProps                 #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#9fc5e8"}}
-    :muiTableBodyCellProps                #js {"sx" #js {"borderRight" "1px solid rgba(224,224,224,1)" "backgroundColor" "inherit"}}})
+    :muiTableBodyRowProps                 #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#8cecff"}} ;PRIMARY 400?
+    :muiTableBodyCellProps                #js {"sx" #js {"color" "white"
+                                                         "borderRight" "1px solid rgba(113,113,113,0.5)"
+                                                         "borderBottom" "1px solid rgba(113,113,113,0.5)"
+                                                         "backgroundColor" "inherit"}}})
   ([header accessor width cell]
    (assoc (text-col header accessor width) :Cell cell)))
-
-(defn text-col-multiline
-  "Simple text column in MRT"
-  ([header accessor width]
-   {:header                               header
-    :accessorKey                          accessor
-    :size                                 width
-    :enablePinning                        false
-    :muiTableHeadCellFilterTextFieldProps {:placeholder "" :sx {:minWidth "0px"}}
-    :filterFn                             text-filter-OR
-    :muiTableBodyCellProps                #js {"sx" #js {"borderRight" "1px solid rgba(224,224,224,1)" "backgroundColor" "inherit" "wordWrap" "break-word" "whiteSpace" "pre-line"}}})
-  ([header accessor width cell]
-   (assoc (text-col-multiline header accessor width) :Cell cell)))
 
 (defn nb-col
   "Simple number column in MRT, by default aligned right with red negatives"
@@ -255,6 +259,20 @@
     :enablePinning                        false
     :muiTableHeadCellFilterTextFieldProps {:placeholder "" :sx {:minWidth "0px"}}
     :filterFn                             nb-filter-OR-AND}))
+
+;(defn text-col-multiline
+;  "Simple text column in MRT"
+;  ([header accessor width]
+;   {:header                               header
+;    :accessorKey                          accessor
+;    :size                                 width
+;    :enablePinning                        false
+;    :muiTableHeadCellFilterTextFieldProps {:placeholder "" :sx {:minWidth "0px"}}
+;    :filterFn                             text-filter-OR
+;    :muiTableBodyCellProps                #js {"sx" #js {"borderRight" "1px solid rgba(224,224,224,1)" "backgroundColor" "inherit" "wordWrap" "break-word" "whiteSpace" "pre-line"}}})
+;  ([header accessor width cell]
+;   (assoc (text-col-multiline header accessor width) :Cell cell)))
+
 
 ;---------------------------------------------TABLE IMPLEMENTATION------------------------------------------------------
 
@@ -348,32 +366,24 @@
           :muiTableHeadCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(113,113,113,0.5)"
                                                        "borderBottom" "1px solid rgba(113,113,113,0.5)"
                                                        "color" "white"
-
-                                                       "backgroundColor" "#3f3f3f" } } ; "flex" "0 0 auto"
+                                                       "backgroundColor" "#3f3f3f" }}
           :muiTableBodyCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(113,113,113,0.5)"
+                                                       "backgroundColor" "#3f3f3f"}}
 
-                                                       "backgroundColor" "#3f3f3f"}} ; "flex" "0 0 auto"
-
-          :muiTablePaperProps            #js {"sx" #js {
+          :muiTablePaperProps            #js {"sx" #js {"backgroundColor" "#1e1e1e" ;DARK 200
                                                         ;"borderTopLeftRadius" "20px" "borderTopRightRadius" "20px" "borderBottomLeftRadius" "20px" "borderBottomRightRadius" "20px"
-                                                        "backgroundColor" "#1e1e1e" ;DARK 200
                                                         }}  ;this is the ultimate element of the MUI Table, we can either match the radius with the one of the toolbar or just change the background color which is eaiser tbh
-          ;:muiExpandAllButtonProps      #js {"sx" #js {"backgroundColor" "white" "color" "white" "size" "50px"}}
-          ;:muiExpandButtonProps      #js {"sx" #js {"backgroundColor" "white" "color" "white" "size" "50px"}}
-          ;:muiTableHeadCellColumnActionsButtonProps #js {"sx" #js {"backgroundColor" "white" "color" "white" "size" "50px"}}
-
           :muiTableBodyProps            #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
           :muiTableBodyContainerProps   #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
-
           :muiTablePaginationProps      #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
 
           :muiTopToolbarProps           #js {"sx" #js {"backgroundColor" "#3f3f3f"
-                                                       "color" "white"
                                                        "borderTopLeftRadius" "15px"
-                                                       "borderTopRightRadius" "15px"}} ;"borderTopLeftRadius" "20px"
-          :muiBottomToolbarProps           #js {"sx" #js {"backgroundColor" "#3f3f3f" "borderBottomLeftRadius" "15px" "borderBottomRightRadius" "15px"}} ;"borderBottomLeftRadius" "20px"
-
-          :muiTableContainerProps        #js {"sx" #js {"backgroundColor" "#3f3f3f"}} ;yes slider ..
+                                                       "borderTopRightRadius" "15px"}}
+          :muiBottomToolbarProps           #js {"sx" #js {"backgroundColor" "#3f3f3f"
+                                                          "borderBottomLeftRadius" "15px"
+                                                          "borderBottomRightRadius" "15px"}}
+          :muiTableContainerProps        #js {"sx" #js {"backgroundColor" "#3f3f3f"}} ;slider ..
 
           :renderToolbarInternalActions (fn [x] ($ (or toolbar mrt-table-toolbar) {:table (.-table x) :data mdata :download-fn (or download-fn (mrt-default-download-fn photo-id (js->clj mcolumns {:keywordize-keys true}))) :photo-id photo-id}))}
          clj-option-map))
