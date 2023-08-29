@@ -194,7 +194,6 @@
      :title {:text title :fontSize 20 :color "white"}
      :data  {:values data-with-color}
      :background "#1e1e1e"                                  ;DARK 200  1e1e1e
-
      :width 400 :height 350
      :encoding {:theta  {:field "nav-eur-perc" :type "quantitative" :stack true}}
      :layer [{:mark {:type "arc" :outerRadius 115}
@@ -330,11 +329,13 @@
   "2 marks: line, circle"
   (let []
     {:$schema  "https://vega.github.io/schema/vega-lite/v5.json"
-     :title    {:text @(rf/subscribe [:price-history/name]) :fontSize 15} :width 1000  :height 400
+     :title    {:text @(rf/subscribe [:price-history/name]) :fontSize 17 :offset 12 :color "white" :dy 0} ;:color "#2bcff0" :dy 60
+     :width 1000  :height 400
+     :background "#3f3f3f"
      :data     {:values data :format {:parse {:date "date:'%Y-%m-%d'" :price "number"}}}
-     :encoding {:x  {:field "date" :type "temporal" :axis {:title "Date" :titleFontSize 14 :labelFontSize 12 :format "%b-%y" }  :sort "ascending"}
-                :y  {:field "close" :type "quantitative" :axis {:title "Price" :titleFontSize 14 :labelFontSize 12} :scale {:domain [(dec (apply min (map :close data))) (inc (apply max (map :close data)))]}}}
-     :layer [{:mark     "line" :selection {:grid {:type "interval" :bind "scales"}}}
+     :encoding {:x  {:field "date" :type "temporal" :axis {:grid false :domain false :title "Date" :titlePadding 17 :labelColor "white" :titleColor "white" :titleFontSize 14 :labelFontSize 12 :format "%b-%y" }  :sort "ascending"}
+                :y  {:field "close" :type "quantitative" :axis {:grid false :domain false :title "Price" :titlePadding 17 :labelColor "white" :titleColor "white" :titleFontSize 14 :labelFontSize 12} :scale {:domain [(dec (apply min (map :close data))) (inc (apply max (map :close data)))]}}}
+     :layer [{:mark     "line" :selection {:grid {:type "interval" :bind "scales"}} :encoding {:color {:value "white"}}}
              {:mark     {:type "circle" }
               :encoding {:opacity {:condition {:test {:param "hover" :empty false} :value 1} :value 0}
                          :size {:condition {:test {:param "hover" :empty false} :value 100} :value 0}
@@ -344,7 +345,5 @@
               :params [{:name "hover" :select {:type "point" :fields ["date"] :nearest true :on "mouseover" :clear "mouseout"}}]}
              ]
      }))
-
-
 
 

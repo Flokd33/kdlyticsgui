@@ -94,10 +94,13 @@
   "Include name formatting and on click event"
   ;(println (get-js-row-key this "ticker"))
   (case (get-js-row-key this "shortName")
-    "CASH" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#696969"} ;DARK 500
+    "CASH" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#696969" } ;DARK 500
                 "onClick" #(do (rf/dispatch [:get-price-history (get-js-row-key this "ticker") (get-js-row-key this "shortName")]))
                 }
-    #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#4e4e4e"} ;DARK 400
+    #js {"sx" #js {
+                   ;{"& .MuiTableRow-root:hover" #js {"backgroundColor" "#c21717"}}
+                   "cursor" "pointer"
+                   "backgroundColor" "#4e4e4e"} ;DARK 400
          "onClick" #(do (rf/dispatch [:get-price-history (get-js-row-key this "ticker") (get-js-row-key this "shortName")]))}
 
     ;(if (odd? (.-index (.-row this)))

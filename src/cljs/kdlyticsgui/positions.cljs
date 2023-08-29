@@ -28,13 +28,21 @@
         show-modal @(rf/subscribe [:price-history/show-modal])]
     (if show-modal
       [modal-panel
-       :wrap-nicely? true
+       :wrap-nicely? false                                  ;need to set up to false for 'parts' to be included..
        :backdrop-on-click #(rf/dispatch [:price-history/close-modal])
+
+       ;:style {:background-color "#1e1e1e"} ;outer container
+       ;:backdrop-color "red" ;opac background
+       :parts {:child-container {                           ;:class "rc-modal-panel-child-container"
+                                 :style {:background-color "#1e1e1e"
+                                         :padding          "16px"
+                                         :border-radius    "10px"}}}
+
        :child
        [v-box :gap "10px"
         :children [[h-box :gap "20px" :align :center
-                    :children [[title :label "Weekly price history since 2002" :level :level2]
-                               [gap :size "1"]
+                    :children [[title :label (str "Weekly price history") :level :level2 :style {:color "white"}]
+                               [gap :size "2"]
                                [md-circle-icon-button :md-icon-name "zmdi-close" :on-click #(rf/dispatch [:price-history/close-modal])]]]
                    (if @(rf/subscribe [:price-history/show-throbber])
                      [box :align :center :child [throbber :size :large]]
@@ -120,7 +128,10 @@
                  [($ mrt/material-react-table-template-fast
                      {:clj-data data-summary
                       :clj-columns columns-summary
-                      :clj-option-map   {:enableGrouping false :enablePinning true :enablePagination true
+                      :clj-option-map   {:enableGrouping false
+                                         :enablePinning true
+                                         :enablePagination true
+                                         :enableRowSelection false
                                          :muiTableBodyRowProps mrt/positions-full-row-formatting}  ;to avoid the cell formatting to mess up this the row formatting :muiTableBodyRowProps, we set the :muiTableBodyProps to nil, cell format override row formating
                       :js-initial-state #js {"density" "compact"
                                              "showColumnFilters" true

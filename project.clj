@@ -33,8 +33,8 @@
   ;https://colorffy.com/dark-theme-generator
   ;For Icons setting (used in MRT Table Toolbar) => node_modules\@mui\material\node\SvgIcon\SvgIcon.js
   ;For page number (TablePaginationSelect) and TablePaginationRoot => node_modules\@mui\material\node\TablePagination\TablePagination.js
-  ;Remain the table hover   => node_modules\@mui\material\node\TableRow\TableRow.js
-
+  ;For MRT Table hover (need hover  to true ?)  => node_modules\@mui\material\node\TableRow\TableRow.js for hover color etc BUT also need to change bootstrap CSS ? NOt TableCell, could be MRT ?
+  ;Issue is not with the hover but something else lol
   :plugins []
   :min-lein-version "2.5.3"
   :source-paths ["src/clj" "src/cljs"]
