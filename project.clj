@@ -16,13 +16,13 @@
                  ]
 
   ;npm i react react-dom
-  ;npm ad react
-  ;mpm install react-dom
+  ;npm i material-react-table @mui/material @mui/icons-material @emotion/react @emotion/styled
+  ;npm
 
   ;add in html head the bootstrap href (see comment in re-com.css)
 
   ;https://www.material-react-table.com/docs/getting-started/install
-  ;npm install material-react-table @mui/material @mui/icons-material @emotion/react @emotion/styled
+
 
   ;https://vincentgarreau.com/particles.js/#default
   ;https://codepen.io/VincentGarreau/pen/bGxvQd
@@ -31,10 +31,12 @@
   ;TODO https://stackoverflow.com/questions/45101039/particles-js-as-a-background-for-only-a-specific-section
 
   ;https://colorffy.com/dark-theme-generator
+
   ;For Icons setting (used in MRT Table Toolbar) => node_modules\@mui\material\node\SvgIcon\SvgIcon.js
   ;For page number (TablePaginationSelect) and TablePaginationRoot => node_modules\@mui\material\node\TablePagination\TablePagination.js
   ;For MRT Table hover (need hover  to true ?)  => node_modules\@mui\material\node\TableRow\TableRow.js for hover color etc BUT also need to change bootstrap CSS ? NOt TableCell, could be MRT ?
-  ;Issue is not with the hover but something else lol
+  ;Issue is not with the hover but something else => need to be added in extra CSS
+
   :plugins []
   :min-lein-version "2.5.3"
   :source-paths ["src/clj" "src/cljs"]
