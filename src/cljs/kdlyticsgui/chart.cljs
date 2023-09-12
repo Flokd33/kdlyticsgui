@@ -333,8 +333,14 @@
      :width 1000  :height 400
      :background "#3f3f3f"
      :data     {:values data :format {:parse {:date "date:'%Y-%m-%d'" :price "number"}}}
-     :encoding {:x  {:field "date" :type "temporal" :axis {:grid false :domain false :title "Date" :titlePadding 17 :labelColor "white" :titleColor "white" :titleFontSize 14 :labelFontSize 12 :format "%b-%y" }  :sort "ascending"}
-                :y  {:field "close" :type "quantitative" :axis {:grid false :domain false :title "Price" :titlePadding 17 :labelColor "white" :titleColor "white" :titleFontSize 14 :labelFontSize 12} :scale {:domain [(dec (apply min (map :close data))) (inc (apply max (map :close data)))]}}}
+     :encoding {:x  {:field "date" :type "temporal" :axis {:grid true :gridColor "#8ddff5" :gridOpacity 0.3 :domain false
+                                                           :title "Date" :titlePadding 17 :labelColor "white" :titleColor "white"
+                                                           :titleFontSize 14 :labelFontSize 12 :format "%b-%y" }
+                     :sort "ascending"}
+                :y  {:field "close" :type "quantitative" :axis {:grid true :gridColor "#8ddff5" :gridOpacity 0.3 :domain false
+                                                                :title "Price" :titlePadding 17 :labelColor "white" :titleColor "white"
+                                                                :titleFontSize 14 :labelFontSize 12}
+                     :scale {:domain [(dec (apply min (map :close data))) (inc (apply max (map :close data)))]}}}
      :layer [{:mark     "line" :selection {:grid {:type "interval" :bind "scales"}} :encoding {:color {:value "white"}}}
              {:mark     {:type "circle" }
               :encoding {:opacity {:condition {:test {:param "hover" :empty false} :value 1} :value 0}
