@@ -9,6 +9,7 @@
 
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [kdlyticsgui.mount :as mount]
+    [kdlyticsgui.guitools :as t]
     [kdlyticsgui.static :as static]
     [kdlyticsgui.guitools :as gt]
     [kdlyticsgui.wealth :as wealth]
@@ -122,7 +123,10 @@
 (defn tools-view []
   [h-box :gap "10px" :padding "0px"
    :children [[mui/navigation]
+              [box :class "subbody" :child [t/mui-dev]]
               [rcm/context-menu]]])
+
+
 
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn active-section []
