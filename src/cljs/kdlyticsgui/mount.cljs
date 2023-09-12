@@ -15,11 +15,11 @@
 
                  :navigation/active-section         :entry
 
-                 :navigation/active-view-wealth     :summary
-                 :navigation/active-view-positions  :summary
-                 :navigation/active-view-vault      :inventory
-                 :navigation/active-view-cellar     :inventory
-                 :navigation/active-view-tools      :scrapping
+                 ;:navigation/active-view-wealth     :summary
+                 ;:navigation/active-view-positions  :summary
+                 ;:navigation/active-view-vault      :inventory
+                 ;:navigation/active-view-cellar     :inventory
+                 ;:navigation/active-view-tools      :scrapping
 
                  ;:navigation/active              {:view        :entry :home        :summary}
 
@@ -53,11 +53,11 @@
            :test-data
            :navigation/active-section
 
-           :navigation/active-view-wealth
-           :navigation/active-view-positions
-           :navigation/active-view-vault
-           :navigation/active-view-cellar
-           :navigation/active-view-tools
+           ;:navigation/active-view-wealth
+           ;:navigation/active-view-positions
+           ;:navigation/active-view-vault
+           ;:navigation/active-view-cellar
+           ;:navigation/active-view-tools
 
            :wealth-summary
 
