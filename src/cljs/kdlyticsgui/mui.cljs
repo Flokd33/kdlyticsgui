@@ -247,7 +247,7 @@
 
 (defnc card-simple
   [{:keys [title text]}]
-  ($ Card {:sx #js { :minWidth 190 :maxHeight 120}}
+  ($ Card {:sx #js { :minWidth 190 :maxHeight 120 :borderRadius "15px"}}
      ($ CardContent
         ($ Typography {:variant "h3"} title)
         ($ Typography {:variant "h5"} text)

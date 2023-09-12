@@ -391,49 +391,49 @@
           :renderToolbarInternalActions (fn [x] ($ (or toolbar mrt-table-toolbar) {:table (.-table x) :data mdata :download-fn (or download-fn (mrt-default-download-fn photo-id (js->clj mcolumns {:keywordize-keys true}))) :photo-id photo-id}))}
          clj-option-map))
 
-(defn base-props
-  "note use of or as subsitute for (if value-is-not-nil value default). This is to make the basic table subset of fast table"
-  [mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id]
-  (merge {:data                         mdata
-          :columns                      mcolumns
-          :enableColumnActions          false
-          :initialState                 (or js-initial-state #js {"density" "compact" "showColumnFilters" true "columnFilters" #js [] "pagination" #js {}})
-          :displayColumnDefOptions      #js {"mrt-row-expand" #js {"size" 75 "muiTableBodyCellProps" #js {"sx" #js {"backgroundColor" "inherit"}}}}
-          :muiTableHeadCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(224,224,224,1)"}} ; "flex" "0 0 auto"
-          :muiTableBodyProps            #js {};#js {"sx" #js {"& tr:nth-of-type(odd)" #js {"backgroundColor" "#f5f5f5"}}}
-          :muiTableBodyCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(224,224,224,1)"}} ; "flex" "0 0 auto"
-          :renderToolbarInternalActions (fn [x] ($ (or toolbar mrt-table-toolbar) {:table (.-table x) :data mdata :download-fn (or download-fn (mrt-default-download-fn photo-id (js->clj mcolumns {:keywordize-keys true}))) :photo-id photo-id}))}
-         clj-option-map))
+;(defn base-props
+;  "note use of or as subsitute for (if value-is-not-nil value default). This is to make the basic table subset of fast table"
+;  [mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id]
+;  (merge {:data                         mdata
+;          :columns                      mcolumns
+;          :enableColumnActions          false
+;          :initialState                 (or js-initial-state #js {"density" "compact" "showColumnFilters" true "columnFilters" #js [] "pagination" #js {}})
+;          :displayColumnDefOptions      #js {"mrt-row-expand" #js {"size" 75 "muiTableBodyCellProps" #js {"sx" #js {"backgroundColor" "inherit"}}}}
+;          :muiTableHeadCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(224,224,224,1)"}} ; "flex" "0 0 auto"
+;          :muiTableBodyProps            #js {};#js {"sx" #js {"& tr:nth-of-type(odd)" #js {"backgroundColor" "#f5f5f5"}}}
+;          :muiTableBodyCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(224,224,224,1)"}} ; "flex" "0 0 auto"
+;          :renderToolbarInternalActions (fn [x] ($ (or toolbar mrt-table-toolbar) {:table (.-table x) :data mdata :download-fn (or download-fn (mrt-default-download-fn photo-id (js->clj mcolumns {:keywordize-keys true}))) :photo-id photo-id}))}
+;         clj-option-map))
 
 ;------------------------------------------------------TEMPLATES--------------------------------------------------------
 
-(defnc material-react-table-template
-  "The magic is in useEffect which will communicate back and forth with reagent
-  Note you need to add extra key with a dummy value that changes every time you want full re-render!!!
-  "
-  [{:keys [clj-data clj-columns clj-option-map js-initial-state external-state-reference initial-external-state toolbar download-fn photo-id]}]
-  (let [pinned-cols (clj->js (conj (mapv :accessorKey (:columns (first clj-columns))) "mrt-row-expand"))
-        [ffilter setFilter] (use-state (. initial-external-state -columnFilters))
-        [grouping setGrouping] (use-state (. initial-external-state -grouping))
-        [expanded setExpanded] (use-state (. initial-external-state -expanded))
-        mdata (use-memo [clj-data clj-option-map]
-                        (if (array? clj-data)
-                          (do (when (:enableGrouping clj-option-map) (.forEach clj-data #(aset % "dummy" ""))) clj-data)
-                          (clj->js (if (:enableGrouping clj-option-map) (map #(assoc % :dummy "") clj-data) clj-data))))
-        mcolumns (use-memo [clj-columns] (clj->js clj-columns))
-        x (use-effect
-            [ffilter grouping expanded]
-            ;(println "DEBUG TABLE, DISABLE IN PROD!" ffilter grouping expanded);TODO DEBUG TOGGLE
-            (let [target #js {"columnFilters" ffilter "grouping" grouping "expanded" expanded}]
-              (if (keyword? external-state-reference) (rf/dispatch [external-state-reference target]) (reset! external-state-reference target))))
-        props (merge
-                (base-props mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id)
-                {:onGroupingChange      setGrouping
-                 :onColumnFiltersChange setFilter
-                 :onExpandedChange      setExpanded
-                 :state                 #js {"columnFilters" ffilter "grouping" grouping "expanded" expanded "columnPinning" #js {"left" pinned-cols "right" #js []}}
-                 })]
-    ($ "div" {:id photo-id} ($ MaterialReactTable {& props}))))
+;(defnc material-react-table-template
+;  "The magic is in useEffect which will communicate back and forth with reagent
+;  Note you need to add extra key with a dummy value that changes every time you want full re-render!!!
+;  "
+;  [{:keys [clj-data clj-columns clj-option-map js-initial-state external-state-reference initial-external-state toolbar download-fn photo-id]}]
+;  (let [pinned-cols (clj->js (conj (mapv :accessorKey (:columns (first clj-columns))) "mrt-row-expand"))
+;        [ffilter setFilter] (use-state (. initial-external-state -columnFilters))
+;        [grouping setGrouping] (use-state (. initial-external-state -grouping))
+;        [expanded setExpanded] (use-state (. initial-external-state -expanded))
+;        mdata (use-memo [clj-data clj-option-map]
+;                        (if (array? clj-data)
+;                          (do (when (:enableGrouping clj-option-map) (.forEach clj-data #(aset % "dummy" ""))) clj-data)
+;                          (clj->js (if (:enableGrouping clj-option-map) (map #(assoc % :dummy "") clj-data) clj-data))))
+;        mcolumns (use-memo [clj-columns] (clj->js clj-columns))
+;        x (use-effect
+;            [ffilter grouping expanded]
+;            ;(println "DEBUG TABLE, DISABLE IN PROD!" ffilter grouping expanded);TODO DEBUG TOGGLE
+;            (let [target #js {"columnFilters" ffilter "grouping" grouping "expanded" expanded}]
+;              (if (keyword? external-state-reference) (rf/dispatch [external-state-reference target]) (reset! external-state-reference target))))
+;        props (merge
+;                (base-props mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id)
+;                {:onGroupingChange      setGrouping
+;                 :onColumnFiltersChange setFilter
+;                 :onExpandedChange      setExpanded
+;                 :state                 #js {"columnFilters" ffilter "grouping" grouping "expanded" expanded "columnPinning" #js {"left" pinned-cols "right" #js []}}
+;                 })]
+;    ($ "div" {:id photo-id} ($ MaterialReactTable {& props}))))
 
 (defnc material-react-table-template-fast
   "No external state hence a lot faster
