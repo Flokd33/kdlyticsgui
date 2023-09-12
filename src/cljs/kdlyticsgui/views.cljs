@@ -136,10 +136,8 @@
            ($ Toolbar {:sx #js {:backgroundColor "#353535"
                                 "&.MuiToolbar-root" #js {"min-height" "51px"}
                                 }} ;height is 64px default @media muitoolbar rott etc
-              ($ IconButton {:size "large" :edge "start" :color "inherit" :aria-label "menu" :sx #js {:mr 0}}
-                 ($ MenuIcon)
-                 )
-              ($ Typography {:variant "h5" :noWrap true :component "div" :sx #js {:flexGrow 1}} "Kdlytics") ;just a text, flexGrow to make sure the following button is at the right end of the element
+              ;($ IconButton {:size "large" :edge "start" :color "inherit" :aria-label "menu" :sx #js {:mr 0}} ($ MenuIcon))
+              ($ Typography {:variant "h5" :noWrap true :component "div" :sx #js {:flexGrow 1 :pl 4 }} "Kdlytics") ;just a text, flexGrow to make sure the following button is at the right end of the element
               ($ Button {:color "inherit" :size "large" :onClick #(rf/dispatch [:navigation/active-section :entry])} "LOGO") ;TODO add my logo
               ;($ MenuIcon)
               )
