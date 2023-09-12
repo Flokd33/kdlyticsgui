@@ -10,7 +10,7 @@
     ["@mui/material" :as mm :refer ( Button IconButton Tooltip Box Divider InputLabel Select createTheme ThemeProvider useTheme Drawer CssBaseline AppBar Toolbar List Typography
                                             ListItem ListItemButton ListItemIcon ListItemText
                                             MenuItem Item FormControl Slider Autocomplete TextField  RadioGroup Radio FormLabel FormControl FormControlLabel Switch
-                                            ListSubheader Unstable_Grid2 Grid
+                                            ListSubheader Unstable_Grid2 Grid Card CardActions CardContent
                                             )]
     ["@mui/icons-material/MoveToInbox" :default InboxIcon]
     ["@mui/icons-material/PhotoCamera" :default PhotoCameraIcon]
@@ -67,7 +67,7 @@
 
   ($ Box {:sx #js {:display "flex"}}
      ($ CssBaseline
-        ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 2 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}
+        ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 200 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}
                                               }} ;width: `calc(100% - ${drawerWidth}px)`  :width "2695px" :ml left-nav-bar-width
            ($ Toolbar {:sx #js {:backgroundColor "#353535"
                                 "&.MuiToolbar-root" #js {"min-height" "51px"}
@@ -244,7 +244,22 @@
         x (use-effect [checked] (reset! checked-atom checked))]
     ($ Switch {:size "small" :checked checked :onChange (fn [e] (setChecked (aget e "target" "checked")))})))
 
+
+(defnc card-simple
+  [{:keys [title text]}]
+  ($ Card {:sx #js { :minWidth 190 :maxHeight 120}}
+     ($ CardContent
+        ($ Typography {:variant "h3"} title)
+        ($ Typography {:variant "h5"} text)
+
+
+        )
+
+     ))
+
 ;-------------------------------------------------GRID COMPONENTS-------------------------------------------------------
+;MAKE MY OWN
+
 
 (defnc mui-grid-component [{:keys [direction class align pt pb pl pr gap children width height justify]}]
   (let [m (merge {:border "1px dashed red" :pt pt :pb pb :pl pl :pr pr}

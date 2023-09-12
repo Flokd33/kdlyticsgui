@@ -3,12 +3,15 @@
             [kdlyticsgui.chart :as chart]
             [kdlyticsgui.tools :as t]
             [kdlyticsgui.mrttables :as mrt]
+            [kdlyticsgui.mui :as mui]
             [re-frame.core :as rf]
             [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                                  single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
                                  input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
             [helix.core :refer [defnc $]]
             [goog.string :as gstring]
+            ["@mui/material" :as mm :refer ( Modal Box Typography
+                                                    )]
             )
   )
 
@@ -23,6 +26,8 @@
               :price-history/data []
               :price-history/show-modal false)))
 
+
+;TODO HERE
 (defn modal-price-history []
   (let [modal-data @(rf/subscribe [:price-history/data])
         show-modal @(rf/subscribe [:price-history/show-modal])]
@@ -48,7 +53,10 @@
                      [box :align :center :child [throbber :size :large]]
                      [h-box :gap "20px" :children [[t/vega-lite (chart/line-chart-price-hover modal-data)]
                                                    ]]
-                     )]]])))
+                     )]]]
+;($ Modal )
+
+      )))
 
 
 (defn summary-display []
@@ -111,16 +119,22 @@
     ;(println data-strategy-exposure-clean)
     ;(rf/dispatch [:get-price-history ticker])
     [v-box :gap "30px"
-     :children [[h-box :class "subbody rightelement" :gap "20px" :children [[t/vega-lite (chart/pie-chart-strategy data-strategy-exposure-clean "Strategy %")]
-                                                                            ($ mrt/material-react-table-template-basic
+     :children [[h-box :class "subbody rightelement" :gap "50px" :children [[t/vega-lite (chart/pie-chart-strategy data-strategy-exposure-clean "Strategy %")]
+                                                                            ($ mrt/material-react-table-template-fast
                                                                                {:clj-data data-characteristics
                                                                                 :clj-columns columns-characteristics
-                                                                                :clj-option-map   {:enableGrouping false :enablePinning false :enablePagination false}
+                                                                                :clj-option-map   {:enableGrouping false :enablePinning false :enablePagination false
+                                                                                                   :muiTableBodyRowProps #js {"sx" #js {"backgroundColor" "#696969" }}
+                                                                                                   }
                                                                                 :js-initial-state #js {"density" "compact" "showColumnFilters" false "pagination" #js {"pageSize" 50} "grouping" #js []}
                                                                                 :toolbar          mrt/mrt-table-toolbar
                                                                                 :download-fn      (mrt/mrt-default-download-fn "characteristics-summary" columns-characteristics)
                                                                                 :photo-id         "characteristics-summary"})
-                                                                            [t/vega-lite (chart/bullet-chart-characteristic data-characteristics-test "TRY")]
+                                                                            ;TODO add few cards for the characteristics tha is it
+                                                                            ($ mui/card-simple {:title "TOTAL $" :text "200 000"} )
+                                                                            ($ mui/card-simple {:title "CASH" :text "10%"} )
+                                                                            ($ mui/card-simple {:title "P/E" :text "9"} )
+                                                                            ;[t/vega-lite (chart/bullet-chart-characteristic data-characteristics-test "TRY")]
                                                                             ]
 
                  ]
