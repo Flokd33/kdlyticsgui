@@ -7,6 +7,37 @@
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                          single-dropdown hyperlink modal-panel alert-box throbber input-password
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
+
+
+    [helix.core :refer [defnc $]]
+    [helix.dom :as hd]
+    [reagent-contextmenu.menu :as rcm]
+    [cljs-time.core :refer [today]]
+    [helix.hooks :refer [use-state use-effect use-memo]]
+    ["material-react-table" :as rt :default MaterialReactTable :refer ( MRT_ShowHideColumnsButton MRT_ToggleDensePaddingButton MRT_FullScreenToggleButton )] ;<MRT_FullScreenToggleButton table={table} />
+    ["@mui/material" :as mm :refer ( Button IconButton Tooltip Box Divider createTheme ThemeProvider useTheme Drawer CssBaseline AppBar Toolbar List Typography Divider ListItem ListItemButton ListItemIcon ListItemText )]
+    ["@mui/icons-material/MoveToInbox" :default InboxIcon]
+    ["@mui/icons-material/PhotoCamera" :default PhotoCameraIcon]
+    ["@mui/icons-material/Download" :default DownloadIcon]
+    ["@mui/icons-material/SystemUpdateAlt" :default SystemUpdateAltIcon]
+    ["@mui/icons-material/Star" :default StarIcon]
+    ["@mui/icons-material/StarBorder" :default StarBorderIcon]
+    ["@mui/icons-material/FilterListOff" :default FilterListOffIcon]
+    ["@mui/icons-material/Filter1" :default Filter1Icon]
+    ["@mui/icons-material/Filter2" :default Filter2Icon]
+    ["@mui/icons-material/Filter3" :default Filter3Icon]
+    ["@mui/icons-material/Filter4" :default Filter4Icon]
+    ["@mui/icons-material/HelpCenter" :default HelpCenterIcon]
+    ["@mui/icons-material/CallEnd" :default CallEndIcon]
+    ["@mui/icons-material/Flag" :default FlagIcon]
+    ["@mui/icons-material/Workspaces" :default WorkspacesIcon]
+    ["@mui/icons-material/BarChart" :default BarChartIcon]
+    ["@mui/icons-material/PieChart" :default PieChartIcon]
+    ["@mui/icons-material/Expand" :default ExpandIcon]
+    ["@mui/icons-material/Menu" :default MenuIcon]
+    ["react" :as react :refer (useMemo useState)]
+
+
     [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
     [kdlyticsgui.mount :as mount]
     [kdlyticsgui.static :as static]
@@ -81,16 +112,84 @@
                                              ]))]
                 [line :color "#2bcff0" :class "separatorline"]]]))
 
-(defn left-nav-bar [choices navigation-key]
-  (println navigation-key)
-  [v-box :gap "20px" :class "leftnavbar"
-   :children (into []
-                   (for [item choices]
-                     ^{:key item}
-                     [button
-                      :class (str "btn btn-primary btn-block" (if (= @(rf/subscribe [navigation-key]) (:code item)) " active")) ;@(rf/subscribe [navigation-key])
-                      :label (:name item)
-                      :on-click #(rf/dispatch [navigation-key (:code item)])]))])
+;(defn left-nav-bar [choices navigation-key]
+;  (println navigation-key)
+;  [v-box :gap "20px" :class "leftnavbar"
+;   :children (into []
+;                   (for [item choices]
+;                     ^{:key item}
+;                     [button
+;                      :class (str "btn btn-primary btn-block" (if (= @(rf/subscribe [navigation-key]) (:code item)) " active")) ;@(rf/subscribe [navigation-key])
+;                      :label (:name item)
+;                      :on-click #(rf/dispatch [navigation-key (:code item)])]))])
+;------------------------------------------------------------NEW NAV BAR------------------------------------------------
+
+(def left-bar-width "160px")  ;150px
+(def top-bar-height "50px")
+
+;#353535; /*DARK 300*/
+;#2bcff0; /* PRIMARY 100 */
+
+(defn left-nav-bar []
+
+  ($ Box {:sx #js {:display "flex"}}
+     ($ CssBaseline
+        ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 2 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}
+                                              }} ;width: `calc(100% - ${drawerWidth}px)`  :width "2695px" :ml left-nav-bar-width
+           ($ Toolbar {:sx #js {:backgroundColor "#353535"
+                                "&.MuiToolbar-root" #js {"min-height" "49px"}
+
+                                }} ;height is 64px default @media muitoolbar rott etc
+              ($ IconButton {:size "large" :edge "start" :color "inherit" :aria-label "menu" :sx #js {:mr 0}}
+                 ($ MenuIcon)                               ;TODO add my logo
+                 )
+              ($ Typography {:variant "h5" :noWrap true :component "div" :sx #js {:flexGrow 1}} "Kdlytics") ;just a text, flexGrow to make sure the following button is at the right end of the element
+              ($ Button {:color "inherit" :size "large" } "LOGO") ;onclick back to load page?
+              )
+           )
+        ($ Drawer {:variant "permanent"
+                   :anchor "left"
+                   :sx #js {:position "absolute"
+                            :zIndex 1
+                            "& .MuiDrawer-paper" #js {:paddingTop top-bar-height :width left-bar-width :boxSizing "border-box" :backgroundColor "#353535"
+                                                      :color "white" }
+                            }
+                   }
+           ($ List
+              (for [item ["Inbox" "Starred" "Drafts"]]
+                        ($ ListItem {:key item :disablePadding true}
+                          ($ ListItemButton
+                             ($ ListItemIcon
+                                ($ InboxIcon {:sx #js {:color "white"}} )
+                                )
+                             ($ ListItemText {:primary item})
+                             )
+                           ))
+              )
+           ($ Divider {:textAlign "left" :light true :sx #js {:backgroundColor "#353535"
+                                                              :color "white"  :fontSize 10
+                                                              "&.MuiDivider-root" #js {"&::before, &::after" #js {:borderColor  "#2bcff0"}
+                                                                                       }}} "Cat2")
+
+           ($ List
+              (for [item ["Inbox" "Starred" "Drafts"]]
+                ($ ListItem {:key item :disablePadding true}
+                   ($ ListItemButton
+                      ($ ListItemIcon
+                         ($ InboxIcon {:sx #js {:color "white"}} )
+                         )
+                      ($ ListItemText {:primary item})
+                      )
+                   ))
+              )
+
+
+           )
+        )
+     )
+  )
+
+
 ;-----------------------------------------------------------------------------------------------------------------------
 (def wealth-navigation
   [{:code :summary          :name "Summary"}
@@ -198,4 +297,6 @@
   [v-box
    :gap "0px"
    :class "body"
-   :children [[modal-mounting] [top-nav-bar] [active-section]]])
+   :children [[modal-mounting]
+              ;[top-nav-bar]
+              [active-section]]])
