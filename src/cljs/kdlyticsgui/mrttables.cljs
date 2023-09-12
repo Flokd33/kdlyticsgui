@@ -448,7 +448,7 @@
         props (merge
                 (base-props-dark mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id)
                 (if (seq pinned-cols) {:state #js {"columnPinning" #js {"left" pinned-cols "right" #js []}}}))]
-    ($ "div" {:id photo-id} ($ MaterialReactTable {& props}))
+    ($ "div" {:id photo-id :class "mrt-table-dark"} ($ MaterialReactTable {& props}))
     ;(println ($ "div" {:id photo-id} ($ MaterialReactTable {& props})))
     ))
 

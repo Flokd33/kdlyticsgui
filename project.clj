@@ -34,8 +34,11 @@
 
   ;For Icons setting (used in MRT Table Toolbar) => node_modules\@mui\material\node\SvgIcon\SvgIcon.js
   ;For page number (TablePaginationSelect) and TablePaginationRoot => node_modules\@mui\material\node\TablePagination\TablePagination.js
-  ;For MRT Table hover (need hover  to true ?)  => node_modules\@mui\material\node\TableRow\TableRow.js for hover color etc BUT also need to change bootstrap CSS ? NOt TableCell, could be MRT ?
-  ;Issue is not with the hover but something else => need to be added in extra CSS
+  ;For MRT Table hover => node_modules\@mui\material\node\TableRow\TableRow.js for hover color
+  ; :BUT also need to change something else, NOt TableCell, could be MRT ? Not bootstrap. NOt extrac CSS
+  ;Issue is not with the hover but something else ?? never really found root cause so I added a class for the table and an extra css targeting td, so issue might be wiht the cell formating overriting the row one  (https://stackoverflow.com/questions/5492900/changing-background-colour-of-tr-element-on-mouseover)
+
+  ;scrollbar re-com css webkittscrollbar background color :TODO
 
   :plugins []
   :min-lein-version "2.5.3"

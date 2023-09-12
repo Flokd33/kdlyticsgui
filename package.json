@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "devDependencies": {
+    "easter-egg-collection": "^1.4.56",
     "shadow-cljs": "^2.15.8"
   },
   "dependencies": {

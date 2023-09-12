@@ -162,16 +162,23 @@ background-color: #353535; /*DARK 300*/
 }
 
 .dropdown-content-right a:hover {
-  background-color: #ddd;
+  background-color: #2bcff0;
 }
 
 .dropdown-right:hover .dropdown-content-right {
   display: block;
 }
 
-
 .active {
   background-color: #2bcff0; /* PRIMARY 100 */
+}
+
+/*.tt tr {
+  background-color: #2bcff0;
+}*/
+
+.mrt-table-dark tr:hover td {
+  background-color: #2bcff0;
 }
 
 .titlescreen p {
