@@ -121,9 +121,12 @@ goog.net.jsloader.cleanup_ = function(scriptNode, removeScriptNode, opt_timeout)
   if (opt_timeout != null) {
     goog.global.clearTimeout(opt_timeout);
   }
-  scriptNode.onload = goog.nullFunction;
-  scriptNode.onerror = goog.nullFunction;
-  scriptNode.onreadystatechange = goog.nullFunction;
+  scriptNode.onload = () => {
+  };
+  scriptNode.onerror = () => {
+  };
+  scriptNode.onreadystatechange = () => {
+  };
   if (removeScriptNode) {
     window.setTimeout(function() {
       goog.dom.removeNode(scriptNode);

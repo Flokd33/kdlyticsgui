@@ -2,15 +2,20 @@
   (:require
     [kdlyticsgui.views :as views]
     [kdlyticsgui.mount :as mount]
-   [reagent.dom :as dom]
-   [re-frame.core :as rf]
-   [re-pressed.core :as rp]
-   ))
+
+    [reagent.core :as r]
+    [reagent.dom.client :as rdc]
+
+    ;[reagent.dom :as dom]
+    [re-frame.core :as rf]
+    [re-pressed.core :as rp]
+    ))
+
+(defonce root (rdc/create-root (.getElementById js/document "app")))
 
 (defn ^:dev/after-load mount-root []
   (rf/clear-subscription-cache!)
-  (dom/render [views/main-panel]
-            (.getElementById js/document "app")))
+  (.render root  (r/as-element [(fn [] views/main-panel)])))
 
 (defn init []
   (rf/dispatch-sync [::mount/initialize-db])

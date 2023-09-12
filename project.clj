@@ -3,26 +3,39 @@
                  [org.clojure/clojurescript "1.11.60"
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library]]
-                 [thheller/shadow-cljs "2.18.0"]
-                 [reagent "1.1.1"]
+                 [thheller/shadow-cljs "2.25.0"]
+                 [reagent "1.2.0"]
                  [re-frame "1.3.0"]
                  [re-com "2.13.2"]
                  [cljs-http "0.1.46"]
                  [re-pressed "0.3.2"]
                  [cljs-drag-n-drop/cljs-drag-n-drop "0.1.0"]
                  [org.clojars.frozenlock/reagent-contextmenu "0.4.3"]
-                 [metasoarous/oz "2.0.0-alpha5"]           ;"1.6.0-alpha34"
                  [lilactown/helix "0.1.9"]
                  [binaryage/devtools "1.0.6"]
-                 ;[day8.re-frame/tracing      "0.6.2"]
-                 ;[day8.re-frame/re-frame-10x "1.5.0"]
-                 [com.cnuernber/tmdjs "2.000-beta-3"]
-                 ;[markdown-clj "1.11.4"]
                  ]
 
-  ;npm install react
-  ;npm ad react
-  ;mpm install react-dom
+  ;npm i react react-dom
+  ;npm i material-react-table @mui/material @mui/icons-material @emotion/react @emotion/styled
+  ;npm
+
+  ;add in html head the bootstrap href (see comment in re-com.css)
+
+  ;https://www.material-react-table.com/docs/getting-started/install
+
+
+  ;https://vincentgarreau.com/particles.js/#default
+  ;https://codepen.io/VincentGarreau/pen/bGxvQd
+  ;https://shekhar-gupta.medium.com/how-to-use-particles-js-and-create-particle-animation-fa3e99187292#:~:text=Start%20by%20including%20the%20HTML,DIV%20element%20with%20id%20particle.&text=Once%20the%20script%20is%20added,event%20to%20load%20our%20particles.
+  ;https://vincentgarreau.com/particles.js/
+  ;TODO https://stackoverflow.com/questions/45101039/particles-js-as-a-background-for-only-a-specific-section
+
+  ;https://colorffy.com/dark-theme-generator
+
+  ;For Icons setting (used in MRT Table Toolbar) => node_modules\@mui\material\node\SvgIcon\SvgIcon.js
+  ;For page number (TablePaginationSelect) and TablePaginationRoot => node_modules\@mui\material\node\TablePagination\TablePagination.js
+  ;For MRT Table hover (need hover  to true ?)  => node_modules\@mui\material\node\TableRow\TableRow.js for hover color etc BUT also need to change bootstrap CSS ? NOt TableCell, could be MRT ?
+  ;Issue is not with the hover but something else => need to be added in extra CSS
 
   :plugins []
   :min-lein-version "2.5.3"

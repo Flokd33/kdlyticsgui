@@ -8,40 +8,54 @@ div.output {
 }
 
 .body {
-background-color: #313131;
+background-color: #353535; /*DARK 300*/
 }
-
 .subbody {
-padding: 65px 5px;
+padding: 80px 5px;
 }
 
 .element {
-background-color: #FAF9F6;
+background-color: #FAF9F6; /* ??? */
 border-radius: 15px;
-padding: 20px 20px;
+padding: 15px 15px;
+margin-top: 70px;
 }
+
+.rightelement {
+background-color: #1e1e1e;  /*DARK 200*/
+border-radius: 20px;
+padding: 20px 20px;
+margin-left: 185px;
+z-index: 100; /*can be removed*/
+}
+
+/*not need to add margin top because the right element will be in a subbody that is already set up to pad 65px corresponding to the top nav bar*/
+/*margin-top: 70px;*/
+
+/*.rc-modal-panel-child-container div  {
+background-color: #1e1e1e;
+}*/
 
 
 .leftnavbar {
 display: flex;
-width: 175px;
+width: 150px;
 z-index: 250;
 position: fixed;
-padding: 77px 0px;
+padding: 75px 0px;
 height: 100%;
-font-size: 14px;
-background-color: #414141;/*#D6E0EA */
+font-size: 17px;
+background-color: #353535; /*DARK 300*/
 /*border: solid 1px black;*/
 }
 
-.rightelement {margin-left: 175px;}
 
 .navbar {
   position: fixed;
   width: 100%;
   top: 0px;
   height: 50px;
-  background-color: #414141;/*#333;*/
+  background-color: #353535; /*DARK 300*/
   margin: 0 !important;
   padding: 0 !important;
   font-family: Segoe UI, Roboto, sans-serif;
@@ -64,17 +78,18 @@ background-color: #414141;/*#D6E0EA */
 }
 
 .navbar a:hover:not(.active) > .dropdown-content, .dropdown:hover {
-  background-color: #525252;/*#111;*/
+  background-color: #8ddff5;  /*PRIMARY 400*/
+
   }
 
 
 .leftnavbar a:hover:not(.active) > .dropdown-content, .dropdown:hover {
-  background-color: #525252;/*#111;*/
+  background-color: #8ddff5; /*PRIMARY 400*/
   }
 
 
 .active {
-  background-color: #6495ED;
+  background-color: #8ddff5; /*PRIMARY 400*/
 }
 
 .separatorline {
@@ -97,17 +112,15 @@ background-color: #414141;/*#D6E0EA */
 }
 
 .dropdown {
-  background-color: #414141;;/* #333;*/
+  background-color: #353535;; /* DARK 300 */
   display: flex;
   justify-content: center;
   }
 
 .dropdown-active {
-  background-color: #337ab7; /* #286090 #6495ED;*/
+  background-color: #2bcff0; /* PRIMARY 100 */
   justify-content: center;
 }
-
-
 
 .dropdown-right {
   float: right;
@@ -120,14 +133,14 @@ background-color: #414141;/*#D6E0EA */
   outline: none;
   color: white;
   padding: 14px 16px;
-  background-color: #6495ED;
+  background-color: #353535; /* DARK 300 */
   font-weight: inherit;
   font-family: inherit;
   margin: 0;
 }
 
 .navbar a:hover:not(.active) > .dropdown-content-right, .dropdown-right:hover {
-  background-color: #111;
+  background-color: #2bcff0; /* PRIMARY 100 */
 }
 
 .dropdown-content-right {
@@ -158,47 +171,7 @@ background-color: #414141;/*#D6E0EA */
 
 
 .active {
-  background-color: #6495ED;
-}
-
-.modal-ta-dlg {
-    justify-content: space-between;
-    width: 400px;
-    height: 600px;
-    padding: 20px;
-}
-
-
-.traxdata table, th, td {
-    border: 1px solid black;
-    padding: 5px;
-}
-
-.traxdata th {background-color: cornflowerblue;}
-.traxdata td:nth-of-type(2) {text-align: right;}
-.traxdata td:nth-of-type(3) {text-align: right;}
-.traxdata th:nth-of-type(1) {width: 100px;}
-.traxdata th:nth-of-type(2) {width: 100px;}
-.traxdata th:nth-of-type(3) {width: 100px;}
-
-.rt-tbody {
-  overflow: visible !important;
-}
-
-.sticky-rt-column {
-  position: sticky !important;
-  left: 0;
-  top: 0;
-  z-index: 1;
-  background-color: whitesmoke;
-}
-
-.sticky-rt-thead {
-  position: sticky !important;
-  top: 0;
-  z-index: 10;
-  background-color: whitesmoke;
-
+  background-color: #2bcff0; /* PRIMARY 100 */
 }
 
 .titlescreen p {
@@ -206,9 +179,9 @@ background-color: #414141;/*#D6E0EA */
                   font-family:    Segoe UI, Roboto, sans-serif;
                   text-transform: lowercase;
                   font-size: 12em;
-                  letter-spacing: 4px;
+                  letter-spacing: 3px;
                   overflow: hidden;
-                  background: linear-gradient(90deg, #000, #fff, #000);
+                  background: linear-gradient(90deg, #000000, #2bcff0, #000000); /*PRIMARY 100*/
                   background-repeat: no-repeat;
                   background-size: 80%;
                   animation: animate-titlescreen 5s linear;
@@ -225,3 +198,21 @@ background-color: #414141;/*#D6E0EA */
                     background-position: 500%;
                   }
                 }
+
+
+#vg-tooltip-element {
+z-index: 2000;
+}
+
+
+/* ---- particles.js container ---- */
+#particles-js {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background-color: #000000;        /*DARK 100*/
+  background-image: url("");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: 50% 50%;
+}

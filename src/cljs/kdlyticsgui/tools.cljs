@@ -2,11 +2,15 @@
   (:require                                                 ;["html2canvas" :as html2canvas]
             [goog.string :as gstring]
             [goog.string.format]
-            [cljs-time.format :as tf])
+            [cljs-time.format :as tf]
+            ["react-vega" :as react-vega :refer (VegaLite)])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
 
+;------------------------------------------------------VEGA-------------------------------------------------------------
+(defn vega-lite [spec] [VegaLite (clj->js {:spec spec}  ) ])
+;------------------------------------------------------????-------------------------------------------------------------
 (defn int->gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
 (defn gdate->yyyyMMdd [x] (subs (.toString x) 0 8))
 (defn gdate->yyyy-MM-dd [x] (let [a (subs (.toString x) 0 8)] (str (subs a 0 4) "-" (subs a 4 6) "-" (subs a 6 8))))
@@ -122,26 +126,26 @@
     (.click el)
     (.removeChild js/document.body el)))
 
-(defn save-image
-  "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
-  [id]
-  (fn []
-    (-> (html2canvas (js/document.querySelector (str "#" id)) {}) ;js/document.body
-        (.then #(save-png (.toDataURL %) (str id "-" (gdate->yyyyMMdd (cljs-time.core/today)))))
-        (.catch #(js/console.log %))
-        (.finally #(js/console.log "cleanup")))))
-
-(defn open-image-in-new-tab
-  "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
-  [id]
-  (fn []
-    (-> (html2canvas (js/document.querySelector (str "#" id)) {})
-        (.then #(.toDataURL % "png"))
-        (.then #((let [w (js/window.open "about:blank")
-                       el (.document.createElement w "iframe")]
-                   (set! (.. el -style -cssText) "border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;")
-                   (set! (.-src (.document.body.appendChild w el)) %)
-                   (.document.close w)))))))
+;(defn save-image
+;  "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
+;  [id]
+;  (fn []
+;    (-> (html2canvas (js/document.querySelector (str "#" id)) {}) ;js/document.body
+;        (.then #(save-png (.toDataURL %) (str id "-" (gdate->yyyyMMdd (cljs-time.core/today)))))
+;        (.catch #(js/console.log %))
+;        (.finally #(js/console.log "cleanup")))))
+;
+;(defn open-image-in-new-tab
+;  "Returning a function. Refers to https://clojurescript.org/guides/promise-interop"
+;  [id]
+;  (fn []
+;    (-> (html2canvas (js/document.querySelector (str "#" id)) {})
+;        (.then #(.toDataURL % "png"))
+;        (.then #((let [w (js/window.open "about:blank")
+;                       el (.document.createElement w "iframe")]
+;                   (set! (.. el -style -cssText) "border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;")
+;                   (set! (.-src (.document.body.appendChild w el)) %)
+;                   (.document.close w)))))))
 
 ;;; below from https://gist.github.com/daveliepmann/cf923140702c8b1de301 ;;;
 (defn local-storage-set-item!
