@@ -14,6 +14,7 @@
                  :test-data                      nil
 
                  :navigation/active-section         :entry
+
                  :navigation/active-view-wealth     :summary
                  :navigation/active-view-positions  :summary
                  :navigation/active-view-vault      :inventory
@@ -51,6 +52,7 @@
 (doseq [k [:rot13
            :test-data
            :navigation/active-section
+
            :navigation/active-view-wealth
            :navigation/active-view-positions
            :navigation/active-view-vault

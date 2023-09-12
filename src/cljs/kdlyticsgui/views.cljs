@@ -7,8 +7,6 @@
     [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                          single-dropdown hyperlink modal-panel alert-box throbber input-password
                          input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
-
-
     [helix.core :refer [defnc $]]
     [helix.dom :as hd]
     [reagent-contextmenu.menu :as rcm]
@@ -35,6 +33,15 @@
     ["@mui/icons-material/PieChart" :default PieChartIcon]
     ["@mui/icons-material/Expand" :default ExpandIcon]
     ["@mui/icons-material/Menu" :default MenuIcon]
+
+    ["@mui/icons-material/Build" :default Build]
+    ["@mui/icons-material/WineBar" :default WineBar]
+    ["@mui/icons-material/Savings" :default Savings]
+    ["@mui/icons-material/ShowChart" :default ShowChart]
+    ["@mui/icons-material/Fort" :default Fort]
+
+
+
     ["react" :as react :refer (useMemo useState)]
 
 
@@ -51,11 +58,11 @@
 ;-----------------------------------------------------------------------------------------------------------------------
 (def main-navigation
   (let [home-events nil]                                                                                                                                                    ;[:get-qt-date]
-    [{:code :wealth          :name "W"            :dispatch :wealth          :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :positions       :name "P"         :dispatch :positions       :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :vault           :name "V"             :dispatch :vault           :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :cellar          :name "C"            :dispatch :cellar          :subs nil       :load-events home-events        :mounting-modal true}
-     {:code :tools           :name "T"             :dispatch :tools           :subs nil       :load-events home-events        :mounting-modal true}
+    [{:code :wealth          :name "Summary"            :dispatch :wealth          :subs nil        :load-events home-events        :mounting-modal true      :icon Savings}
+     {:code :positions       :name "Positions"         :dispatch :positions       :subs nil           :load-events home-events        :mounting-modal true      :icon ShowChart}
+     {:code :vault           :name "Vault"             :dispatch :vault           :subs nil       :load-events home-events        :mounting-modal true      :icon Fort}
+     {:code :cellar          :name "Cellar"            :dispatch :cellar          :subs nil        :load-events home-events        :mounting-modal true      :icon WineBar}
+     {:code :tools           :name "Tools"             :dispatch :tools           :subs nil       :load-events home-events        :mounting-modal true      :icon Build}
      ]))
 
 (defn modal-mounting []
@@ -66,21 +73,11 @@
 
 (defn entry [] [box :padding "280px 0px" :class "subbody" :child
                 [v-box :align-self :center :class "titlescreen" :children
-                 ;[label :label "Please select an item at the top."]
-                 [[:p {:class "titlescreen"} "Hello"] [:p ""]] ;2nd [:p] to avoid the cursor blinking next to the logo
-                 ]
-
-                ;[v-box :align-self :center :class "page-section" :children
-                ; ;[label :label "Please select an item at the top."]
-                ; [[:p {:class "page-section"} ] [:p ""]] ;2nd [:p] to avoid the cursor blinking next to the logo
-                ; ]
-
-                ;[v-box :align-self :center :class "particles-js" :children
-                ; ;[label :label "Please select an item at the top."]
-                ; [[:p {:class "particles-js"} ] ]
-                ; ]
-
-                ])
+                 [[:p {:class "titlescreen"} "Hello"]
+                  [:p ""] ;2nd [:p] to avoid the cursor blinking next to the logo
+                  ($ Button {:color "inherit" :size "large" :onClick #(rf/dispatch [:navigation/active-section :positions])} "LET'S GO")
+                  ]
+                 ]])
 
 (defn navigation-event
   "This is really not pure. But it saves loading time at mount."
@@ -124,8 +121,8 @@
 ;                      :on-click #(rf/dispatch [navigation-key (:code item)])]))])
 ;------------------------------------------------------------NEW NAV BAR------------------------------------------------
 
-(def left-bar-width "160px")  ;150px
-(def top-bar-height "50px")
+(def left-bar-width "165px")  ;150px
+(def top-bar-height "53px")
 
 ;#353535; /*DARK 300*/
 ;#2bcff0; /* PRIMARY 100 */
@@ -137,53 +134,33 @@
         ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 2 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}
                                               }} ;width: `calc(100% - ${drawerWidth}px)`  :width "2695px" :ml left-nav-bar-width
            ($ Toolbar {:sx #js {:backgroundColor "#353535"
-                                "&.MuiToolbar-root" #js {"min-height" "49px"}
-
+                                "&.MuiToolbar-root" #js {"min-height" "51px"}
                                 }} ;height is 64px default @media muitoolbar rott etc
               ($ IconButton {:size "large" :edge "start" :color "inherit" :aria-label "menu" :sx #js {:mr 0}}
-                 ($ MenuIcon)                               ;TODO add my logo
+                 ($ MenuIcon)
                  )
               ($ Typography {:variant "h5" :noWrap true :component "div" :sx #js {:flexGrow 1}} "Kdlytics") ;just a text, flexGrow to make sure the following button is at the right end of the element
-              ($ Button {:color "inherit" :size "large" } "LOGO") ;onclick back to load page?
+              ($ Button {:color "inherit" :size "large" :onClick #(rf/dispatch [:navigation/active-section :entry])} "LOGO") ;TODO add my logo
+              ;($ MenuIcon)
               )
            )
-        ($ Drawer {:variant "permanent"
-                   :anchor "left"
-                   :sx #js {:position "absolute"
-                            :zIndex 1
-                            "& .MuiDrawer-paper" #js {:paddingTop top-bar-height :width left-bar-width :boxSizing "border-box" :backgroundColor "#353535"
-                                                      :color "white" }
-                            }
-                   }
+        ($ Drawer {:variant "permanent" :anchor "left" :sx #js {:position "absolute" :zIndex 1
+                                                                "& .MuiDrawer-paper" #js {:paddingTop top-bar-height :width left-bar-width :boxSizing "border-box" :backgroundColor "#353535" :color "white"}
+                                                                }}
            ($ List
-              (for [item ["Inbox" "Starred" "Drafts"]]
-                        ($ ListItem {:key item :disablePadding true}
-                          ($ ListItemButton
-                             ($ ListItemIcon
-                                ($ InboxIcon {:sx #js {:color "white"}} )
-                                )
-                             ($ ListItemText {:primary item})
+              (for [item main-navigation]
+                        ($ ListItem {:key (:code item) :disablePadding true :onClick #(rf/dispatch [:navigation/active-section (:code item)])}
+                          ($ ListItemButton {:selected false ; need fct for dynamic true ;https://stackoverflow.com/questions/71984986/how-can-i-override-styling-for-listitembutton-when-its-selected
+                                             :sx #js {"&:hover" #js {:backgroundColor "#2bcff0"}
+                                                       ;workaround would be JS :backgroundColor (if (= (:code item) @(rf/subscribe [:navigation/active-section])) "#000000" "#111111" )...must be slow
+                                                       "&.Mui-selected" #js {:backgroundColor "#000000"} ;this should work if  :selected = true, maybe the item is not selected when we click.. OnClick doenst change the state ?
+                                                       }}
+                             ($ ListItemIcon ($ (:icon item) {:sx #js {:color "white"}} ))
+                             ($ ListItemText {:primary (:name item)})
                              )
                            ))
               )
-           ($ Divider {:textAlign "left" :light true :sx #js {:backgroundColor "#353535"
-                                                              :color "white"  :fontSize 10
-                                                              "&.MuiDivider-root" #js {"&::before, &::after" #js {:borderColor  "#2bcff0"}
-                                                                                       }}} "Cat2")
-
-           ($ List
-              (for [item ["Inbox" "Starred" "Drafts"]]
-                ($ ListItem {:key item :disablePadding true}
-                   ($ ListItemButton
-                      ($ ListItemIcon
-                         ($ InboxIcon {:sx #js {:color "white"}} )
-                         )
-                      ($ ListItemText {:primary item})
-                      )
-                   ))
-              )
-
-
+           ;($ Divider {:textAlign "left" :light true :sx #js {:backgroundColor "#353535" :color "white"  :fontSize 10 "&.MuiDivider-root" #js {"&::before, &::after" #js {:borderColor  "#2bcff0"}}}} "Cat2")
            )
         )
      )
@@ -279,8 +256,8 @@
 
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn active-section []
-  ;(println @(rf/subscribe [:navigation/active-section]))
-  (println "HELLO")
+  (println @(rf/subscribe [:navigation/active-section]))
+  ;(println "HELLO")
   (.scrollTo js/window 0 0)
   (case @(rf/subscribe [:navigation/active-section])
     :entry            [entry]

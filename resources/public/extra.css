@@ -177,6 +177,7 @@ background-color: #353535; /*DARK 300*/
   background-color: #2bcff0;
 }*/
 
+/* class mrt-table-dark has been assigned  */
 .mrt-table-dark tr:hover td {
   background-color: #2bcff0;
 }
@@ -195,8 +196,8 @@ background-color: #353535; /*DARK 300*/
                   animation-iteration-count: infinite;
                   -webkit-background-clip: text;
                   -webkit-text-fill-color: rgba(255, 255, 255, 0);
+                  user-select: none                                         /* avoid select text on double click, messing up with particles */
                 }
-
                 @keyframes animate-titlescreen {
                   0% {
                     background-position: -500%;
@@ -211,7 +212,6 @@ background-color: #353535; /*DARK 300*/
 z-index: 2000;
 }
 
-
 /* ---- particles.js container ---- */
 #particles-js {
   position: fixed;
@@ -222,4 +222,5 @@ z-index: 2000;
   background-repeat: no-repeat;
   background-size: cover;
   background-position: 50% 50%;
+/*  z-index: 20*/
 }
