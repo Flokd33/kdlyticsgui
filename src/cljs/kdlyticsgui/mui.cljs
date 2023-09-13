@@ -255,6 +255,25 @@
         )
      ))
 
+(defnc modal-button-simple
+  [{:keys [title text]}]
+  (let [[is-open, setOpen] (use-state false)
+        handleOpen (fn [] (setOpen true))
+        handleClose (fn [] (setOpen false))]
+    [   ($ Button {:onClick handleOpen} "Open modal")
+     ($ Modal {:open is-open :onClose handleClose
+               :aria-labelledby "modal-modal-title"
+               :aria-describedby "modal-modal-description"}
+        ($ Box {:sx #js {:position "absolute" :top "50%" :left "50%" :transform "translate(-50%, -50%)"
+                         :bgcolor "background.paper"
+                         :border "2px solid #0000"
+                         :width 400 :boxShadow 24 :p 4 }}
+           ($ Typography {:variant "h6"} title)
+           ($ Typography {:variant "h6"} text)
+           )
+        )]
+    )
+  )
 ;-------------------------------------------------GRID COMPONENTS-------------------------------------------------------
 ;MAKE MY OWN
 
