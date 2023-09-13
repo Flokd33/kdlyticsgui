@@ -10,7 +10,7 @@
     ["@mui/material" :as mm :refer ( Button IconButton Tooltip Box Divider InputLabel Select createTheme ThemeProvider useTheme Drawer CssBaseline AppBar Toolbar List Typography
                                             ListItem ListItemButton ListItemIcon ListItemText
                                             MenuItem Item FormControl Slider Autocomplete TextField  RadioGroup Radio FormLabel FormControl FormControlLabel Switch
-                                            ListSubheader Unstable_Grid2 Grid Card CardActions CardContent
+                                            ListSubheader Unstable_Grid2 Grid Card CardActions CardContent Modal
                                             )]
     ["@mui/icons-material/MoveToInbox" :default InboxIcon]
     ["@mui/icons-material/PhotoCamera" :default PhotoCameraIcon]
@@ -87,7 +87,6 @@
 ;                                      (list 'reagent-mui.util/js->clj' sym)))]
 ;         (reagent.core/as-element (do ~@body))))))
 
-
 ;------------------------------------------------------------NAVIGATION------------------------------------------------
 (def left-bar-width "165px")
 (def top-bar-height "53px")
@@ -104,14 +103,21 @@
 ;#353535; /*DARK 300*/
 ;#2bcff0; /* PRIMARY 100 */
 
-
+(rf/reg-event-fx
+  :change-active-section
+  (fn [{:keys [db]} [_ index]]
+    (let [main-navigation-grp (group-by :index main-navigation)]
+      {:db (assoc db :navigation/active-section (:code (first (main-navigation-grp index))))} ;:cellar
+      )
+    ))
 
 (defnc navigation []
 (let [[selectedIndex setSelectedIndex] (use-state 2)
       handleListItemClick (fn [event index] (setSelectedIndex index))
-      x (use-effect [selectedIndex] (rf/dispatch [:navigation/active-section :cellar]))
+      x (use-effect [selectedIndex] (rf/dispatch [:change-active-section selectedIndex])) ;(:code (first (main-navigation-grp selectedIndex)))
+      ;x (use-effect [selectedIndex] (println (:name (first (main-navigation-grp selectedIndex)))))
       ]
-  (println selectedIndex)                                   ; on first click selectedIndex is False => due to the rf/dispatch
+  ;(println selectedIndex)
   ($ Box {:sx #js {:display "flex"}}
      ($ CssBaseline
         ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 200 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}}} ;width: `calc(100% - ${drawerWidth}px)`  :width "2695px" :ml left-nav-bar-width
@@ -122,16 +128,15 @@
         ($ Drawer {:variant "permanent" :anchor "left" :sx #js {:position "absolute" :zIndex 1 "& .MuiDrawer-paper" #js {:paddingTop top-bar-height :width left-bar-width :boxSizing "border-box" :backgroundColor "#353535" :color "white"}}}
            ($ List
               (for [item main-navigation]
-                ($ ListItem {:key (:code item) :disablePadding true :onClick #(do
-                                                                                ;(rf/dispatch [:navigation/active-section (:code item)])
-                                                                                ;no need for the dispatch it is am effect of the handleListItemClick
-                                                                                 (handleListItemClick % (:index item))
-                                                                                   )}
+                ($ ListItem {:key (:code item) :disablePadding true :onClick #(handleListItemClick % (:index item))}
                    ($ ListItemButton {:selected (= selectedIndex (:index item))
                                       ;https://stackoverflow.com/questions/71984986/how-can-i-override-styling-for-listitembutton-when-its-selected
                                       ;https://stackoverflow.com/questions/61486061/how-to-set-selected-and-hover-color-of-listitem-in-material-ui
-                                      :sx       #js {"&:hover"        #js {:backgroundColor "#2bcff0"}
+                                      :sx       #js {"&:hover"        #js {:backgroundColor "#8cecff"} ;PRIMARY 400
                                                      "&.Mui-selected" #js {:backgroundColor "#2bcff0"}
+                                                     "&.Mui-selected:hover" #js {:backgroundColor "#2bcff0"}
+                                                     "&& .MuiTouchRipple-child" #js {:backgroundColor "black"} ;it works
+                                                     "&& .MuiTouchRipple-rippleVisible" #js {:opacity 0.5 :animation-duration "600ms"} ;it works
                                                      }}
                       ($ ListItemIcon ($ (:icon item) {:sx #js {:color "white"}}))
                       ($ ListItemText {:primary (:name item)})
