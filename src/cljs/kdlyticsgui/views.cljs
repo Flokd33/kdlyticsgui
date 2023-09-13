@@ -95,7 +95,7 @@
 
 (defn wealth-view []
   [h-box :gap "10px" :padding "0px"
-   :children [[mui/navigation];[left-nav-bar wealth-navigation :navigation/active-view-wealth]
+   :children [($ mui/navigation) ;[left-nav-bar wealth-navigation :navigation/active-view-wealth]
               [box :class "subbody" :child [wealth/summary-display]]
               ;[wealth/modal-price-history]
               [rcm/context-menu]]])
@@ -103,26 +103,26 @@
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn positions-view []
   [h-box :gap "10px" :padding "0px"
-   :children [[mui/navigation]
+   :children [($ mui/navigation)
               [box :class "subbody" :child [positions/summary-display]]
               [positions/modal-price-history]
               [rcm/context-menu]]])
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn vault-view []
   [h-box :gap "10px" :padding "0px"
-   :children [[mui/navigation]
+   :children [($ mui/navigation)
               [rcm/context-menu]]])
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn cellar-view []
   [h-box :gap "10px" :padding "0px"
-   :children [[mui/navigation]
+   :children [($ mui/navigation)
               [box :class "subbody" :child [cellar/summary-display]]
               [rcm/context-menu]]])
 
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn tools-view []
   [h-box :gap "10px" :padding "0px"
-   :children [[mui/navigation]
+   :children [($ mui/navigation)
               [box :class "subbody" :child [t/mui-dev]]
               [rcm/context-menu]]])
 

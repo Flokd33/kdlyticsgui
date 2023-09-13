@@ -47,59 +47,6 @@
 ;https://github.com/reagent-project/reagent/blob/e70c52531341bba83636e88eb7b60ff5796195b1/examples/material-ui/src/example/core.cljs#L78-L93
 ;https://github.com/dakra/mui-templates/blob/master/src/mui_templates/views/components.cljs#L55-L58
 
-;------------------------------------------------------------NAVIGATION------------------------------------------------
-(def left-bar-width "165px")  ;150px
-(def top-bar-height "53px")
-
-(def main-navigation
-  (let [home-events nil]                                                                                                                                                    ;[:get-qt-date]
-    [{:code :wealth          :name "Summary"            :dispatch :wealth          :subs nil        :load-events home-events        :mounting-modal true      :icon Savings}
-     {:code :positions       :name "Positions"         :dispatch :positions       :subs nil           :load-events home-events        :mounting-modal true      :icon ShowChart}
-     {:code :vault           :name "Vault"             :dispatch :vault           :subs nil       :load-events home-events        :mounting-modal true      :icon Fort}
-     {:code :cellar          :name "Cellar"            :dispatch :cellar          :subs nil        :load-events home-events        :mounting-modal true      :icon WineBar}
-     {:code :tools           :name "Tools"             :dispatch :tools           :subs nil       :load-events home-events        :mounting-modal true      :icon Build}
-     ]))
-
-;#353535; /*DARK 300*/
-;#2bcff0; /* PRIMARY 100 */
-
-(defn navigation []
-
-  ($ Box {:sx #js {:display "flex"}}
-     ($ CssBaseline
-        ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 200 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}
-                                              }} ;width: `calc(100% - ${drawerWidth}px)`  :width "2695px" :ml left-nav-bar-width
-           ($ Toolbar {:sx #js {:backgroundColor "#353535"
-                                "&.MuiToolbar-root" #js {"min-height" "51px"}
-                                }} ;height is 64px default @media muitoolbar rott etc
-              ;($ IconButton {:size "large" :edge "start" :color "inherit" :aria-label "menu" :sx #js {:mr 0}} ($ MenuIcon))
-              ($ Typography {:variant "h5" :noWrap true :component "div" :sx #js {:flexGrow 1 :pl 4 }} "Kdlytics") ;just a text, flexGrow to make sure the following button is at the right end of the element
-              ($ Button {:color "inherit" :size "large" :onClick #(rf/dispatch [:navigation/active-section :entry])} "LOGO") ;TODO add my logo
-              ;($ MenuIcon)
-              )
-           )
-        ($ Drawer {:variant "permanent" :anchor "left" :sx #js {:position "absolute" :zIndex 1
-                                                                "& .MuiDrawer-paper" #js {:paddingTop top-bar-height :width left-bar-width :boxSizing "border-box" :backgroundColor "#353535" :color "white"}
-                                                                }}
-           ($ List
-              (for [item main-navigation]
-                ($ ListItem {:key (:code item) :disablePadding true :onClick #(rf/dispatch [:navigation/active-section (:code item)])}
-                   ($ ListItemButton {:selected false ; need fct for dynamic true ;https://stackoverflow.com/questions/71984986/how-can-i-override-styling-for-listitembutton-when-its-selected
-                                      :sx #js {"&:hover" #js {:backgroundColor "#2bcff0"}
-                                               ;workaround would be JS :backgroundColor (if (= (:code item) @(rf/subscribe [:navigation/active-section])) "#000000" "#111111" )...must be slow
-                                               "&.Mui-selected" #js {:backgroundColor "#000000"} ;this should work if  :selected = true, maybe the item is not selected when we click.. OnClick doenst change the state ?
-                                               }}
-                      ($ ListItemIcon ($ (:icon item) {:sx #js {:color "white"}} ))
-                      ($ ListItemText {:primary (:name item)})
-                      )
-                   ))
-              )
-           ;($ Divider {:textAlign "left" :light true :sx #js {:backgroundColor "#353535" :color "white"  :fontSize 10 "&.MuiDivider-root" #js {"&::before, &::after" #js {:borderColor  "#2bcff0"}}}} "Cat2")
-           )
-        )
-     )
-  )
-
 ;--------------------------------------------------------TOOLS----------------------------------------------------------
 (def classes (let [prefix "rmui-example"]
                {:root       (str prefix "-root")
@@ -139,6 +86,59 @@
 ;       (let [~@(interleave bindings (for [sym argsyms]
 ;                                      (list 'reagent-mui.util/js->clj' sym)))]
 ;         (reagent.core/as-element (do ~@body))))))
+
+
+;------------------------------------------------------------NAVIGATION------------------------------------------------
+(def left-bar-width "165px")
+(def top-bar-height "53px")
+
+(def main-navigation
+  (let [home-events nil]                                                                                                                                                    ;[:get-qt-date]
+    [{:code :wealth      :name "Summary"    :dispatch :wealth      :subs nil   :load-events home-events   :mounting-modal true  :icon Savings    :index 1}
+     {:code :positions   :name "Positions"  :dispatch :positions   :subs nil   :load-events home-events   :mounting-modal true  :icon ShowChart  :index 2}
+     {:code :vault       :name "Vault"      :dispatch :vault       :subs nil   :load-events home-events   :mounting-modal true  :icon Fort       :index 3}
+     {:code :cellar      :name "Cellar"     :dispatch :cellar      :subs nil   :load-events home-events   :mounting-modal true  :icon WineBar    :index 4}
+     {:code :tools       :name "Tools"      :dispatch :tools       :subs nil   :load-events home-events   :mounting-modal true  :icon Build      :index 5}
+     ]))
+
+;#353535; /*DARK 300*/
+;#2bcff0; /* PRIMARY 100 */
+
+
+
+(defnc navigation []
+(let [[selectedIndex setSelectedIndex] (use-state 2)
+      handleListItemClick (fn [event index] (setSelectedIndex index))
+      x (use-effect [selectedIndex] (rf/dispatch [:navigation/active-section :cellar]))
+      ]
+  (println selectedIndex)                                   ; on first click selectedIndex is False => due to the rf/dispatch
+  ($ Box {:sx #js {:display "flex"}}
+     ($ CssBaseline
+        ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 200 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}}} ;width: `calc(100% - ${drawerWidth}px)`  :width "2695px" :ml left-nav-bar-width
+           ($ Toolbar {:sx #js {:backgroundColor "#353535" "&.MuiToolbar-root" #js {"min-height" "51px"}}} ;toolbar height is 64px default => @media muitoolbar rott etc
+              ;($ IconButton {:size "large" :edge "start" :color "inherit" :aria-label "menu" :sx #js {:mr 0}} ($ MenuIcon))
+              ($ Typography {:variant "h5" :noWrap true :component "div" :sx #js {:flexGrow 1 :pl 4 }} "AppName") ;just a text, flexGrow to make sure the following button is at the right end of the element
+              ($ Button {:color "inherit" :size "large" :onClick #(rf/dispatch [:navigation/active-section :entry])} "AppLogo")))
+        ($ Drawer {:variant "permanent" :anchor "left" :sx #js {:position "absolute" :zIndex 1 "& .MuiDrawer-paper" #js {:paddingTop top-bar-height :width left-bar-width :boxSizing "border-box" :backgroundColor "#353535" :color "white"}}}
+           ($ List
+              (for [item main-navigation]
+                ($ ListItem {:key (:code item) :disablePadding true :onClick #(do
+                                                                                ;(rf/dispatch [:navigation/active-section (:code item)])
+                                                                                ;no need for the dispatch it is am effect of the handleListItemClick
+                                                                                 (handleListItemClick % (:index item))
+                                                                                   )}
+                   ($ ListItemButton {:selected (= selectedIndex (:index item))
+                                      ;https://stackoverflow.com/questions/71984986/how-can-i-override-styling-for-listitembutton-when-its-selected
+                                      ;https://stackoverflow.com/questions/61486061/how-to-set-selected-and-hover-color-of-listitem-in-material-ui
+                                      :sx       #js {"&:hover"        #js {:backgroundColor "#2bcff0"}
+                                                     "&.Mui-selected" #js {:backgroundColor "#2bcff0"}
+                                                     }}
+                      ($ ListItemIcon ($ (:icon item) {:sx #js {:color "white"}}))
+                      ($ ListItemText {:primary (:name item)})
+                      )
+                   )))
+           ;($ Divider {:textAlign "left" :light true :sx #js {:backgroundColor "#353535" :color "white"  :fontSize 10 "&.MuiDivider-root" #js {"&::before, &::after" #js {:borderColor  "#2bcff0"}}}} "Cat2")
+           )))))
 
 ;----------------------------------------------------INPUT/DISPLAY COMPONENTS-------------------------------------------
 (defnc slider-simple
@@ -244,22 +244,19 @@
         x (use-effect [checked] (reset! checked-atom checked))]
     ($ Switch {:size "small" :checked checked :onChange (fn [e] (setChecked (aget e "target" "checked")))})))
 
-
 (defnc card-simple
   [{:keys [title text]}]
-  ($ Card {:sx #js { :minWidth 190 :maxHeight 120 :borderRadius "15px"}}
+  ($ Card {:sx #js { :minWidth 180 :maxHeight 95 :borderRadius "15px"}}
      ($ CardContent
-        ($ Typography {:variant "h3"} title)
-        ($ Typography {:variant "h5"} text)
-
-
+        ($ Box {:sx #js { :width 170 :height 42 :backgroundColor "#555555"}}
+           ($ Typography {:variant "h5"} title))
+        ;($ Typography {:variant "p"} "bla bla")
+        ($ Typography {:variant "h6"} text)
         )
-
      ))
 
 ;-------------------------------------------------GRID COMPONENTS-------------------------------------------------------
 ;MAKE MY OWN
-
 
 (defnc mui-grid-component [{:keys [direction class align pt pb pl pr gap children width height justify]}]
   (let [m (merge {:border "1px dashed red" :pt pt :pb pb :pl pl :pr pr}
