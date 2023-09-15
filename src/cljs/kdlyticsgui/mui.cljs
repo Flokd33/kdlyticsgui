@@ -9,9 +9,13 @@
     ["react" :as react :refer (useMemo useState)]
     ["@mui/material" :as mm :refer ( Button IconButton Tooltip Box Divider InputLabel Select createTheme ThemeProvider useTheme Drawer CssBaseline AppBar Toolbar List Typography
                                             ListItem ListItemButton ListItemIcon ListItemText
-                                            MenuItem Item FormControl Slider Autocomplete TextField  RadioGroup Radio FormLabel FormControl FormControlLabel Switch
+                                            MenuItem Item FormControl Slider Autocomplete TextField  RadioGroup Radio FormLabel FormControlLabel Switch
                                             ListSubheader Unstable_Grid2 Grid Card CardActions CardContent Modal
+                                            FormControl
                                             )]
+    ["@mui/material/FormControl" :default MuiFormControl ]
+    ["@mui/material/styles" :refer [styled]]
+
     ["@mui/icons-material/MoveToInbox" :default InboxIcon]
     ["@mui/icons-material/PhotoCamera" :default PhotoCameraIcon]
     ["@mui/icons-material/Download" :default DownloadIcon]
@@ -75,17 +79,13 @@
 ;  {:palette {:primary   colors/purple
 ;             :secondary colors/green}})
 
-;(defmacro react-component
-;  "Helper for creating anonymous React components with Reagent"
-;  "From arttuka/reagent-material-ui \"5.11.12-0\""
-;  {:arglists '([[props] & body])}
-;  [bindings & body]
-;  (assert (vector? bindings) "react-component requires a vector for its bindings")
-;  (let [argsyms (repeatedly (count bindings) #(gensym "arg"))]
-;    `(fn [~@argsyms]
-;       (let [~@(interleave bindings (for [sym argsyms]
-;                                      (list 'reagent-mui.util/js->clj' sym)))]
-;         (reagent.core/as-element (do ~@body))))))
+
+;(defnc FormControlStyled
+;  (styled MuiFormControl #js {"&.MuiFormLabel-root.Mui-focused" #js {:color "red"}} )
+;
+;  )
+
+
 
 ;------------------------------------------------------------NAVIGATION------------------------------------------------
 (def left-bar-width "165px")
@@ -107,18 +107,18 @@
   :change-active-section
   (fn [{:keys [db]} [_ index]]
     (let [main-navigation-grp (group-by :index main-navigation)]
-      {:db (assoc db :navigation/active-section (:code (first (main-navigation-grp index))))} ;:cellar
+      {:db (assoc db :navigation/active-section (:code (first (main-navigation-grp index))))} ; (:code (first (main-navigation-grp index)))
       )
     ))
 
 (defnc navigation []
 (let [[selectedIndex setSelectedIndex] (use-state 2)
       handleListItemClick (fn [event index] (setSelectedIndex index))
-      x (use-effect [selectedIndex] (rf/dispatch [:change-active-section selectedIndex])) ;(:code (first (main-navigation-grp selectedIndex)))
+      x (use-effect [selectedIndex] (rf/dispatch [:change-active-section selectedIndex])) ; selectedIndex
       ;x (use-effect [selectedIndex] (println (:name (first (main-navigation-grp selectedIndex)))))
       ]
   ;(println selectedIndex)
-  ($ Box {:sx #js {:display "flex"}}
+  ($ Box {:sx #js {:display "flex"} }
      ($ CssBaseline
         ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 200 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}}} ;width: `calc(100% - ${drawerWidth}px)`  :width "2695px" :ml left-nav-bar-width
            ($ Toolbar {:sx #js {:backgroundColor "#353535" "&.MuiToolbar-root" #js {"min-height" "51px"}}} ;toolbar height is 64px default => @media muitoolbar rott etc
@@ -146,12 +146,16 @@
            )))))
 
 ;----------------------------------------------------INPUT/DISPLAY COMPONENTS-------------------------------------------
+
+(def logi-blue "#2bcff0")                                   ;DONT CHANGE
+
 (defnc slider-simple
   [{:keys [width on-change]}]
-  ($ Slider {:defaultValue 50 :marks true :step 10 :aria-label "Small steps" :size "normal" :valueLabelDisplay "on" :sx #js {"width" width}
+  ($ Slider {:defaultValue 50 :marks false :step 10 :aria-label "Small steps" :size "normal" :valueLabelDisplay "on"
+             :sx #js {"color" logi-blue
+                      "width" width}
              :onChange on-change
-             })
-  )
+             }))
 
 (defnc text-simple
   "variant is one of h1, h2, ... , h6, subtitle1, subtitle2, body1, body2, button, caption, overline"
@@ -162,7 +166,13 @@
 (defnc button-simple
   "variant is one of text, contained, outlined"
   [{:keys [variant text on-click]}]
-  ($ Button {:variant variant :onClick on-click } text)   ;:endIcon [($ SendIcon)]
+  ($ Button {:variant variant :onClick on-click
+             :sx #js {"color" "white"
+                      "&.MuiButton-contained" #js {:backgroundColor logi-blue}
+                      "&.MuiButton-contained:hover" #js {:color "black"}
+                      "&.MuiButton-outlined" #js {:borderColor "white"}
+                      "&.MuiButton-outlined:hover" #js {:borderColor logi-blue :color logi-blue}}
+             } text)   ;:endIcon [($ SendIcon)]
   )
 
 (defnc radio-button
@@ -173,48 +183,78 @@
 (defnc radio-group-button
   [{:keys [title list on-change]}]
   ($ FormControl
-     ($ FormLabel {:id "demo-radio-buttons-group-label"} title)
-     ($ RadioGroup {:row true :aria-labelledby "demo-row-radio-buttons-group-label" :name "row-radio-buttons-group" :onChange on-change}
-        (for [item list] ($ FormControlLabel {:value (:value item) :label (:label item) :control ($ Radio)}))))
-  )
+     ($ FormLabel {:id "demo-radio-buttons-group-label"  :sx #js {:color "white" "&.Mui-focused" #js {:color logi-blue}}  } title)
+     ($ RadioGroup {:row true  :aria-labelledby "demo-row-radio-buttons-group-label" :name "row-radio-buttons-group" :onChange on-change }
+        (for [item list] ($ FormControlLabel {:value (:value item) :label (:label item)
+                                              :sx #js {"color" "white"}
+                                              :control ($ Radio ;radio buttons are SVG!... => https://stackoverflow.com/questions/60493740/how-to-change-border-color-of-radio-button-in-material-ui
+                                                          {:sx #js { ;"& .MuiSvgIcon-root" #js {:fill "#2bcff0"}
+                                                                    "& .MuiSvgIcon-root:not(.MuiSvgIcon-root ~ .MuiSvgIcon-root)" #js {:fill "white"}
+                                                                    "& .MuiSvgIcon-root + .MuiSvgIcon-root" #js {:fill "#2bcff0"}
+                                                                    }})})))))
 
 (defnc select-input-simple
   [{:keys [label-text value choices on-change]}]
-  ($ FormControl {:key "unique" :fullWidth false :size "small" :sx #js {"m" 0 "minWidth" 150}} ;small is a bit too small for the label display but match re-com size.. :key is needed as a unique key
-     ($ InputLabel {:id "demo-simple-select-label" :sx #js {"fontSize" 16 "fontWeight" "Bold"} } label-text) ;Portfolio is the label text
+  ($ FormControl {:key "unique" :variant "outlined" :fullWidth false ;:size "small"
+                  :sx #js {"m" 0 "minWidth" 150
+                           ;for custom styling we can 1) use @mui/material/styles and recreate a new component (e.g https://demos.themeselection.com/marketplace/materio-mui-react-nextjs-admin-template/demo-4/forms/form-elements/select/)
+                           ;or 2) format in the CSS (example in extra.css)
+                           ;or 3) sx below https://stackoverflow.com/questions/73196850/i-want-to-change-the-hover-color-to-red-wrote-a-topic-for-this-element-does-not
+                           "& .MuiOutlinedInput-notchedOutline" #js {:border "1px solid #2bcff0"}
+                           "&& .Mui-focused .MuiOutlinedInput-notchedOutline" #js {:border "2px solid purple"}
+                           "&& :hover .MuiOutlinedInput-notchedOutline" #js {:border "1.5px solid purple"}
+                           "& .MuiSvgIcon-root" #js {:fill "#2bcff0"}
+                           }}
+     ($ InputLabel {:id "demo-simple-select-label" :sx #js {"fontSize" 16 "fontWeight" "Bold"
+                                                            "color" "white"
+                                                            "&.Mui-focused " #js {:color logi-blue}}} label-text)
      ($ Select {:id "demo-simple-small" :labelId "demo-simple-select-label" :className (:text-field classes)
                 :label (str label-text "1")                    ;help the size of label text
                 :defaultValue (:id (first choices))            ;defaulted value
                 ;:value value                                  ;selected value?
                 :onChange on-change
-                :children (for [c choices] ($ MenuItem {:value (:id c) :key (:id c)} (:label c))) ; we need a unique key to avoid warning in console
-                :MenuProps  #js {:PaperProps #js {:sx #js {:maxHeight 300 }}}
-                }))
-  )
-
-(defnc select-input-grouping
-  [{:keys [label-text choices on-change]}]
-  ($ FormControl {:key "unique" :fullWidth false :size "small" :sx #js {"m" 0 "minWidth" 150 }} ; :key is needed as a unique key?
-     ($ InputLabel {:htmlFor "grouped-select" :sx #js {"fontSize" 16 "fontWeight" "Bold"} } label-text) ;Portfolio is the label text
-     ($ Select {:id "grouped-select" :className (:text-field classes)
-                :label (str label-text "1")                         ;help the size of label text
-                :defaultValue (first (:portfolios (first choices))) ;defaulted value
-                ;:value value                                      ;selected value?
-                :onChange on-change
-                :children (into [] (concat (for [g choices]
-                                             [($ ListSubheader (:label g))
-                                              (for [p (:portfolios g)] ($ MenuItem {:value p :key p} p))])))
-                :MenuProps  #js {:PaperProps #js {:sx #js {:maxHeight 300 }}}
-                }))
-  )
-
+                :sx #js {"& .MuiSelect-select" #js {:color "red"}}
+                :children (for [c choices] ($ MenuItem {:key (:id c) ; we need a unique key to avoid warning in console
+                                                        :value (:id c)
+                                                        :sx #js {:color "white"}}
+                                              (:label c)
+                                              ))
+                :MenuProps  #js {:PaperProps #js {:sx #js {:maxHeight 300 :background-color "#1e1e1e" :border "1.5px solid #2bcff0"
+                                                           "& .Mui-selected" #js {:color "#2bcff0"}
+                                                           }}}
+                })))
 
 (defnc select-input-search
   [{:keys [label-text choices on-change]}]
   ($ Autocomplete
      {:id "combo-box-demo"
       :options (clj->js (into [] (for [c choices] {:label (:label c) })))
-      :sx #js { "width" 200 "height" 50 "fontSize" 30 "& .MuiFormLabel-root" #js {"fontSize" "1.25rem" "fontWeight" "Bold"}}
+      :sx #js { "width" 200 "height" 50 "fontSize" 30
+               ;LABEL
+               "& .MuiFormLabel-root" #js {"fontSize" "1.25rem" "fontWeight" "Bold" "color" "white"}
+               "& label.Mui-focused" #js {:color "#2bcff0"}
+               ;MENU
+               "& .MuiOutlinedInput-root" #js {:color "red"}
+               ;https://stackoverflow.com/questions/71942822/materialui-v5-how-to-style-autocomplete-options
+
+               ;BOX
+               "& .MuiOutlinedInput-notchedOutline" #js {:border "1px solid #2bcff0"}
+               "&& .Mui-focused .MuiOutlinedInput-notchedOutline" #js {:border "2px solid purple"}
+               "&& :hover .MuiOutlinedInput-notchedOutline" #js {:border "1.5px solid purple"}
+               ;ICON
+               "& .MuiSvgIcon-root" #js {:fill "#2bcff0"}
+
+               }
+      ;:PaperComponent #js {:Paper #js {:sx #js {:color "green"}}}
+
+      :ListboxProps #js {:sx #js {:color "white"
+                                  :background-color "#1e1e1e" :border "1.5px solid #2bcff0"
+
+                                  ;https://mui.com/material-ui/api/autocomplete/#css
+                                  ;" &.MuiAutocomplete-paper " #js {:background-color "#2bcff0"}
+                                  ;"& .MuiAutocomplete-input[aria-selected='true']" #js {:color "#2bcff0"}
+                                  }}
+
       :defaultValue (:label (first choices))
       :renderInput (fn [^js params]
                      (set! (.-variant params) "outlined")
@@ -227,6 +267,22 @@
       }
      )
   )
+
+;(defnc select-input-grouping
+;  [{:keys [label-text choices on-change]}]
+;  ($ FormControl {:key "unique" :fullWidth false :size "small" :sx #js {"m" 0 "minWidth" 150}} ; :key is needed as a unique key?
+;     ($ InputLabel {:htmlFor "grouped-select" :sx #js {"fontSize" 16 "fontWeight" "Bold" :color "white" "&.Mui-focused" #js {:color logi-blue}} } label-text) ;Portfolio is the label text
+;     ($ Select {:id "grouped-select" :className (:text-field classes)
+;                :label (str label-text "1")
+;                :defaultValue (first (:portfolios (first choices)))
+;                ;:value value                                      ;selected value?
+;                :onChange on-change
+;                :children (into [] (concat (for [g choices]
+;                                             [($ ListSubheader (:label g))
+;                                              (for [p (:portfolios g)] ($ MenuItem {:value p :key p} p))])))
+;                :MenuProps  #js {:PaperProps #js {:sx #js {:maxHeight 300 }}}
+;                }))
+;  )
 
 ;(defnc date-picker
 ;  "This is the typical switch at the top right of a box to display or hide it"
