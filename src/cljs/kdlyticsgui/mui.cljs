@@ -12,13 +12,20 @@
                                             MenuItem Item FormControl Slider Autocomplete TextField  RadioGroup Radio FormLabel FormControlLabel Switch
                                             ListSubheader Unstable_Grid2 Grid Card CardActions CardContent Modal
                                             FormControl
+                                            DrawerHeader
                                             )]
-    ["@mui/material/FormControl" :default MuiFormControl ]
-    ["@mui/material/styles" :refer [styled]]
+    ;["@mui/material/FormControl" :default MuiFormControl]
+    ["@mui/material/styles" :refer [styled useTheme]]
+    ;["@mui/material/styles" :refer (useTheme styled)]
+
+    ["@mdi/js" :refer ( mdiGold mdiFinance mdiBottleWine mdiTools mdiPiggyBank)]
+    ["@mdi/react" :refer ( Icon )]
 
     ["@mui/icons-material/MoveToInbox" :default InboxIcon]
     ["@mui/icons-material/PhotoCamera" :default PhotoCameraIcon]
     ["@mui/icons-material/Download" :default DownloadIcon]
+    ["@mui/icons-material/ChevronLeft" :default ChevronLeftIcon]
+    ["@mui/icons-material/ChevronRight" :default ChevronRightIcon]
     ["@mui/icons-material/SystemUpdateAlt" :default SystemUpdateAltIcon]
     ["@mui/icons-material/Star" :default StarIcon]
     ["@mui/icons-material/StarBorder" :default StarBorderIcon]
@@ -41,6 +48,8 @@
     ["@mui/icons-material/ShowChart" :default ShowChart]
     ["@mui/icons-material/Fort" :default Fort]
 
+    ;["@material-ui/core/styles" :refer [withStyles]]
+
     ;["@mui/x-date-pickers" :refer ( DatePicker LocalizationProvider)]
     ;["@mui/x-date-pickers/AdapterDayjs" :refer ( AdapterDayjs )]
     ;["dayjs" :as dayjs]
@@ -50,7 +59,10 @@
 ;--------------------------------------------------------USEFUL----------------------------------------------------------
 ;https://github.com/reagent-project/reagent/blob/e70c52531341bba83636e88eb7b60ff5796195b1/examples/material-ui/src/example/core.cljs#L78-L93
 ;https://github.com/dakra/mui-templates/blob/master/src/mui_templates/views/components.cljs#L55-L58
-
+;for custom styling we can
+;   1) use @mui/material/styles and recreate a new component (e.g https://demos.themeselection.com/marketplace/materio-mui-react-nextjs-admin-template/demo-4/forms/form-elements/select/)
+;or 2) format in the CSS (example in extra.css)
+;or 3) sx https://stackoverflow.com/questions/73196850/i-want-to-change-the-hover-color-to-red-wrote-a-topic-for-this-element-does-not
 ;--------------------------------------------------------TOOLS----------------------------------------------------------
 (def classes (let [prefix "rmui-example"]
                {:root       (str prefix "-root")
@@ -68,10 +80,9 @@
 
 (defn synthetic-event-value
   [v]
-  "Here we already get the value by taking the second argument %2 of the Autocomplete on-change event "
+  "Here we already get the value by taking the second argument %2 of the Autocomplete on-change event"
   "https://stackoverflow.com/questions/70426718/getting-syntheticbaseevent-object-instead-of-the-simple-event-when-using-react"
   "(fn [_ choice] (println (:label (js->clj [_ e] {:keywordize-keys true})) ))"
-
   (:label (js->clj v {:keywordize-keys true}))
   )
 
@@ -79,80 +90,122 @@
 ;  {:palette {:primary   colors/purple
 ;             :secondary colors/green}})
 
-
-;(defnc FormControlStyled
-;  (styled MuiFormControl #js {"&.MuiFormLabel-root.Mui-focused" #js {:color "red"}} )
-;
-;  )
-
-
-
-;------------------------------------------------------------NAVIGATION------------------------------------------------
-(def left-bar-width "165px")
-(def top-bar-height "53px")
-
+;--------------------------------------------------NAVIGATION-----------------------------------------------------------
 (def main-navigation
-  (let [home-events nil]                                                                                                                                                    ;[:get-qt-date]
-    [{:code :wealth      :name "Summary"    :dispatch :wealth      :subs nil   :load-events home-events   :mounting-modal true  :icon Savings    :index 1}
-     {:code :positions   :name "Positions"  :dispatch :positions   :subs nil   :load-events home-events   :mounting-modal true  :icon ShowChart  :index 2}
-     {:code :vault       :name "Vault"      :dispatch :vault       :subs nil   :load-events home-events   :mounting-modal true  :icon Fort       :index 3}
-     {:code :cellar      :name "Cellar"     :dispatch :cellar      :subs nil   :load-events home-events   :mounting-modal true  :icon WineBar    :index 4}
-     {:code :tools       :name "Tools"      :dispatch :tools       :subs nil   :load-events home-events   :mounting-modal true  :icon Build      :index 5}
+  (let [home-events nil]
+    [{:code :wealth      :name "Summary"     :subs nil   :load-events home-events   :mounting-modal true  :icon-mui Savings    :icon-mdi mdiPiggyBank       :index 1}
+     {:code :positions   :name "Positions"   :subs nil   :load-events home-events   :mounting-modal true  :icon-mui ShowChart  :icon-mdi mdiFinance         :index 2}
+     {:code :vault       :name "Vault"       :subs nil   :load-events home-events   :mounting-modal true  :icon-mui Fort       :icon-mdi mdiGold            :index 3}
+     {:code :cellar      :name "Cellar"      :subs nil   :load-events home-events   :mounting-modal true  :icon-mui WineBar    :icon-mdi mdiBottleWine      :index 4}
+     {:code :tools       :name "Tools"       :subs nil   :load-events home-events   :mounting-modal true  :icon-mui Build      :icon-mdi mdiTools           :index 5}
      ]))
-
-;#353535; /*DARK 300*/
-;#2bcff0; /* PRIMARY 100 */
 
 (rf/reg-event-fx
   :change-active-section
   (fn [{:keys [db]} [_ index]]
     (let [main-navigation-grp (group-by :index main-navigation)]
-      {:db (assoc db :navigation/active-section (:code (first (main-navigation-grp index))))} ; (:code (first (main-navigation-grp index)))
-      )
-    ))
+      {:db (assoc db :navigation/active-section (if (= 0 index) :entry (:code (first (main-navigation-grp index)))))})))
+;----------------------------------------------SIMPLE RESPONSIVE NAVIGATION---------------------------------------------
+;(defnc navigation-simple []
+;(let [[selectedIndex setSelectedIndex] (use-state 2)
+;      handleListItemClick (fn [event index] (setSelectedIndex index))
+;      x (use-effect [selectedIndex] (rf/dispatch [:change-active-section selectedIndex]))]
+;  ($ Box {:sx #js {:display "flex"} }
+;     ($ CssBaseline
+;        ($ AppBar {:position "fixed" :sx #js {:height appbar-height :width "100%" :zIndex 200 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}}}
+;           ($ Toolbar {:sx #js {:backgroundColor "#353535" "&.MuiToolbar-root" #js {"min-height" "51px"}}} ;toolbar height is 64px default => @media muitoolbar etc
+;              ;($ IconButton {:size "large" :edge "start" :color "inherit" :aria-label "menu" :sx #js {:mr 0}} ($ MenuIcon))
+;              ($ Typography {:variant "h5" :noWrap true :component "div" :sx #js {:flexGrow 1 :pl 4 }} "AppName") ;just a text, flexGrow to make sure the following button is at the right end of the element
+;              ($ Button {:color "inherit" :size "large" :onClick #(rf/dispatch [:navigation/active-section :entry])} "AppLogo")))
+;        ($ Drawer {:variant "permanent" :anchor "left"
+;                   :sx #js {:position "absolute" :zIndex 1 "& .MuiDrawer-paper" #js {:paddingTop appbar-height :width drawer-width :boxSizing "border-box" :backgroundColor "#353535" :color "white"}}}
+;           ($ List
+;              (for [item main-navigation]
+;                ($ ListItem {:key (:code item) :disablePadding true :onClick #(handleListItemClick % (:index item))}
+;                   ($ ListItemButton {:selected (= selectedIndex (:index item))
+;                                      ;https://stackoverflow.com/questions/71984986/how-can-i-override-styling-for-listitembutton-when-its-selected
+;                                      ;https://stackoverflow.com/questions/61486061/how-to-set-selected-and-hover-color-of-listitem-in-material-ui
+;                                      :sx       #js {"&:hover"        #js {:backgroundColor "#8cecff"} ;PRIMARY 400
+;                                                     "&.Mui-selected" #js {:backgroundColor "#2bcff0"}
+;                                                     "&.Mui-selected:hover" #js {:backgroundColor "#2bcff0"}
+;                                                     "&& .MuiTouchRipple-child" #js {:backgroundColor "black"}  ;animation when clicked
+;                                                     "&& .MuiTouchRipple-rippleVisible" #js {:opacity 0.5 :animation-duration "600ms"}  ;animation when clicked
+;                                                     }}
+;                      ($ ListItemIcon ($ (:icon item) {:sx #js {:color "white"}}))
+;                      ($ ListItemText {:primary (:name item)})
+;                      )
+;                   )))
+;           ;($ Divider {:textAlign "left" :light true :sx #js {:backgroundColor "#353535" :color "white"  :fontSize 10 "&.MuiDivider-root" #js {"&::before, &::after" #js {:borderColor  "#2bcff0"}}}} "Cat2")
+;           )))))
+;-----------------------------------------PERSISTENT RESPONSIVE NAVIGATION----------------------------------------------
+;https://github.com/dakra/mui-templates/blob/master/src/mui_templates/dashboard.cljss
+
+(def color-logitech "#2bcff0")
+(def color-dark-100 "#000000")
+(def color-dark-200 "#1e1e1e")
+(def color-dark-300 "#3f3f3f")
+
+(def drawer-width 165)                                      ;same as (def drawer-width "165px")
+(def appbar-height 53)
 
 (defnc navigation []
-(let [[selectedIndex setSelectedIndex] (use-state 2)
-      handleListItemClick (fn [event index] (setSelectedIndex index))
-      x (use-effect [selectedIndex] (rf/dispatch [:change-active-section selectedIndex])) ; selectedIndex
-      ;x (use-effect [selectedIndex] (println (:name (first (main-navigation-grp selectedIndex)))))
-      ]
-  ;(println selectedIndex)
-  ($ Box {:sx #js {:display "flex"} }
-     ($ CssBaseline
-        ($ AppBar {:position "fixed" :sx #js {:height top-bar-height :width "100%" :zIndex 200 :backgroundColor "#2bcff0" :borderBottom #js {"min-height" "50px"}}} ;width: `calc(100% - ${drawerWidth}px)`  :width "2695px" :ml left-nav-bar-width
-           ($ Toolbar {:sx #js {:backgroundColor "#353535" "&.MuiToolbar-root" #js {"min-height" "51px"}}} ;toolbar height is 64px default => @media muitoolbar rott etc
-              ;($ IconButton {:size "large" :edge "start" :color "inherit" :aria-label "menu" :sx #js {:mr 0}} ($ MenuIcon))
-              ($ Typography {:variant "h5" :noWrap true :component "div" :sx #js {:flexGrow 1 :pl 4 }} "AppName") ;just a text, flexGrow to make sure the following button is at the right end of the element
-              ($ Button {:color "inherit" :size "large" :onClick #(rf/dispatch [:navigation/active-section :entry])} "AppLogo")))
-        ($ Drawer {:variant "permanent" :anchor "left" :sx #js {:position "absolute" :zIndex 1 "& .MuiDrawer-paper" #js {:paddingTop top-bar-height :width left-bar-width :boxSizing "border-box" :backgroundColor "#353535" :color "white"}}}
-           ($ List
-              (for [item main-navigation]
-                ($ ListItem {:key (:code item) :disablePadding true :onClick #(handleListItemClick % (:index item))}
-                   ($ ListItemButton {:selected (= selectedIndex (:index item))
-                                      ;https://stackoverflow.com/questions/71984986/how-can-i-override-styling-for-listitembutton-when-its-selected
-                                      ;https://stackoverflow.com/questions/61486061/how-to-set-selected-and-hover-color-of-listitem-in-material-ui
-                                      :sx       #js {"&:hover"        #js {:backgroundColor "#8cecff"} ;PRIMARY 400
-                                                     "&.Mui-selected" #js {:backgroundColor "#2bcff0"}
-                                                     "&.Mui-selected:hover" #js {:backgroundColor "#2bcff0"}
-                                                     "&& .MuiTouchRipple-child" #js {:backgroundColor "black"} ;it works
-                                                     "&& .MuiTouchRipple-rippleVisible" #js {:opacity 0.5 :animation-duration "600ms"} ;it works
-                                                     }}
-                      ($ ListItemIcon ($ (:icon item) {:sx #js {:color "white"}}))
-                      ($ ListItemText {:primary (:name item)})
-                      )
-                   )))
-           ;($ Divider {:textAlign "left" :light true :sx #js {:backgroundColor "#353535" :color "white"  :fontSize 10 "&.MuiDivider-root" #js {"&::before, &::after" #js {:borderColor  "#2bcff0"}}}} "Cat2")
-           )))))
+  (let [theme (useTheme)
+
+        [open setOpen] (use-state false)
+        handleDrawerOpen (fn [] (setOpen true))
+        handleDrawerClose (fn [] (setOpen false))
+
+        [selectedIndex setSelectedIndex] (use-state 0)
+        handleListItemClick (fn [event index] (setSelectedIndex index))
+        x (use-effect [selectedIndex] (rf/dispatch [:change-active-section selectedIndex]))
+
+        backToEntry (fn [] (do (handleDrawerClose) (setSelectedIndex 0)))
+        ]
+    ($ Box {:sx #js {:display "flex"}}
+       ($ CssBaseline
+          ($ AppBar {:position "fixed"
+                     :sx #js {:height appbar-height :backgroundColor color-logitech :width "100%" ;(if open (str "calc(100% - " drawer-width ")") "100%")
+                              :zIndex (+ (.. theme -zIndex -drawer) 1)  ;(if open 0 (+ (.. theme -zIndex -drawer) 1))
+                              :transition (.. theme -transitions (create #js ["width" "margin"]
+                                                                         #js {:easing (.. theme -transitions -easing -sharp)
+                                                                              :duration (if open (.. theme -transitions -duration -leavingScreen) (.. theme -transitions -duration -enteringScreen))}))}}
+             ($ Toolbar {:sx #js {:backgroundColor color-dark-200 "&.MuiToolbar-root" #js {:minHeight (- appbar-height 2) :padding 0}}} ;there is a default padding right/left at 24px
+                ($ Button {:color "inherit" :size "large" :sx #js {:width drawer-width :fontSize "20px" :textTransform "none"} :onClick (if open handleDrawerClose handleDrawerOpen)} "Kdlytics") ;:textTransform to avoid conversion to upper case
+                ($ Button {:color "inherit" :size "large" :sx #js {:width drawer-width :marginLeft (str "calc(100% - " (* 2 drawer-width) "px)")} :onClick #(backToEntry)} "Logo")
+                ;Alternatives:
+                ;($ IconButton {:color "inherit" :aria-label "open drawer" :edge "start" :size "large" :onClick handleDrawerOpen} ($ MenuIcon))
+                ;($ Typography {:variant "h6" :noWrap true :component "div" } "Kdlytics")
+                ;(if open ($ IconButton {:onClick handleDrawerClose } ($ ChevronLeftIcon)) ($ IconButton {:onClick handleDrawerOpen } ($ ChevronRightIcon)))
+                ))
+
+          ($ Drawer {:variant "persistent" :anchor "left" :open open ;for variant with icon display :open true
+                     :sx #js {"& .MuiDrawer-paper" #js {:paddingTop (str appbar-height "px") :width drawer-width :boxSizing "border-box" :backgroundColor color-dark-200 :color "white"}}} ;for variant with icon display (if open drawer-width "50px")
+             ($ List  {:sx #js {:paddingBottom 0 :paddingTop 0}} ;there is a default padding top/bottom at 8px => :p 0 works as well
+                (for [item main-navigation]
+                  ($ ListItem {:key (:code item) :disablePadding true :onClick #(handleListItemClick % (:index item))} ;:justifyContent "flex-start"
+                     ($ ListItemButton {:selected (= selectedIndex (:index item))
+                                        ;https://stackoverflow.com/questions/71984986/how-can-i-override-styling-for-listitembutton-when-its-selected
+                                        ;https://stackoverflow.com/questions/61486061/how-to-set-selected-and-hover-color-of-listitem-in-material-ui
+                                        :sx       #js {"&:hover"        #js {:backgroundColor color-dark-300}
+                                                       "&.Mui-selected" #js {:backgroundColor color-logitech}
+                                                       "&.Mui-selected:hover" #js {:backgroundColor color-logitech}
+                                                       "&& .MuiTouchRipple-child" #js {:backgroundColor "black"}                         ;animation when clicked
+                                                       "&& .MuiTouchRipple-rippleVisible" #js {:opacity 0.5 :animationDuration "600ms"} ;animation when clicked
+                                                       }}
+                        ;($ ListItemIcon ($ (:icon-mui item) {:sx #js {:color "white"}}))
+                        ($ ListItemIcon ($ Icon  {:path (:icon-mdi item) :size 1 :color "white"})) ;:sx #js {"& .MuiListItemIcon-root"  #js {:minWidth "max-content"}} per default the ListItemIcon comes with spaces hence why we set up .MuiListItemIcon-root, we need ml 2 below
+                        ($ ListItemText {:primary (:name item) :sx #js {:ml -2}}) ;margin-left to position text vs icon
+                        )
+                     )))
+             )
+          ))
+    ))
 
 ;----------------------------------------------------INPUT/DISPLAY COMPONENTS-------------------------------------------
-
-(def logi-blue "#2bcff0")                                   ;DONT CHANGE
-
 (defnc slider-simple
   [{:keys [width on-change]}]
   ($ Slider {:defaultValue 50 :marks false :step 10 :aria-label "Small steps" :size "normal" :valueLabelDisplay "on"
-             :sx #js {"color" logi-blue
+             :sx #js {"color" color-logitech
                       "width" width}
              :onChange on-change
              }))
@@ -168,11 +221,11 @@
   [{:keys [variant text on-click]}]
   ($ Button {:variant variant :onClick on-click
              :sx #js {"color" "white"
-                      "&.MuiButton-contained" #js {:backgroundColor logi-blue}
+                      "&.MuiButton-contained" #js {:backgroundColor color-logitech}
                       "&.MuiButton-contained:hover" #js {:color "black"}
                       "&.MuiButton-outlined" #js {:borderColor "white"}
-                      "&.MuiButton-outlined:hover" #js {:borderColor logi-blue :color logi-blue}}
-             } text)   ;:endIcon [($ SendIcon)]
+                      "&.MuiButton-outlined:hover" #js {:borderColor color-logitech :color color-logitech}}
+             } text)
   )
 
 (defnc radio-button
@@ -183,31 +236,27 @@
 (defnc radio-group-button
   [{:keys [title list on-change]}]
   ($ FormControl
-     ($ FormLabel {:id "demo-radio-buttons-group-label"  :sx #js {:color "white" "&.Mui-focused" #js {:color logi-blue}}  } title)
+     ($ FormLabel {:id "demo-radio-buttons-group-label" :sx #js {:color "white" "&.Mui-focused" #js {:color color-logitech}}} title)
      ($ RadioGroup {:row true  :aria-labelledby "demo-row-radio-buttons-group-label" :name "row-radio-buttons-group" :onChange on-change }
         (for [item list] ($ FormControlLabel {:value (:value item) :label (:label item)
                                               :sx #js {"color" "white"}
                                               :control ($ Radio ;radio buttons are SVG!... => https://stackoverflow.com/questions/60493740/how-to-change-border-color-of-radio-button-in-material-ui
-                                                          {:sx #js { ;"& .MuiSvgIcon-root" #js {:fill "#2bcff0"}
-                                                                    "& .MuiSvgIcon-root:not(.MuiSvgIcon-root ~ .MuiSvgIcon-root)" #js {:fill "white"}
-                                                                    "& .MuiSvgIcon-root + .MuiSvgIcon-root" #js {:fill "#2bcff0"}
+                                                          {:sx #js {"& .MuiSvgIcon-root:not(.MuiSvgIcon-root ~ .MuiSvgIcon-root)" #js {:fill "white"}
+                                                                    "& .MuiSvgIcon-root + .MuiSvgIcon-root" #js {:fill color-logitech}
                                                                     }})})))))
 
 (defnc select-input-simple
   [{:keys [label-text value choices on-change]}]
   ($ FormControl {:key "unique" :variant "outlined" :fullWidth false ;:size "small"
                   :sx #js {"m" 0 "minWidth" 150
-                           ;for custom styling we can 1) use @mui/material/styles and recreate a new component (e.g https://demos.themeselection.com/marketplace/materio-mui-react-nextjs-admin-template/demo-4/forms/form-elements/select/)
-                           ;or 2) format in the CSS (example in extra.css)
-                           ;or 3) sx below https://stackoverflow.com/questions/73196850/i-want-to-change-the-hover-color-to-red-wrote-a-topic-for-this-element-does-not
-                           "& .MuiOutlinedInput-notchedOutline" #js {:border "1px solid #2bcff0"}
+                           "& .MuiOutlinedInput-notchedOutline" #js {:border (str "1.5px solid" color-logitech)}
                            "&& .Mui-focused .MuiOutlinedInput-notchedOutline" #js {:border "2px solid purple"}
                            "&& :hover .MuiOutlinedInput-notchedOutline" #js {:border "1.5px solid purple"}
-                           "& .MuiSvgIcon-root" #js {:fill "#2bcff0"}
+                           "& .MuiSvgIcon-root" #js {:fill color-logitech}
                            }}
      ($ InputLabel {:id "demo-simple-select-label" :sx #js {"fontSize" 16 "fontWeight" "Bold"
                                                             "color" "white"
-                                                            "&.Mui-focused " #js {:color logi-blue}}} label-text)
+                                                            "&.Mui-focused " #js {:color color-logitech}}} label-text)
      ($ Select {:id "demo-simple-small" :labelId "demo-simple-select-label" :className (:text-field classes)
                 :label (str label-text "1")                    ;help the size of label text
                 :defaultValue (:id (first choices))            ;defaulted value
@@ -219,8 +268,8 @@
                                                         :sx #js {:color "white"}}
                                               (:label c)
                                               ))
-                :MenuProps  #js {:PaperProps #js {:sx #js {:maxHeight 300 :background-color "#1e1e1e" :border "1.5px solid #2bcff0"
-                                                           "& .Mui-selected" #js {:color "#2bcff0"}
+                :MenuProps  #js {:PaperProps #js {:sx #js {:maxHeight 300 :background-color color-dark-200 :border (str "1.5px solid" color-logitech)
+                                                           "& .Mui-selected" #js {:color color-logitech}
                                                            }}}
                 })))
 
@@ -232,24 +281,19 @@
       :sx #js { "width" 200 "height" 50 "fontSize" 30
                ;LABEL
                "& .MuiFormLabel-root" #js {"fontSize" "1.25rem" "fontWeight" "Bold" "color" "white"}
-               "& label.Mui-focused" #js {:color "#2bcff0"}
+               "& label.Mui-focused" #js {:color color-logitech}
                ;MENU
                "& .MuiOutlinedInput-root" #js {:color "red"}
                ;https://stackoverflow.com/questions/71942822/materialui-v5-how-to-style-autocomplete-options
-
                ;BOX
-               "& .MuiOutlinedInput-notchedOutline" #js {:border "1px solid #2bcff0"}
+               "& .MuiOutlinedInput-notchedOutline" #js {:border (str "1.5px solid" color-logitech)}
                "&& .Mui-focused .MuiOutlinedInput-notchedOutline" #js {:border "2px solid purple"}
                "&& :hover .MuiOutlinedInput-notchedOutline" #js {:border "1.5px solid purple"}
                ;ICON
-               "& .MuiSvgIcon-root" #js {:fill "#2bcff0"}
-
-               }
+               "& .MuiSvgIcon-root" #js {:fill color-logitech}}
       ;:PaperComponent #js {:Paper #js {:sx #js {:color "green"}}}
-
       :ListboxProps #js {:sx #js {:color "white"
-                                  :background-color "#1e1e1e" :border "1.5px solid #2bcff0"
-
+                                  :background-color color-dark-200 :border (str "1.5px solid" color-logitech)
                                   ;https://mui.com/material-ui/api/autocomplete/#css
                                   ;" &.MuiAutocomplete-paper " #js {:background-color "#2bcff0"}
                                   ;"& .MuiAutocomplete-input[aria-selected='true']" #js {:color "#2bcff0"}
@@ -263,10 +307,7 @@
                      (js/console.log (clj->js params))
                      (r/create-element mm/TextField params)
                      )
-      :onChange on-change
-      }
-     )
-  )
+      :onChange on-change}))
 
 ;(defnc select-input-grouping
 ;  [{:keys [label-text choices on-change]}]
@@ -306,15 +347,16 @@
     ($ Switch {:size "small" :checked checked :onChange (fn [e] (setChecked (aget e "target" "checked")))})))
 
 (defnc card-simple
-  [{:keys [title text]}]
-  ($ Card {:sx #js { :minWidth 180 :maxHeight 95 :borderRadius "15px"}}
+  [{:keys [title value]}]
+  ($ Card {:sx #js { :minWidth 170 :maxHeight 95 :borderRadius "15px" :backgroundColor color-dark-300}}
      ($ CardContent
-        ($ Box {:sx #js { :width 170 :height 42 :backgroundColor "#555555"}}
-           ($ Typography {:variant "h5"} title))
-        ;($ Typography {:variant "p"} "bla bla")
-        ($ Typography {:variant "h6"} text)
+        ($ Box {:sx #js { :width 160 :height 42 :backgroundColor color-dark-300}}
+           ($ Typography {:variant "h5" :color "white"} title))
+        ;($ Typography {:variant "p" :color "grey"} "bla bla")
+        ($ Typography {:variant "h6" :color "white"} value)
         )
      ))
+
 
 (defnc modal-button-simple
   [{:keys [title text]}]
@@ -407,9 +449,7 @@
     (fn [id width title-str opts children]                  ;see https://github.com/reagent-project/reagent/blob/master/doc/CreatingReagentComponents.md need to repeat the arguments!
       (d/div {:id id}
              (mui-vbox :class "rightelement" :gap "20px" :width width
-                       :children (concat [(mui-hbox :align :center :children (into [($ text-simple {:variant "head1" :text title-str})
-
-                                                                                    ]
+                       :children (concat [(mui-hbox :align :center :children (into [($ text-simple {:variant "head1" :text title-str})]
                                                                                    (if (:show-hide opts) [($ switch {:checked-atom show-element :default-checked (not (:hide-by-default opts))})])))]
                                          (if @show-element children)))))))
 

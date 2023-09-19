@@ -32,7 +32,7 @@
                 [v-box :align-self :center :class "titlescreen" :children
                  [[:p {:class "titlescreen"} "Hello"]
                   [:p ""] ;2nd [:p] to avoid the cursor blinking next to the logo
-                  ($ Button {:color "inherit" :size "large" :onClick #(rf/dispatch [:navigation/active-section :positions])} "LET'S GO")
+                  ;($ Button {:color "inherit" :size "large" :sx #js {:color "grey"} :onClick #(rf/dispatch [:change-active-section 2])} "LET'S GO")
                   ]
                  ]])
 
@@ -97,7 +97,6 @@
   [h-box :gap "10px" :padding "0px"
    :children [[box :class "subbody" :child [wealth/summary-display]]
               [rcm/context-menu]]])
-
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn positions-view []
   [h-box :gap "10px" :padding "0px"
@@ -113,14 +112,11 @@
   [h-box :gap "10px" :padding "0px"
    :children [[box :class "subbody" :child [cellar/summary-display]]
               [rcm/context-menu]]])
-
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn tools-view []
   [h-box :gap "10px" :padding "0px"
    :children [[box :class "subbody" :child [t/mui-dev]]
               [rcm/context-menu]]])
-
-
 
 ;-----------------------------------------------------------------------------------------------------------------------
 (defn active-section []
@@ -143,5 +139,5 @@
    :class "body"
    :children [($ mui/navigation)
               [modal-mounting]
-              [active-section]
-              ]])
+              [active-section]]
+   ])

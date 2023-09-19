@@ -131,9 +131,9 @@
                                                                                 :download-fn      (mrt/mrt-default-download-fn "characteristics-summary" columns-characteristics)
                                                                                 :photo-id         "characteristics-summary"})
                                                                             ;TODO add few cards for the characteristics tha is it
-                                                                            ($ mui/card-simple {:title "TOTAL $" :text "200 000"} )
-                                                                            ($ mui/card-simple {:title "CASH" :text "10%"} )
-                                                                            ($ mui/card-simple {:title "P/E" :text "9"} )
+                                                                            ($ mui/card-simple {:title "TOTAL $" :value "200 000"} )
+                                                                            ($ mui/card-simple {:title "CASH" :value "10%"} )
+                                                                            ($ mui/card-simple {:title "P/E" :value "9"} )
                                                                             ;[t/vega-lite (chart/bullet-chart-characteristic data-characteristics-test "TRY")]
                                                                             ]
 

@@ -376,7 +376,7 @@
           :muiTablePaperProps            #js {"sx" #js {"backgroundColor" "#1e1e1e" ;DARK 200
                                                         ;"borderTopLeftRadius" "20px" "borderTopRightRadius" "20px" "borderBottomLeftRadius" "20px" "borderBottomRightRadius" "20px"
                                                         }}  ;this is the ultimate element of the MUI Table, we can either match the radius with the one of the toolbar or just change the background color which is eaiser tbh
-          :muiTableBodyProps            #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
+          :muiTableBodyProps            #js {"sx" #js {"backgroundColor" "#3f3f3f"}} ;DARK 300
           :muiTableBodyContainerProps   #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
           :muiTablePaginationProps      #js {"sx" #js {"backgroundColor" "#3f3f3f"}}
 
