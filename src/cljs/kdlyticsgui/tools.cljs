@@ -3,13 +3,14 @@
             [goog.string :as gstring]
             [goog.string.format]
             [cljs-time.format :as tf]
+            [helix.core :refer [defnc $]]
             ["react-vega" :as react-vega :refer (VegaLite)])
   (:import (goog.i18n NumberFormat)
            (goog.i18n.NumberFormat Format))
   )
 
 ;------------------------------------------------------VEGA-------------------------------------------------------------
-(defn vega-lite [spec] [VegaLite (clj->js {:spec spec}  ) ])
+(defn vega-lite [spec] (VegaLite (clj->js {:spec spec} )))
 ;------------------------------------------------------????-------------------------------------------------------------
 (defn int->gdate [x] (goog.date.UtcDateTime.fromIsoString. (str x)))
 (defn gdate->yyyyMMdd [x] (subs (.toString x) 0 8))

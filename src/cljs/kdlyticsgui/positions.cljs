@@ -4,6 +4,7 @@
             [kdlyticsgui.tools :as t]
             [kdlyticsgui.mrttables :as mrt]
             [kdlyticsgui.mui :as mui]
+            ["react-vega" :as react-vega :refer (VegaLite)]
             [re-frame.core :as rf]
             [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                                  single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
@@ -122,7 +123,7 @@
 
     [(mui/right-element-box-generic "positions-summary" "1700px" "Summary"
                                     [($ mui/my-grid {:direction "row" :gap "30px"
-                                                     :children [;[t/vega-lite (chart/pie-chart-strategy data-strategy-exposure-clean "Strategy %")]
+                                                     :children [(t/vega-lite (chart/pie-chart-strategy data-strategy-exposure-clean "Strategy %"))
                                                                 ($ mrt/material-react-table-template-fast
                                                                    {:clj-data data-characteristics
                                                                     :clj-columns columns-characteristics
