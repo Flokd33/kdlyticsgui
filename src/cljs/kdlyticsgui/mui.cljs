@@ -212,9 +212,11 @@
 
 (defnc text-simple
   "variant is one of h1, h2, ... , h6, subtitle1, subtitle2, body1, body2, button, caption, overline"
-  [{:keys [variant text]}]
-  ($ Typography {:variant variant } text)
+  [{:keys [variant text color]}]
+  ($ Typography {:variant variant :color color} text)
   )
+
+(defnc title-screen [{:keys [text]}] ($ Typography {:class "titlescreen"} text))
 
 (defnc button-simple
   "variant is one of text, contained, outlined"
@@ -378,7 +380,26 @@
     )
   )
 ;-------------------------------------------------GRID COMPONENTS-------------------------------------------------------
-;MAKE MY OWN
+(defnc mui-body-box [{:keys [class gap children]}]
+  ($ Box
+     {:class class}
+     ($ Grid {:container true :direction "column" :spacing (or gap "0px")
+              :justifyContent "flexStart" :alignItems "start"} ;flexStart for reactive expandable content of the body
+        (mapv #($ Grid {:item true} %) children))))
+
+(defnc my-grid [{:keys [class direction gap align width children]}]
+  ($ Box
+     {:class (or class "my-grid")} ;:sx #js {"& .MuiGrid-root" #js {:width width}}
+     ($ Grid {:container true :direction direction :spacing (or gap "0px")
+              :justifyContent "flexStart" :alignItems (or align "start")}
+        (mapv #($ Grid {:item true} %) children))))
+
+(defn right-element-box-generic
+  [id width title children ]
+  (d/div {:id id}
+         ($ my-grid {:class "right-element" :direction "column" :gap "20px" :align "start" :width width :children [($ text-simple {:variant "h4" :text title :color "white"}) children]})))
+
+;NOT MY STUFF
 
 (defnc mui-grid-component [{:keys [direction class align pt pb pl pr gap children width height justify]}]
   (let [m (merge {:border "1px dashed red" :pt pt :pb pb :pl pl :pr pr}
@@ -396,27 +417,6 @@
 (defnc mui-hbox-component [m] ($ mui-grid-component {& (assoc m :direction "row")}))
 (defnc mui-vbox-component [m] ($ mui-grid-component {& (assoc m :direction "column")}))
 
-;(defnc mui-hbox-component [{:keys [align pt pb pl pr gap children width height justify]}]
-;  (let [m (merge {:border "1px dashed red" :pt pt :pb pb :pl pl :pr pr }
-;                 (if width {:width (int (.replace ^js/String width "px" ""))})
-;                 (if height {:height (int (.replace ^js/String height "px" ""))}))]
-;    ($ Box
-;       {& m}                                                ;careful syntax for props
-;       ($ Grid {:container      true :direction "row"   :spacing (or gap "0px") ;:gap would also work
-;                :justifyContent (or justify "flexStart") :alignItems (or align "center")} ;:display "flex"
-;          (mapv #($ Grid {:item true} %) children)))))
-
-
-;(defnc mui-vbox-component [{:keys [align pt pb pl pr gap children width height justify]}]
-;  (let [m (merge {:border "1px dashed red" :pt pt :pb pb :pl pl :pr pr }
-;                 (if width {:width (int (.replace ^js/String width "px" ""))})
-;                 (if height {:height (int (.replace ^js/String height "px" ""))}))]
-;    ($ Box
-;       {& m}                                                ;careful syntax for props
-;       ($ Grid {:container      true :direction "column" :spacing (or gap "0px")
-;                :justifyContent (or justify "flexStart") :alignItems (or align "center")} ;:display "flex"
-;          (mapv #($ Grid {:item true} %) children)))))
-
 (defn mui-hbox
   ;We are using the same signature as re-com h-box
   [& {:keys [size width height min-width min-height max-width max-height justify align align-self margin padding gap children class style attr]
@@ -430,7 +430,6 @@
     ($ mui-hbox-component {:class class :width width :height height :align align :justify justify :pt pt :pb pb :pl pl :pr pr :gap gap :children children})))
 
 (defn mui-vbox
-  ;We are using the same signature as re-com v-box
   [& {:keys [size width height min-width min-height max-width max-height justify align align-self margin padding gap children class style attr]
       :or   {size "none" justify :start align :stretch}
       :as   args}]
@@ -442,16 +441,7 @@
     ($ mui-vbox-component {:class class :width width :height height :align align :pt pt :pb pb :pl pl :pr pr :gap gap :children children})))
 
 
-(defn mrt-right-element-box-generic
-  "This is the box we'll use most of the time, in particular when there's a NAV bar at the left and only one box at the right."
-  [id width title-str opts children]
-  (let [show-element (r/atom true)]
-    (fn [id width title-str opts children]                  ;see https://github.com/reagent-project/reagent/blob/master/doc/CreatingReagentComponents.md need to repeat the arguments!
-      (d/div {:id id}
-             (mui-vbox :class "rightelement" :gap "20px" :width width
-                       :children (concat [(mui-hbox :align :center :children (into [($ text-simple {:variant "head1" :text title-str})]
-                                                                                   (if (:show-hide opts) [($ switch {:checked-atom show-element :default-checked (not (:hide-by-default opts))})])))]
-                                         (if @show-element children)))))))
+
 
 
 

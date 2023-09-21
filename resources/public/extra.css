@@ -8,29 +8,37 @@ div.output {
 }
 
 .body {
-background-color: #353535; /*DARK 300*/
+background-color: #000000; /*DARK 300*/
+margin-top: 40px; /* Body start below the Appbar, we do not use margin left because we want the body (particularly Particles.js) to be visible if we collapse the drawer*/
 }
-.subbody {
+
+/*.subbody {
 padding: 80px 5px;
-}
+}*/
 
-.element {
-background-color: #FAF9F6; /* ??? */
+/*.element {
 border-radius: 15px;
-padding: 15px 15px;
-margin-top: 70px;
+padding: 90px 155px;
+}*/
+
+.center-element {
+padding: 200px 600px; /*this is only for Titlescreen*/
 }
 
-.rightelement {
-background-color: #1e1e1e;  /*DARK 200*/;
+.right-element {
+background-color: #1e1e1e;
+margin-left: 200px; /* start a bit after Drawer */
+margin-top: 20px; /* so if we have >1 right-element there is a 50px gap in between (top + bottom) */
+margin-bottom: 30px; /* so if we have >1 right-element there is a 50px gap in between (top + bottom) */
 border-radius: 20px;
-padding: 20px 20px;
-margin-left: 185px;
-z-index: 100; /*can be removed*/
+padding: 25px 25px;
+z-index: 20;
+position: relative;
+width: 1700px;
 }
 
-/*not need to add margin top because the right element will be in a subbody that is already set up to pad 65px corresponding to the top nav bar*/
-/*margin-top: 70px;*/
+.my-grid {
+}
 
 /*.rc-modal-panel-child-container div  {
 background-color: #1e1e1e;
@@ -45,8 +53,7 @@ position: fixed;
 padding: 75px 0px;
 height: 100%;
 font-size: 17px;
-background-color: #353535; /*DARK 300*/
-/*border: solid 1px black;*/
+background-color: #353535;
 }
 
 
@@ -197,7 +204,7 @@ background-color: #353535; /*DARK 300*/
 
 
 /*---------------------------------------------TITLE SCREEN-----------------------------------------------------------*/
-.titlescreen p {
+.titlescreen  {
                   position: relative;
                   font-family:    Segoe UI, Roboto, sans-serif;
                   text-transform: lowercase;
@@ -221,7 +228,6 @@ background-color: #353535; /*DARK 300*/
                     background-position: 500%;
                   }
                 }
-
 /*------------------------------------------------ ??? ---------------------------------------------------------------*/
 #vg-tooltip-element {
 z-index: 2000;
@@ -238,5 +244,5 @@ z-index: 2000;
   background-repeat: no-repeat;
   background-size: cover;
   background-position: 50% 50%;
-/*  z-index: 20*/
+  z-index: 0
 }
