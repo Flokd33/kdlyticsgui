@@ -26,7 +26,7 @@
 ;-----------------------------------------------------------------------------------------------------------------------
 (defnc entry-view [] ($ mui/mui-body-box {:class "center-element" :children [($ mui/title-screen {:text "hello"})]}))
 (defnc wealth-view [] ($ mui/mui-body-box {:class "body" :children [($ wealth/summary-display)]}))
-(defnc positions-view [] ($ mui/mui-body-box {:class "body" :children [($ positions/summary-display) [positions/modal-price-history]]}))
+(defnc positions-view [] ($ mui/mui-body-box {:class "body" :children [($ positions/summary-display) ($ positions/modal-price-history)]}))
 (defnc vault-view [] ($ mui/mui-body-box {:class "body" :children []}))
 (defnc cellar-view [] ($ mui/mui-body-box {:class "body" :children [($ cellar/summary-display)]}))
 (defnc tools-view [] ($ mui/mui-body-box {:class "body" :children [($ t/mui-dev)]}))

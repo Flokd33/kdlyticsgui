@@ -26,11 +26,11 @@
               :price-history/data []
               :price-history/show-modal false)))
 
-
 ;TODO HERE
-(defn modal-price-history []
+(defnc modal-price-history []
   (let [modal-data @(rf/subscribe [:price-history/data])
         show-modal @(rf/subscribe [:price-history/show-modal])]
+    (println modal-data)
     (if show-modal
       [modal-panel
        :wrap-nicely? false                                  ;need to set up to false for 'parts' to be included..
@@ -56,18 +56,19 @@
                      )]]]
 ;($ Modal )
 
-      )))
+      )
+    ))
 
+(when (empty? @(rf/subscribe [:positions-summary])) (rf/dispatch [:get-positions-summary]))
+(when (empty? @(rf/subscribe [:positions-top10])) (rf/dispatch [:get-positions-top10]))
+(when (empty? @(rf/subscribe [:positions-characteristics])) (rf/dispatch [:get-positions-characteristics]))
+(when (empty? @(rf/subscribe [:positions-strategy-exposure])) (rf/dispatch [:get-positions-strategy-exposure]))
 
 (defnc summary-display []
-  (when (empty? @(rf/subscribe [:positions-summary])) (rf/dispatch [:get-positions-summary]))
-  (when (empty? @(rf/subscribe [:positions-top10])) (rf/dispatch [:get-positions-top10]))
-  (when (empty? @(rf/subscribe [:positions-characteristics])) (rf/dispatch [:get-positions-characteristics]))
-  (when (empty? @(rf/subscribe [:positions-strategy-exposure])) (rf/dispatch [:get-positions-strategy-exposure]))
+
   (let [data-summary @(rf/subscribe [:positions-summary])
         data-top10 @(rf/subscribe [:positions-top10])
         data-characteristics @(rf/subscribe [:positions-characteristics])
-
         data-characteristics-test [{:title "Revenue" :subtitle "Revenue bla bla " :ranges [150 225 300]  :measures [220 270] :markers [250]}
                                    {:title "Profit" :subtitle "Profit bla bla " :ranges [15 22 30]  :measures [21 23] :markers [26]}]
 

@@ -354,12 +354,13 @@
 
 (rf/reg-event-db
   :receive-price-history-data
-  (fn [db [_ data]] (assoc db :price-history/data data
+  (fn [db [_ data]] (println "DATA RECEIVED") (assoc db :price-history/data data
                               :price-history/show-throbber false)))
 
 (rf/reg-event-fx
   :get-price-history
   (fn [{:keys [db]} [_ ticker name]]
+    (println "GO MODAL")
     {:db                (assoc db :price-history/ticker ticker
                                   :price-history/name   name
                                   :price-history/show-modal true
