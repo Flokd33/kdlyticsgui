@@ -112,11 +112,11 @@
   "Include name formatting and on click event"
   ;(println (get-js-row-key this "ticker"))
   (case (get-js-row-key this "type")
-    "red" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#b42421"}} ;9C2421
+    "red" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#b42421" }} ; "color" "#000000"
     "white" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#f1f285"}}
     "sweet" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#eccd13"}}
     "champagne" #js {"sx" #js {"cursor" "pointer" "backgroundColor" "#F7E7CE"}}
-    #js {"sx" #js {"cursor" "pointer"}}
+    #js {"sx" #js {"cursor" "pointer" }}
 
     ;(if (odd? (.-index (.-row this)))
     ;   #js {:sx #js {"cursor" "pointer" "backgroundColor" "#F5F5F5"}}
@@ -232,7 +232,7 @@
 
 (defn text-col
   "Simple text column in MRT"
-  ([header accessor width]
+  ([header accessor width ]
    {:header                               header
     :accessorKey                          accessor
     :size                                 width
@@ -244,14 +244,14 @@
                                                          "borderRight" "1px solid rgba(113,113,113,0.5)"
                                                          "borderBottom" "1px solid rgba(113,113,113,0.5)"
                                                          "backgroundColor" "inherit"}}})
-  ([header accessor width cell]
+  ([header accessor width cell black?]
    (assoc (text-col header accessor width) :Cell cell)))
 
 (defn nb-col
   "Simple number column in MRT, by default aligned right with red negatives"
   ([header accessor width cell aggregate AggregatedCell]
    (assoc (nb-col header accessor width cell) :aggregationFn aggregate :AggregatedCell AggregatedCell))
-  ([header accessor width cell aggregate]
+  ([header accessor width cell aggregate ]
    (assoc (nb-col header accessor width cell) :aggregationFn aggregate :AggregatedCell cell))
   ([header accessor width cell]
    {:header                               header
@@ -371,7 +371,9 @@
                                                        "color" "white"
                                                        "backgroundColor" "#3f3f3f" }}
           :muiTableBodyCellProps        #js {"sx" #js {"borderRight" "1px solid rgba(113,113,113,0.5)"
-                                                       "backgroundColor" "#3f3f3f"}}
+                                                       "backgroundColor" "#3f3f3f"
+                                                       ;"color" "black"
+                                                       }}
 
           :muiTablePaperProps            #js {"sx" #js {"backgroundColor" "#1e1e1e" ;DARK 200
                                                         ;"borderTopLeftRadius" "20px" "borderTopRightRadius" "20px" "borderBottomLeftRadius" "20px" "borderBottomRightRadius" "20px"
@@ -448,7 +450,7 @@
         props (merge
                 (base-props-dark mdata mcolumns clj-option-map js-initial-state toolbar download-fn photo-id)
                 (if (seq pinned-cols) {:state #js {"columnPinning" #js {"left" pinned-cols "right" #js []}}}))]
-    ($ "div" {:id photo-id :class "mrt-table-dark"} ($ MaterialReactTable {& props}))
+    ($ "div" {:id photo-id :class (if (=  photo-id "cellar-summary") "mrt-table-dark-cellar" "mrt-table-dark")} ($ MaterialReactTable {& props}))
     ;(println ($ "div" {:id photo-id} ($ MaterialReactTable {& props})))
     ))
 

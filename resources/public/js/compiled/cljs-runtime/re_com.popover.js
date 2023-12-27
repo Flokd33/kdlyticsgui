@@ -267,14 +267,14 @@ re_com.popover.backdrop_args_desc = ((re_com.config.include_args_desc_QMARK_)?ne
  */
 re_com.popover.backdrop = (function re_com$popover$backdrop(var_args){
 var args__5775__auto__ = [];
-var len__5769__auto___28856 = arguments.length;
-var i__5770__auto___28857 = (0);
+var len__5769__auto___28853 = arguments.length;
+var i__5770__auto___28854 = (0);
 while(true){
-if((i__5770__auto___28857 < len__5769__auto___28856)){
-args__5775__auto__.push((arguments[i__5770__auto___28857]));
+if((i__5770__auto___28854 < len__5769__auto___28853)){
+args__5775__auto__.push((arguments[i__5770__auto___28854]));
 
-var G__28858 = (i__5770__auto___28857 + (1));
-i__5770__auto___28857 = G__28858;
+var G__28856 = (i__5770__auto___28854 + (1));
+i__5770__auto___28854 = G__28856;
 continue;
 } else {
 }
@@ -434,14 +434,14 @@ re_com.popover.popover_border_args_desc = ((re_com.config.include_args_desc_QMAR
  */
 re_com.popover.popover_border = (function re_com$popover$popover_border(var_args){
 var args__5775__auto__ = [];
-var len__5769__auto___28887 = arguments.length;
-var i__5770__auto___28888 = (0);
+var len__5769__auto___28864 = arguments.length;
+var i__5770__auto___28865 = (0);
 while(true){
-if((i__5770__auto___28888 < len__5769__auto___28887)){
-args__5775__auto__.push((arguments[i__5770__auto___28888]));
+if((i__5770__auto___28865 < len__5769__auto___28864)){
+args__5775__auto__.push((arguments[i__5770__auto___28865]));
 
-var G__28891 = (i__5770__auto___28888 + (1));
-i__5770__auto___28888 = G__28891;
+var G__28866 = (i__5770__auto___28865 + (1));
+i__5770__auto___28865 = G__28866;
 continue;
 } else {
 }
@@ -559,14 +559,14 @@ throw (new Error(["No matching clause: ",cljs.core.str.cljs$core$IFn$_invoke$ari
 var re_com$popover$popover_border_render = function (var_args){
 var p__28812 = null;
 if (arguments.length > 0) {
-var G__28903__i = 0, G__28903__a = new Array(arguments.length -  0);
-while (G__28903__i < G__28903__a.length) {G__28903__a[G__28903__i] = arguments[G__28903__i + 0]; ++G__28903__i;}
-  p__28812 = new cljs.core.IndexedSeq(G__28903__a,0,null);
+var G__28887__i = 0, G__28887__a = new Array(arguments.length -  0);
+while (G__28887__i < G__28887__a.length) {G__28887__a[G__28887__i] = arguments[G__28887__i + 0]; ++G__28887__i;}
+  p__28812 = new cljs.core.IndexedSeq(G__28887__a,0,null);
 } 
 return re_com$popover$popover_border_render__delegate.call(this,p__28812);};
 re_com$popover$popover_border_render.cljs$lang$maxFixedArity = 0;
-re_com$popover$popover_border_render.cljs$lang$applyTo = (function (arglist__28904){
-var p__28812 = cljs.core.seq(arglist__28904);
+re_com$popover$popover_border_render.cljs$lang$applyTo = (function (arglist__28888){
+var p__28812 = cljs.core.seq(arglist__28888);
 return re_com$popover$popover_border_render__delegate(p__28812);
 });
 re_com$popover$popover_border_render.cljs$core$IFn$_invoke$arity$variadic = re_com$popover$popover_border_render__delegate;
@@ -590,14 +590,14 @@ re_com.popover.popover_content_wrapper_args_desc = ((re_com.config.include_args_
  */
 re_com.popover.popover_content_wrapper = (function re_com$popover$popover_content_wrapper(var_args){
 var args__5775__auto__ = [];
-var len__5769__auto___28916 = arguments.length;
-var i__5770__auto___28917 = (0);
+var len__5769__auto___28899 = arguments.length;
+var i__5770__auto___28900 = (0);
 while(true){
-if((i__5770__auto___28917 < len__5769__auto___28916)){
-args__5775__auto__.push((arguments[i__5770__auto___28917]));
+if((i__5770__auto___28900 < len__5769__auto___28899)){
+args__5775__auto__.push((arguments[i__5770__auto___28900]));
 
-var G__28918 = (i__5770__auto___28917 + (1));
-i__5770__auto___28917 = G__28918;
+var G__28901 = (i__5770__auto___28900 + (1));
+i__5770__auto___28900 = G__28901;
 continue;
 } else {
 }
@@ -680,14 +680,14 @@ return and__5043__auto__;
 var re_com$popover$popover_content_wrapper_render = function (var_args){
 var p__28821 = null;
 if (arguments.length > 0) {
-var G__28922__i = 0, G__28922__a = new Array(arguments.length -  0);
-while (G__28922__i < G__28922__a.length) {G__28922__a[G__28922__i] = arguments[G__28922__i + 0]; ++G__28922__i;}
-  p__28821 = new cljs.core.IndexedSeq(G__28922__a,0,null);
+var G__28910__i = 0, G__28910__a = new Array(arguments.length -  0);
+while (G__28910__i < G__28910__a.length) {G__28910__a[G__28910__i] = arguments[G__28910__i + 0]; ++G__28910__i;}
+  p__28821 = new cljs.core.IndexedSeq(G__28910__a,0,null);
 } 
 return re_com$popover$popover_content_wrapper_render__delegate.call(this,p__28821);};
 re_com$popover$popover_content_wrapper_render.cljs$lang$maxFixedArity = 0;
-re_com$popover$popover_content_wrapper_render.cljs$lang$applyTo = (function (arglist__28923){
-var p__28821 = cljs.core.seq(arglist__28923);
+re_com$popover$popover_content_wrapper_render.cljs$lang$applyTo = (function (arglist__28911){
+var p__28821 = cljs.core.seq(arglist__28911);
 return re_com$popover$popover_content_wrapper_render__delegate(p__28821);
 });
 re_com$popover$popover_content_wrapper_render.cljs$core$IFn$_invoke$arity$variadic = re_com$popover$popover_content_wrapper_render__delegate;
@@ -711,14 +711,14 @@ re_com.popover.popover_anchor_wrapper_args_desc = ((re_com.config.include_args_d
  */
 re_com.popover.popover_anchor_wrapper = (function re_com$popover$popover_anchor_wrapper(var_args){
 var args__5775__auto__ = [];
-var len__5769__auto___28924 = arguments.length;
-var i__5770__auto___28925 = (0);
+var len__5769__auto___28912 = arguments.length;
+var i__5770__auto___28913 = (0);
 while(true){
-if((i__5770__auto___28925 < len__5769__auto___28924)){
-args__5775__auto__.push((arguments[i__5770__auto___28925]));
+if((i__5770__auto___28913 < len__5769__auto___28912)){
+args__5775__auto__.push((arguments[i__5770__auto___28913]));
 
-var G__28926 = (i__5770__auto___28925 + (1));
-i__5770__auto___28925 = G__28926;
+var G__28914 = (i__5770__auto___28913 + (1));
+i__5770__auto___28913 = G__28914;
 continue;
 } else {
 }
@@ -810,14 +810,14 @@ return new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMP
 var re_com$popover$popover_anchor_wrapper_render = function (var_args){
 var p__28826 = null;
 if (arguments.length > 0) {
-var G__28936__i = 0, G__28936__a = new Array(arguments.length -  0);
-while (G__28936__i < G__28936__a.length) {G__28936__a[G__28936__i] = arguments[G__28936__i + 0]; ++G__28936__i;}
-  p__28826 = new cljs.core.IndexedSeq(G__28936__a,0,null);
+var G__28926__i = 0, G__28926__a = new Array(arguments.length -  0);
+while (G__28926__i < G__28926__a.length) {G__28926__a[G__28926__i] = arguments[G__28926__i + 0]; ++G__28926__i;}
+  p__28826 = new cljs.core.IndexedSeq(G__28926__a,0,null);
 } 
 return re_com$popover$popover_anchor_wrapper_render__delegate.call(this,p__28826);};
 re_com$popover$popover_anchor_wrapper_render.cljs$lang$maxFixedArity = 0;
-re_com$popover$popover_anchor_wrapper_render.cljs$lang$applyTo = (function (arglist__28937){
-var p__28826 = cljs.core.seq(arglist__28937);
+re_com$popover$popover_anchor_wrapper_render.cljs$lang$applyTo = (function (arglist__28927){
+var p__28826 = cljs.core.seq(arglist__28927);
 return re_com$popover$popover_anchor_wrapper_render__delegate(p__28826);
 });
 re_com$popover$popover_anchor_wrapper_render.cljs$core$IFn$_invoke$arity$variadic = re_com$popover$popover_anchor_wrapper_render__delegate;
@@ -841,14 +841,14 @@ re_com.popover.popover_tooltip_args_desc = ((re_com.config.include_args_desc_QMA
  */
 re_com.popover.popover_tooltip = (function re_com$popover$popover_tooltip(var_args){
 var args__5775__auto__ = [];
-var len__5769__auto___28954 = arguments.length;
-var i__5770__auto___28955 = (0);
+var len__5769__auto___28929 = arguments.length;
+var i__5770__auto___28930 = (0);
 while(true){
-if((i__5770__auto___28955 < len__5769__auto___28954)){
-args__5775__auto__.push((arguments[i__5770__auto___28955]));
+if((i__5770__auto___28930 < len__5769__auto___28929)){
+args__5775__auto__.push((arguments[i__5770__auto___28930]));
 
-var G__28956 = (i__5770__auto___28955 + (1));
-i__5770__auto___28955 = G__28956;
+var G__28931 = (i__5770__auto___28930 + (1));
+i__5770__auto___28930 = G__28931;
 continue;
 } else {
 }

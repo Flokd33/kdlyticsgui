@@ -38,7 +38,6 @@
                                                                    :toolbar          mrt/mrt-table-toolbar
                                                                    :download-fn      (mrt/mrt-default-download-fn "cellar-summary" columns)
                                                                    :photo-id         "cellar-summary"})
-
                                                                ]})]
 
                                    )]

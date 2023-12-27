@@ -22,7 +22,7 @@ padding: 90px 155px;
 }*/
 
 .center-element {
-padding: 200px 600px; /*this is only for Titlescreen*/
+padding: 250px 800px; /*this is only for Titlescreen*/
 }
 
 .right-element {
@@ -184,8 +184,16 @@ background-color: #353535;
 /* class mrt-table-dark has been assigned  */
 .mrt-table-dark tr:hover td {
   background-color: #2bcff0;
+  color: #000000
 }
 
+.mrt-table-dark-cellar tr:hover td {
+  background-color: #2bcff0;
+  color: #000000
+}
+.mrt-table-dark-cellar td {
+  color: #000000
+}
 /*---------------------------------------------MUI COMPONENTS---------------------------------------------------------*/
 /*.MuiInputBase-root {
 *//*  border-radius: 50px !important;*//*
