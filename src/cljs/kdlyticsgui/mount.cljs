@@ -15,11 +15,11 @@
 
                  :navigation/active-section         :entry
 
-                 :navigation/active-view-wealth     :summary
-                 :navigation/active-view-positions  :summary
-                 :navigation/active-view-vault      :inventory
-                 :navigation/active-view-cellar     :inventory
-                 :navigation/active-view-tools      :scrapping
+                 ;:navigation/active-view-wealth     :summary
+                 ;:navigation/active-view-positions  :summary
+                 ;:navigation/active-view-vault      :inventory
+                 ;:navigation/active-view-cellar     :inventory
+                 ;:navigation/active-view-tools      :scrapping
 
                  ;:navigation/active              {:view        :entry :home        :summary}
 
@@ -53,11 +53,11 @@
            :test-data
            :navigation/active-section
 
-           :navigation/active-view-wealth
-           :navigation/active-view-positions
-           :navigation/active-view-vault
-           :navigation/active-view-cellar
-           :navigation/active-view-tools
+           ;:navigation/active-view-wealth
+           ;:navigation/active-view-positions
+           ;:navigation/active-view-vault
+           ;:navigation/active-view-cellar
+           ;:navigation/active-view-tools
 
            :wealth-summary
 
@@ -354,12 +354,13 @@
 
 (rf/reg-event-db
   :receive-price-history-data
-  (fn [db [_ data]] (assoc db :price-history/data data
+  (fn [db [_ data]] (println "DATA RECEIVED") (assoc db :price-history/data data
                               :price-history/show-throbber false)))
 
 (rf/reg-event-fx
   :get-price-history
   (fn [{:keys [db]} [_ ticker name]]
+    (println "GO MODAL")
     {:db                (assoc db :price-history/ticker ticker
                                   :price-history/name   name
                                   :price-history/show-modal true

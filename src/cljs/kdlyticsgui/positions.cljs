@@ -3,12 +3,16 @@
             [kdlyticsgui.chart :as chart]
             [kdlyticsgui.tools :as t]
             [kdlyticsgui.mrttables :as mrt]
+            [kdlyticsgui.mui :as mui]
+            ["react-vega" :as react-vega :refer (VegaLite)]
             [re-frame.core :as rf]
             [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
                                  single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
                                  input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
             [helix.core :refer [defnc $]]
             [goog.string :as gstring]
+            ["@mui/material" :as mm :refer ( Modal Box Typography
+                                                    )]
             )
   )
 
@@ -23,9 +27,11 @@
               :price-history/data []
               :price-history/show-modal false)))
 
-(defn modal-price-history []
+;TODO HERE
+(defnc modal-price-history []
   (let [modal-data @(rf/subscribe [:price-history/data])
         show-modal @(rf/subscribe [:price-history/show-modal])]
+    (println modal-data)
     (if show-modal
       [modal-panel
        :wrap-nicely? false                                  ;need to set up to false for 'parts' to be included..
@@ -48,18 +54,22 @@
                      [box :align :center :child [throbber :size :large]]
                      [h-box :gap "20px" :children [[t/vega-lite (chart/line-chart-price-hover modal-data)]
                                                    ]]
-                     )]]])))
+                     )]]]
+;($ Modal )
 
+      )
+    ))
 
-(defn summary-display []
-  (when (empty? @(rf/subscribe [:positions-summary])) (rf/dispatch [:get-positions-summary]))
-  (when (empty? @(rf/subscribe [:positions-top10])) (rf/dispatch [:get-positions-top10]))
-  (when (empty? @(rf/subscribe [:positions-characteristics])) (rf/dispatch [:get-positions-characteristics]))
-  (when (empty? @(rf/subscribe [:positions-strategy-exposure])) (rf/dispatch [:get-positions-strategy-exposure]))
+(when (empty? @(rf/subscribe [:positions-summary])) (rf/dispatch [:get-positions-summary]))
+(when (empty? @(rf/subscribe [:positions-top10])) (rf/dispatch [:get-positions-top10]))
+(when (empty? @(rf/subscribe [:positions-characteristics])) (rf/dispatch [:get-positions-characteristics]))
+(when (empty? @(rf/subscribe [:positions-strategy-exposure])) (rf/dispatch [:get-positions-strategy-exposure]))
+
+(defnc summary-display []
+
   (let [data-summary @(rf/subscribe [:positions-summary])
         data-top10 @(rf/subscribe [:positions-top10])
         data-characteristics @(rf/subscribe [:positions-characteristics])
-
         data-characteristics-test [{:title "Revenue" :subtitle "Revenue bla bla " :ranges [150 225 300]  :measures [220 270] :markers [250]}
                                    {:title "Profit" :subtitle "Profit bla bla " :ranges [15 22 30]  :measures [21 23] :markers [26]}]
 
@@ -110,39 +120,59 @@
         ]
     ;(println data-strategy-exposure-clean)
     ;(rf/dispatch [:get-price-history ticker])
-    [v-box :gap "30px"
-     :children [[h-box :class "subbody rightelement" :gap "20px" :children [[t/vega-lite (chart/pie-chart-strategy data-strategy-exposure-clean "Strategy %")]
-                                                                            ($ mrt/material-react-table-template-basic
-                                                                               {:clj-data data-characteristics
-                                                                                :clj-columns columns-characteristics
-                                                                                :clj-option-map   {:enableGrouping false :enablePinning false :enablePagination false}
-                                                                                :js-initial-state #js {"density" "compact" "showColumnFilters" false "pagination" #js {"pageSize" 50} "grouping" #js []}
-                                                                                :toolbar          mrt/mrt-table-toolbar
-                                                                                :download-fn      (mrt/mrt-default-download-fn "characteristics-summary" columns-characteristics)
-                                                                                :photo-id         "characteristics-summary"})
-                                                                            [t/vega-lite (chart/bullet-chart-characteristic data-characteristics-test "TRY")]
-                                                                            ]
 
-                 ]
-                [gt/mrt-right-element-box-generic "positions-summary" maxrw "" {}
-                 [($ mrt/material-react-table-template-fast
-                     {:clj-data data-summary
-                      :clj-columns columns-summary
-                      :clj-option-map   {:enableGrouping false
-                                         :enablePinning true
-                                         :enablePagination true
-                                         :enableRowSelection false
-                                         :muiTableBodyRowProps mrt/positions-full-row-formatting}  ;to avoid the cell formatting to mess up this the row formatting :muiTableBodyRowProps, we set the :muiTableBodyProps to nil, cell format override row formating
-                      :js-initial-state #js {"density" "compact"
-                                             "showColumnFilters" true
-                                             "pagination" #js {"pageSize" 50}
-                                             "grouping" #js []
-                                             "sorting" #js [ #js{"id" "nav-eur-perc" "desc" true}]
-                                             "columnVisibility" #js {"nav-local" false "pnl-local" false "strategy-3" false "alloc-strat-1" false "alloc-strat-2" false "alloc-strat-3" false}}
-                      :toolbar          mrt/mrt-table-toolbar
-                      :download-fn      (mrt/mrt-default-download-fn "positions-summary" columns-summary)
-                      :photo-id         "positions-summary"})
-                  ]]]
+    [(mui/right-element-box-generic "positions-summary" "1700px" "Summary"
+                                    [($ mui/my-grid {:direction "row" :gap "30px"
+                                                     :children [(t/vega-lite (chart/pie-chart-strategy data-strategy-exposure-clean "Strategy %"))
+                                                                ($ mrt/material-react-table-template-fast
+                                                                   {:clj-data data-characteristics
+                                                                    :clj-columns columns-characteristics
+                                                                    :clj-option-map   {:enableGrouping false :enablePinning false :enablePagination false
+                                                                                       :muiTableBodyRowProps #js {"sx" #js {"backgroundColor" "#696969" }}
+                                                                                       }
+                                                                    :js-initial-state #js {"density" "compact" "showColumnFilters" false "pagination" #js {"pageSize" 50} "grouping" #js []}
+                                                                    :toolbar          mrt/mrt-table-toolbar
+                                                                    :download-fn      (mrt/mrt-default-download-fn "characteristics-summary" columns-characteristics)
+                                                                    :photo-id         "characteristics-summary"})
+                                                                ;TODO add few cards for the characteristics tha is it
+                                                                ($ mui/card-simple {:title "TOTAL $" :value "200 000"} )
+                                                                ($ mui/card-simple {:title "CASH" :value "10%"} )
+                                                                ($ mui/card-simple {:title "P/E" :value "9"} )
+                                                                ;[t/vega-lite (chart/bullet-chart-characteristic data-characteristics-test "TRY")]
+                                                                ]
+                                                     })
+                                     ]
+                                    )
+     (mui/right-element-box-generic "positions-breakdown" "1700px" "Breakdown"
+                                    [($ mui/my-grid {:direction "row" :gap "30px"
+                                                     :children [($ mui/my-grid {:direction "row" :gap "30px"
+                                                                                :children [($ mrt/material-react-table-template-fast
+                                                                                              {:clj-data data-summary
+                                                                                               :clj-columns columns-summary
+                                                                                               :clj-option-map   {:enableGrouping false
+                                                                                                                  :enablePinning true
+                                                                                                                  :enablePagination true
+                                                                                                                  :enableRowSelection false
+                                                                                                                  :muiTableBodyRowProps mrt/positions-full-row-formatting}  ;to avoid the cell formatting to mess up this the row formatting :muiTableBodyRowProps, we set the :muiTableBodyProps to nil, cell format override row formating
+                                                                                               :js-initial-state #js {"density" "compact"
+                                                                                                                      "showColumnFilters" true
+                                                                                                                      "pagination" #js {"pageSize" 50}
+                                                                                                                      "grouping" #js []
+                                                                                                                      "sorting" #js [ #js{"id" "nav-eur-perc" "desc" true}]
+                                                                                                                      "columnVisibility" #js {"nav-local" false "pnl-local" false "strategy-3" false "alloc-strat-1" false "alloc-strat-2" false "alloc-strat-3" false}}
+                                                                                               :toolbar          mrt/mrt-table-toolbar
+                                                                                               :download-fn      (mrt/mrt-default-download-fn "positions-summary" columns-summary)
+                                                                                               :photo-id         "positions-summary"})
+                                                                                           ]})
+
+                                                                ]
+                                                     })
+                                     ]
+                                    )
 
      ]
+
+
     ))
+
+
