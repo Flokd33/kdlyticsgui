@@ -3,7 +3,7 @@
             [reagent.core :as r]
             [goog.string :as gstring]
             [goog.string.format]
-            [re-com.core :refer [p]]
+    ;[re-com.core :refer [p]]
             [re-frame.core :as rf]
             [kdlyticsgui.tools :as t]
             [helix.core :refer [defnc $]]

@@ -6,9 +6,9 @@
             [kdlyticsgui.mui :as mui]
             ["react-vega" :as react-vega :refer (VegaLite)]
             [re-frame.core :as rf]
-            [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                                 single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
-                                 input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
+            ;[re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
+            ;                     single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
+            ;                     input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
             [helix.core :refer [defnc $]]
             [goog.string :as gstring]
             ["@mui/material" :as mm :refer ( Modal Box Typography

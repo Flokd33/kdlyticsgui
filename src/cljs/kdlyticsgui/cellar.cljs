@@ -5,16 +5,13 @@
             [kdlyticsgui.mui :as mui]
             [kdlyticsgui.mrttables :as mrt]
             [re-frame.core :as rf]
-            [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                                 single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
-                                 input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
             [helix.core :refer [defnc $]]
             )
   )
 
 (defnc summary-display []
-  (rf/dispatch [:get-cellar-summary])
-  (let [data @(rf/subscribe [:cellar-summary])
+  (rf/dispatch [:get-cellar-summary])                       ;TODO IF EMPTY bla bla
+  (let [data @(rf/subscribe [:cellar-summary])              ;USE REACTION /USE SUBSCRIBE react data store
         columns [{:header "Description" :id "description" :columns [(mrt/text-col "Name" "name" 60)
                                                                     (mrt/text-col "Type" "type" 60)
                                                                     (mrt/text-col "Description" "description" 100)]}

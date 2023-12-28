@@ -1,12 +1,14 @@
 (ns kdlyticsgui.views
   (:require
     [re-frame.core :as rf]
-    [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink modal-panel alert-box throbber input-password
-                         input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
+    ;[re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
+    ;                     single-dropdown hyperlink modal-panel alert-box throbber input-password
+    ;                     input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
+    ;
     [reagent-contextmenu.menu :as rcm]
     [cljs-time.core :refer [today]]
-    [re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
+    ;[re-com.box :refer [h-box-args-desc v-box-args-desc box-args-desc gap-args-desc line-args-desc scroller-args-desc border-args-desc flex-child-style]]
+    ;
     [kdlyticsgui.mount :as mount]
     [kdlyticsgui.guitools :as t]
     [kdlyticsgui.static :as static]
@@ -17,6 +19,7 @@
     [kdlyticsgui.mui :as mui]
     [helix.core :refer [defnc $]]
     ))
+
 ;-----------------------------------------------------------------------------------------------------------------------
 ;(defn modal-mounting []
 ;  (if @(rf/subscribe [:navigation/show-mounting-modal])

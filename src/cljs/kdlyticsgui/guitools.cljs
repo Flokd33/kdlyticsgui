@@ -1,8 +1,8 @@
 (ns kdlyticsgui.guitools
   (:require
-    [re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
-                         single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
-                         input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
+    ;[re-com.core :refer [p p-span h-box v-box box gap line scroller border label title button close-button checkbox hyperlink-href slider horizontal-bar-tabs radio-button info-button
+    ;                     single-dropdown hyperlink modal-panel alert-box throbber input-password selection-list md-circle-icon-button
+    ;                     input-text input-textarea popover-anchor-wrapper popover-content-wrapper popover-tooltip datepicker-dropdown] :refer-macros [handler-fn]]
     [re-frame.core :as rf]
     [reagent.core :as r]
     [kdlyticsgui.tools :as t]
@@ -16,14 +16,14 @@
     [helix.dom :as d]
     ))
 
-(defn mrt-right-element-box-generic
-  [id width title-str opts children]
-  (let [show-element (r/atom true)]
-    (fn [id width title-str opts children]                  ;see https://github.com/reagent-project/reagent/blob/master/doc/CreatingReagentComponents.md need to repeat the arguments!
-      [v-box :class "subbody rightelement" :gap "0px" :width width
-       :children (concat [[h-box :align :center :children (into [[title :label title-str :level :level1] [gap :size "1"]]
-                                                                (if (:show-hide opts) [($ mui/switch {:checked-atom show-element :default-checked (not (:hide-by-default opts))})]))]]
-                         (if @show-element children))])))
+;(defn mrt-right-element-box-generic
+;  [id width title-str opts children]
+;  (let [show-element (r/atom true)]
+;    (fn [id width title-str opts children]                  ;see https://github.com/reagent-project/reagent/blob/master/doc/CreatingReagentComponents.md need to repeat the arguments!
+;      [v-box :class "subbody rightelement" :gap "0px" :width width
+;       :children (concat [[h-box :align :center :children (into [[title :label title-str :level :level1] [gap :size "1"]]
+;                                                                (if (:show-hide opts) [($ mui/switch {:checked-atom show-element :default-checked (not (:hide-by-default opts))})]))]]
+;                         (if @show-element children))])))
 
 (def slider-result (r/atom "Slider result"))
 (def select-result (r/atom "Simple select result"))

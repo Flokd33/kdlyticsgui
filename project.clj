@@ -6,7 +6,7 @@
                  [thheller/shadow-cljs "2.25.0"]
                  [reagent "1.2.0"]
                  [re-frame "1.3.0"]
-                 [re-com "2.13.2"]
+                 ;[re-com "2.13.2"]
                  [cljs-http "0.1.46"]
                  [re-pressed "0.3.2"]
                  [cljs-drag-n-drop/cljs-drag-n-drop "0.1.0"]
@@ -39,6 +39,8 @@
   ;Issue is not with the hover but something else ?? never really found root cause so I added a class for the table and an extra css targeting td, so issue might be wiht the cell formating overriting the row one  (https://stackoverflow.com/questions/5492900/changing-background-colour-of-tr-element-on-mouseover)
 
   ;scrollbar re-com css webkittscrollbar background color :TODO
+  ;Replace re-com par MUI => but we now need React Data Store to make sure our re-frame atoms/subscriptions recreate the MUI component on change... RDS create hooks from re-frame
+
 
   :plugins []
   :min-lein-version "2.5.3"
